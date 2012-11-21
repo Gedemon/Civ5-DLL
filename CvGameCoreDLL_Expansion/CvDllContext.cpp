@@ -53,9 +53,9 @@ HANDLE CvDllGameContext::s_hHeap = INVALID_HANDLE_VALUE;
 // WARNING! This must be unique for each DLL!
 // If you are a modder and you are creating your own DLL from the original source, this must be changed to a unique GUID.
 // Use the Visual Studio Create GUID option in the Tools menu to create a new GUID.
-// {C3B2B6B3-439C-480b-8536-1CF39FCFC682}
+// {4AAD27CB-5D49-474c-A54B-DCD000E5D24F}
 static const GUID CIV5_CORE_RELEASE_DLL_GUID =
-{ 0xc3b2b6b3, 0x439c, 0x480b, { 0x85, 0x36, 0x1c, 0xf3, 0x9f, 0xcf, 0xc6, 0x82 } };
+{ 0x4aad27cb, 0x5d49, 0x474c, { 0xa5, 0x4b, 0xdc, 0xd0, 0x0, 0xe5, 0xd2, 0x4f } };
 
 static const char* CIV5_CORE_RELEASE_DLL_VERSION = "1.0.0";
 
