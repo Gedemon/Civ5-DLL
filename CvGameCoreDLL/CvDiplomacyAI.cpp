@@ -9857,6 +9857,26 @@ void CvDiplomacyAI::DoContactPlayer(PlayerTypes ePlayer)
 	// Now see if it's a valid time to send this message (we may have already sent it)
 	if (eStatement != NO_DIPLO_STATEMENT_TYPE)
 	{
+		
+		// RED <<<<<
+		bool bResult = true;
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if(pkScriptSystem)
+		{
+			CvLuaArgsHandle args;
+			args->Push(ePlayer);	
+		
+			if(LuaSupport::CallTestAll(pkScriptSystem, "CanSendDiploStatement", args.get(), bResult))
+			{
+				// Check the result.
+				if(bResult == false)
+				{
+					bResult = false;
+				}
+			}
+		}
+		if (bResult)
+		// RED >>>>> /!\ line below above was already commented out /!\
 		//if (bSendStatement)
 		{
 			LogStatementToPlayer(ePlayer, eStatement);
