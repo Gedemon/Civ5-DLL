@@ -11950,6 +11950,20 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 
 		else
 		{
+			// RED <<<<<
+			{
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if(pkScriptSystem)
+				{	
+					CvLuaArgsHandle args;
+
+					args->Push(GetID());
+
+					bool bResult;
+					LuaSupport::CallHook(pkScriptSystem, "PlayerEndTurnInitiated", args.get(), bResult);
+				}
+			}
+			// RED >>>>>
 			if (!kGame.isMPOption(MPOPTION_SIMULTANEOUS_TURNS))
 				DoUnitReset();
 
@@ -11975,7 +11989,20 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 
 			if (!isHuman() || (isHuman() && !isAlive()) || ( isHuman() && gDLL->HasReceivedTurnAllComplete(GetID()) ) || kGame.getAIAutoPlay())
 				kGame.changeNumGameTurnActive(-1, std::string("setTurnActive() for player ") + getName());
+			// RED <<<<<
+			{
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if(pkScriptSystem)
+				{	
+					CvLuaArgsHandle args;
 
+					args->Push(GetID());
+
+					bool bResult;
+					LuaSupport::CallHook(pkScriptSystem, "PlayerEndTurnCompleted", args.get(), bResult);
+				}
+			}
+			// RED >>>>>
 			DLLUI->PublishPlayerTurnStatus(DLLUIClass::TURN_END, GetID());
 		}
 	}
