@@ -265,7 +265,7 @@ bool CvDllDatabaseUtility::PerformDatabasePostProcessing()
 		InsertGameDefine(kInsertDefine, "CITY_PLOTS_RADIUS", CITY_PLOTS_RADIUS);
 		InsertGameDefine(kInsertDefine, "CITY_PLOTS_DIAMETER", CITY_PLOTS_DIAMETER);
 		// RED
-		InsertGameDefine(kInsertDefine, "DLL_RED_GK", 2);
+		InsertGameDefine(kInsertDefine, "DLL_RED_GK", 3);
 	}
 
 	db->EndTransaction();
