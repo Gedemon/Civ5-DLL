@@ -249,6 +249,9 @@ m_syncArchive(*this)
 , m_bSetUpForRangedAttack("CvUnit::m_bSetUpForRangedAttack", m_syncArchive)
 , m_bEmbarked("CvUnit::m_bEmbarked", m_syncArchive)
 , m_bAITurnProcessed("CvUnit::m_bAITurnProcessed", m_syncArchive, false, true)
+// RED
+, m_bIsSpecialType("CvUnit::m_bIsSpecialType", m_syncArchive)
+// RED
 , m_eTacticalMove("CvUnit::m_eTacticalMove", m_syncArchive)
 , m_eOwner("CvUnit::m_eOwner", m_syncArchive)
 , m_eOriginalOwner("CvUnit::m_eOriginalOwner", m_syncArchive)
@@ -745,6 +748,10 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	m_bAITurnProcessed = false;
 	m_bWaitingForMove = false;
 	m_eTacticalMove = NO_TACTICAL_MOVE;
+
+	// RED
+	m_bIsSpecialType = false;
+	// RED
 
 	m_eOwner = eOwner;
 	m_eOriginalOwner = eOwner;
@@ -1617,6 +1624,59 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 		{
 			return true;
 		}
+		// RED <<<<<
+		int iOldDefenderStrength = pDefender->GetMaxDefenseStrength(pDefender->plot(), pAttacker);
+		int iDefenderStrength = GetMaxDefenseStrength(plot(), pAttacker);
+		int iOldAttackerStrength = 0;
+		int iAttackerStrength = 0;
+
+		if (pAttacker->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true) > 0 && pAttacker->getDomainType() == DOMAIN_AIR)
+		{
+			iAttackerStrength = pAttacker->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true);
+			iOldAttackerStrength = iAttackerStrength;
+			if (pDefender->getDomainType() != DOMAIN_AIR)
+			{
+				iOldDefenderStrength /= 2;
+			}
+			if (getDomainType() != DOMAIN_AIR)
+			{
+				iDefenderStrength /= 2;
+			}
+		}
+		else
+		{
+			iAttackerStrength = pAttacker->GetMaxAttackStrength(pAttacker->plot(), plot(), this);
+			iOldAttackerStrength = pAttacker->GetMaxAttackStrength(pAttacker->plot(), pDefender->plot(), pDefender);
+		}
+
+		int iAttackerDamageInflicted = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+		int iOldAttackerDamageInflicted = pAttacker->getCombatDamage(iOldAttackerStrength, iOldDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+
+		int iDefenderDamageInflicted = getCombatDamage(iDefenderStrength, iAttackerStrength, getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+		int iOldDefenderDamageInflicted = pDefender->getCombatDamage(iOldDefenderStrength, iOldAttackerStrength, pDefender->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+
+		if (pAttacker->getDomainType() == DOMAIN_AIR && getDomainType() != DOMAIN_AIR)
+		{
+			iAttackerDamageInflicted /= 2;
+			iDefenderDamageInflicted /= 3;
+		}
+		if (pAttacker->getDomainType() == DOMAIN_AIR && pDefender->getDomainType() != DOMAIN_AIR)
+		{
+			iOldAttackerDamageInflicted /= 2;
+			iOldDefenderDamageInflicted /= 3;
+		}
+
+		int iAttackerTotalDamageInflicted = iAttackerDamageInflicted + getDamage();
+		int iOldAttackerTotalDamageInflicted = iOldAttackerDamageInflicted + pDefender->getDamage();
+
+		//int iDefenderTotalDamageInflicted = iDefenderDamageInflicted + pAttacker->getDamage();
+		//int iOldDefenderTotalDamageInflicted = iOldDefenderDamageInflicted + pAttacker->getDamage();
+
+		if (iAttackerTotalDamageInflicted < iOldAttackerTotalDamageInflicted)
+		{
+			return true;
+		}
+		// RED >>>>>
 	}
 
 	iOurDefense = GetMaxDefenseStrength(plot(), pAttacker);
@@ -12576,6 +12636,27 @@ void CvUnit::ChangeNumInterceptions(int iChange)
 		m_iNumInterceptions += iChange;
 }
 
+// RED <<<<<
+//	--------------------------------------------------------------------------------
+bool CvUnit::isSpecialType() const
+{
+	VALIDATE_OBJECT
+
+	return m_bIsSpecialType;
+}
+
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setIsSpecialType(bool bNewValue)
+{
+	VALIDATE_OBJECT
+	if (bNewValue != isSpecialType())
+	{
+		m_bIsSpecialType = bNewValue;
+	}
+}
+// RED >>>>>
+
 //	--------------------------------------------------------------------------------
 bool CvUnit::isOutOfInterceptions() const
 {
@@ -13852,6 +13933,17 @@ bool CvUnit::AreUnitsOfSameType(const CvUnit & pUnit2, const bool bPretendEmbark
 	{
 		return true;
 	}
+	
+	// RED <<<<<
+	bool bUnit1isSpecial = isSpecialType();
+	bool bUnit2isSpecial = pUnit2.isSpecialType();
+	bool bSameOwner = getOwner() == pUnit2.getOwner();
+	// Allow stacking with special units, but don't allow 2 special units to stack... 
+	if (bSameOwner && (bUnit1isSpecial || bUnit2isSpecial) && !(bUnit1isSpecial && bUnit2isSpecial))
+	{
+		return false;
+	}
+	// RED >>>>>
 
 	return CvGameQueries::AreUnitsSameType(getUnitType(), pUnit2.getUnitType());
 }
