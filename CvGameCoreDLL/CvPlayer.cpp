@@ -6156,6 +6156,14 @@ int CvPlayer::getProductionModifier(CvString* toolTipSink) const
 	// Unit Supply
 	iTempMod = GetUnitProductionMaintenanceMod();
 	iMultiplier += iTempMod;
+	/* todo : Create GetGoldProductionMaintenanceMod()
+	// RED <<<<<
+	if calculateGoldRate() < 0 then
+	{
+		iMultiplier += min(GC.getMAX_UNIT_SUPPLY_PRODMOD(), -calculateGoldRate()/50)
+	}
+	// RED >>>>>
+	//*/
 	GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_UNIT_SUPPLY", iTempMod);
 
 	return iMultiplier;
@@ -6848,7 +6856,7 @@ int CvPlayer::calculateUnitProductionMaintenanceMod() const
 	int iPaidUnits = GetNumUnitsOutOfSupply();
 
 	// Example: Player can support 8 Units, he has 12. 4 * 10 means he loses 40% of his Production
-	int iMaintenanceMod = min(/*70*/ GC.getMAX_UNIT_SUPPLY_PRODMOD(), iPaidUnits * 10);
+	int iMaintenanceMod = min(/*70*/ GC.getMAX_UNIT_SUPPLY_PRODMOD(), iPaidUnits * GC.getSUPPLY_PRODMOD_PER_UNIT());
 	iMaintenanceMod = -iMaintenanceMod;
 
 	return iMaintenanceMod;
