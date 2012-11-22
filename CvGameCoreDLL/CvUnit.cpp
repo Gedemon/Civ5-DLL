@@ -1893,6 +1893,7 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 
 	if (kTheirTeam.isMinorCiv())
 	{
+
 		// Minors can't intrude into one another's territory
 		if (!kMyTeam.isMinorCiv())
 		{
@@ -1916,6 +1917,14 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 			bool bHasOpenBorders = pMinorAI->IsPlayerHasOpenBorders(getOwner());
 			// If already intruding on this minor, okay to do it some more
 			bool bIntruding = pMinorAI->IsMajorIntruding(getOwner());
+			
+			// RED
+			PlayerTypes ePlayer = getOwner();
+			if (kTheirTeam.isClosedBorder() && (pMinorAI->GetFriendshipWithMajor(ePlayer) < pMinorAI->GetAlliesThreshold())) // Can't enter without having Allied level if borders are closed.
+			{
+				return false;
+			}
+			// RED
 
 			if (bAngerFreeUnit || bHasOpenBorders || bIntruding)
 			{
@@ -2266,6 +2275,9 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 		if (!(bMoveFlags & MOVEFLAG_ATTACK) && !(bMoveFlags & MOVEFLAG_DECLARE_WAR))
 		{
 			if (plot.isCity() && plot.getPlotCity()->getOwner() != getOwner())
+				// RED : check here for aircraft in allied cities
+				if (getDomainType() != DOMAIN_AIR)
+				// RED
 				return false;
 		}
 
@@ -4952,6 +4964,23 @@ bool CvUnit::canRebaseAt(const CvPlot* pPlot, int iX, int iY) const
 		{
 			bCityToRebase = true;
 		}
+		// RED <<<<<
+		// Allow air units to rebase in friendly cities.
+		if(GC.getGame().isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") )
+		{
+			CvPlayer& pOwnerPlayer = GET_PLAYER(pToPlot->getPlotCity()->getOwner());
+			CvTeam& pOwnerTeam = GET_TEAM(pOwnerPlayer.getTeam());
+			bool bMinorOpenBorder = false;
+			if (pOwnerPlayer.isMinorCiv())
+			{
+				CvMinorCivAI* pMinorAI = GET_PLAYER(pOwnerTeam.getLeaderID()).GetMinorCivAI();
+				if (pMinorAI->GetFriendshipWithMajor(getOwner()) >= pMinorAI->GetAlliesThreshold())
+					bMinorOpenBorder = true;
+			}
+			if ( pOwnerTeam.IsAllowsOpenBordersToTeam(getTeam()) || pOwnerPlayer.getTeam() == getTeam() || bMinorOpenBorder )
+				bCityToRebase = true;
+		}
+		// RED >>>>>
 	}
 
 	// Rebase onto Unit which can hold cargo

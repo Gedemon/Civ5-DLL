@@ -133,6 +133,11 @@ protected:
 	static int lIsMapCentering(lua_State* L);
 	static int lSetMapCentering(lua_State* L);
 
+	// RED
+	static int lIsClosedBorder(lua_State* L);
+	static int lSetClosedBorder(lua_State* L);
+	// RED
+
 	static int lGetID(lua_State* L);
 
 	static int lGetTechShareCount(lua_State* L);

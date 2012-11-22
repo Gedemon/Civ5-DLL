@@ -218,6 +218,7 @@ bool CvGameQueries::AreUnitsSameType(UnitTypes eFirstUnitType, UnitTypes eSecond
 		}
 
 		// Conversely air units can always stack
+		// RED : this will need to be edited if we want a limit for air unit
 		if (eFirstDomain == DOMAIN_AIR)
 		{
 			return false;

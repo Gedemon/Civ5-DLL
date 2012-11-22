@@ -197,6 +197,11 @@ public:
 	bool isMapCentering() const;
 	void setMapCentering(bool bNewValue);
 
+	// RED
+	bool isClosedBorder() const;
+	void setClosedBorder(bool bNewValue);
+	// RED
+
 	TeamTypes GetID() const;
 
 	int getTechShareCount(int iIndex) const;
@@ -402,6 +407,10 @@ protected:
 	int m_iNumNaturalWondersDiscovered;
 	int m_iBestPossibleRoute;
 	int m_iNumMinorCivsAttacked;
+
+	// RED
+	bool m_bClosedBorder;
+	// RED
 
 	bool m_bMapCentering;
 	bool m_bHasBrokenPeaceTreaty;
