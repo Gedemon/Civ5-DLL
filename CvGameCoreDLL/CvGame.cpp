@@ -1733,7 +1733,21 @@ void CvGame::updateTurnTimer()
 	if(gameTurnTimerExpired == true)
 	{
 		if(!gDLL->HasSentTurnComplete() && gDLL->allAIProcessedThisTurn() && allUnitAIProcessed())
-		{
+		{			
+			// RED <<<<<
+			{
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if(pkScriptSystem)
+				{	
+					CvLuaArgsHandle args;
+
+					args->Push(getActivePlayer());
+
+					bool bResult;
+					LuaSupport::CallHook(pkScriptSystem, "TurnComplete", args.get(), bResult);
+				}
+			}
+			// RED >>>>>
 			gDLL->sendTurnComplete();
 			CvAchievementUnlocker::EndTurn();
 		}
@@ -1809,6 +1823,20 @@ void CvGame::updateTestEndTurn()
 				{
 					if(pkIface->canEndTurn() && gDLL->allAIProcessedThisTurn() && allUnitAIProcessed() && !gDLL->HasSentTurnComplete())
 					{
+						// RED <<<<<
+						{
+							ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+							if(pkScriptSystem)
+							{	
+								CvLuaArgsHandle args;
+
+								args->Push(getActivePlayer());
+
+								bool bResult;
+								LuaSupport::CallHook(pkScriptSystem, "TurnComplete", args.get(), bResult);
+							}
+						}
+						// RED >>>>>
 						gDLL->sendTurnComplete();
 						CvAchievementUnlocker::EndTurn();
 						m_endTurnTimer.Start();
@@ -1910,6 +1938,20 @@ void CvGame::updateTestEndTurn()
 							{
 								if(!gDLL->HasSentTurnComplete() && gDLL->allAIProcessedThisTurn() && allUnitAIProcessed() && pkIface && pkIface->IsMPAutoEndTurnEnabled())
 								{
+									// RED <<<<<
+									{
+										ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+										if(pkScriptSystem)
+										{	
+											CvLuaArgsHandle args;
+
+											args->Push(getActivePlayer());
+
+											bool bResult;
+											LuaSupport::CallHook(pkScriptSystem, "TurnComplete", args.get(), bResult);
+										}
+									}
+									// RED >>>>>
 									gDLL->sendTurnComplete();
 									CvAchievementUnlocker::EndTurn();
 								}
@@ -3140,6 +3182,20 @@ void CvGame::doControl(ControlTypes eControl)
 	case CONTROL_ENDTURN_ALT:
 		if (gDLL->getInterfaceIFace()->canEndTurn() && gDLL->allAIProcessedThisTurn() && allUnitAIProcessed())
 		{
+			// RED <<<<<
+			{
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if(pkScriptSystem)
+				{	
+					CvLuaArgsHandle args;
+
+					args->Push(getActivePlayer());
+
+					bool bResult;
+					LuaSupport::CallHook(pkScriptSystem, "TurnComplete", args.get(), bResult);
+				}
+			}
+			// RED >>>>>
 			gDLL->sendTurnComplete();
 			CvAchievementUnlocker::EndTurn();
 			gDLL->getInterfaceIFace()->setInterfaceMode(INTERFACEMODE_SELECTION);
@@ -3151,6 +3207,20 @@ void CvGame::doControl(ControlTypes eControl)
 			EndTurnBlockingTypes eBlock = GET_PLAYER(getActivePlayer()).GetEndTurnBlockingType();
 			if(gDLL->allAIProcessedThisTurn() && allUnitAIProcessed() && (eBlock == NO_ENDTURN_BLOCKING_TYPE || eBlock == ENDTURN_BLOCKING_UNITS))
 			{
+				// RED <<<<<
+				{
+					ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+					if(pkScriptSystem)
+					{	
+						CvLuaArgsHandle args;
+
+						args->Push(getActivePlayer());
+
+						bool bResult;
+						LuaSupport::CallHook(pkScriptSystem, "TurnComplete", args.get(), bResult);
+					}
+				}
+				// RED >>>>>
 				gDLL->sendTurnComplete();
 				CvAchievementUnlocker::EndTurn();
 				SetForceEndingTurn(true);
