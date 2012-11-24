@@ -7790,7 +7790,7 @@ int CvUnit::GetMaxDefenseStrength(const CvPlot* pInPlot, const CvUnit* pAttacker
 	{
 		// RED <<<<<
 		int fixFactor = 1;
-		if (pAttacker->getDomainType() == DOMAIN_AIR)
+		if (pAttacker->getDomainType() == DOMAIN_AIR && GC.getGame().isOption("GAMEOPTION_DOUBLE_EMBARKED_DEFENSE_AGAINST_AIR"))
 			fixFactor = 2;
  		if (IsNotCivilianIfEmbarked())
 			return GC.getEMBARKED_NOT_CIVILIAN_COMBAT_STRENGTH()*fixFactor;
