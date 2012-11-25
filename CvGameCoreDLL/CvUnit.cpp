@@ -2277,13 +2277,16 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 
 			if (pLoopUnit != NULL)
 			{
-				if (pLoopUnit->isEmbarked())
+				
+				//if (pLoopUnit->isEmbarked())
 				{
+					/*
 					bool bSpecialEmbarked = isEmbarked() && (pLoopUnit->isSpecialType() || isSpecialType());
-					bool bSeaUnitIsAI = getDomainType() == DOMAIN_SEA && !isHuman();
-					if (bSpecialEmbarked || bSeaUnitIsAI)
-						bCanMoveThrough = false ;
-				}
+					bool bSeaUnitIsAI = (getDomainType() == DOMAIN_SEA && !isHuman()) || (isEmbarked() && !isHuman());
+					if (bSpecialEmbarked || bSeaUnitIsAI)//*/
+						//bCanMoveThrough = false ;
+					bCanMoveThrough = !( (isEmbarked() && ( pLoopUnit->getDomainType() == DOMAIN_SEA || pLoopUnit->isEmbarked() )) || (getDomainType() == DOMAIN_SEA && pLoopUnit->isEmbarked()));
+				} 
 			}
 		}
 		if (!bCanMoveThrough)
