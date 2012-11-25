@@ -798,6 +798,11 @@ public:
 	int GetNumInterceptions() const;
 	void ChangeNumInterceptions(int iChange);
 
+	// RED
+	bool isSpecialType() const;
+	void setIsSpecialType(bool bNewValue);
+	// RED
+
 	bool isOutOfInterceptions() const;
 	int getMadeInterceptionCount() const;
 	void setMadeInterception(bool bNewValue);
@@ -1209,6 +1214,9 @@ protected:
 	FAutoVariable<bool, CvUnit> m_bSetUpForRangedAttack;
 	FAutoVariable<bool, CvUnit> m_bEmbarked;
 	FAutoVariable<bool, CvUnit> m_bAITurnProcessed;
+	// RED
+	FAutoVariable<bool, CvUnit> m_bIsSpecialType;
+	// RED
 
 	FAutoVariable<TacticalAIMoveTypes, CvUnit> m_eTacticalMove;
 	FAutoVariable<PlayerTypes, CvUnit> m_eCapturingPlayer;
