@@ -2327,6 +2327,41 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 	{
 		return false;
 	}
+	
+	// RED <<<<<
+	// Crashfix: Don't allow embarked special units to stack, ever.
+	// To do: find why embarked special units cause crash when moving over another embarked unit, special or not, during automission...
+	// To do: find why naval AI units cause crash when moving over an embarked unit, special or not, during automission...
+	{		
+		bool bCanMoveThrough = true;
+
+		const IDInfo* pUnitNode;
+		const CvUnit* pLoopUnit;
+		pUnitNode = plot.headUnitNode();
+
+		while (pUnitNode != NULL)
+		{
+			pLoopUnit = GetPlayerUnit(*pUnitNode);
+			pUnitNode = plot.nextUnitNode(pUnitNode);
+
+			if (pLoopUnit != NULL)
+			{
+				
+				//if (pLoopUnit->isEmbarked())
+				{
+					/*
+					bool bSpecialEmbarked = isEmbarked() && (pLoopUnit->isSpecialType() || isSpecialType());
+					bool bSeaUnitIsAI = (getDomainType() == DOMAIN_SEA && !isHuman()) || (isEmbarked() && !isHuman());
+					if (bSpecialEmbarked || bSeaUnitIsAI)//*/
+						//bCanMoveThrough = false ;
+					bCanMoveThrough = !( (isEmbarked() && ( pLoopUnit->getDomainType() == DOMAIN_SEA || pLoopUnit->isEmbarked() )) || (getDomainType() == DOMAIN_SEA && pLoopUnit->isEmbarked()));
+				} 
+			}
+		}
+		if (!bCanMoveThrough)
+			return false;
+	}
+	// RED >>>>>
 
 	// Added in Civ 5: Destination plots can't allow stacked Units of the same type
 	if (bMoveFlags & MOVEFLAG_DESTINATION)
