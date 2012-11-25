@@ -2387,6 +2387,24 @@ void CvGame::selectionListGameNetMessage(int eMessage, int iData2, int iData3, i
 					}
 					else
 					{
+						// RED <<<<<
+						{
+							ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+							if(pkScriptSystem)
+							{						
+								CvLuaArgsHandle args;
+
+								args->Push(pkSelectedUnit->getOwner());
+								args->Push(pkSelectedUnit->GetID());
+								args->Push(pPlot->getX());
+								args->Push(pPlot->getY());
+								args->Push(iData2);
+
+								bool bResult;
+								LuaSupport::CallHook(pkScriptSystem, "PushingMissionTo", args.get(), bResult);
+							}
+						}
+						// RED >>>>>
 						gDLL->sendPushMission(pkSelectedUnit->GetID(), ((MissionTypes)iData2), iData3, iData4, iFlags, bShift);
 					}
 				}
