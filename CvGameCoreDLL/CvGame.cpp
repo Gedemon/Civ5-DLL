@@ -2432,7 +2432,7 @@ void CvGame::selectionListGameNetMessage(int eMessage, int iData2, int iData3, i
 						// RED <<<<<
 						{
 							ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-							if(pkScriptSystem)
+							if(pkScriptSystem && pPlot)
 							{						
 								CvLuaArgsHandle args;
 
