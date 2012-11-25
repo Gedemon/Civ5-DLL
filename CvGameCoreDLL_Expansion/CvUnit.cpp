@@ -8906,7 +8906,12 @@ int CvUnit::GetMaxDefenseStrength(const CvPlot* pInPlot, const CvUnit* pAttacker
 
 	if(m_bEmbarked)
 	{
-		return GetEmbarkedUnitDefense();;
+		// RED <<<<<
+		int fixFactor = 1;
+		if (pAttacker->getDomainType() == DOMAIN_AIR)
+			fixFactor = 2;
+ 		return GetEmbarkedUnitDefense()*fixFactor;
+		// RED >>>>>
 	}
 
 	if(GetBaseCombatStrength() == 0)
@@ -9145,15 +9150,24 @@ int CvUnit::GetMaxRangedCombatStrength(const CvUnit* pOtherUnit, const CvCity* p
 
 	if(NULL != pOtherUnit)
 	{
-		// Unit Class Mod
-		iModifier += getUnitClassModifier(pOtherUnit->getUnitClassType());
+		// RED <<<<<	
+		if (pOtherUnit->isEmbarked()) 
+		{
+			iModifier += domainModifier(DOMAIN_SEA); // Embarked = SEA, yep.
+		}
+		else
+		{	
+			// Unit Class Mod
+			iModifier += getUnitClassModifier(pOtherUnit->getUnitClassType());
 
-		// Unit combat modifier VS other unit
-		if(pOtherUnit->getUnitCombatType() != NO_UNITCOMBAT)
-			iModifier += unitCombatModifier(pOtherUnit->getUnitCombatType());
+			// Unit combat modifier VS other unit
+			if(pOtherUnit->getUnitCombatType() != NO_UNITCOMBAT)
+				iModifier += unitCombatModifier(pOtherUnit->getUnitCombatType());
 
-		// Domain modifier VS other unit
-		iModifier += domainModifier(pOtherUnit->getDomainType());
+			// Domain modifier VS other unit
+			iModifier += domainModifier(pOtherUnit->getDomainType());
+		}
+		// RED >>>>>
 
 		// Bonus VS fortified
 		if(pOtherUnit->getFortifyTurns() > 0)
@@ -9200,8 +9214,11 @@ int CvUnit::GetMaxRangedCombatStrength(const CvUnit* pOtherUnit, const CvCity* p
 		// ATTACKING
 		if(bForRangedAttack)
 		{
-			// Unit Class Attack Mod
-			iModifier += unitClassAttackModifier(pOtherUnit->getUnitClassType());
+			// RED <<<<<
+			if (!pOtherUnit->isEmbarked())
+				// Unit Class Attack Mod
+				iModifier += unitClassAttackModifier(pOtherUnit->getUnitClassType());
+			// RED >>>>>
 
 			////////////////////////
 			// KNOWN BATTLE PLOT
@@ -9268,13 +9285,18 @@ int CvUnit::GetMaxRangedCombatStrength(const CvUnit* pOtherUnit, const CvCity* p
 		}
 
 		// Ranged DEFENSE
-		else
-		{
-			// Ranged Defense Mod
-			iModifier += rangedDefenseModifier();
+		else 
+		{	
+			// RED <<<<<
+			if (!pOtherUnit->isEmbarked()) 
+			{
+				// Ranged Defense Mod
+				iModifier += rangedDefenseModifier();
 
-			// Unit Class Defense Mod
-			iModifier += unitClassDefenseModifier(pOtherUnit->getUnitClassType());
+				// Unit Class Defense Mod
+				iModifier += unitClassDefenseModifier(pOtherUnit->getUnitClassType());
+			}
+			// RED >>>>>
 		}
 	}
 
@@ -9373,8 +9395,10 @@ int CvUnit::GetAirCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bInc
 	// Unit is Defender
 	if(pCity == NULL)
 	{
-		// Use Ranged combat value for defender, UNLESS it's a boat
-		if(pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, /*bForRangedAttack*/ false) > 0 && !pDefender->getDomainType() == DOMAIN_SEA)
+ 		// Use Ranged combat value for defender, UNLESS it's a boat
+		// RED: UNLESS it's a boat or is embarked !
+		// if (pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, /*bForRangedAttack*/ false) > 0 && !pDefender->getDomainType() == DOMAIN_SEA)
+		if (pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, /*bForRangedAttack*/ false) > 0 && !pDefender->getDomainType() == DOMAIN_SEA && !pDefender->isEmbarked())
 		{
 			iDefenderStrength = pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, /*bForRangedAttack*/ false);
 		}
@@ -9473,8 +9497,10 @@ int CvUnit::GetRangeCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bI
 		}
 
 		// Use Ranged combat value for defender, UNLESS it's a boat
-		else if(pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, false) > 0 && pDefender->getDomainType() != DOMAIN_SEA)
-		{
+		// RED UNLESS it's a boat or is embarked !
+		//if (pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, false) > 0 && pDefender->getDomainType() != DOMAIN_SEA )
+		if (pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, false) > 0 && pDefender->getDomainType() != DOMAIN_SEA && !pDefender->isEmbarked())
+ 		{
 			iDefenderStrength = pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, /*bForRangedAttack*/ false);
 
 			// Ranged units take less damage from one another
@@ -9563,7 +9589,9 @@ int CvUnit::GetAirStrikeDefenseDamage(const CvUnit* pAttacker, bool bIncludeRand
 	int iDefenderStrength = 0;
 
 	// Use Ranged combat value for defender, UNLESS it's a boat
-	if(GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, false) > 0 && !getDomainType() == DOMAIN_SEA)
+	// RED: UNLESS it's a boat or is embarked !
+	// if (GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, false) > 0 && !getDomainType() == DOMAIN_SEA)
+	if (GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, false) > 0 && !getDomainType() == DOMAIN_SEA && !isEmbarked())
 		iDefenderStrength = GetMaxRangedCombatStrength(pAttacker, /*pCity*/ NULL, false, false);
 	else
 		iDefenderStrength = GetMaxDefenseStrength(plot(), pAttacker);
@@ -15920,6 +15948,28 @@ bool CvUnit::canRangeStrikeAt(int iX, int iY, bool bNeedWar, bool bNoncombatAllo
 	}
 
 	CvPlot* pTargetPlot = GC.getMap().plot(iX, iY);
+
+	// RED <<<<<
+	bool bResult = true;
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if(pkScriptSystem)
+	{
+		CvLuaArgsHandle args;
+		args->Push(getOwner());
+		args->Push(GetID());
+		args->Push(pTargetPlot->getX());
+		args->Push(pTargetPlot->getY());
+		
+		if(LuaSupport::CallTestAll(pkScriptSystem, "CanRangeStrikeAt", args.get(), bResult))
+		{
+			// Check the result.
+			if(bResult == false)
+			{
+				return false;
+			}
+		}
+	}
+	// RED >>>>>
 
 	// If it's NOT a city, see if there are any units to aim for
 	if(!pTargetPlot->isCity())
