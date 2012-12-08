@@ -352,7 +352,11 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetUpgradeDiscount);
 	Method(GetExperiencePercent);
 	Method(GetKamikazePercent);
-
+	
+	// RED <<<<<<
+	Method(IsMarkedBestDefender);
+	Method(SetMarkedBestDefender);
+	// RED >>>>>>
 
 	Method(IsOutOfAttacks);
 	Method(SetMadeAttack);
@@ -3459,6 +3463,28 @@ int CvLuaUnit::lGetKamikazePercent(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
+// RED <<<<<<
+//------------------------------------------------------------------------------
+//bool isMarkedBestDefender();
+int CvLuaUnit::lIsMarkedBestDefender(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->isMarkedBestDefender();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//void setMarkedBestDefender(bool bNewValue);
+int CvLuaUnit::lSetMarkedBestDefender(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bNewValue = lua_toboolean(L, 2);
+
+	pkUnit->setMarkedBestDefender(bNewValue);
+	return 0;
+}
+// RED >>>>>
 //------------------------------------------------------------------------------
 //bool isOutOfAttacks();
 int CvLuaUnit::lIsOutOfAttacks(lua_State* L)
