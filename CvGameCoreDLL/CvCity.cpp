@@ -288,7 +288,13 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits)
 	// Plot Ownership
 	setEverOwned(getOwner(), true);
 
-	pPlot->setOwner(getOwner(), m_iID, bBumpUnits);
+	// RED <<<<<
+	if( GC.getGame().isOption("GAMEOPTION_FREE_PLOTS") )
+		pPlot->setOwner(getOwner(), NO_PLAYER);
+	else
+		pPlot->setOwner(getOwner(), m_iID, bBumpUnits);
+	// RED >>>>>
+
 	// Clear the improvement before the city attaches itself to the plot, else the improvement does not
 	// remove the resource allocation from the current owner.  This would result in double resource points because
 	// the plot has already had setOwner called on it (above), giving the player the resource points.
@@ -305,11 +311,18 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits)
 		{
 			if (pAdjacentPlot->getOwner() == NO_PLAYER)
 			{
-				pAdjacentPlot->setOwner(getOwner(), m_iID, bBumpUnits);
+				// RED <<<<<
+				if( GC.getGame().isOption("GAMEOPTION_FREE_PLOTS") )
+					pAdjacentPlot->setOwner(getOwner(), NO_PLAYER, bBumpUnits);
+				else
+					pAdjacentPlot->setOwner(getOwner(), m_iID, bBumpUnits);
+				// RED >>>>>
 			}
 			if (pAdjacentPlot->getOwner() == getOwner())
 			{
-				pAdjacentPlot->SetCityPurchaseID(m_iID);
+				// RED <<<<<
+				if(! GC.getGame().isOption("GAMEOPTION_FREE_PLOTS") )
+					pAdjacentPlot->SetCityPurchaseID(m_iID);
 			}
 		}
 	}

@@ -1682,16 +1682,21 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 	FStaticVector<int, 121, true, c_eCiv5GameplayDLL, 0> aiPurchasedPlotY;
 	const int iMaxRange = /*5*/ GC.getMAXIMUM_ACQUIRE_PLOT_DISTANCE();
 
-	for (int iPlotLoop = 0; iPlotLoop < GC.getMap().numPlots(); iPlotLoop++)
+	// RED <<<<<
+	if(! GC.getGame().isOption("GAMEOPTION_FREE_PLOTS") ) 
 	{
-		CvPlot* pLoopPlot = GC.getMap().plotByIndexUnchecked(iPlotLoop);
-		if (pLoopPlot && pLoopPlot->GetCityPurchaseOwner() == eOldOwner && pLoopPlot->GetCityPurchaseID() == pOldCity->GetID())
+		for (int iPlotLoop = 0; iPlotLoop < GC.getMap().numPlots(); iPlotLoop++)
 		{
-			aiPurchasedPlotX.push_back(pLoopPlot->getX());
-			aiPurchasedPlotY.push_back(pLoopPlot->getY());
-			pLoopPlot->ClearCityPurchaseInfo();
+			CvPlot* pLoopPlot = GC.getMap().plotByIndexUnchecked(iPlotLoop);
+			if (pLoopPlot && pLoopPlot->GetCityPurchaseOwner() == eOldOwner && pLoopPlot->GetCityPurchaseID() == pOldCity->GetID())
+			{
+				aiPurchasedPlotX.push_back(pLoopPlot->getX());
+				aiPurchasedPlotY.push_back(pLoopPlot->getY());
+				pLoopPlot->ClearCityPurchaseInfo();
+			}
 		}
 	}
+	// RED >>>>>
 
 	pOldCity->PreKill();
 
@@ -2029,7 +2034,14 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 		if (!bDisbanded)
 		{
 			if (pPlot->getOwner() != pNewCity->getOwner())
-				pPlot->setOwner(pNewCity->getOwner(), /*iAcquireCityID*/ pNewCity->GetID(), /*bCheckUnits*/ true, /*bUpdateResources*/ true);
+				// RED <<<<<
+				// Should not be needed here, except with a game that was started without that option.
+				// To do: give back city ownership at load when the option is deactivated...
+				if( GC.getGame().isOption("GAMEOPTION_FREE_PLOTS") )
+					pPlot->setOwner(pNewCity->getOwner(), NO_PLAYER, /*bCheckUnits*/ true, /*bUpdateResources*/ true);
+				else
+					pPlot->setOwner(pNewCity->getOwner(), /*iAcquireCityID*/ pNewCity->GetID(), /*bCheckUnits*/ true, /*bUpdateResources*/ true);
+				// RED >>>>>
 		}
 		else
 		{

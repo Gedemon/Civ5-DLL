@@ -1263,7 +1263,12 @@ bool CvWorldBuilderMapLoader::InitMap()
 			int iCityID = 0;
 			const CvCity *pkCity = FindClosestCity(eOwner, *pkPlot);
 			if( pkCity ) iCityID = pkCity->GetID();
-			pkPlot->setOwner(eOwner, iCityID);
+			// RED <<<<<
+			if( GC.getGame().isOption("GAMEOPTION_FREE_PLOTS") )
+				pkPlot->setOwner(eOwner, NO_PLAYER);
+			else
+				pkPlot->setOwner(eOwner, iCityID);
+			// RED >>>>>
 		}
 	}
 
