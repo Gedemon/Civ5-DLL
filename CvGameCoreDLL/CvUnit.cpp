@@ -240,6 +240,7 @@ m_syncArchive(*this)
 , m_iEmbarkedAllWaterCount(0)
 , m_iEmbarkExtraVisibility(0)
 , m_strName("")
+, m_bBestDefender("CvUnit::m_bBestDefender", m_syncArchive) // RED
 , m_bPromotionReady("CvUnit::m_bPromotionReady", m_syncArchive)
 , m_bDeathDelay("CvUnit::m_bDeathDelay", m_syncArchive)
 , m_bCombatFocus("CvUnit::m_bCombatFocus", m_syncArchive)
@@ -737,6 +738,7 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	m_iEmbarkedAllWaterCount = 0;
 	m_iEmbarkExtraVisibility = 0;
 
+	m_bBestDefender = false; // RED
 	m_bPromotionReady = false;
 	m_bDeathDelay = false;
 	m_bCombatFocus = false;
@@ -12689,6 +12691,26 @@ void CvUnit::rotateFacingDirectionCounterClockwise()
 	DirectionTypes newDirection = (DirectionTypes) ((m_eFacingDirection + NUM_DIRECTION_TYPES - 1) % NUM_DIRECTION_TYPES);
 	setFacingDirection(newDirection);
 }
+
+// RED <<<<<
+//	--------------------------------------------------------------------------------
+bool CvUnit::isMarkedBestDefender() const
+{
+	VALIDATE_OBJECT
+
+	return m_bBestDefender;
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setMarkedBestDefender(bool bNewValue)
+{
+	VALIDATE_OBJECT
+	if (bNewValue != isMarkedBestDefender())
+	{
+		m_bBestDefender = bNewValue;
+	}
+}
+// RED >>>>>
 
 //	--------------------------------------------------------------------------------
 bool CvUnit::isOutOfAttacks() const
