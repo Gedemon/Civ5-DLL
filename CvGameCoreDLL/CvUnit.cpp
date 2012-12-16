@@ -1904,7 +1904,7 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 				return true;
 			}
 
-			if (bIsCity && bIsDeclareWarMove)
+			if (bIsCity && bIsDeclareWarMove && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
 			{
 				return false;
 			}
@@ -2276,6 +2276,13 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 		{
 			if (plot.isCity() && plot.getPlotCity()->getOwner() != getOwner())
 				// RED <<<<<
+				if (GET_PLAYER(plot.getPlotCity()->getOwner()).isMinorCiv()) // special check for minor civs: we don't want to allow basing of units in cities unless we have allied level...
+				{
+					CvMinorCivAI* pMinorAI = GET_PLAYER(plot.getPlotCity()->getOwner()).GetMinorCivAI();
+					if (pMinorAI->GetFriendshipWithMajor(getOwner()) < pMinorAI->GetAlliesThreshold())
+						return false;
+				}
+
 				if (getDomainType() != DOMAIN_AIR && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
 				// RED >>>>>
 				return false;
