@@ -289,6 +289,7 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits)
 	setEverOwned(getOwner(), true);
 
 	pPlot->setOwner(getOwner(), m_iID, bBumpUnits);
+
 	// Clear the improvement before the city attaches itself to the plot, else the improvement does not
 	// remove the resource allocation from the current owner.  This would result in double resource points because
 	// the plot has already had setOwner called on it (above), giving the player the resource points.

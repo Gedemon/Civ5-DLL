@@ -2022,6 +2022,8 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 		}
 	}
 
+	//  !GC.getGame().isOption("GAMEOPTION_FREE_PLOTS")
+
 	// grant the new owner any of the plots that were purchased by the prior owner
 	for (uint ui = 0; ui < aiPurchasedPlotX.size(); ui++)
 	{
@@ -2029,7 +2031,11 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 		if (!bDisbanded)
 		{
 			if (pPlot->getOwner() != pNewCity->getOwner())
-				pPlot->setOwner(pNewCity->getOwner(), /*iAcquireCityID*/ pNewCity->GetID(), /*bCheckUnits*/ true, /*bUpdateResources*/ true);
+				// RED <<<<<
+				// Change ownership only when the "Free Plots" option is not active.
+				if(! GC.getGame().isOption("GAMEOPTION_FREE_PLOTS") )
+					pPlot->setOwner(pNewCity->getOwner(), /*iAcquireCityID*/ pNewCity->GetID(), /*bCheckUnits*/ true, /*bUpdateResources*/ true);
+				// RED >>>>>
 		}
 		else
 		{
