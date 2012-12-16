@@ -3898,6 +3898,12 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit * pUnit, bool bBreakOnUnitLim
 	int iNumUnitsOfSameType = 0;
 	bool bPretendEmbarked = false;
 
+	// RED <<<<<
+	// To do : limit based by unit domain & type of buildings in city...
+	if (isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))
+		return iNumUnitsOfSameType;
+	// RED >>>>>
+
 	if (isWater() && pUnit->canEmbarkOnto(*pUnit->plot(), *this))
 	{
 		bPretendEmbarked = true;

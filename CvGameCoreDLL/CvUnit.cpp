@@ -2275,9 +2275,9 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 		if (!(bMoveFlags & MOVEFLAG_ATTACK) && !(bMoveFlags & MOVEFLAG_DECLARE_WAR))
 		{
 			if (plot.isCity() && plot.getPlotCity()->getOwner() != getOwner())
-				// RED : check here for aircraft in allied cities
-				if (getDomainType() != DOMAIN_AIR)
-				// RED
+				// RED <<<<<
+				if (getDomainType() != DOMAIN_AIR && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
+				// RED >>>>>
 				return false;
 		}
 
