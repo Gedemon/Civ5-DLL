@@ -1874,6 +1874,7 @@ void CvGame::updateTestEndTurn()
 							}
 							else
 							{
+								if (!(pUnit->plot()->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))) // RED
 								eEndTurnBlockingType = ENDTURN_BLOCKING_STACKED_UNITS;
 							}
 						}
