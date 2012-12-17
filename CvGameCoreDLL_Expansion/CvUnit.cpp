@@ -9629,9 +9629,7 @@ int CvUnit::GetRangeCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bI
 		}
 
 		// Use Ranged combat value for defender, UNLESS it's a boat
-		// RED UNLESS it's a boat or is embarked !
-		//if (pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, false) > 0 && pDefender->getDomainType() != DOMAIN_SEA )
-		if (pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, false) > 0 && pDefender->getDomainType() != DOMAIN_SEA && !pDefender->isEmbarked())
+		else if(pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, false) > 0 && pDefender->getDomainType() != DOMAIN_SEA )
  		{
 			iDefenderStrength = pDefender->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, false, /*bForRangedAttack*/ false);
 
