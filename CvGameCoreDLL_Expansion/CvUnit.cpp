@@ -2051,7 +2051,7 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 
 			// RED
 			PlayerTypes ePlayer = getOwner();
-			if (kTheirTeam.isClosedBorder() && (pMinorAI->GetFriendshipWithMajor(ePlayer) < pMinorAI->GetAlliesThreshold())) // Can't enter without having Allied level if borders are closed.
+			if (kTheirTeam.isClosedBorder() && (pMinorAI->GetEffectiveFriendshipWithMajor(ePlayer) < pMinorAI->GetAlliesThreshold())) // Can't enter without having Allied level if borders are closed.
 			{
 				return false;
 			}
@@ -2459,7 +2459,7 @@ bool CvUnit::canMoveInto(const CvPlot& plot, byte bMoveFlags) const
 				if (GET_PLAYER(plot.getPlotCity()->getOwner()).isMinorCiv()) // special check for minor civs: we don't want to allow basing of units in cities unless we have allied level...
 				{
 					CvMinorCivAI* pMinorAI = GET_PLAYER(plot.getPlotCity()->getOwner()).GetMinorCivAI();
-					if (pMinorAI->GetFriendshipWithMajor(getOwner()) < pMinorAI->GetAlliesThreshold())
+					if (pMinorAI->GetEffectiveFriendshipWithMajor(getOwner()) < pMinorAI->GetAlliesThreshold())
 						return false;
 				}
 
@@ -5330,7 +5330,7 @@ bool CvUnit::canRebaseAt(const CvPlot* pPlot, int iX, int iY) const
 			if (pOwnerPlayer.isMinorCiv())
 			{
 				CvMinorCivAI* pMinorAI = GET_PLAYER(pOwnerTeam.getLeaderID()).GetMinorCivAI();
-				if (pMinorAI->GetFriendshipWithMajor(getOwner()) >= pMinorAI->GetAlliesThreshold())
+				if (pMinorAI->GetEffectiveFriendshipWithMajor(getOwner()) >= pMinorAI->GetAlliesThreshold())
 					bMinorOpenBorder = true;
 			}
 			if ( pOwnerTeam.IsAllowsOpenBordersToTeam(getTeam()) || pOwnerPlayer.getTeam() == getTeam() || bMinorOpenBorder )

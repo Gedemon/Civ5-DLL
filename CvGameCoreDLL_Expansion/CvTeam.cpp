@@ -171,6 +171,10 @@ void CvTeam::uninit()
 	m_iBestPossibleRoute = NO_ROUTE;
 	m_iNumMinorCivsAttacked = 0;
 
+	// RED
+	m_bClosedBorder = false;
+	// RED
+
 	m_bMapCentering = false;
 	m_bHasBrokenPeaceTreaty = false;
 	m_bHomeOfUnitedNations = false;
@@ -3015,6 +3019,24 @@ void CvTeam::setMapCentering(bool bNewValue)
 	}
 }
 
+
+// RED - <<<<<
+//	--------------------------------------------------------------------------------
+bool CvTeam::isClosedBorder() const
+{
+	return m_bClosedBorder;
+}
+
+
+//	--------------------------------------------------------------------------------
+void CvTeam::setClosedBorder(bool bNewValue)
+{
+	if (isClosedBorder() != bNewValue)
+	{
+		m_bClosedBorder = bNewValue;
+	}
+}
+// RED - >>>>>
 
 //	--------------------------------------------------------------------------------
 TeamTypes CvTeam::GetID() const
@@ -6485,6 +6507,10 @@ void CvTeam::Read(FDataStream& kStream)
 	kStream >> m_iBestPossibleRoute;
 	kStream >> m_iNumMinorCivsAttacked;
 
+	// RED
+	kStream >> m_bClosedBorder;
+	// RED
+	
 	kStream >> m_bMapCentering;
 	kStream >> m_bHasBrokenPeaceTreaty;
 	kStream >> m_bHomeOfUnitedNations;
@@ -6754,6 +6780,10 @@ void CvTeam::Write(FDataStream& kStream) const
 	kStream << m_iNumNaturalWondersDiscovered;
 	kStream << m_iBestPossibleRoute;
 	kStream << m_iNumMinorCivsAttacked;
+
+	// RED
+	kStream << m_bClosedBorder;
+	// RED
 
 	kStream << m_bMapCentering;
 	kStream << m_bHasBrokenPeaceTreaty;
