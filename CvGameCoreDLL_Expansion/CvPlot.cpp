@@ -2551,6 +2551,12 @@ const UnitHandle CvPlot::getBestDefender(PlayerTypes eOwner, PlayerTypes eAttack
 							{
 								if((pAttacker == NULL) || (pAttacker->getDomainType() != DOMAIN_AIR) || (pLoopUnit->getDamage() < pAttacker->GetRangedCombatLimit()))
 								{
+									// RED <<<<<									
+									if (pLoopUnit->isMarkedBestDefender())
+									{
+										return pLoopUnit; // No need to compare, this unit request to be considered the best defender.
+									}
+									// RED >>>>>
 									if(pLoopUnit->isBetterDefenderThan(pBestUnit.pointer(), pAttacker))
 									{
 										pBestUnit = pLoopUnit;
@@ -3981,6 +3987,12 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 {
 	int iNumUnitsOfSameType = 0;
 
+	// RED <<<<<
+	// To do : limit based by unit domain & type of buildings in city...
+	if (isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))
+		return iNumUnitsOfSameType;
+	// RED >>>>>
+
 	bool bCombat = false;
 
 	if(pUnit->IsCombatUnit())
@@ -4014,7 +4026,10 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 			if(!kUnitTeam.isAtWar(pLoopUnit->getTeam()))
 			{
 				// Units of the same type OR Units belonging to different civs
-				if(pUnit->getOwner() != pLoopUnit->getOwner() || pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked))
+				//if (pUnit->getOwner() != pLoopUnit->getOwner() || pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked))
+				// RED : for air unit in foreign cities, we must allows units belonging to different civs
+				if ((pUnit->getOwner() != pLoopUnit->getOwner() && pUnit->getDomainType() != DOMAIN_AIR ) || (pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked) && (!GC.getGame().isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") || pUnit->getDomainType() != DOMAIN_AIR )))
+				// RED
 				{
 					// We should allow as many cargo units as we want
 					if(!pLoopUnit->isCargo())

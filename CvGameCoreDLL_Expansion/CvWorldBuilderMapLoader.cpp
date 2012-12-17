@@ -103,6 +103,8 @@ void InitTypeDesc()
 		}
 
 		sg_kMapTypeDesc.m_kUnits.uiSize = 0;
+		// RED
+		//*
 		const int iUnitCount = GC.getNumUnitInfos();
 		for(int i = 0; i < iUnitCount; ++i)
 		{
@@ -118,6 +120,17 @@ void InitTypeDesc()
 
 			++sg_kMapTypeDesc.m_kUnits.uiSize;
 		}
+		//*/
+		// RED
+		// Gedemon:
+		// Yup, that's a bad hack to fix this: http://forums.civfanatics.com/showthread.php?t=473022
+		// Can't find another way as the assert complaining about number of unit type come from the EXE or one of the original DLL when "CvGameCoreDLLFinal Release.dll" is modded.
+		// If you know why or have found a better way, tell me.
+		// If a crash occurs when using more than 255 unit types on a WB map, look here first...
+		// see also CvWorldBuilderMapTypeDesc.h, farray.h
+		if (sg_kMapTypeDesc.m_kUnits.uiSize > 256) 
+			sg_kMapTypeDesc.m_kUnits.uiSize = 256; // from the time being, just use a two-handed axe on the code...
+		// RED
 
 		sg_kMapTypeDesc.m_kTechs.uiSize = 0;
 		const int iTechCount = GC.getNumTechInfos();

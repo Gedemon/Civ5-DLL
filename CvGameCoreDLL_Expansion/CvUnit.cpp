@@ -256,6 +256,7 @@ CvUnit::CvUnit() :
 	, m_iCityAttackPlunderModifier(0)
 	, m_iReligiousStrengthLossRivalTerritory(0)
 	, m_strName("")
+	, m_bBestDefender("CvUnit::m_bBestDefender", m_syncArchive) // RED
 	, m_bPromotionReady("CvUnit::m_bPromotionReady", m_syncArchive)
 	, m_bDeathDelay("CvUnit::m_bDeathDelay", m_syncArchive)
 	, m_bCombatFocus("CvUnit::m_bCombatFocus", m_syncArchive)
@@ -265,6 +266,9 @@ CvUnit::CvUnit() :
 	, m_bSetUpForRangedAttack("CvUnit::m_bSetUpForRangedAttack", m_syncArchive)
 	, m_bEmbarked("CvUnit::m_bEmbarked", m_syncArchive)
 	, m_bAITurnProcessed("CvUnit::m_bAITurnProcessed", m_syncArchive, false, true)
+	// RED
+	, m_bIsSpecialType("CvUnit::m_bIsSpecialType", m_syncArchive)
+	// RED
 	, m_eTacticalMove("CvUnit::m_eTacticalMove", m_syncArchive)
 	, m_eOwner("CvUnit::m_eOwner", m_syncArchive)
 	, m_eOriginalOwner("CvUnit::m_eOriginalOwner", m_syncArchive)
@@ -775,6 +779,7 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	m_iCityAttackPlunderModifier = 0;
 	m_iReligiousStrengthLossRivalTerritory = 0;
 
+	m_bBestDefender = false; // RED
 	m_bPromotionReady = false;
 	m_bDeathDelay = false;
 	m_bCombatFocus = false;
@@ -786,6 +791,10 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	m_bAITurnProcessed = false;
 	m_bWaitingForMove = false;
 	m_eTacticalMove = NO_TACTICAL_MOVE;
+
+	// RED
+	m_bIsSpecialType = false;
+	// RED
 
 	m_eOwner = eOwner;
 	m_eOriginalOwner = eOwner;
@@ -1687,6 +1696,59 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 		{
 			return true;
 		}
+		// RED <<<<<
+		int iOldDefenderStrength = pDefender->GetMaxDefenseStrength(pDefender->plot(), pAttacker);
+		int iDefenderStrength = GetMaxDefenseStrength(plot(), pAttacker);
+		int iOldAttackerStrength = 0;
+		int iAttackerStrength = 0;
+
+		if (pAttacker->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true) > 0 && pAttacker->getDomainType() == DOMAIN_AIR)
+		{
+			iAttackerStrength = pAttacker->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true);
+			iOldAttackerStrength = iAttackerStrength;
+			if (pDefender->getDomainType() != DOMAIN_AIR)
+			{
+				iOldDefenderStrength /= 2;
+			}
+			if (getDomainType() != DOMAIN_AIR)
+			{
+				iDefenderStrength /= 2;
+			}
+		}
+		else
+		{
+			iAttackerStrength = pAttacker->GetMaxAttackStrength(pAttacker->plot(), plot(), this);
+			iOldAttackerStrength = pAttacker->GetMaxAttackStrength(pAttacker->plot(), pDefender->plot(), pDefender);
+		}
+
+		int iAttackerDamageInflicted = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+		int iOldAttackerDamageInflicted = pAttacker->getCombatDamage(iOldAttackerStrength, iOldDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+
+		int iDefenderDamageInflicted = getCombatDamage(iDefenderStrength, iAttackerStrength, getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+		int iOldDefenderDamageInflicted = pDefender->getCombatDamage(iOldDefenderStrength, iOldAttackerStrength, pDefender->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+
+		if (pAttacker->getDomainType() == DOMAIN_AIR && getDomainType() != DOMAIN_AIR)
+		{
+			iAttackerDamageInflicted /= 2;
+			iDefenderDamageInflicted /= 3;
+		}
+		if (pAttacker->getDomainType() == DOMAIN_AIR && pDefender->getDomainType() != DOMAIN_AIR)
+		{
+			iOldAttackerDamageInflicted /= 2;
+			iOldDefenderDamageInflicted /= 3;
+		}
+
+		int iAttackerTotalDamageInflicted = iAttackerDamageInflicted + getDamage();
+		int iOldAttackerTotalDamageInflicted = iOldAttackerDamageInflicted + pDefender->getDamage();
+
+		//int iDefenderTotalDamageInflicted = iDefenderDamageInflicted + pAttacker->getDamage();
+		//int iOldDefenderTotalDamageInflicted = iOldDefenderDamageInflicted + pAttacker->getDamage();
+
+		if (iAttackerTotalDamageInflicted < iOldAttackerTotalDamageInflicted)
+		{
+			return true;
+		}
+		// RED >>>>>
 	}
 
 	iOurDefense = GetMaxDefenseStrength(plot(), pAttacker);
@@ -1973,7 +2035,7 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 				return true;
 			}
 
-			if(bIsCity && bIsDeclareWarMove)
+			if (bIsCity && bIsDeclareWarMove && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
 			{
 				return false;
 			}
@@ -1986,6 +2048,14 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 			bool bHasOpenBorders = pMinorAI->IsPlayerHasOpenBorders(getOwner());
 			// If already intruding on this minor, okay to do it some more
 			bool bIntruding = pMinorAI->IsMajorIntruding(getOwner());
+
+			// RED
+			PlayerTypes ePlayer = getOwner();
+			if (kTheirTeam.isClosedBorder() && (pMinorAI->GetFriendshipWithMajor(ePlayer) < pMinorAI->GetAlliesThreshold())) // Can't enter without having Allied level if borders are closed.
+			{
+				return false;
+			}
+			// RED
 
 			if(bAngerFreeUnit || bHasOpenBorders || bIntruding)
 			{
@@ -2343,6 +2413,41 @@ bool CvUnit::canMoveInto(const CvPlot& plot, byte bMoveFlags) const
 		return false;
 	}
 
+	// RED <<<<<
+	// Crashfix: Don't allow embarked special units to stack, ever.
+	// To do: find why embarked special units cause crash when moving over another embarked unit, special or not, during automission...
+	// To do: find why naval AI units cause crash when moving over an embarked unit, special or not, during automission...
+	{		
+		bool bCanMoveThrough = true;
+
+		const IDInfo* pUnitNode;
+		const CvUnit* pLoopUnit;
+		pUnitNode = plot.headUnitNode();
+
+		while (pUnitNode != NULL)
+		{
+			pLoopUnit = GetPlayerUnit(*pUnitNode);
+			pUnitNode = plot.nextUnitNode(pUnitNode);
+
+			if (pLoopUnit != NULL)
+			{
+				
+				//if (pLoopUnit->isEmbarked())
+				{
+					/*
+					bool bSpecialEmbarked = isEmbarked() && (pLoopUnit->isSpecialType() || isSpecialType());
+					bool bSeaUnitIsAI = (getDomainType() == DOMAIN_SEA && !isHuman()) || (isEmbarked() && !isHuman());
+					if (bSpecialEmbarked || bSeaUnitIsAI)//*/
+						//bCanMoveThrough = false ;
+					bCanMoveThrough = !( (isEmbarked() && ( pLoopUnit->getDomainType() == DOMAIN_SEA || pLoopUnit->isEmbarked() )) || (getDomainType() == DOMAIN_SEA && pLoopUnit->isEmbarked()));
+				} 
+			}
+		}
+		if (!bCanMoveThrough)
+			return false;
+	}
+	// RED >>>>>
+
 	// Added in Civ 5: Destination plots can't allow stacked Units of the same type
 	if(bMoveFlags & MOVEFLAG_DESTINATION)
 	{
@@ -2350,6 +2455,16 @@ bool CvUnit::canMoveInto(const CvPlot& plot, byte bMoveFlags) const
 		if(!(bMoveFlags & MOVEFLAG_ATTACK) && !(bMoveFlags & MOVEFLAG_DECLARE_WAR))
 		{
 			if(plot.isCity() && plot.getPlotCity()->getOwner() != getOwner())
+				// RED <<<<<
+				if (GET_PLAYER(plot.getPlotCity()->getOwner()).isMinorCiv()) // special check for minor civs: we don't want to allow basing of units in cities unless we have allied level...
+				{
+					CvMinorCivAI* pMinorAI = GET_PLAYER(plot.getPlotCity()->getOwner()).GetMinorCivAI();
+					if (pMinorAI->GetFriendshipWithMajor(getOwner()) < pMinorAI->GetAlliesThreshold())
+						return false;
+				}
+
+				if (getDomainType() != DOMAIN_AIR && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
+				// RED >>>>>
 				return false;
 		}
 
@@ -5205,6 +5320,23 @@ bool CvUnit::canRebaseAt(const CvPlot* pPlot, int iX, int iY) const
 		{
 			bCityToRebase = true;
 		}
+		// RED <<<<<
+		// Allow air units to rebase in friendly cities.
+		if(GC.getGame().isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") )
+		{
+			CvPlayer& pOwnerPlayer = GET_PLAYER(pToPlot->getPlotCity()->getOwner());
+			CvTeam& pOwnerTeam = GET_TEAM(pOwnerPlayer.getTeam());
+			bool bMinorOpenBorder = false;
+			if (pOwnerPlayer.isMinorCiv())
+			{
+				CvMinorCivAI* pMinorAI = GET_PLAYER(pOwnerTeam.getLeaderID()).GetMinorCivAI();
+				if (pMinorAI->GetFriendshipWithMajor(getOwner()) >= pMinorAI->GetAlliesThreshold())
+					bMinorOpenBorder = true;
+			}
+			if ( pOwnerTeam.IsAllowsOpenBordersToTeam(getTeam()) || pOwnerPlayer.getTeam() == getTeam() || bMinorOpenBorder )
+				bCityToRebase = true;
+		}
+		// RED >>>>>
 	}
 
 	// Rebase onto Unit which can hold cargo
@@ -14112,6 +14244,26 @@ void CvUnit::rotateFacingDirectionCounterClockwise()
 	setFacingDirection(newDirection);
 }
 
+// RED <<<<<
+//	--------------------------------------------------------------------------------
+bool CvUnit::isMarkedBestDefender() const
+{
+	VALIDATE_OBJECT
+
+	return m_bBestDefender;
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setMarkedBestDefender(bool bNewValue)
+{
+	VALIDATE_OBJECT
+	if (bNewValue != isMarkedBestDefender())
+	{
+		m_bBestDefender = bNewValue;
+	}
+}
+// RED >>>>>
+
 //	--------------------------------------------------------------------------------
 bool CvUnit::isOutOfAttacks() const
 {
@@ -14156,6 +14308,27 @@ void CvUnit::ChangeNumInterceptions(int iChange)
 	if(iChange != 0)
 		m_iNumInterceptions += iChange;
 }
+
+// RED <<<<<
+//	--------------------------------------------------------------------------------
+bool CvUnit::isSpecialType() const
+{
+	VALIDATE_OBJECT
+
+	return m_bIsSpecialType;
+}
+
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setIsSpecialType(bool bNewValue)
+{
+	VALIDATE_OBJECT
+	if (bNewValue != isSpecialType())
+	{
+		m_bIsSpecialType = bNewValue;
+	}
+}
+// RED >>>>>
 
 //	--------------------------------------------------------------------------------
 bool CvUnit::isOutOfInterceptions() const
@@ -15485,6 +15658,17 @@ bool CvUnit::AreUnitsOfSameType(const CvUnit& pUnit2, const bool bPretendEmbarke
 	{
 		return true;
 	}
+
+	// RED <<<<<
+	bool bUnit1isSpecial = isSpecialType();
+	bool bUnit2isSpecial = pUnit2.isSpecialType();
+	bool bSameOwner = getOwner() == pUnit2.getOwner();
+	// Allow stacking with special units, but don't allow 2 special units to stack... 
+	if (bSameOwner && (bUnit1isSpecial || bUnit2isSpecial) && !(bUnit1isSpecial && bUnit2isSpecial))
+	{
+		return false;
+	}
+	// RED >>>>>
 
 	return CvGameQueries::AreUnitsSameType(getUnitType(), pUnit2.getUnitType());
 }

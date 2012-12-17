@@ -2368,7 +2368,11 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 		if(!bDisbanded)
 		{
 			if(pPlot->getOwner() != pNewCity->getOwner())
-				pPlot->setOwner(pNewCity->getOwner(), /*iAcquireCityID*/ pNewCity->GetID(), /*bCheckUnits*/ true, /*bUpdateResources*/ true);
+				// RED <<<<<
+				// Change ownership only when the "Free Plots" option is not active.
+				if(! GC.getGame().isOption("GAMEOPTION_FREE_PLOTS") )
+					pPlot->setOwner(pNewCity->getOwner(), /*iAcquireCityID*/ pNewCity->GetID(), /*bCheckUnits*/ true, /*bUpdateResources*/ true);
+				// RED >>>>>
 		}
 		else
 		{
@@ -7868,7 +7872,7 @@ int CvPlayer::calculateUnitProductionMaintenanceMod() const
 	int iPaidUnits = GetNumUnitsOutOfSupply();
 
 	// Example: Player can support 8 Units, he has 12. 4 * 10 means he loses 40% of his Production
-	int iMaintenanceMod = min(/*70*/ GC.getMAX_UNIT_SUPPLY_PRODMOD(), iPaidUnits * 10);
+	int iMaintenanceMod = min(/*70*/ GC.getMAX_UNIT_SUPPLY_PRODMOD(), iPaidUnits * GC.getSUPPLY_PRODMOD_PER_UNIT());
 	iMaintenanceMod = -iMaintenanceMod;
 
 	return iMaintenanceMod;
@@ -13760,6 +13764,20 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 
 		else
 		{
+			// RED <<<<<
+			{
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if(pkScriptSystem)
+				{	
+					CvLuaArgsHandle args;
+
+					args->Push(GetID());
+
+					bool bResult;
+					LuaSupport::CallHook(pkScriptSystem, "PlayerEndTurnInitiated", args.get(), bResult);
+				}
+			}
+			// RED >>>>>
 			if(!kGame.isMPOption(MPOPTION_SIMULTANEOUS_TURNS))
 				DoUnitReset();
 
@@ -13785,7 +13803,20 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 
 			if(!isHuman() || (isHuman() && !isAlive()) || (isHuman() && gDLL->HasReceivedTurnAllComplete(GetID())) || kGame.getAIAutoPlay())
 				kGame.changeNumGameTurnActive(-1, std::string("setTurnActive() for player ") + getName());
+			// RED <<<<<
+			{
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if(pkScriptSystem)
+				{	
+					CvLuaArgsHandle args;
 
+					args->Push(GetID());
+
+					bool bResult;
+					LuaSupport::CallHook(pkScriptSystem, "PlayerEndTurnCompleted", args.get(), bResult);
+				}
+			}
+			// RED >>>>>
 			DLLUI->PublishPlayerTurnStatus(DLLUIClass::TURN_END, GetID());
 		}
 	}

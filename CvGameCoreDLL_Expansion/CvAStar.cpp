@@ -840,7 +840,7 @@ int PathDestValid(int iToX, int iToY, const void* pointer, CvAStar* finder)
 		CvCity* pCity = pToPlot->getPlotCity();
 		if(pCity)
 		{
-			if(pUnit->getOwner() != pCity->getOwner() && !GET_TEAM(eTeam).isAtWar(pCity->getTeam()) && !(finder->GetInfo() & MOVE_IGNORE_STACKING))
+			if (pUnit->getOwner() != pCity->getOwner() && !GET_TEAM(eTeam).isAtWar(pCity->getTeam()) && !(finder->GetInfo() & MOVE_IGNORE_STACKING) && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
 			{
 				return FALSE;
 			}
@@ -1199,7 +1199,7 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 
 					if(kNodeCacheData.bIsRevealedToTeam)
 					{
-						if (kNodeCacheData.bContainsOtherFriendlyTeamCity && !(iFinderIgnoreStacking))
+						if (kNodeCacheData.bContainsOtherFriendlyTeamCity && !(iFinderIgnoreStacking) && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
 							return FALSE;
 					}
 				}
