@@ -3593,7 +3593,7 @@ bool CvUnit::canHold(const CvPlot* pPlot) const
 	VALIDATE_OBJECT
 	if (isHuman() && !getFortifyTurns()) // we aren't fortified
 	{
-		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
+		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
 		{
 			return false;
 		}
@@ -3623,7 +3623,7 @@ bool CvUnit::canSleep(const CvPlot* pPlot) const
 
 	if (isHuman() && !getFortifyTurns()) // we aren't fortified
 	{
-		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
+		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
 		{
 			return false;
 		}
@@ -3658,7 +3658,7 @@ bool CvUnit::canFortify(const CvPlot* pPlot) const
 	VALIDATE_OBJECT
 	if (isHuman() && !getFortifyTurns()) // we aren't fortified
 	{
-		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
+		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
 		{
 			return false;
 		}
