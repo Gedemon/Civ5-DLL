@@ -3600,7 +3600,7 @@ bool CvUnit::canHold(const CvPlot* pPlot) const
 	}
 
 	// slewis - make this an all player rule, not just humans!
-	if (isHuman() && pPlot->getPlotCity() && (GetBaseCombatStrength() > 0))
+	if (isHuman() && pPlot->getPlotCity() && (GetBaseCombatStrength() > 0) && !GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))
 	{
 		if (getDomainType() != DOMAIN_SEA)
 		{
@@ -3630,7 +3630,7 @@ bool CvUnit::canSleep(const CvPlot* pPlot) const
 	}
 
 	// slewis - make this an all player rule, not just humans!
-	if (IsCanAttack() && isHuman() && pPlot->getPlotCity() && getDomainType() != DOMAIN_AIR)
+	if (IsCanAttack() && isHuman() && pPlot->getPlotCity() && getDomainType() != DOMAIN_AIR && !GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))
 	{
 		if (getDomainType() != DOMAIN_SEA)
 		{
