@@ -3498,6 +3498,7 @@ bool CvUnit::canHold(const CvPlot* pPlot) const
 	VALIDATE_OBJECT
 	if (isHuman() && !getFortifyTurns()) // we aren't fortified
 	{
+		// RED //if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
 		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
 		{
 			return false;
@@ -3505,6 +3506,7 @@ bool CvUnit::canHold(const CvPlot* pPlot) const
 	}
 
 	// slewis - make this an all player rule, not just humans!
+	// RED //if (isHuman() && pPlot->getPlotCity() && (GetBaseCombatStrength() > 0))
 	if (isHuman() && pPlot->getPlotCity() && (GetBaseCombatStrength() > 0) && !GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))
 	{
 		if (getDomainType() != DOMAIN_SEA)
@@ -3528,6 +3530,7 @@ bool CvUnit::canSleep(const CvPlot* pPlot) const
 
 	if (isHuman() && !getFortifyTurns()) // we aren't fortified
 	{
+		// RED //if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
 		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
 		{
 			return false;
@@ -3535,6 +3538,7 @@ bool CvUnit::canSleep(const CvPlot* pPlot) const
 	}
 
 	// slewis - make this an all player rule, not just humans!
+	// RED //if (IsCanAttack() && isHuman() && pPlot->getPlotCity() && getDomainType() != DOMAIN_AIR)
 	if (IsCanAttack() && isHuman() && pPlot->getPlotCity() && getDomainType() != DOMAIN_AIR && !GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))
 	{
 		if (getDomainType() != DOMAIN_SEA)
@@ -3563,6 +3567,7 @@ bool CvUnit::canFortify(const CvPlot* pPlot) const
 	VALIDATE_OBJECT
 	if (isHuman() && !getFortifyTurns()) // we aren't fortified
 	{
+		// RED //if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
 		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
 		{
 			return false;
