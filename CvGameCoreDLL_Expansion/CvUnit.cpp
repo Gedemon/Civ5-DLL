@@ -2455,6 +2455,7 @@ bool CvUnit::canMoveInto(const CvPlot& plot, byte bMoveFlags) const
 		if(!(bMoveFlags & MOVEFLAG_ATTACK) && !(bMoveFlags & MOVEFLAG_DECLARE_WAR))
 		{
 			if(plot.isCity() && plot.getPlotCity()->getOwner() != getOwner())
+			{
 				// RED <<<<<
 				if (GET_PLAYER(plot.getPlotCity()->getOwner()).isMinorCiv()) // special check for minor civs: we don't want to allow basing of units in cities unless we have allied level...
 				{
@@ -2466,6 +2467,7 @@ bool CvUnit::canMoveInto(const CvPlot& plot, byte bMoveFlags) const
 				if (getDomainType() != DOMAIN_AIR && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
 				// RED >>>>>
 				return false;
+			}
 		}
 
 		// Check to see if any units are present at this full-turn move plot (borrowed from CvGameCoreUtils::pathDestValid())
@@ -3723,7 +3725,9 @@ bool CvUnit::canHold(const CvPlot* pPlot) const // skip turn
 	VALIDATE_OBJECT
 	if(isHuman() && !getFortifyTurns())  // we aren't fortified
 	{
-		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
+		// RED //if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
+		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
+
 		{
 			return false;
 		}
@@ -3745,7 +3749,8 @@ bool CvUnit::canSleep(const CvPlot* pPlot) const
 
 	if(isHuman() && !getFortifyTurns())  // we aren't fortified
 	{
-		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
+		// RED //if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
+		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
 		{
 			return false;
 		}
@@ -3771,7 +3776,8 @@ bool CvUnit::canFortify(const CvPlot* pPlot) const
 	VALIDATE_OBJECT
 	if(isHuman() && !getFortifyTurns())  // we aren't fortified
 	{
-		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
+		// RED //if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
+		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
 		{
 			return false;
 		}
