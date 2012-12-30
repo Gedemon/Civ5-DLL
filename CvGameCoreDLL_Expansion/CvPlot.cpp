@@ -637,10 +637,22 @@ void CvPlot::verifyUnitValidPlot()
 						{
 							// Unit not allowed to be here
 							if(getNumFriendlyUnitsOfType(pLoopUnit) > /*1*/ GC.getPLOT_UNIT_LIMIT())
-								pLoopUnit->jumpToNearestValidPlot();
-
-							if(!isValidDomainForLocation(*pLoopUnit) || !(pLoopUnit->canEnterTerritory(getTeam(), false /*bIgnoreRightOfPassage*/, isCity())))
-								pLoopUnit->jumpToNearestValidPlot();
+							{
+								if (!pLoopUnit->jumpToNearestValidPlot())
+								{
+									pLoopUnit->kill(false);
+									pLoopUnit = NULL;
+								}
+							}
+							
+							if (pLoopUnit != NULL)
+							{
+								if(!isValidDomainForLocation(*pLoopUnit) || !(pLoopUnit->canEnterTerritory(getTeam(), false /*bIgnoreRightOfPassage*/, isCity())))
+								{
+									if (!pLoopUnit->jumpToNearestValidPlot())
+										pLoopUnit->kill(false);
+								}
+							}
 						}
 					}
 				}
@@ -668,7 +680,8 @@ void CvPlot::verifyUnitValidPlot()
 								{
 									if(!(pLoopUnit->isInvisible(getTeam(), false)))
 									{
-										pLoopUnit->jumpToNearestValidPlot();
+										if (!pLoopUnit->jumpToNearestValidPlot())
+											pLoopUnit->kill(false);
 									}
 								}
 							}
@@ -2700,7 +2713,7 @@ int CvPlot::defenseModifier(TeamTypes eDefender, bool, bool bHelp) const
 }
 
 //	---------------------------------------------------------------------------
-int CvPlot::movementCost(const CvUnit* pUnit, const CvPlot* pFromPlot) const
+int CvPlot::movementCost(const CvUnit* pUnit, const CvPlot* pFromPlot, int iMovesRemaining /*= 0*/) const
 {
 	int iRegularCost;
 	int iRouteCost;
@@ -2710,7 +2723,10 @@ int CvPlot::movementCost(const CvUnit* pUnit, const CvPlot* pFromPlot) const
 
 	if(ConsumesAllMoves(pUnit, pFromPlot))
 	{
-		return pUnit->maxMoves();
+		if (iMovesRemaining > 0)
+			return iMovesRemaining;
+		else
+			return pUnit->maxMoves();
 	}
 	else if(CostsOnlyOne(pUnit, pFromPlot))
 	{
@@ -2718,7 +2734,10 @@ int CvPlot::movementCost(const CvUnit* pUnit, const CvPlot* pFromPlot) const
 	}
 	else if(IsSlowedByZOC(pUnit, pFromPlot))
 	{
-		return pUnit->maxMoves();
+		if (iMovesRemaining > 0)
+			return iMovesRemaining;
+		else
+			return pUnit->maxMoves();
 	}
 
 	GetCostsForMove(pUnit, pFromPlot, iRegularCost, iRouteCost, iRouteFlatCost);
@@ -2727,7 +2746,7 @@ int CvPlot::movementCost(const CvUnit* pUnit, const CvPlot* pFromPlot) const
 }
 
 //	---------------------------------------------------------------------------
-int CvPlot::MovementCostNoZOC(const CvUnit* pUnit, const CvPlot* pFromPlot) const
+int CvPlot::MovementCostNoZOC(const CvUnit* pUnit, const CvPlot* pFromPlot, int iMovesRemaining /*= 0*/) const
 {
 	int iRegularCost;
 	int iRouteCost;
@@ -2737,7 +2756,10 @@ int CvPlot::MovementCostNoZOC(const CvUnit* pUnit, const CvPlot* pFromPlot) cons
 
 	if(ConsumesAllMoves(pUnit, pFromPlot))
 	{
-		return pUnit->maxMoves();
+		if (iMovesRemaining > 0)
+			return iMovesRemaining;
+		else
+			return pUnit->maxMoves();
 	}
 	else if(CostsOnlyOne(pUnit, pFromPlot))
 	{
@@ -2767,6 +2789,12 @@ bool CvPlot::ConsumesAllMoves(const CvUnit* pUnit, const CvPlot* pFromPlot) cons
 	// if the unit can embark and we are transitioning from land to water or vice versa
 	if(isWater() != pFromPlot->isWater() && pUnit->CanEverEmbark())
 	{
+		// Is the unit from a civ that can disembark for just 1 MP?
+		if(!isWater() && pFromPlot->isWater() && pUnit->isEmbarked() && GET_PLAYER(pUnit->getOwner()).GetPlayerTraits()->IsEmbarkedToLandFlatCost())
+		{
+			return false;	// Then no, it does not.
+		}
+
 		if(!pUnit->canMoveAllTerrain())
 		{
 			return true;
@@ -9073,6 +9101,26 @@ const IDInfo* CvPlot::tailUnitNode() const
 IDInfo* CvPlot::tailUnitNode()
 {
 	return m_units.tail();
+}
+
+//	--------------------------------------------------------------------------------
+uint CvPlot::getUnits(IDInfoVector* pkInfoVector) const
+{
+	uint uiCount = 0;
+	if (pkInfoVector)
+	{
+		pkInfoVector->clear();
+	
+		const IDInfo* pUnitNode = headUnitNode();
+
+		while (pUnitNode != NULL)
+		{
+			pkInfoVector->push_back(*pUnitNode);
+			pUnitNode = nextUnitNode(pUnitNode);
+			++uiCount;
+		}
+	}
+	return uiCount;
 }
 
 //	--------------------------------------------------------------------------------

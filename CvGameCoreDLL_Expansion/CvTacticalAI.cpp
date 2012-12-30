@@ -5790,9 +5790,14 @@ void CvTacticalAI::ExecuteAttack(CvTacticalTarget* pTarget, CvPlot* pTargetPlot,
 	for(int iDirectionLoop = 0; iDirectionLoop < NUM_DIRECTION_TYPES; ++iDirectionLoop)
 	{
 		CvPlot* pAdjacentPlot = plotDirection(pTargetPlot->getX(), pTargetPlot->getY(), ((DirectionTypes)iDirectionLoop));
-		if(pAdjacentPlot != NULL && pAdjacentPlot->getNumDefenders(pTarget->GetTargetPlayer()) == 0)
+		if (pAdjacentPlot)
 		{
-			plotList.push_back(pAdjacentPlot);
+			int iPlotIndex = GC.getMap().plotNum(pAdjacentPlot->getX(), pAdjacentPlot->getY());
+			CvTacticalAnalysisCell *pCell = m_pMap->GetCell(iPlotIndex);
+			if(pAdjacentPlot != NULL && pAdjacentPlot->getNumDefenders(pTarget->GetTargetPlayer()) == 0 && !pCell->IsEnemyCity())
+			{
+				plotList.push_back(pAdjacentPlot);
+			}
 		}
 	}
 
@@ -7980,6 +7985,8 @@ bool CvTacticalAI::FindUnitsWithinStrikingDistance(CvPlot* pTarget, int iNumTurn
 	bool rtnValue = false;
 	m_CurrentMoveUnits.clear();
 
+	bool bIsCityTarget = pTarget->getPlotCity() != NULL;
+
 	// Loop through all units available to tactical AI this turn
 	for(it = m_CurrentTurnUnits.begin(); it != m_CurrentTurnUnits.end(); it++)
 	{
@@ -7995,6 +8002,11 @@ bool CvTacticalAI::FindUnitsWithinStrikingDistance(CvPlot* pTarget, int iNumTurn
 				}
 
 				if(pLoopUnit->isOutOfAttacks())
+				{
+					continue;
+				}
+
+				if (!bIsCityTarget && pLoopUnit->IsCityAttackOnly())
 				{
 					continue;
 				}
