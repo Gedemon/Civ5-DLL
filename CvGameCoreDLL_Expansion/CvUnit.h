@@ -869,11 +869,21 @@ public:
 	int getDropRange() const;
 	void changeDropRange(int iChange);
 
+	// RED <<<<<<
+	bool isMarkedBestDefender() const;
+	void setMarkedBestDefender(bool bNewValue);
+	// RED >>>>>>
+
 	bool isOutOfAttacks() const;
 	void setMadeAttack(bool bNewValue);
 
 	int GetNumInterceptions() const;
 	void ChangeNumInterceptions(int iChange);
+
+	// RED
+	bool isSpecialType() const;
+	void setIsSpecialType(bool bNewValue);
+	// RED
 
 	bool isOutOfInterceptions() const;
 	int getMadeInterceptionCount() const;
@@ -1318,6 +1328,10 @@ protected:
 	FAutoVariable<bool, CvUnit> m_bSetUpForRangedAttack;
 	FAutoVariable<bool, CvUnit> m_bEmbarked;
 	FAutoVariable<bool, CvUnit> m_bAITurnProcessed;
+	FAutoVariable<bool, CvUnit> m_bBestDefender; // RED
+	// RED
+	FAutoVariable<bool, CvUnit> m_bIsSpecialType;
+	// RED
 
 	FAutoVariable<TacticalAIMoveTypes, CvUnit> m_eTacticalMove;
 	FAutoVariable<PlayerTypes, CvUnit> m_eCapturingPlayer;

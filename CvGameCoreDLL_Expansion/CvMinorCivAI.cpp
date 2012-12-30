@@ -2027,9 +2027,15 @@ void CvMinorCivAI::DoTurn()
 		DoElection();
 		DoFriendship();
 
-		DoTestThreatenedAnnouncement();
-		DoTestWarWithMajorQuest();
-		DoTestProxyWarNotification();
+
+		// RED <<<<<
+		if(! GC.getGame().isOption("GAMEOPTION_NO_MINOR_DIPLO_SPAM") ) 
+		{
+			DoTestThreatenedAnnouncement();
+			DoTestWarWithMajorQuest();
+			DoTestProxyWarNotification();
+		}
+		// RED >>>>>
 
 		DoTurnQuests();
 

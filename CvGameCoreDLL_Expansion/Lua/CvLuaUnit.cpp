@@ -360,11 +360,20 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetExperiencePercent);
 	Method(GetKamikazePercent);
 
+	// RED <<<<<<
+	Method(IsMarkedBestDefender);
+	Method(SetMarkedBestDefender);
+	// RED >>>>>>
 
 	Method(IsOutOfAttacks);
 	Method(SetMadeAttack);
 	Method(isOutOfInterceptions);
 	Method(SetMadeInterception);
+
+	// RED
+	Method(IsSpecialType);
+	Method(SetIsSpecialType);
+	// RED
 
 	Method(IsPromotionReady);
 	Method(SetPromotionReady);
@@ -3547,6 +3556,28 @@ int CvLuaUnit::lGetKamikazePercent(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
+// RED <<<<<<
+//------------------------------------------------------------------------------
+//bool isMarkedBestDefender();
+int CvLuaUnit::lIsMarkedBestDefender(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->isMarkedBestDefender();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//void setMarkedBestDefender(bool bNewValue);
+int CvLuaUnit::lSetMarkedBestDefender(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bNewValue = lua_toboolean(L, 2);
+
+	pkUnit->setMarkedBestDefender(bNewValue);
+	return 0;
+}
+// RED >>>>>
 //------------------------------------------------------------------------------
 //bool isOutOfAttacks();
 int CvLuaUnit::lIsOutOfAttacks(lua_State* L)
@@ -3587,6 +3618,28 @@ int CvLuaUnit::lSetMadeInterception(lua_State* L)
 	pkUnit->setMadeInterception(bNewValue);
 	return 0;
 }
+// RED <<<<<
+//------------------------------------------------------------------------------
+//bool isSpecialType();
+int CvLuaUnit::lIsSpecialType(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->isSpecialType();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//void setIsSpecialType(bool bNewValue);
+int CvLuaUnit::lSetIsSpecialType(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bNewValue = lua_toboolean(L, 2);
+
+	pkUnit->setIsSpecialType(bNewValue);
+	return 0;
+}
+// RED >>>>>
 //------------------------------------------------------------------------------
 //bool isPromotionReady();
 int CvLuaUnit::lIsPromotionReady(lua_State* L)

@@ -1734,6 +1734,8 @@ void CvGame::updateTurnTimer()
 	{
 		if(!gDLL->HasSentTurnComplete() && gDLL->allAIProcessedThisTurn() && allUnitAIProcessed())
 		{			
+
+
 			// RED <<<<<
 			{
 				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();

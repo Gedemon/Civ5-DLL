@@ -140,6 +140,11 @@ void CvLuaTeam::PushMethods(lua_State* L, int t)
 	Method(IsMapCentering);
 	Method(SetMapCentering);
 
+	// RED
+	Method(IsClosedBorder);
+	Method(SetClosedBorder);
+	// RED
+
 	Method(GetID);
 
 	Method(GetTechShareCount);
@@ -884,6 +889,22 @@ int CvLuaTeam::lSetMapCentering(lua_State* L)
 	return BasicLuaMethod(L, &CvTeam::setMapCentering);
 }
 
+// RED - <<<<<
+//------------------------------------------------------------------------------
+//bool isClosedBorder();
+int CvLuaTeam::lIsClosedBorder(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvTeam::isClosedBorder);
+}
+
+
+//------------------------------------------------------------------------------
+//void setClosedBorder(bool bNewValue);
+int CvLuaTeam::lSetClosedBorder(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvTeam::setClosedBorder);
+}
+// RED - >>>>>>
 
 //------------------------------------------------------------------------------
 //int getID();
