@@ -7228,7 +7228,8 @@ void CvGame::updateMoves()
 								}
 								if (bMoveMe)
 								{
-									pLoopUnit->jumpToNearestValidPlotWithinRange(1);
+									if (!pLoopUnit->jumpToNearestValidPlotWithinRange(1))
+										pLoopUnit->kill(false);	// Can't find a valid spot.
 									break;
 								}
 								pLoopUnit->doDelayedDeath();
@@ -9854,7 +9855,7 @@ CombatPredictionTypes CvGame::GetCombatPrediction (const CvUnit* pAttackingUnit,
 	{
 		ePrediction = COMBAT_PREDICTION_TOTAL_VICTORY;
 	}
-	else if (iAttackingDamageInflicted - iDefenderDamageInflicted > 3)
+	else if (iAttackingDamageInflicted - iDefenderDamageInflicted > 30)
 	{
 		ePrediction = COMBAT_PREDICTION_MAJOR_VICTORY;
 	}
@@ -9862,7 +9863,7 @@ CombatPredictionTypes CvGame::GetCombatPrediction (const CvUnit* pAttackingUnit,
 	{
 		ePrediction = COMBAT_PREDICTION_SMALL_VICTORY;
 	}
-	else if (iDefenderDamageInflicted - iAttackingDamageInflicted > 3)
+	else if (iDefenderDamageInflicted - iAttackingDamageInflicted > 30)
 	{
 		ePrediction = COMBAT_PREDICTION_MAJOR_DEFEAT;
 	}
