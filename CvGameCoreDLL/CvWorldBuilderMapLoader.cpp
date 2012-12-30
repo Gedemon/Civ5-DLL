@@ -128,7 +128,7 @@ void InitTypeDesc()
 		// If you know why or have found a better way, tell me.
 		// If a crash occurs when using more than 255 unit types on a WB map, look here first...
 		// see also CvWorldBuilderMapTypeDesc.h, farray.h
-		if (sg_kMapTypeDesc.m_kUnits.uiSize > 256) 
+		if (sg_kMapTypeDesc.m_kUnits.uiSize > 256 && GC.getGame().isOption("GAMEOPTION_UNIT_LIMIT_FIX")) 
 			sg_kMapTypeDesc.m_kUnits.uiSize = 256; // from the time being, just use a two-handed axe on the code...
 		// RED
 
