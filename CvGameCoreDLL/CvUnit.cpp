@@ -2372,6 +2372,7 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 		if (!(bMoveFlags & MOVEFLAG_ATTACK) && !(bMoveFlags & MOVEFLAG_DECLARE_WAR))
 		{
 			if (plot.isCity() && plot.getPlotCity()->getOwner() != getOwner())
+			{
 				// RED <<<<<
 				if (GET_PLAYER(plot.getPlotCity()->getOwner()).isMinorCiv()) // special check for minor civs: we don't want to allow basing of units in cities unless we have allied level...
 				{
@@ -2383,6 +2384,7 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 				if (getDomainType() != DOMAIN_AIR && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
 				// RED >>>>>
 				return false;
+			}
 		}
 
 		// Check to see if any units are present at this full-turn move plot (borrowed from CvGameCoreUtils::pathDestValid())
