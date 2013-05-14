@@ -997,7 +997,12 @@ void CvCityStrategyAI::ChooseProduction(bool bUseAsyncRandom, BuildingTypes eIgn
 						{
 							int iWaterTiles = pBiggestNearbyBodyOfWater->getNumTiles();
 							int iNumUnitsofMine = pBiggestNearbyBodyOfWater->getUnitsPerPlayer(m_pCity->getOwner());
+#if defined(MOD_CONFIG_AI_IN_XML)
+							int iFactor = GC.getAI_CONFIG_MILITARY_TILES_PER_SHIP();
+							if (iNumUnitsofMine * iFactor > iWaterTiles)
+#else
 							if (iNumUnitsofMine * 5 > iWaterTiles)
+#endif
 							{
 								iTempWeight = 0;
 							}

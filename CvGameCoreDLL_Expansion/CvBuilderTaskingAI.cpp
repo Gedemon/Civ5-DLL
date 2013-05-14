@@ -543,7 +543,11 @@ int CorrectWeight(int iWeight)
 }
 
 /// Use the flavor settings to determine what the worker should do
+#if defined(MOD_UNITS_LOCAL_WORKERS)
+bool CvBuilderTaskingAI::EvaluateBuilder(CvUnit* pUnit, BuilderDirective* paDirectives, UINT uaDirectives, bool bOnlyKeepBest, bool bOnlyEvaluateWorkersPlot, bool bLimit)
+#else
 bool CvBuilderTaskingAI::EvaluateBuilder(CvUnit* pUnit, BuilderDirective* paDirectives, UINT uaDirectives, bool bOnlyKeepBest, bool bOnlyEvaluateWorkersPlot)
+#endif
 {
 	// number of cities has changed mid-turn, so we need to re-evaluate what workers should do
 	if(m_pPlayer->getNumCities() != m_iNumCities)
@@ -611,7 +615,11 @@ bool CvBuilderTaskingAI::EvaluateBuilder(CvUnit* pUnit, BuilderDirective* paDire
 
 		// distance weight
 		// find how many turns the plot is away
+#if defined(MOD_UNITS_LOCAL_WORKERS)
+		int iMoveTurnsAway = FindTurnsAway(pUnit, pPlot, bLimit);
+#else
 		int iMoveTurnsAway = FindTurnsAway(pUnit, pPlot);
+#endif
 		if(iMoveTurnsAway < 0)
 		{
 			if(m_bLogging)
@@ -663,7 +671,11 @@ bool CvBuilderTaskingAI::EvaluateBuilder(CvUnit* pUnit, BuilderDirective* paDire
 
 		// distance weight
 		// find how many turns the plot is away
+#if defined(MOD_UNITS_LOCAL_WORKERS)
+		int iMoveTurnsAway = FindTurnsAway(pUnit, pPlot, bLimit);
+#else
 		int iMoveTurnsAway = FindTurnsAway(pUnit, pPlot);
+#endif
 		if(iMoveTurnsAway < 0)
 		{
 			if(m_bLogging)
@@ -1659,7 +1671,11 @@ bool CvBuilderTaskingAI::ShouldBuilderConsiderPlot(CvUnit* pUnit, CvPlot* pPlot)
 }
 
 /// Determines if the builder can get to the plot. Returns -1 if no path can be found, otherwise it returns the # of turns to get there
+#if defined(MOD_UNITS_LOCAL_WORKERS)
+int CvBuilderTaskingAI::FindTurnsAway(CvUnit* pUnit, CvPlot* pPlot, bool bLimit)
+#else
 int CvBuilderTaskingAI::FindTurnsAway(CvUnit* pUnit, CvPlot* pPlot)
+#endif
 {
 	// If this plot is far away, we'll just use its distance as an estimate of the time to get there (to avoid hitting the path finder)
 	// We'll be sure to check later to make sure we have a real path before we execute this
@@ -1669,6 +1685,19 @@ int CvBuilderTaskingAI::FindTurnsAway(CvUnit* pUnit, CvPlot* pPlot)
 	}
 
 	int iPlotDistance = plotDistance(pUnit->getX(), pUnit->getY(), pPlot->getX(), pPlot->getY());
+
+#if defined(MOD_UNITS_LOCAL_WORKERS)
+	if (bLimit && MOD_UNITS_LOCAL_WORKERS) {
+		int iLimit = (pUnit->getDomainType() == DOMAIN_LAND) ?
+						gCustomMods.getOption("UNITS_LOCAL_WORKERS_LANDLIMIT") :
+						gCustomMods.getOption("UNITS_LOCAL_WORKERS_WATERLIMIT");
+
+		if (iPlotDistance > iLimit) {
+			return -1;
+		}
+	}
+#endif
+
 #if 1
 	// Always return the raw distance
 	return iPlotDistance;

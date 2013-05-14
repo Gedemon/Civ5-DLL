@@ -53,7 +53,24 @@ void CvUnitMission::AutoMission(UnitHandle hUnit)
 				}
 			}
 
+#if defined(MOD_BUGFIX_WORKERS_VISIBLE_DANGER)
+			bool bAbortMission = (!bEscortedBuilder && !hUnit->IsIgnoringDangerWakeup());
+			// Remove the line below to have combat units behave like workers, waking at every opportunity!
+			bAbortMission = (bAbortMission && !hUnit->IsCombatUnit());
+
+			// Only change human player's units' behaviour
+			if (GET_PLAYER(hUnit->getOwner()).isHuman() && MOD_BUGFIX_WORKERS_VISIBLE_DANGER) {
+				// Stop only if the worker can actually see the enemy
+				bAbortMission = (bAbortMission && hUnit->SentryAlert());
+			} else {
+				// Stop if there is any hint of an enemy
+				bAbortMission = (bAbortMission && GET_PLAYER(hUnit->getOwner()).GetPlotDanger(*(hUnit->plot())) > 0);
+			}
+
+			if(bAbortMission)
+#else
 			if(!bEscortedBuilder && !hUnit->IsIgnoringDangerWakeup() && !hUnit->IsCombatUnit() && GET_PLAYER(hUnit->getOwner()).GetPlotDanger(*(hUnit->plot())) > 0)
+#endif
 			{
 				hUnit->ClearMissionQueue();
 				hUnit->SetIgnoreDangerWakeup(true);

@@ -245,16 +245,23 @@ void CvCityCitizens::DoTurn()
 
 	if(m_pCity->IsPuppet())
 	{
-		SetFocusType(CITY_AI_FOCUS_TYPE_GOLD);
-		SetNoAutoAssignSpecialists(false);
-		SetForcedAvoidGrowth(false);
-		int iExcessFoodTimes100 = m_pCity->getYieldRateTimes100(YIELD_FOOD) - (m_pCity->foodConsumption() * 100);
-		if(iExcessFoodTimes100 < 0)
+#if defined(MOD_UI_CITY_PRODUCTION)
+		if(!(MOD_UI_CITY_PRODUCTION && thisPlayer.isHuman()))
 		{
-			SetFocusType(NO_CITY_AI_FOCUS_TYPE);
-			//SetNoAutoAssignSpecialists(true);
+#endif
+			SetFocusType(CITY_AI_FOCUS_TYPE_GOLD);
+			SetNoAutoAssignSpecialists(false);
 			SetForcedAvoidGrowth(false);
+			int iExcessFoodTimes100 = m_pCity->getYieldRateTimes100(YIELD_FOOD) - (m_pCity->foodConsumption() * 100);
+			if(iExcessFoodTimes100 < 0)
+			{
+				SetFocusType(NO_CITY_AI_FOCUS_TYPE);
+				//SetNoAutoAssignSpecialists(true);
+				SetForcedAvoidGrowth(false);
+			}
+#if defined(MOD_UI_CITY_PRODUCTION)
 		}
+#endif
 	}
 	else if(!thisPlayer.isHuman())
 	{
@@ -1811,11 +1818,40 @@ bool CvCityCitizens::IsPlotBlockaded(CvPlot* pPlot) const
 				// Must be water in the same Area
 				if(pNearbyPlot->isWater() && pNearbyPlot->getArea() == pPlot->getArea())
 				{
+#if defined(MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES)
+					int iPlotDistance = plotDistance(pNearbyPlot->getX(), pNearbyPlot->getY(), pPlot->getX(), pPlot->getY());
+					if(iPlotDistance <= iBlockadeDistance)
+#else
 					if(plotDistance(pNearbyPlot->getX(), pNearbyPlot->getY(), pPlot->getX(), pPlot->getY()) <= iBlockadeDistance)
+#endif
 					{
 						// Enemy boat within range to blockade our plot?
 						if(pNearbyPlot->IsActualEnemyUnit(ePlayer))
 						{
+#if defined(MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES)
+							if (MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES && iPlotDistance > 1) {
+								// Is there an allied ship in the plot?
+								if (pPlot->IsActualAlliedUnit(ePlayer)) {
+									return false;
+								}
+
+								// We have an enemy ship 2 (or more) plots away,
+								// so check if we have an immediately adjacent allied ship to keep this plot open (ships in port do not count!)
+								for (int iI = 0; iI < NUM_DIRECTION_TYPES; iI++) {
+									CvPlot* pAdjacentPlot = plotDirection(pPlot->getX(), pPlot->getY(), ((DirectionTypes)iI));
+
+									if (pAdjacentPlot != NULL) {
+										// Must be water in the same Area
+										if (pAdjacentPlot->isWater() && pAdjacentPlot->getArea() == pPlot->getArea()) {
+											// If there is an allied ship here the blockade from 2 (or more) tiles away is itself blocked!
+											if (pAdjacentPlot->IsActualAlliedUnit(ePlayer)) {
+												return false;
+											}
+										}
+									}
+								}
+							}
+#endif
 							return true;
 						}
 					}

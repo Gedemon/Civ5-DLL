@@ -118,12 +118,19 @@ public:
 	int GetExtraSpies() const;
 	int GetSpyRankChange() const;
 	int GetInstantSpyRankChange() const;
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	int GetConversionModifier() const;
+	int GetGlobalConversionModifier() const;
+#endif
 	int GetPreferredDisplayPosition() const;
 	int GetPortraitIndex() const;
 	bool IsTeamShare() const;
 	bool IsWater() const;
 	bool IsRiver() const;
 	bool IsFreshWater() const;
+#if defined(MOD_API_EXTENSIONS)
+	bool IsAddsFreshWater() const;
+#endif
 	bool IsMountain() const;
 	bool IsHill() const;
 	bool IsFlat() const;
@@ -301,6 +308,11 @@ private:
 	int m_iSpyRankChange;
 	int m_iInstantSpyRankChange;
 
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	int m_iConversionModifier;
+	int m_iGlobalConversionModifier;
+#endif
+
 	int m_iPreferredDisplayPosition;
 	int m_iPortraitIndex;
 
@@ -308,6 +320,9 @@ private:
 	bool m_bWater;
 	bool m_bRiver;
 	bool m_bFreshWater;
+#if defined(MOD_API_EXTENSIONS)
+	bool m_bAddsFreshWater;
+#endif
 	bool m_bMountain;
 	bool m_bHill;
 	bool m_bFlat;

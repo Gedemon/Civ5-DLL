@@ -95,6 +95,9 @@ public:
 	int GetCulturalPlunderMultiplier() const;
 	int GetStealTechSlowerModifier() const;
 	int GetCatchSpiesModifier() const;
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	int GetConversionModifier() const;
+#endif
 	int GetGoldPerUnit() const;
 	int GetGoldPerMilitaryUnit() const;
 	int GetCityStrengthMod() const;
@@ -250,6 +253,9 @@ private:
 	int m_iCulturalPlunderMultiplier;
 	int m_iStealTechSlowerModifier;
 	int m_iCatchSpiesModifier;
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	int m_iConversionModifier;
+#endif
 	int m_iGoldPerUnit;
 	int m_iGoldPerMilitaryUnit;
 	int m_iCityStrengthMod;
@@ -431,6 +437,9 @@ enum PolicyModifierType
     POLICYMOD_CULTURAL_PLUNDER_MULTIPLIER,
     POLICYMOD_STEAL_TECH_SLOWER_MODIFIER,
     POLICYMOD_CATCH_SPIES_MODIFIER,
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+    POLICYMOD_CONVERSION_MODIFIER,
+#endif
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

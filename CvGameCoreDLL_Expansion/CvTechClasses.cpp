@@ -1248,6 +1248,7 @@ bool CvPlayerTechs::IsNoResearchAvailable() const
 ///Check for Achievement
 void CvPlayerTechs::CheckForTechAchievement() const
 {
+#if !defined(NO_ACHIEVEMENTS)
 	if(m_pPlayer->isHuman() && !GC.getGame().isGameMultiPlayer())
 	{
 		//Check for Catherine Achievement
@@ -1309,6 +1310,7 @@ void CvPlayerTechs::CheckForTechAchievement() const
 			gDLL->UnlockAchievement(ACHIEVEMENT_ALL_TECHS);
 		}
 	}
+#endif
 }
 
 /// Accessor: How many turns of research left?

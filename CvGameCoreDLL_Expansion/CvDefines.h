@@ -10,10 +10,11 @@
 #ifndef CVDEFINES_H
 #define CVDEFINES_H
 
-#define NUM_CITY_PLOTS										(37)
+//#define NUM_CITY_PLOTS										(37)
 #define CITY_HOME_PLOT										(0)
 #define CITY_PLOTS_RADIUS									(3)
 #define CITY_PLOTS_DIAMETER									((CITY_PLOTS_RADIUS*2) + 1)
+#define NUM_CITY_PLOTS										((6 * (1+CITY_PLOTS_RADIUS) * CITY_PLOTS_RADIUS / 2) + 1)
 
 #define CIV5_WBMAP_EXT										".Civ5Map"
 

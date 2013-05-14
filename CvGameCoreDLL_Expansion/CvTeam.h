@@ -52,9 +52,15 @@ public:
 	void updateYield();
 
 	bool canChangeWarPeace(TeamTypes eTeam) const;
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+	bool canDeclareWar(TeamTypes eTeam, PlayerTypes eOriginatingPlayer = NO_PLAYER) const;
+	void declareWar(TeamTypes eTeam, bool bDefensivePact = false, PlayerTypes eOriginatingPlayer = NO_PLAYER);
+	void makePeace(TeamTypes eTeam, bool bBumpUnits = true, bool bSuppressNotification = false, PlayerTypes eOriginatingPlayer = NO_PLAYER);
+#else
 	bool canDeclareWar(TeamTypes eTeam) const;
 	void declareWar(TeamTypes eTeam, bool bDefensivePact = false);
 	void makePeace(TeamTypes eTeam, bool bBumpUnits = true, bool bSuppressNotification = false);
+#endif
 
 	int GetTurnMadePeaceTreatyWithTeam(TeamTypes eTeam) const;
 	void SetTurnMadePeaceTreatyWithTeam(TeamTypes eTeam, int iNewValue);
@@ -510,8 +516,13 @@ protected:
 	void announceTechToPlayers(TechTypes eIndex, bool bPartial = false);
 
 	void DoNowAtWarOrPeace(TeamTypes eTeam, bool bWar);
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+	void DoDeclareWar(PlayerTypes eOriginatingPlayer, TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyPact = false);
+	void DoMakePeace(PlayerTypes eOriginatingPlayer, TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotification = false);
+#else
 	void DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyPact = false);
 	void DoMakePeace(TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotification = false);
+#endif
 };
 
 // helper for accessing static functions

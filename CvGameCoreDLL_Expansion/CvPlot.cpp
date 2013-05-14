@@ -30,6 +30,10 @@
 #include "CvInfosSerializationHelper.h"
 #include "CvBarbarians.h"
 
+#if defined(MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES)
+#include "CvDiplomacyAI.h"
+#endif
+
 #include "CvDllPlot.h"
 #include "CvDllUnit.h"
 
@@ -848,6 +852,31 @@ bool CvPlot::isAdjacentToShallowWater() const
 }
 
 
+#if defined(MOD_PROMOTIONS_CROSS_ICE)
+//	--------------------------------------------------------------------------------
+bool CvPlot::isAdjacentToIce() const
+{
+	CvPlot* pAdjacentPlot;
+	int iI;
+
+	for(iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
+	{
+		pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
+
+		if(pAdjacentPlot != NULL)
+		{
+			if(pAdjacentPlot->isIce())
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+#endif
+
+
 //	--------------------------------------------------------------------------------
 bool CvPlot::isCoastalLand(int iMinWaterSize) const
 {
@@ -982,6 +1011,13 @@ bool CvPlot::isFreshWater() const
 						return true;
 					}
 				}
+
+#if defined(MOD_API_EXTENSIONS)
+				if (pLoopPlot->isCity() && pLoopPlot->getPlotCity()->isAddsFreshWater())
+				{
+					return true;
+				}
+#endif
 			}
 		}
 	}
@@ -1157,7 +1193,12 @@ int CvPlot::seeFromLevel(TeamTypes eTeam) const
 	// Plot recon-ed?
 	if(getReconCount() > 0)
 	{
+#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
+		// By my reckoning, this just needs to be a big number
+		iLevel = GC.getRECON_VISIBILITY_RANGE() * 4;
+#else
 		iLevel = GC.getRECON_VISIBILITY_RANGE() * 2;
+#endif
 	}
 	// Normal visibility
 	else
@@ -1566,7 +1607,229 @@ bool CvPlot::canSeePlot(const CvPlot* pPlot, TeamTypes eTeam, int iRange, Direct
 }
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_BUGFIX_RANGE_3_TARGETTING)
+// Original bug-fix by DaveMcW (http://forums.civfanatics.com/showthread.php?t=479509)
+bool CvPlot::canSeeDisplacementPlot(TeamTypes eTeam, int dx, int dy, int originalDX, int originalDY, bool firstPlot, bool outerRing) const
+{
+	if (MOD_BUGFIX_RANGE_3_TARGETTING) {
+		return canSeeDisplacementPlot_FIXED(eTeam, dx, dy, originalDX, originalDY, firstPlot, outerRing);
+	} else {
+		return canSeeDisplacementPlot_ORIGINAL(eTeam, dx, dy, originalDX, originalDY, firstPlot, outerRing);
+	}
+}
+
+bool CvPlot::canSeeDisplacementPlot_FIXED(TeamTypes eTeam, int dx, int dy, int originalDX, int originalDY, bool, bool) const
+{
+	CvPlot* pPlot = plotXY(getX(), getY(), dx, dy);
+	if(pPlot != NULL)
+	{
+		int iHexDistanceBetweenPlots = hexDistance(originalDX, originalDY);
+
+		// assume that we can always see our plot and the plot next door
+		if(iHexDistanceBetweenPlots == 0 || iHexDistanceBetweenPlots == 1)
+		{
+			return true;
+		}
+
+		int fromLevel = seeFromLevel(eTeam);
+
+		// Do an optimized Bresenham's along 2 lines in hex space
+		// The steps are multiplied by 2*iHexDistanceBetweenPlots to keep them as integers
+		int iXStep = dx * 2;
+		int iYStep = dy * 2;
+
+		int iNextDX = 0;
+		int iNextDY = 0;
+
+		int iDeltaX;
+		int iDeltaY;
+
+		int iNextDXStep;
+		int iNextDYStep;
+
+		if (iXStep >= 0)
+		{
+			iDeltaX = iHexDistanceBetweenPlots * 2;
+			iNextDXStep = 1;
+		}
+		else
+		{
+			iDeltaX = -iHexDistanceBetweenPlots * 2;
+			iNextDXStep = -1;
+		}
+
+		if (iYStep >= 0)
+		{
+			iDeltaY = iHexDistanceBetweenPlots * 2;
+			iNextDYStep = 1;
+		}
+		else
+		{
+			iDeltaY = -iHexDistanceBetweenPlots * 2;
+			iNextDYStep = -1;
+		}
+
+		int iXError = iDeltaX / 2;
+		int iYError = iDeltaY / 2;
+
+		for(int iThisStep=1; iThisStep<iHexDistanceBetweenPlots; iThisStep++)
+		{
+			bool bSpecialCaseX = false;
+			bool bSpecialCaseY = false;
+
+			iXError -= iXStep;
+			iYError -= iYStep;
+
+			if (iXError == 0 && iYStep != 0)
+			{
+				bSpecialCaseX = true;
+			}
+			else if ((iXError < 0 && iXStep > 0) || (iXError > 0 && iXStep < 0))
+			{
+				iXError += iDeltaX;
+				iNextDX += iNextDXStep;
+			}
+
+			if (iYError == 0 && iYStep != 0)
+			{
+				bSpecialCaseY = true;
+			}
+			else if ((iYError < 0 && iYStep > 0) || (iYError > 0 && iYStep < 0))
+			{
+				iYError += iDeltaY;
+				iNextDY += iNextDYStep;
+			}
+
+			bool bBlocked = false;
+
+			// figure out if we can see through this plot
+
+			// extra-special special case
+			if(bSpecialCaseX && bSpecialCaseY)
+			{
+				CvPlot* passThroughPlot = plotXY(getX(), getY(), iNextDX + iNextDXStep, iNextDY);
+				if(passThroughPlot)
+				{
+					int passThroughLevel = passThroughPlot->seeThroughLevel();
+					if(fromLevel < passThroughLevel)
+					{
+						bBlocked = true;
+					}
+					if(bBlocked)
+					{
+						bBlocked = false;
+						CvPlot* otherPassThroughPlot = plotXY(getX(), getY(), iNextDX, iNextDY + iNextDYStep);
+						if(otherPassThroughPlot)
+						{
+							int otherPassThroughLevel = otherPassThroughPlot->seeThroughLevel();
+							if(fromLevel < otherPassThroughLevel)
+							{
+								bBlocked = true;
+							}
+						}
+						else
+						{
+							bBlocked = true;
+						}
+					}
+				}
+				else
+				{
+					bBlocked = true;
+				}
+			}
+			else
+			{
+
+				CvPlot* passThroughPlot = plotXY(getX(), getY(), iNextDX, iNextDY);
+				if(passThroughPlot)
+				{
+					int passThroughLevel = passThroughPlot->seeThroughLevel();
+
+					if(fromLevel < passThroughLevel)
+					{
+						bBlocked = true;
+					}
+				}
+				else
+				{
+					bBlocked = true;
+				}
+
+				// special case if either (not both) plots end on a hex border
+				// in these cases we will need to try the +0 and +1 cases
+				// this is so that an obstruction on one plot only doesn't obscure the sight line
+				//
+				//         Target
+				//
+				//   Mountain  Plain
+				//
+				//		   Origin
+				//
+				// I'll be generous in the case where there are obstructions on alternating sides
+				// and pretend you can see the target
+				//
+				//         Target
+				//
+				//   Mountain  Plain
+				//
+				//         Plain
+				//
+				//     Plain   Mountain
+				//
+				//         Origin
+
+				if(bBlocked)
+				{
+					int iTempDX = 0;
+					int iTempDY = 0;
+					if(bSpecialCaseX)
+					{
+						bBlocked = false;
+						iTempDX = iNextDXStep;
+					}
+					if(bSpecialCaseY)
+					{
+						bBlocked = false;
+						iTempDY = iNextDYStep;
+					}
+					if(!bBlocked)
+					{
+						{
+							CvPlot* passThroughPlot = plotXY(getX(), getY(), iNextDX + iTempDX, iNextDY + iTempDY);
+							if(passThroughPlot)
+							{
+								int passThroughLevel = passThroughPlot->seeThroughLevel();
+								if(fromLevel < passThroughLevel)
+								{
+									bBlocked = true;
+								}
+							}
+							else
+							{
+								bBlocked = true;
+							}
+
+						}
+					}
+				}
+			}
+
+
+			if(bBlocked)
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+
+}
+bool CvPlot::canSeeDisplacementPlot_ORIGINAL(TeamTypes eTeam, int dx, int dy, int originalDX, int originalDY, bool, bool) const
+#else
 bool CvPlot::canSeeDisplacementPlot(TeamTypes eTeam, int dx, int dy, int originalDX, int originalDY, bool, bool) const
+#endif
 {
 	CvPlot* pPlot = plotXY(getX(), getY(), dx, dy);
 	if(pPlot != NULL)
@@ -1827,14 +2090,20 @@ void CvPlot::updateSight(bool bIncrement)
 
 	if(getReconCount() > 0)
 	{
+#if !defined(MOD_PROMOTIONS_VARIABLE_RECON)
 		int iRange = GC.getRECON_VISIBILITY_RANGE();
+#endif
 		for(iI = 0; iI < MAX_PLAYERS; ++iI)
 		{
 			for(pLoopUnit = GET_PLAYER((PlayerTypes)iI).firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = GET_PLAYER((PlayerTypes)iI).nextUnit(&iLoop))
 			{
 				if(pLoopUnit->getReconPlot() == this)
 				{
+#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
+					changeAdjacentSight(pLoopUnit->getTeam(), pLoopUnit->reconRange(), bIncrement, pLoopUnit->getSeeInvisibleType(), pLoopUnit->getFacingDirection(true));
+#else
 					changeAdjacentSight(pLoopUnit->getTeam(), iRange, bIncrement, pLoopUnit->getSeeInvisibleType(), pLoopUnit->getFacingDirection(true));
+#endif
 				}
 			}
 		}
@@ -1849,6 +2118,9 @@ void CvPlot::updateSeeFromSight(bool bIncrement)
 	int iDX, iDY;
 
 	int iRange = GC.getUNIT_VISIBILITY_RANGE() + 1;
+#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
+	int iReconRange = GC.getRECON_VISIBILITY_RANGE() + 1;
+#endif
 	for(int iPromotion = 0; iPromotion < GC.getNumPromotionInfos(); ++iPromotion)
 	{
 		const PromotionTypes ePromotion = static_cast<PromotionTypes>(iPromotion);
@@ -1856,10 +2128,17 @@ void CvPlot::updateSeeFromSight(bool bIncrement)
 		if(pkPromotionInfo)
 		{
 			iRange += pkPromotionInfo->GetVisibilityChange();
+#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
+			iReconRange += std::max(0, pkPromotionInfo->GetReconChange());
+#endif
 		}
 	}
 
+#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
+	iRange = std::max(iReconRange, iRange);
+#else
 	iRange = std::max(GC.getRECON_VISIBILITY_RANGE() + 1, iRange);
+#endif
 	iRange = std::min(8, iRange); // I don't care, I'm not looking more than 8 out, deal
 
 	for(iDX = -iRange; iDX <= iRange; iDX++)
@@ -1994,13 +2273,23 @@ bool CvPlot::canHaveImprovement(ImprovementTypes eImprovement, TeamTypes eTeam, 
 	int iI;
 
 	CvAssertMsg(eImprovement != NO_IMPROVEMENT, "Improvement is not assigned a valid value");
+#if !defined(MOD_GLOBAL_ALPINE_PASSES)
 	CvAssertMsg(getTerrainType() != NO_TERRAIN, "TerrainType is not assigned a valid value");
+#endif
 
 	CvImprovementEntry* pkImprovementInfo = GC.getImprovementInfo(eImprovement);
 	if(pkImprovementInfo == NULL)
 	{
 		return false;
 	}
+
+#if defined(MOD_GLOBAL_ALPINE_PASSES)
+	if (MOD_GLOBAL_ALPINE_PASSES && pkImprovementInfo->IsMountainsMakesValid() && isMountain()) {
+		return true;
+	}
+
+	CvAssertMsg(getTerrainType() != NO_TERRAIN, "TerrainType is not assigned a valid value");
+#endif
 
 	bValid = false;
 
@@ -2181,6 +2470,12 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 			{
 				bValid = true;
 			}
+#if defined(MOD_BUGFIX_REMOVE_GHOST_ROUTES)
+			else if(MOD_BUGFIX_REMOVE_GHOST_ROUTES && getOwner() == NO_PLAYER && (GetPlayerResponsibleForRoute() == NO_PLAYER || !GET_PLAYER(GetPlayerResponsibleForRoute()).isAlive()))
+			{
+				bValid = true;
+			}
+#endif
 			else
 			{
 				return false;
@@ -2285,8 +2580,16 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 					}
 				}
 			}
+#if defined(MOD_GLOBAL_QUICK_ROUTES)
+		} else if (MOD_GLOBAL_QUICK_ROUTES) {
+			// If there is no route in this plot, and the player is human, only permit roads 
+			// (they can come back later and upgrade to rail, but let's get the trade route connected quickly)
+			if (GET_PLAYER(ePlayer).isHuman() && eRoute > ROUTE_ROAD) {
+				return false;
+			}
+#endif
 		}
-
+		
 		bValid = true;
 	}
 
@@ -2776,15 +3079,46 @@ bool CvPlot::ConsumesAllMoves(const CvUnit* pUnit, const CvPlot* pFromPlot) cons
 	if(!pFromPlot->isValidDomainForLocation(*pUnit))
 	{
 		// If we are a land unit that can embark, then do further tests.
+#if defined(MOD_PATHFINDER_DEEP_WATER_EMBARKATION)
+		if(pUnit->getDomainType() != DOMAIN_LAND || pUnit->canMoveAllTerrain())
+			return true;
+			
+		if(pUnit->IsHoveringUnit()) {
+			if (!pUnit->IsEmbarkDeepWater()) {
+				return true;
+			}
+		} else {
+			if (!pUnit->CanEverEmbark()) {
+				return true;
+			}
+		}
+#else
 		if(pUnit->getDomainType() != DOMAIN_LAND || pUnit->IsHoveringUnit() || pUnit->canMoveAllTerrain() || !pUnit->CanEverEmbark())
 			return true;
+#endif
 	}
 
 	// if the unit can embark and we are transitioning from land to water or vice versa
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+	bool bFromWater = !pFromPlot->isTerraFirma(pUnit);
+	bool bToWater = !isTerraFirma(pUnit);
+	bool bCanEmbark = pUnit->CanEverEmbark();
+#if defined(MOD_PATHFINDER_DEEP_WATER_EMBARKATION)
+	if (pUnit->IsHoveringUnit() && pUnit->IsEmbarkDeepWater()) {
+		bCanEmbark = true;
+	}
+#endif
+	if(bToWater != bFromWater && bCanEmbark)
+#else
 	if(isWater() != pFromPlot->isWater() && pUnit->CanEverEmbark())
+#endif
 	{
 		// Is the unit from a civ that can disembark for just 1 MP?
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+		if(!bToWater && bFromWater && pUnit->isEmbarked() && GET_PLAYER(pUnit->getOwner()).GetPlayerTraits()->IsEmbarkedToLandFlatCost())
+#else
 		if(!isWater() && pFromPlot->isWater() && pUnit->isEmbarked() && GET_PLAYER(pUnit->getOwner()).GetPlayerTraits()->IsEmbarkedToLandFlatCost())
+#endif
 		{
 			return false;	// Then no, it does not.
 		}
@@ -2884,6 +3218,13 @@ void CvPlot::GetCostsForMove(const CvUnit* pUnit, const CvPlot* pFromPlot, int& 
 		{
 			iRegularCost /= 2;
 		}
+
+#if defined(MOD_PROMOTIONS_HALF_MOVE)
+		else if((getFeatureType() == NO_FEATURE) ? pUnit->isTerrainHalfMove(getTerrainType()) : pUnit->isFeatureHalfMove(getFeatureType()))
+		{
+			iRegularCost *= 2;
+		}
+#endif
 	}
 
 	iRegularCost = std::min(iRegularCost, (iBaseMoves * iMoveDenominator));
@@ -3016,6 +3357,12 @@ bool CvPlot::IsSlowedByZOC(const CvUnit* pUnit, const CvPlot* pFromPlot) const
 									{
 										// continue on
 									}
+#if defined(MOD_BUGFIX_HOVERING_PATHFINDER)
+									// hovering units always exert a ZOC
+									else if (pLoopUnit->IsHoveringUnit()) {
+										// continue on
+									}
+#endif
 									else
 									{
 										continue;
@@ -3643,6 +3990,54 @@ bool CvPlot::isFriendlyCity(const CvUnit& kUnit, bool) const
 	return false;
 }
 
+#if defined(MOD_GLOBAL_PASSABLE_FORTS)
+bool CvPlot::isFriendlyCityOrPassableFort(const CvUnit& kUnit, bool) const
+{
+	static ImprovementTypes eImprovementFort = (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_FORT");
+	static ImprovementTypes eImprovementCitadel = (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_CITADEL");
+
+	ImprovementTypes eImprovement = getImprovementType();
+	bool bIsFort = MOD_GLOBAL_PASSABLE_FORTS && (eImprovement == eImprovementFort || eImprovement == eImprovementCitadel);
+	bool bIsCityOrFort = getPlotCity() || bIsFort;
+
+	if (!bIsCityOrFort) {
+		// Not a city or a fort
+		return false;
+	}
+
+	if (IsFriendlyTerritory(kUnit.getOwner())) {
+		// In friendly lands (ours, an allied CS or a major with open borders)
+		return true;
+	}
+
+	if (getTeam() == NO_TEAM) {
+		// In no-mans land ...
+		TeamTypes eTeam = kUnit.getTeam();
+
+		if (getNumUnits() == 0) {
+			return true;
+		}
+
+		// ... make sure there are only friendly units here
+		const IDInfo* pUnitNode = headUnitNode();
+		while (pUnitNode != NULL) {
+			if ((pUnitNode->eOwner >= 0) && pUnitNode->eOwner < MAX_PLAYERS) {
+				CvUnit* pLoopUnit = (GET_PLAYER(pUnitNode->eOwner).getUnit(pUnitNode->iID));
+
+				if (pLoopUnit && (eTeam == pLoopUnit->getTeam())) {
+					// Any friendly unit will do
+					return true;
+				}
+			}
+
+			pUnitNode = nextUnitNode(pUnitNode);
+		}
+	}
+
+	return false;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 /// Is this a plot that's friendly to our team? (owned by us or someone we have Open Borders with)
 bool CvPlot::IsFriendlyTerritory(PlayerTypes ePlayer) const
@@ -3980,7 +4375,11 @@ bool CvPlot::isVisibleOtherUnit(PlayerTypes ePlayer) const
 
 //	--------------------------------------------------------------------------------
 /// Is there an enemy Unit on this Plot?  (Don't care if we can actually see it or not, so be careful with this)
+#if defined(MOD_GLOBAL_SHORT_EMBARKED_BLOCKADES)
+bool CvPlot::IsActualEnemyUnit(PlayerTypes ePlayer, bool bCombatUnitsOnly, bool bNavalUnitsOnly) const
+#else
 bool CvPlot::IsActualEnemyUnit(PlayerTypes ePlayer, bool bCombatUnitsOnly) const
+#endif
 {
 	TeamTypes eTeam = GET_PLAYER(ePlayer).getTeam();
 	CvTeam& kTeam = GET_TEAM(eTeam);
@@ -3994,7 +4393,14 @@ bool CvPlot::IsActualEnemyUnit(PlayerTypes ePlayer, bool bCombatUnitsOnly) const
 			{
 				if(!bCombatUnitsOnly || pkUnit->IsCombatUnit())
 				{
-					return true;
+#if defined(MOD_GLOBAL_SHORT_EMBARKED_BLOCKADES)
+					if (!bNavalUnitsOnly || pkUnit->getDomainType() == DOMAIN_SEA)
+					{
+#endif
+						return true;
+#if defined(MOD_GLOBAL_SHORT_EMBARKED_BLOCKADES)
+				}
+#endif
 				}
 			}
 		}
@@ -4002,6 +4408,37 @@ bool CvPlot::IsActualEnemyUnit(PlayerTypes ePlayer, bool bCombatUnitsOnly) const
 
 	return false;
 }
+
+#if defined(MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES)
+//	--------------------------------------------------------------------------------
+/// Is there an allied Unit on this Plot?  (Don't care if we can actually see it or not, so be careful with this)
+bool CvPlot::IsActualAlliedUnit(PlayerTypes ePlayer, bool bCombatUnitsOnly) const
+{
+	CvPlayer& kPlayer = GET_PLAYER(ePlayer);
+
+	for (int iUnitLoop = 0; iUnitLoop < getNumUnits(); iUnitLoop++) {
+		CvUnit* pkUnit = getUnitByIndex(iUnitLoop);
+		if (pkUnit) {
+			PlayerTypes eOwner = ((PlayerTypes) pkUnit->getOwner());
+			CvPlayer& kOwner = GET_PLAYER(eOwner);
+			
+			if (ePlayer == eOwner || kPlayer.getTeam() == kOwner.getTeam()) {
+				// It's our unit (or a team member's)
+				return (!bCombatUnitsOnly || pkUnit->IsCombatUnit());
+			} else {
+				// Is it an allied minor or DoF major?
+				if (kOwner.isMinorCiv() && kOwner.GetMinorCivAI()->GetAlly() == ePlayer) {
+					return (!bCombatUnitsOnly || pkUnit->IsCombatUnit());
+				} else if (!kOwner.isBarbarian() && kOwner.GetDiplomacyAI()->IsDoFAccepted(ePlayer)) {
+					return (!bCombatUnitsOnly || pkUnit->IsCombatUnit());
+				}
+			}
+		}
+	}
+
+	return false;
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 // Used to restrict number of units allowed on a plot at one time
@@ -4269,8 +4706,24 @@ bool CvPlot::isValidDomainForLocation(const CvUnit& unit) const
 	{
 		return true;
 	}
+	
+#if defined(MOD_PROMOTIONS_CROSS_ICE)
+	if (unit.getDomainType() == DOMAIN_LAND && isIce() && unit.canCrossIce()) {
+		return true;
+	}
+#endif
 
+#if defined(MOD_EVENTS_REBASE)
+	if (unit.getDomainType() == DOMAIN_AIR && MOD_EVENTS_REBASE && unit.canLoad(*this)) {
+		return true;
+	}
+#endif
+
+#if defined(MOD_GLOBAL_PASSABLE_FORTS)
+	return (unit.getDomainType() == DOMAIN_SEA) ? isFriendlyCityOrPassableFort(unit, true) : isCity();
+#else
 	return isCity();
+#endif
 }
 
 
@@ -4288,8 +4741,17 @@ bool CvPlot::isValidDomainForAction(const CvUnit& unit) const
 		break;
 
 	case DOMAIN_LAND:
-	case DOMAIN_IMMOBILE:
+	case DOMAIN_IMMOBILE: 
+		// Only hover over shallow water or ice
+#if defined(MOD_BUGFIX_HOVERING_PATHFINDER)
+		{ bool bOK = (!isWater() || (unit.IsHoveringUnit() && isShallowWater()) || unit.canMoveAllTerrain() || unit.isEmbarked());
+#if defined(MOD_PROMOTIONS_CROSS_ICE)
+		bOK = bOK || (unit.IsHoveringUnit() && isIce());
+#endif
+		return bOK; }
+#else
 		return (!isWater() || unit.IsHoveringUnit() || unit.canMoveAllTerrain() || unit.isEmbarked());
+#endif
 		break;
 
 	default:
@@ -5772,6 +6234,25 @@ void CvPlot::setFeatureType(FeatureTypes eNewValue, int iVariety)
 				}
 			}
 		}
+
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+		if (MOD_EVENTS_TILE_IMPROVEMENTS) {
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem) {
+				CvLuaArgsHandle args;
+				args->Push(getX());
+				args->Push(getY());
+				args->Push(getOwner());
+				args->Push(eOldFeature);
+				args->Push(eNewValue);
+
+				// Attempt to execute the game events.
+				// Will return false if there are no registered listeners.
+				bool bResult = false;
+				LuaSupport::CallHook(pkScriptSystem, "TileFeatureChanged", args.get(), bResult);
+			}
+		}
+#endif
 	}
 }
 
@@ -6113,7 +6594,11 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, bool bGiftFromMajor)
 		setUpgradeProgress(0);
 
 		// make sure this plot is not disabled
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+		SetImprovementPillaged(false, false);
+#else
 		SetImprovementPillaged(false);
+#endif
 
 		for(iI = 0; iI < MAX_TEAMS; ++iI)
 		{
@@ -6153,6 +6638,7 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, bool bGiftFromMajor)
 				CvPlayer& owningPlayer = GET_PLAYER(owningPlayerID);
 				owningPlayer.changeImprovementCount(eNewValue, 1);
 
+#if !defined(NO_ACHIEVEMENTS)
 				//DLC_04 Achievement
 				if(owningPlayerID == GC.getGame().getActivePlayer() && strncmp(newImprovementEntry.GetType(), "IMPROVEMENT_MOTTE_BAILEY", 64) == 0)
 				{
@@ -6162,6 +6648,7 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, bool bGiftFromMajor)
 						gDLL->UnlockAchievement(ACHIEVEMENT_SCENARIO_04_BUILD_MOTTE);
 					}
 				}
+#endif
 
 				// Maintenance
 				if(MustPayMaintenanceHere(owningPlayerID))
@@ -6263,6 +6750,26 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, bool bGiftFromMajor)
 		{
 			setLayoutDirty(true);
 		}
+		
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+		if (MOD_EVENTS_TILE_IMPROVEMENTS) {
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem) {
+				CvLuaArgsHandle args;
+				args->Push(getX());
+				args->Push(getY());
+				args->Push(getOwner());
+				args->Push(eOldImprovement);
+				args->Push(eNewValue);
+				args->Push(IsImprovementPillaged());
+
+				// Attempt to execute the game events.
+				// Will return false if there are no registered listeners.
+				bool bResult = false;
+				LuaSupport::CallHook(pkScriptSystem, "TileImprovementChanged", args.get(), bResult);
+			}
+		}
+#endif
 	}
 }
 
@@ -6274,7 +6781,11 @@ bool CvPlot::IsImprovementPillaged() const
 }
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+void CvPlot::SetImprovementPillaged(bool bPillaged, bool bEvents)
+#else
 void CvPlot::SetImprovementPillaged(bool bPillaged)
+#endif
 {
 	bool bWasPillaged = m_bImprovementPillaged;
 
@@ -6312,6 +6823,26 @@ void CvPlot::SetImprovementPillaged(bool bPillaged)
 				}
 			}
 		}
+		
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+		if (bEvents && MOD_EVENTS_TILE_IMPROVEMENTS) {
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem) {
+				CvLuaArgsHandle args;
+				args->Push(getX());
+				args->Push(getY());
+				args->Push(getOwner());
+				args->Push(getImprovementType());
+				args->Push(getImprovementType());
+				args->Push(IsImprovementPillaged());
+
+				// Attempt to execute the game events.
+				// Will return false if there are no registered listeners.
+				bool bResult = false;
+				LuaSupport::CallHook(pkScriptSystem, "TileImprovementChanged", args.get(), bResult);
+			}
+		}
+#endif
 	}
 
 	if(bWasPillaged != m_bImprovementPillaged)
@@ -6499,7 +7030,11 @@ void CvPlot::setRouteType(RouteTypes eNewValue)
 		}
 
 		// make sure this plot is not disabled
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+		SetRoutePillaged(false, false);
+#else
 		SetRoutePillaged(false);
+#endif
 
 		for(iI = 0; iI < MAX_TEAMS; ++iI)
 		{
@@ -6513,6 +7048,26 @@ void CvPlot::setRouteType(RouteTypes eNewValue)
 		}
 
 		updateYield();
+
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+		if (MOD_EVENTS_TILE_IMPROVEMENTS) {
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem) {
+				CvLuaArgsHandle args;
+				args->Push(getX());
+				args->Push(getY());
+				args->Push(getOwner());
+				args->Push(eOldRoute);
+				args->Push(eNewValue);
+				args->Push(IsRoutePillaged());
+
+				// Attempt to execute the game events.
+				// Will return false if there are no registered listeners.
+				bool bResult = false;
+				LuaSupport::CallHook(pkScriptSystem, "TileRouteChanged", args.get(), bResult);
+			}
+		}
+#endif
 	}
 }
 
@@ -6523,7 +7078,11 @@ bool CvPlot::IsRoutePillaged() const
 }
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+void CvPlot::SetRoutePillaged(bool bPillaged, bool bEvents)
+#else
 void CvPlot::SetRoutePillaged(bool bPillaged)
+#endif
 {
 	if(m_bRoutePillaged != bPillaged)
 	{
@@ -6537,6 +7096,26 @@ void CvPlot::SetRoutePillaged(bool bPillaged)
 				}
 			}
 		}
+
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+		if (bEvents && MOD_EVENTS_TILE_IMPROVEMENTS) {
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem) {
+				CvLuaArgsHandle args;
+				args->Push(getX());
+				args->Push(getY());
+				args->Push(getOwner());
+				args->Push(getRouteType());
+				args->Push(getRouteType());
+				args->Push(IsRoutePillaged());
+
+				// Attempt to execute the game events.
+				// Will return false if there are no registered listeners.
+				bool bResult = false;
+				LuaSupport::CallHook(pkScriptSystem, "TileRouteChanged", args.get(), bResult);
+			}
+		}
+#endif
 	}
 
 	m_bRoutePillaged = bPillaged;
@@ -8109,7 +8688,9 @@ bool CvPlot::setRevealed(TeamTypes eTeam, bool bNewValue, bool bTerrainOnly, Tea
 
 		m_bfRevealed.ToggleBit(eTeam);
 
+#if !defined(NO_ACHIEVEMENTS)
 		bool bEligibleForAchievement = GET_PLAYER(GC.getGame().getActivePlayer()).isHuman() && !GC.getGame().isGameMultiPlayer();
+#endif
 
 		if(area())
 		{
@@ -8127,6 +8708,23 @@ bool CvPlot::setRevealed(TeamTypes eTeam, bool bNewValue, bool bTerrainOnly, Tea
 
 					int iNumNaturalWondersLeft = GC.getMap().GetNumNaturalWonders() - GET_TEAM(eTeam).GetNumNaturalWondersDiscovered();
 
+#if defined(MOD_EVENTS_NW_DISCOVERY)
+					if (MOD_EVENTS_NW_DISCOVERY) {
+						ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+						if (pkScriptSystem) {
+							CvLuaArgsHandle args;
+							args->Push(eTeam);
+							args->Push(getFeatureType());
+							args->Push(getX());
+							args->Push(getY());
+							args->Push((getNumMajorCivsRevealed() == 0)); // bFirst
+
+							bool bResult = false;
+							LuaSupport::CallHook(pkScriptSystem, "NaturalWonderDiscovered", args.get(), bResult);
+						}
+					}
+#endif
+					
 					Localization::String strText = Localization::Lookup("TXT_KEY_NOTIFICATION_FOUND_NATURAL_WONDER");
 					strText << iNumNaturalWondersLeft;
 					strText << GC.getFeatureInfo(getFeatureType())->GetTextKey();
@@ -8267,14 +8865,17 @@ bool CvPlot::setRevealed(TeamTypes eTeam, bool bNewValue, bool bTerrainOnly, Tea
 							CvPopupInfo kPopupInfo(BUTTONPOPUP_NATURAL_WONDER_REWARD, getX(), getY(), iFinderGold, 0 /*iFlags */, bFirstFinder);
 							pInterface->AddPopup(kPopupInfo);
 
+#if !defined(NO_ACHIEVEMENTS)
 							//Add Stat and check for Achievement
 							if(bEligibleForAchievement && !GC.getGame().isGameMultiPlayer())
 							{
 								gDLL->IncrementSteamStatAndUnlock(ESTEAMSTAT_NATURALWONDERS, 100, ACHIEVEMENT_ALL_NATURALWONDER);
 							}
+#endif
 
 						}
 
+#if !defined(NO_ACHIEVEMENTS)
 						//DLC2 Natural Wonder Achievements
 						{
 							CvFeatureInfo* pkFeatureInfo = GC.getFeatureInfo(getFeatureType());
@@ -8287,6 +8888,7 @@ bool CvPlot::setRevealed(TeamTypes eTeam, bool bNewValue, bool bTerrainOnly, Tea
 									gDLL->UnlockAchievement(ACHIEVEMENT_SCENARIO_02_DISCOVER_EL_DORADO);
 							}
 						}
+#endif
 
 						auto_ptr<ICvPlot1> pDllPlot(new CvDllPlot(this));
 						gDLL->GameplayNaturalWonderRevealed(pDllPlot.get());
@@ -8322,11 +8924,13 @@ bool CvPlot::setRevealed(TeamTypes eTeam, bool bNewValue, bool bTerrainOnly, Tea
 					{
 						CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_FOUND_GOODY_HUT");
 						CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_FOUND_GOODY_HUT");
+#if !defined(NO_ACHIEVEMENTS)
 						if(bEligibleForAchievement)
 						{
 							gDLL->UnlockAchievement(ACHIEVEMENT_ANCIENT_RUIN);
 							OutputDebugString("RUINS!");
 						}
+#endif
 						for(iI = 0; iI < MAX_MAJOR_CIVS; ++iI)
 						{
 							CvPlayerAI& playerI = GET_PLAYER((PlayerTypes)iI);
@@ -8344,11 +8948,12 @@ bool CvPlot::setRevealed(TeamTypes eTeam, bool bNewValue, bool bTerrainOnly, Tea
 						}
 					}
 				}
+#if !defined(NO_ACHIEVEMENTS)
 				if(bEligibleForAchievement)
 				{
 					gDLL->IncrementSteamStatAndUnlock(ESTEAMSTAT_TILESDISCOVERED, 1000, ACHIEVEMENT_1000TILES);
 				}
-
+#endif
 
 			}
 		}

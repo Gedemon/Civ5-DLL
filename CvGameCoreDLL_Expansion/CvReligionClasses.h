@@ -166,7 +166,11 @@ public:
 	ReligionTypes GetReligionToFound(PlayerTypes ePlayer);
 	void FoundPantheon(PlayerTypes ePlayer, BeliefTypes eBelief);
 	void FoundReligion(PlayerTypes ePlayer, ReligionTypes eReligion, const char* szCustomName, BeliefTypes eBelief1, BeliefTypes eBelief2, BeliefTypes eBelief3, BeliefTypes eBelief4, CvCity* pkHolyCity);
+#if defined(MOD_API_RELIGION)
+	void EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligion, BeliefTypes eBelief1, BeliefTypes eBelief2=NO_BELIEF);
+#else
 	void EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligion, BeliefTypes eBelief1, BeliefTypes eBelief2);
+#endif
 	void SetHolyCity(ReligionTypes eReligion, CvCity* pkHolyCity);
 	void SetFounder(ReligionTypes eReligion, PlayerTypes eFounder);
 	void UpdateAllCitiesThisReligion(ReligionTypes eReligion);
@@ -187,7 +191,11 @@ public:
 	BeliefTypes GetBeliefInPantheon(PlayerTypes ePlayer) const;
 	bool HasCreatedPantheon(PlayerTypes ePlayer) const;
 	int GetNumPantheonsCreated() const;
+#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+	std::vector<BeliefTypes> GetAvailablePantheonBeliefs(PlayerTypes ePlayer=NO_PLAYER);
+#else
 	std::vector<BeliefTypes> GetAvailablePantheonBeliefs();
+#endif
 	bool IsPantheonBeliefAvailable(BeliefTypes eBelief);
 
 	// Main religion information functions
@@ -201,10 +209,17 @@ public:
 	int GetNumReligionsFounded() const;
 	int GetNumReligionsEnhanced() const;
 	int GetNumReligionsStillToFound() const;
+#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+	std::vector<BeliefTypes> GetAvailableFounderBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
+	std::vector<BeliefTypes> GetAvailableFollowerBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
+	std::vector<BeliefTypes> GetAvailableEnhancerBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
+	std::vector<BeliefTypes> GetAvailableBonusBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
+#else
 	std::vector<BeliefTypes> GetAvailableFounderBeliefs();
 	std::vector<BeliefTypes> GetAvailableFollowerBeliefs();
 	std::vector<BeliefTypes> GetAvailableEnhancerBeliefs();
 	std::vector<BeliefTypes> GetAvailableBonusBeliefs();
+#endif
 
 	int GetAdjacentCityReligiousPressure (ReligionTypes eReligion, CvCity *pFromCity, CvCity *pToCity);
 
@@ -461,11 +476,19 @@ public:
 
 	void DoTurn();
 
+#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+	BeliefTypes ChoosePantheonBelief(PlayerTypes ePlayer/*=NO_PLAYER*/);
+	BeliefTypes ChooseFounderBelief(PlayerTypes ePlayer/*=NO_PLAYER*/, ReligionTypes eReligion/*=NO_RELIGION*/);
+	BeliefTypes ChooseFollowerBelief(PlayerTypes ePlayer/*=NO_PLAYER*/, ReligionTypes eReligion/*=NO_RELIGION*/);
+	BeliefTypes ChooseEnhancerBelief(PlayerTypes ePlayer/*=NO_PLAYER*/, ReligionTypes eReligion/*=NO_RELIGION*/);
+	BeliefTypes ChooseBonusBelief(PlayerTypes ePlayer/*=NO_PLAYER*/, ReligionTypes eReligion/*=NO_RELIGION*/, int iExcludeBelief1, int iExcludeBelief2, int iExcludeBelief3);
+#else
 	BeliefTypes ChoosePantheonBelief();
 	BeliefTypes ChooseFounderBelief();
 	BeliefTypes ChooseFollowerBelief();
 	BeliefTypes ChooseEnhancerBelief();
 	BeliefTypes ChooseBonusBelief(int iExcludeBelief1, int iExcludeBelief2, int iExcludeBelief3);
+#endif
 
 	CvCity* ChooseMissionaryTargetCity(UnitHandle pUnit);
 	CvPlot* ChooseMissionaryTargetPlot(UnitHandle pUnit, int* piTurns = NULL);

@@ -31,6 +31,9 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(CanHaveFeature);
 	Method(GetFeatureType);
 	Method(GetTerrainType);
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+	Method(GetTurnDamage);
+#endif
 	Method(IsRiver);
 	Method(IsWater);
 	Method(SetFeatureType);
@@ -50,6 +53,9 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(ShareAdjacentArea);
 	Method(IsAdjacentToLand);
 	Method(IsAdjacentToShallowWater);
+#if defined(MOD_PROMOTIONS_CROSS_ICE)
+	Method(IsAdjacentToIce);
+#endif
 	Method(IsCoastalLand);
 
 	Method(IsWithinTeamCityRadius);
@@ -107,6 +113,9 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 
 	Method(IsCity);
 	Method(IsFriendlyCity);
+#if defined(MOD_GLOBAL_PASSABLE_FORTS)
+	Method(IsFriendlyCityOrPassableFort);
+#endif
 	Method(IsEnemyCity);
 	Method(IsBeingWorked);
 
@@ -129,6 +138,9 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 
 	Method(GetX);
 	Method(GetY);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(GetIndex);
+#endif
 	Method(At);
 	Method(GetLatitude);
 	Method(Area);
@@ -175,6 +187,9 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(GetPlotType);
 	Method(IsFlatlands);
 	Method(IsHills);
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+	Method(IsTerraFirma);
+#endif
 	Method(IsOpenGround);
 	Method(IsRoughGround);
 	Method(IsMountain);
@@ -300,6 +315,22 @@ int CvLuaPlot::lGetTerrainType(lua_State* L)
 
 	return 1;
 }
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+//------------------------------------------------------------------------------
+int CvLuaPlot::lGetTurnDamage(lua_State* L)
+{
+	CvPlot* pkPlot = GetInstance(L);
+
+	const bool bIgnoreTerrainDamage = lua_toboolean(L, 2);
+	const bool bIgnoreFeatureDamage = lua_toboolean(L, 3);
+	const bool bExtraTerrainDamage  = lua_toboolean(L, 4);
+	const bool bExtraFeatureDamage  = lua_toboolean(L, 5);
+
+	lua_pushinteger(L, pkPlot->getTurnDamage(bIgnoreTerrainDamage, bIgnoreFeatureDamage, bExtraTerrainDamage, bExtraFeatureDamage));
+
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 int CvLuaPlot::lIsRiver(lua_State* L)
 {
@@ -430,6 +461,14 @@ int CvLuaPlot::lIsAdjacentToShallowWater(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlot::isAdjacentToShallowWater);
 }
+#if defined(MOD_PROMOTIONS_CROSS_ICE)
+//------------------------------------------------------------------------------
+//bool IsAdjacentToIce()
+int CvLuaPlot::lIsAdjacentToIce(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::isAdjacentToIce);
+}
+#endif
 //------------------------------------------------------------------------------
 //bool isCoastalLand();
 int CvLuaPlot::lIsCoastalLand(lua_State* L)
@@ -765,6 +804,19 @@ int CvLuaPlot::lIsFriendlyCity(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+#if defined(MOD_GLOBAL_PASSABLE_FORTS)
+//bool isFriendlyCityOrPassableFort(CyUnit* pUnit, bool bCheckImprovement);
+int CvLuaPlot::lIsFriendlyCityOrPassableFort(lua_State* L)
+{
+	CvPlot* pkPlot = GetInstance(L);
+	CvUnit* pkUnit = CvLuaUnit::GetInstance(L, 2);
+	const bool bCheckImprovement = lua_toboolean(L, 3);
+
+	const bool bResult = pkPlot->isFriendlyCityOrPassableFort(*pkUnit, bCheckImprovement);
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //bool isEnemyCity(CyUnit* pUnit);
 int CvLuaPlot::lIsEnemyCity(lua_State* L)
@@ -908,6 +960,14 @@ int CvLuaPlot::lGetY(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlot::getY);
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//int getIndex();
+int CvLuaPlot::lGetIndex(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::GetPlotIndex);
+}
+#endif
 //------------------------------------------------------------------------------
 //bool at(int iX, int iY);
 int CvLuaPlot::lAt(lua_State* L)
@@ -1132,7 +1192,17 @@ int CvLuaPlot::lIsPotentialCityWorkForArea(lua_State* L)
 //PlayerTypes getOwner();
 int CvLuaPlot::lGetOwner(lua_State* L)
 {
+#if defined(MOD_API_LUA_EXTENSIONS)
+	CvPlot* pkPlot = GetInstance(L);
+	const int iPlayer  = pkPlot->getOwner();
+	const int iCity = pkPlot->GetCityPurchaseID();
+
+	lua_pushinteger(L, iPlayer);
+	lua_pushinteger(L, iCity);
+	return 2;
+#else
 	return BasicLuaMethod(L, &CvPlot::getOwner);
+#endif
 }
 //------------------------------------------------------------------------------
 //void setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUnits = true, bool bUpdateResources = true);
@@ -1158,6 +1228,18 @@ int CvLuaPlot::lIsHills(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlot::isHills);
 }
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+//------------------------------------------------------------------------------
+//bool isTerraFirma(CyUnit* pUnit);
+int CvLuaPlot::lIsTerraFirma(lua_State* L)
+{
+	CvPlot* pkPlot = GetInstance(L);
+	CvUnit* pkUnit = CvLuaUnit::GetInstance(L, 2);
+	const bool bResult = pkPlot->isTerraFirma(pkUnit);
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //bool isOpenGround();
 int CvLuaPlot::lIsOpenGround(lua_State* L)

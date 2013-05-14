@@ -12,6 +12,8 @@
 #ifndef CIV5_PLAYER_H
 #define CIV5_PLAYER_H
 
+#include "CustomMods.h"
+
 #define SAFE_ESTIMATE_NUM_IMPROVEMENTS 50
 #define SAFE_ESTIMATE_NUM_CITIES       64
 #define MAX_INCOMING_UNITS	20
@@ -452,6 +454,11 @@ public:
 	void ChangeStartingSpyRank(int iChange);
 	// END Espionage
 
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	int GetConversionModifier() const;
+	void ChangeConversionModifier(int iChange);
+#endif
+
 	int GetWoundedUnitDamageMod() const;
 	void SetWoundedUnitDamageMod(int iValue);
 	void ChangeWoundedUnitDamageMod(int iChange);
@@ -792,6 +799,9 @@ public:
 
 	bool IsHasLostCapital() const;
 	void SetHasLostCapital(bool bValue, PlayerTypes eConqueror);
+#if defined(MOD_GLOBAL_NO_CONQUERED_SPACESHIPS)
+	void disassembleSpaceship();
+#endif
 	PlayerTypes GetCapitalConqueror() const;
 
 	int getCitiesLost() const;
@@ -813,12 +823,22 @@ public:
 	void changeWondersScore(int iChange);
 
 	int getCombatExperience() const;
+#if defined(MOD_GLOBAL_LOCAL_GENERALS)
+	void setCombatExperience(int iExperience, CvUnit* pFromUnit = NULL);
+	void changeCombatExperience(int iChange, CvUnit* pFromUnit = NULL);
+#else
 	void setCombatExperience(int iExperience);
 	void changeCombatExperience(int iChange);
+#endif
 	int getLifetimeCombatExperience() const;
 	int getNavalCombatExperience() const;
+#if defined(MOD_GLOBAL_LOCAL_GENERALS)
+	void setNavalCombatExperience(int iExperience, CvUnit* pFromUnit = NULL);
+	void changeNavalCombatExperience(int iChange, CvUnit* pFromUnit = NULL);
+#else
 	void setNavalCombatExperience(int iExperience);
 	void changeNavalCombatExperience(int iChange);
+#endif
 
 	int getBorderObstacleCount() const;
 	bool isBorderObstacle() const;
@@ -1256,6 +1276,9 @@ public:
 	void SetHolyCity(int iCityID);
 
 	PromotionTypes GetEmbarkationPromotion() const;
+#if defined(MOD_PROMOTIONS_DEEP_WATER_EMBARKATION)
+	PromotionTypes GetDeepWaterEmbarkationPromotion() const;
+#endif
 
 	void DoAnnounceReligionAdoption();
 	// End New Religion Stuff
@@ -1476,6 +1499,9 @@ protected:
 	int m_iHappinessPerXPolicies;
 	int m_iEspionageModifier;
 	int m_iSpyStartingRank;
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	int m_iConversionModifier;
+#endif
 	FAutoVariable<int, CvPlayer> m_iAdvancedStartPoints;
 	FAutoVariable<int, CvPlayer> m_iAttackBonusTurns;
 	FAutoVariable<int, CvPlayer> m_iGoldenAgeProgressMeter;

@@ -898,6 +898,9 @@ int PathCost(CvAStarNode* parent, CvAStarNode* node, int data, const void* point
 	CvAssertMsg(eUnitDomain != DOMAIN_AIR, "pUnit->getDomainType() is not expected to be equal with DOMAIN_AIR");
 
 	bool bToPlotIsWater = pToPlot->isWater();
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+	bToPlotIsWater = !pToPlot->isTerraFirma(pUnit);
+#endif
 	int iMax;
 	if(parent->m_iData1 > 0)
 	{
@@ -929,7 +932,12 @@ int PathCost(CvAStarNode* parent, CvAStarNode* node, int data, const void* point
 	{
 		iCost = (PATH_MOVEMENT_WEIGHT * iCost);
 
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+		bool bFromTerraFirma = pFromPlot->isTerraFirma(pUnit);
+		if(eUnitDomain == DOMAIN_LAND && bFromTerraFirma && bToPlotIsWater && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+#else
 		if(eUnitDomain == DOMAIN_LAND && !pFromPlot->isWater() && bToPlotIsWater && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+#endif
 		{
 			iCost += PATH_INCORRECT_EMBARKING_WEIGHT;
 		}
@@ -947,7 +955,15 @@ int PathCost(CvAStarNode* parent, CvAStarNode* node, int data, const void* point
 		{
 			if(pToPlot->getFeatureType() != NO_FEATURE)
 			{
-				iCost += (GC.getPATH_DAMAGE_WEIGHT() * std::max(0, GC.getFeatureInfo(pToPlot->getFeatureType())->getTurnDamage())) / GC.getMAX_HIT_POINTS();
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+				if (MOD_API_PLOT_BASED_DAMAGE) {
+					iCost += (GC.getPATH_DAMAGE_WEIGHT() * std::max(0, pToPlot->getTurnDamage(pUnit->ignoreTerrainDamage(), pUnit->ignoreFeatureDamage(), pUnit->extraTerrainDamage(), pUnit->extraFeatureDamage()))) / GC.getMAX_HIT_POINTS();
+				} else {
+#endif
+					iCost += (GC.getPATH_DAMAGE_WEIGHT() * std::max(0, GC.getFeatureInfo(pToPlot->getFeatureType())->getTurnDamage())) / GC.getMAX_HIT_POINTS();
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+				}
+#endif
 			}
 
 			if(pToPlot->getExtraMovePathCost() > 0)
@@ -1101,6 +1117,9 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 	kToNodeCacheData.iNumFriendlyUnitsOfType = pToPlot->getNumFriendlyUnitsOfType(pUnit);
 	kToNodeCacheData.bIsMountain = pToPlot->isMountain();
 	kToNodeCacheData.bIsWater = pToPlot->isWater();
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+	kToNodeCacheData.bIsTerraFirma = pToPlot->isTerraFirma(pUnit);
+#endif
 	kToNodeCacheData.bCanEnterTerrain = pUnit->canEnterTerrain(*pToPlot, CvUnit::MOVEFLAG_PRETEND_CORRECT_EMBARK_STATE);
 	kToNodeCacheData.bIsRevealedToTeam = pToPlot->isRevealed(eUnitTeam);
 	kToNodeCacheData.bContainsOtherFriendlyTeamCity = false;
@@ -1255,9 +1274,19 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 	// slewis - moved this up so units can't move directly into the water. Not 100% sure this is the right solution.
 	if(unit_domain_type == DOMAIN_LAND)
 	{
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+		bool bFromTerraFirma = kFromNodeCacheData.bIsTerraFirma;
+		bool bToWater = !kToNodeCacheData.bIsTerraFirma;
+		if( bFromTerraFirma && bToWater && kToNodeCacheData.bIsRevealedToTeam && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+#else
 		if(!kFromNodeCacheData.bIsWater && kToNodeCacheData.bIsWater && kToNodeCacheData.bIsRevealedToTeam && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+#endif
 		{
+#if defined(MOD_PATHFINDER_DEEP_WATER_EMBARKATION)
+			if(!pUnit->canMoveAllTerrain())
+#else
 			if(!pUnit->IsHoveringUnit() && !pUnit->canMoveAllTerrain())
+#endif
 			{
 				return FALSE;
 			}
@@ -1568,7 +1597,13 @@ int IgnoreUnitsCost(CvAStarNode* parent, CvAStarNode* node, int data, const void
 	{
 		iCost = (PATH_MOVEMENT_WEIGHT * iCost);
 
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+		bool bFromTerraFirma = pFromPlot->isTerraFirma(pUnit);
+		bool bToWater = !pToPlot->isTerraFirma(pUnit);
+		if(bFromTerraFirma && bToWater && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+#else
 		if(!pFromPlot->isWater() && pToPlot->isWater() && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+#endif
 		{
 			iCost += PATH_INCORRECT_EMBARKING_WEIGHT;
 		}
@@ -1591,7 +1626,15 @@ int IgnoreUnitsCost(CvAStarNode* parent, CvAStarNode* node, int data, const void
 		{
 			if(pToPlot->getFeatureType() != NO_FEATURE)
 			{
-				iCost += (GC.getPATH_DAMAGE_WEIGHT() * std::max(0, GC.getFeatureInfo(pToPlot->getFeatureType())->getTurnDamage())) / GC.getMAX_HIT_POINTS();
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+				if (MOD_API_PLOT_BASED_DAMAGE) {
+					iCost += (GC.getPATH_DAMAGE_WEIGHT() * std::max(0, pToPlot->getTurnDamage(pUnit->ignoreTerrainDamage(), pUnit->ignoreFeatureDamage(), pUnit->extraTerrainDamage(), pUnit->extraFeatureDamage()))) / GC.getMAX_HIT_POINTS();
+				} else {
+#endif
+					iCost += (GC.getPATH_DAMAGE_WEIGHT() * std::max(0, GC.getFeatureInfo(pToPlot->getFeatureType())->getTurnDamage())) / GC.getMAX_HIT_POINTS();
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+				}
+#endif
 			}
 
 			if(pToPlot->getExtraMovePathCost() > 0)
@@ -1705,7 +1748,13 @@ int IgnoreUnitsValid(CvAStarNode* parent, CvAStarNode* node, int data, const voi
 	// slewis - moved this up so units can't move directly into the water. Not 100% sure this is the right solution.
 	if(pUnit->getDomainType() == DOMAIN_LAND)
 	{
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+		bool bFromTerraFirma = pFromPlot->isTerraFirma(pUnit);
+		bool bToWater = !pToPlot->isTerraFirma(pUnit);
+		if(bFromTerraFirma && bToWater && pToPlot->isRevealed(eUnitTeam) && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+#else
 		if(!pFromPlot->isWater() && pToPlot->isWater() && pToPlot->isRevealed(eUnitTeam) && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+#endif
 		{
 			return FALSE;
 		}
@@ -3021,7 +3070,13 @@ int UIPathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* po
 				// which move over land and sea plots equally (canMoveAllTerrain)
 				if (!pUnit->canMoveAllTerrain())
 				{
+#if defined(MOD_BUGFIX_HOVERING_PATHFINDER)
+					if (!(pUnit->IsHoveringUnit() && (pToPlot->isShallowWater() || pToPlot->getFeatureType() == FEATURE_ICE))) {
+						return FALSE;
+					}
+#else
 					return FALSE;
+#endif
 				}
 			}
 		}
@@ -3171,6 +3226,9 @@ int TacticalAnalysisMapPathValid(CvAStarNode* parent, CvAStarNode* node, int dat
 	kToNodeCacheData.iNumFriendlyUnitsOfType = pToPlot->getNumFriendlyUnitsOfType(pUnit);
 	kToNodeCacheData.bIsMountain = pToPlot->isMountain();
 	kToNodeCacheData.bIsWater = pToPlotCell->IsWater();
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+	kToNodeCacheData.bIsTerraFirma = pToPlotCell->IsTerraFirma();
+#endif
 	kToNodeCacheData.bCanEnterTerrain = pUnit->canEnterTerrain(*pToPlot, CvUnit::MOVEFLAG_PRETEND_CORRECT_EMBARK_STATE);
 	kToNodeCacheData.bIsRevealedToTeam = pToPlotCell->IsRevealed();
 	kToNodeCacheData.bContainsOtherFriendlyTeamCity = false;
@@ -3335,9 +3393,19 @@ int TacticalAnalysisMapPathValid(CvAStarNode* parent, CvAStarNode* node, int dat
 	// slewis - moved this up so units can't move directly into the water. Not 100% sure this is the right solution.
 	if(unit_domain_type == DOMAIN_LAND)
 	{
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+		bool bFromTerraFirma = kFromNodeCacheData.bIsTerraFirma;
+		bool bToWater = !kToNodeCacheData.bIsTerraFirma;
+		if(bFromTerraFirma && bToWater && kToNodeCacheData.bIsRevealedToTeam && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+#else
 		if(!kFromNodeCacheData.bIsWater && kToNodeCacheData.bIsWater && kToNodeCacheData.bIsRevealedToTeam && !pUnit->canEmbarkOnto(*pFromPlot, *pToPlot, true))
+#endif
 		{
+#if defined(MOD_PATHFINDER_DEEP_WATER_EMBARKATION)
+			if(!pUnit->canMoveAllTerrain())
+#else
 			if(!pUnit->IsHoveringUnit() && !pUnit->canMoveAllTerrain())
+#endif
 			{
 				return FALSE;
 			}

@@ -119,6 +119,9 @@ public:
 	bool IsBonusReligiousBelief() const;
 	bool IsAbleToAnnexCityStates() const;
 	bool IsCrossesMountainsAfterGreatGeneral() const;
+#if defined(MOD_TRAITS_CROSSES_ICE)
+	bool IsCrossesIce() const;
+#endif
 	bool IsMayaCalendarBonuses() const;
 
 	const char* getShortDescription() const;
@@ -215,6 +218,9 @@ protected:
 	bool m_bBonusReligiousBelief;
 	bool m_bAbleToAnnexCityStates;
 	bool m_bCrossesMountainsAfterGreatGeneral;
+#if defined(MOD_TRAITS_CROSSES_ICE)
+	bool m_bCrossesIce;
+#endif
 	bool m_bMayaCalendarBonuses;
 
 	CvString m_strShortDescription;
@@ -534,6 +540,12 @@ public:
 	{
 		return m_bCrossesMountainsAfterGreatGeneral;
 	};
+#if defined(MOD_TRAITS_CROSSES_ICE)
+	bool IsCrossesIce() const
+	{
+		return m_bCrossesIce;
+	};
+#endif
 	bool IsMayaCalendarBonuses() const
 	{
 		return m_bMayaCalendarBonuses;
@@ -597,6 +609,9 @@ public:
 		return m_eCombatBonusImprovement;
 	};
 	bool IsAbleToCrossMountains() const;
+#if defined(MOD_TRAITS_CROSSES_ICE)
+	bool IsAbleToCrossIce() const;
+#endif
 
 	// Maya calendar routines
 	bool IsUsingMayaCalendar() const;
@@ -681,6 +696,9 @@ private:
 	bool m_bBonusReligiousBelief;
 	bool m_bAbleToAnnexCityStates;
 	bool m_bCrossesMountainsAfterGreatGeneral;
+#if defined(MOD_TRAITS_CROSSES_ICE)
+	bool m_bCrossesIce;
+#endif
 	bool m_bMayaCalendarBonuses;
 
 	UnitTypes m_eCampGuardType;

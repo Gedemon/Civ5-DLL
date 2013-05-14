@@ -19,6 +19,8 @@
 #include "../CvDiplomacyAI.h"
 #include "../CvMinorCivAI.h"
 
+#include "../CustomMods.h"
+
 #define RegisterEnum(e) pRegisterEnum(L, #e, e)
 
 void CvLuaEnums::Register(lua_State* L)
@@ -859,6 +861,9 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(ENDTURN_BLOCKING_STEAL_TECH);
 	RegisterEnum(ENDTURN_BLOCKING_MAYA_LONG_COUNT);
 	RegisterEnum(ENDTURN_BLOCKING_FAITH_GREAT_PERSON);
+#if defined(MOD_UI_CITY_EXPANSION)
+	RegisterEnum(ENDTURN_BLOCKING_CITY_TILE);
+#endif
 	RegisterEnum(NUM_ENDTURN_BLOCKING_TYPES);
 	EnumEnd(L);
 

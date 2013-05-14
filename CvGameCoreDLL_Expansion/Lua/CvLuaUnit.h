@@ -12,6 +12,8 @@
 
 #include "CvLuaScopedInstance.h"
 
+#include "../CustomMods.h"
+
 class CvLuaUnit : public CvLuaScopedInstance<CvLuaUnit, CvUnit>
 {
 public:
@@ -72,6 +74,9 @@ protected:
 	static int lCanEmbarkOnto(lua_State* L);
 	static int lCanDisembarkOnto(lua_State* L);
 	static int lCanRebaseAt(lua_State* L);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	static int lRebaseAt(lua_State* L);
+#endif
 	static int lEmbark(lua_State* L);
 
 	static int lIsRangeAttackIgnoreLOS(lua_State* L);
@@ -124,6 +129,9 @@ protected:
 	static int lGetUpgradeUnitType(lua_State* L);
 	static int lUpgradePrice(lua_State* L);
 	static int lCanUpgradeRightNow(lua_State* L);
+#if defined(MOD_GLOBAL_CS_UPGRADES)
+	static int lCanUpgradeInTerritory(lua_State* L);
+#endif
 	static int lGetNumResourceNeededToUpgrade(lua_State* L);
 
 	static int lGetHandicapType(lua_State* L);
@@ -131,6 +139,9 @@ protected:
 	static int lGetSpecialUnitType(lua_State* L);
 	static int lGetCaptureUnitType(lua_State* L);
 	static int lGetUnitCombatType(lua_State* L);
+#if defined(MOD_GLOBAL_PROMOTION_CLASSES)
+	static int lGetUnitPromotionType(lua_State* L);
+#endif
 	static int lGetUnitAIType(lua_State* L);
 	static int lGetDomainType(lua_State* L);
 	static int lGetInvisibleType(lua_State* L);
@@ -229,8 +240,26 @@ protected:
 	static int lIgnoreBuildingDefense(lua_State* L);
 	static int lCanMoveImpassable(lua_State* L);
 	static int lCanMoveAllTerrain(lua_State* L);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	static int lIsHoveringUnit(lua_State* L);
+#endif
 	static int lFlatMovementCost(lua_State* L);
 	static int lIgnoreTerrainCost(lua_State* L);
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+	static int lIgnoreTerrainDamage(lua_State* L);
+	static int lIgnoreFeatureDamage(lua_State* L);
+	static int lExtraTerrainDamage(lua_State* L);
+	static int lExtraFeatureDamage(lua_State* L);
+#endif
+#if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
+	static int lCanCrossMountains(lua_State* L);
+#endif
+#if defined(MOD_PROMOTIONS_CROSS_OCEANS)
+	static int lCanCrossOceans(lua_State* L);
+#endif
+#if defined(MOD_PROMOTIONS_CROSS_ICE)
+	static int lCanCrossIce(lua_State* L);
+#endif
 	static int lIsNeverInvisible(lua_State* L);
 	static int lIsInvisible(lua_State* L);
 
@@ -335,6 +364,9 @@ protected:
 	static int lGetGarrisonedCity(lua_State* L);
 
 	static int lGetExtraVisibilityRange(lua_State* L);
+#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
+	static int lGetExtraReconRange(lua_State* L);
+#endif
 	static int lGetExtraMoves(lua_State* L);
 	static int lGetExtraMoveDiscount(lua_State* L);
 	static int lGetExtraRange(lua_State* L);
@@ -412,6 +444,10 @@ protected:
 	static int lSetName(lua_State* L);
 	static int lIsTerrainDoubleMove(lua_State* L);
 	static int lIsFeatureDoubleMove(lua_State* L);
+#if defined(MOD_PROMOTIONS_HALF_MOVE)
+	static int lIsTerrainHalfMove(lua_State* L);
+	static int lIsFeatureHalfMove(lua_State* L);
+#endif
 
 	static int lGetScriptData(lua_State* L);
 	static int lSetScriptData(lua_State* L);
@@ -440,6 +476,11 @@ protected:
 	static int lGetSpreadsLeft(lua_State* L);
 	static int lGetNumFollowersAfterSpread(lua_State* L);
 	static int lGetMajorityReligionAfterSpread(lua_State* L);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	static int lSetReligion(lua_State* L);
+	static int lSetConversionStrength(lua_State* L);
+	static int lSetSpreadsLeft(lua_State* L);
+#endif
 
 	// Helper Functions
 	static int lRangeStrike(lua_State* L);

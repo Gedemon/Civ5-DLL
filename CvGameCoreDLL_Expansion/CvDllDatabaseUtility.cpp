@@ -179,6 +179,11 @@ bool CvDllDatabaseUtility::CacheGameDatabaseData()
 
 	if(bSuccess)
 		m_bGameDatabaseNeedsCaching = false;
+		
+#if defined(CUSTOM_MODS_H)
+	// Load up the CustomModOptions configuration
+	gCustomMods.preloadCache();
+#endif
 
 	return bSuccess;
 }

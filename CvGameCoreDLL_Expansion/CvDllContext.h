@@ -8,6 +8,8 @@
 #pragma once
 #include "CvDllInterfaces.h"
 
+#include "CustomMods.h"
+
 class CvDllNetworkSyncronization;
 class CvDllNetInitInfo;
 class CvDllNetLoadGameInfo;

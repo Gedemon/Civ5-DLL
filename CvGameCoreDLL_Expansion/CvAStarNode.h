@@ -56,6 +56,9 @@ struct CvPathNodeCacheData
 	bool bPlotVisibleToTeam:1;
 	bool bIsMountain:1;
 	bool bIsWater:1;
+#if defined(MOD_PATHFINDER_TERRAFIRMA)
+	bool bIsTerraFirma:1;
+#endif
 	bool bCanEnterTerrain:1;
 	bool bIsRevealedToTeam:1;
 	bool bContainsOtherFriendlyTeamCity:1;

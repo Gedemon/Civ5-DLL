@@ -252,6 +252,9 @@ public:
 	void SetEverCapital(bool bValue);
 
 	bool isCoastal(int iMinWaterSize = -1) const;
+#if defined(MOD_API_EXTENSIONS)
+	bool isAddsFreshWater() const;
+#endif
 
 	int foodConsumption(bool bNoAngry = false, int iExtra = 0) const;
 	int foodDifference(bool bBottom = true) const;
@@ -406,6 +409,11 @@ public:
 
 	int GetEspionageModifier() const;
 	void ChangeEspionageModifier(int iChange);
+
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	int GetConversionModifier() const;
+	void ChangeConversionModifier(int iChange);
+#endif
 
 	bool IsNoOccupiedUnhappiness() const;
 	int GetNoOccupiedUnhappinessCount() const;
@@ -869,6 +877,9 @@ protected:
 	FAutoVariable<int, CvCity> m_iCountExtraLuxuries;
 	FAutoVariable<int, CvCity> m_iCheapestPlotInfluence;
 	int m_iEspionageModifier;
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	int m_iConversionModifier;
+#endif
 
 	OperationSlot m_unitBeingBuiltForOperation;
 

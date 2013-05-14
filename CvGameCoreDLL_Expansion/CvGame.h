@@ -483,7 +483,18 @@ public:
 	void SetBarbarianReleaseTurn(int iValue);
 
 	UnitTypes GetRandomSpawnUnitType(PlayerTypes ePlayer, bool bIncludeUUs, bool bIncludeRanged);
+#if defined(MOD_GLOBAL_CS_GIFT_SHIPS)
+	UnitTypes GetCompetitiveSpawnUnitType(PlayerTypes ePlayer, bool bIncludeUUs, bool bIncludeRanged, bool bIncludeShips);
+#else
 	UnitTypes GetCompetitiveSpawnUnitType(PlayerTypes ePlayer, bool bIncludeUUs, bool bIncludeRanged);
+#endif
+#if defined(MOD_GLOBAL_CS_GIFTS)
+#if defined(MOD_GLOBAL_CS_GIFT_SHIPS)
+	UnitTypes GetCsGiftSpawnUnitType(PlayerTypes ePlayer, bool bIncludeShips);
+#else
+	UnitTypes GetCsGiftSpawnUnitType(PlayerTypes ePlayer);
+#endif
+#endif
 	UnitTypes GetRandomUniqueUnitType(bool bIncludeCivsInGame, bool bIncludeStartEra, bool bIncludeOldEras, bool bIncludeRanged);
 
 	CvSiteEvaluatorForSettler* GetSettlerSiteEvaluator();
