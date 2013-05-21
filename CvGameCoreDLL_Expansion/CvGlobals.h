@@ -7111,10 +7111,17 @@ protected:
 
 	int m_aiPlotDirectionX[NUM_DIRECTION_TYPES];
 	int m_aiPlotDirectionY[NUM_DIRECTION_TYPES];
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	int m_aiCityPlotX[MAX_CITY_PLOTS];
+	int m_aiCityPlotY[MAX_CITY_PLOTS];
+	int m_aiCityPlotPriority[MAX_CITY_PLOTS];
+	int m_aaiXYCityPlot[2*MAX_CITY_RADIUS+1][2*MAX_CITY_RADIUS+1];
+#else
 	int m_aiCityPlotX[NUM_CITY_PLOTS];
 	int m_aiCityPlotY[NUM_CITY_PLOTS];
 	int m_aiCityPlotPriority[NUM_CITY_PLOTS];
 	int m_aaiXYCityPlot[CITY_PLOTS_DIAMETER][CITY_PLOTS_DIAMETER];
+#endif
 
 	DirectionTypes m_aeTurnLeftDirection[NUM_DIRECTION_TYPES];
 	DirectionTypes m_aeTurnRightDirection[NUM_DIRECTION_TYPES];

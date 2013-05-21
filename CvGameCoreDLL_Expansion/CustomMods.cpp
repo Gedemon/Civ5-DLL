@@ -13,6 +13,7 @@ CustomMods::CustomMods() :
 	m_bGLOBAL_PASSABLE_FORTS(false),
 	m_bGLOBAL_PASSABLE_FORTS_ANY(false),
 	m_bGLOBAL_CITY_FOREST_BONUS(false),
+	m_bGLOBAL_CITY_WORKING(false),
 	m_bGLOBAL_ALPINE_PASSES(false),
 	m_bGLOBAL_CS_GIFT_SHIPS(false),
 	m_bGLOBAL_CS_UPGRADES(false),
@@ -29,6 +30,11 @@ CustomMods::CustomMods() :
 	m_bGLOBAL_NUKES_MELT_ICE(false),
 
 	m_bTRAITS_CROSSES_ICE(false),
+	m_bTRAITS_CITY_WORKING(false),
+
+	m_bPOLICIES_CITY_WORKING(false),
+
+	m_bTECHS_CITY_WORKING(false),
 
 	m_bPROMOTIONS_VARIABLE_RECON(false),
 	m_bPROMOTIONS_CROSS_MOUNTAINS(false),
@@ -41,6 +47,7 @@ CustomMods::CustomMods() :
 	m_bUI_CITY_EXPANSION(false),
 
 	m_bBUILDINGS_PRO_RATA_PURCHASE(false),
+	m_bBUILDINGS_CITY_WORKING(false),
 
 	m_bUNITS_LOCAL_WORKERS(false),
 	m_bUNITS_HOVERING_LAND_ONLY_HEAL(false),
@@ -55,6 +62,7 @@ CustomMods::CustomMods() :
 	m_bEVENTS_DIPLO_EVENTS(false),
 	m_bEVENTS_MINORS(false),
 	m_bEVENTS_GOODY_TECH(false),
+	m_bEVENTS_GREAT_PEOPLE(false),
 	m_bEVENTS_FOUND_RELIGION(false),
 	m_bEVENTS_ACQUIRE_BELIEFS(false),
 	m_bEVENTS_CITY(false),
@@ -100,7 +108,7 @@ CustomMods::CustomMods() :
 }
 
 void CustomMods::preloadCache() {
-	(void) getOption("GLOBAL_ENABLE_MAGELLAN");
+	(void) getOption("EVENTS_CIRCUMNAVIGATION");
 }
 
 void CustomMods::reloadCache() {
@@ -126,12 +134,12 @@ int CustomMods::getOption(const char* szOption) {
 			m_options[string(szName)] = iValue;
 		}
 
-		m_bGLOBAL_ENABLE_MAGELLAN                 = (m_options[string("GLOBAL_ENABLE_MAGELLAN")] == 1);
 		m_bGLOBAL_LOCAL_GENERALS                  = (m_options[string("GLOBAL_LOCAL_GENERALS")] == 1);
 		m_bGLOBAL_PROMOTION_CLASSES               = (m_options[string("GLOBAL_PROMOTION_CLASSES")] == 1);
 		m_bGLOBAL_PASSABLE_FORTS                  = (m_options[string("GLOBAL_PASSABLE_FORTS")] == 1);
 		m_bGLOBAL_PASSABLE_FORTS_ANY              = (m_options[string("GLOBAL_PASSABLE_FORTS_ANY")] == 1);
 		m_bGLOBAL_CITY_FOREST_BONUS               = (m_options[string("GLOBAL_CITY_FOREST_BONUS")] == 1);
+		m_bGLOBAL_CITY_WORKING                    = (m_options[string("GLOBAL_CITY_WORKING")] == 1);
 		m_bGLOBAL_ALPINE_PASSES                   = (m_options[string("GLOBAL_ALPINE_PASSES")] == 1);
 		m_bGLOBAL_CS_GIFT_SHIPS                   = (m_options[string("GLOBAL_CS_GIFT_SHIPS")] == 1);
 		m_bGLOBAL_CS_UPGRADES                     = (m_options[string("GLOBAL_CS_UPGRADES")] == 1);
@@ -148,6 +156,11 @@ int CustomMods::getOption(const char* szOption) {
 		m_bGLOBAL_NUKES_MELT_ICE                  = (m_options[string("GLOBAL_NUKES_MELT_ICE")] == 1); 
 
 		m_bTRAITS_CROSSES_ICE                     = (m_options[string("TRAITS_CROSSES_ICE")] == 1);
+		m_bTRAITS_CITY_WORKING                    = (m_options[string("TRAITS_CITY_WORKING")] == 1);
+
+		m_bPOLICIES_CITY_WORKING                  = (m_options[string("POLICIES_CITY_WORKING")] == 1);
+
+		m_bTECHS_CITY_WORKING                     = (m_options[string("TECHS_CITY_WORKING")] == 1);
 
 		m_bPROMOTIONS_VARIABLE_RECON              = (m_options[string("PROMOTIONS_VARIABLE_RECON")] == 1);
 		m_bPROMOTIONS_CROSS_MOUNTAINS             = (m_options[string("PROMOTIONS_CROSS_MOUNTAINS")] == 1);
@@ -160,6 +173,7 @@ int CustomMods::getOption(const char* szOption) {
 		m_bUI_CITY_EXPANSION                      = (m_options[string("UI_CITY_EXPANSION")] == 1);
 
 		m_bBUILDINGS_PRO_RATA_PURCHASE            = (m_options[string("BUILDINGS_PRO_RATA_PURCHASE")] == 1);
+		m_bBUILDINGS_CITY_WORKING                 = (m_options[string("BUILDINGS_CITY_WORKING")] == 1);
 
 		m_bUNITS_LOCAL_WORKERS                    = (m_options[string("UNITS_LOCAL_WORKERS")] == 1);
 		m_bUNITS_HOVERING_LAND_ONLY_HEAL          = (m_options[string("UNITS_HOVERING_LAND_ONLY_HEAL")] == 1);
@@ -169,11 +183,13 @@ int CustomMods::getOption(const char* szOption) {
 		m_bRELIGION_RANDOMISE                     = (m_options[string("RELIGION_RANDOMISE")] == 1);
 		m_bRELIGION_CONVERSION_MODIFIERS          = (m_options[string("RELIGION_CONVERSION_MODIFIERS")] == 1);
 
+		m_bEVENTS_CIRCUMNAVIGATION                = (m_options[string("EVENTS_CIRCUMNAVIGATION")] == 1);
 		m_bEVENTS_NEW_ERA                         = (m_options[string("EVENTS_NEW_ERA")] == 1);
 		m_bEVENTS_NW_DISCOVERY                    = (m_options[string("EVENTS_NW_DISCOVERY")] == 1);
 		m_bEVENTS_DIPLO_EVENTS                    = (m_options[string("EVENTS_DIPLO_EVENTS")] == 1);
 		m_bEVENTS_MINORS                          = (m_options[string("EVENTS_MINORS")] == 1);
 		m_bEVENTS_GOODY_TECH                      = (m_options[string("EVENTS_GOODY_TECH")] == 1);
+		m_bEVENTS_GREAT_PEOPLE                    = (m_options[string("EVENTS_GREAT_PEOPLE")] == 1);
 		m_bEVENTS_FOUND_RELIGION                  = (m_options[string("EVENTS_FOUND_RELIGION")] == 1);
 		m_bEVENTS_ACQUIRE_BELIEFS                 = (m_options[string("EVENTS_ACQUIRE_BELIEFS")] == 1);
 		m_bEVENTS_CITY                            = (m_options[string("EVENTS_CITY")] == 1);

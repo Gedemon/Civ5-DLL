@@ -158,6 +158,9 @@ void CvTeam::uninit()
 	m_iResearchAgreementTradingAllowedCount = 0;
 	m_iTradeAgreementTradingAllowedCount = 0;
 	m_iPermanentAllianceTradingCount = 0;
+#if defined(MOD_TECHS_CITY_WORKING)
+	m_iCityWorkingChange = 0;
+#endif
 	m_iBridgeBuildingCount = 0;
 	m_iWaterWorkCount = 0;
 	m_iRiverTradeCount = 0;
@@ -3001,6 +3004,31 @@ void CvTeam::changePermanentAllianceTradingCount(int iChange)
 	m_iPermanentAllianceTradingCount = (m_iPermanentAllianceTradingCount + iChange);
 	CvAssert(getPermanentAllianceTradingCount() >= 0);
 }
+
+#if defined(MOD_TECHS_CITY_WORKING)
+//	--------------------------------------------------------------------------------
+int CvTeam::GetCityWorkingChange() const
+{
+	return m_iCityWorkingChange;
+}
+
+
+//	--------------------------------------------------------------------------------
+bool CvTeam::isCityWorkingChange()	const
+{
+	return (GetCityWorkingChange() != 0);
+}
+
+
+//	--------------------------------------------------------------------------------
+void CvTeam::changeCityWorkingChange(int iChange)
+{
+	if(iChange != 0)
+	{
+		m_iCityWorkingChange = (m_iCityWorkingChange + iChange);
+	}
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 int CvTeam::getBridgeBuildingCount() const
@@ -5847,9 +5875,21 @@ void CvTeam::testCircumnavigated()
 					}
 					DLLUI->AddMessage(0, ((PlayerTypes)iI), false, GC.getEVENT_MESSAGE_TIME(), strBuffer);
 
-#if defined(MOD_GLOBAL_ENABLE_MAGELLAN)
-					CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_CIRC_GLOBE");
-					AddNotification(NOTIFICATION_GENERIC, strBuffer, strSummary, -1, -1, -1);
+#if defined(MOD_EVENTS_CIRCUMNAVIGATION)
+					if (MOD_EVENTS_CIRCUMNAVIGATION) {
+						ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+						if (pkScriptSystem) {
+							CvLuaArgsHandle args;
+							args->Push(eTeamID);
+
+							bool bResult = false;
+							LuaSupport::CallHook(pkScriptSystem, "CircumnavigatedGlobe", args.get(), bResult);
+						}
+						
+						// Notifications should now be sent via the event
+						// CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_CIRC_GLOBE");
+						// AddNotification(NOTIFICATION_GENERIC, strBuffer, strSummary, -1, -1, -1);
+					}
 #endif
 				}
 			}
@@ -5927,6 +5967,13 @@ void CvTeam::processTech(TechTypes eTech, int iChange)
 	{
 		changePermanentAllianceTradingCount(iChange);
 	}
+
+#if defined(MOD_TECHS_CITY_WORKING)
+	if(pTech->GetCityWorkingChange() != 0)
+	{
+		changeCityWorkingChange(pTech->GetCityWorkingChange() * iChange);
+	}
+#endif
 
 	if(pTech->IsBridgeBuilding())
 	{
@@ -6627,6 +6674,9 @@ void CvTeam::Read(FDataStream& kStream)
 	kStream >> m_iResearchAgreementTradingAllowedCount;
 	kStream >> m_iTradeAgreementTradingAllowedCount;
 	kStream >> m_iPermanentAllianceTradingCount;
+#if defined(MOD_TECHS_CITY_WORKING)
+	MOD_SERIALIZE_FROM(kStream, m_iCityWorkingChange);
+#endif
 	kStream >> m_iBridgeBuildingCount;
 	kStream >> m_iWaterWorkCount;
 	kStream >> m_iRiverTradeCount;
@@ -6904,6 +6954,9 @@ void CvTeam::Write(FDataStream& kStream) const
 	kStream << m_iResearchAgreementTradingAllowedCount;
 	kStream << m_iTradeAgreementTradingAllowedCount;
 	kStream << m_iPermanentAllianceTradingCount;
+#if defined(MOD_TECHS_CITY_WORKING)
+	MOD_SERIALIZE_TO(kStream, m_iCityWorkingChange);
+#endif
 	kStream << m_iBridgeBuildingCount;
 	kStream << m_iWaterWorkCount;
 	kStream << m_iRiverTradeCount;

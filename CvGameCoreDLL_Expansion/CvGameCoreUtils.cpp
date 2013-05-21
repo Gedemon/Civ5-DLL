@@ -31,7 +31,11 @@ CvPlot* plotCity(int iX, int iY, int iIndex)
 {
 	int iDeltaHexX = 0;
 	int iDeltaHexY = 0;
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	if(iIndex < MAX_CITY_PLOTS)
+#else
 	if(iIndex < NUM_CITY_PLOTS)
+#endif
 	{
 		iDeltaHexX = GC.getCityPlotX()[iIndex]; // getCityPlotX now uses hex-space coords
 		iDeltaHexY = GC.getCityPlotY()[iIndex];
@@ -111,13 +115,22 @@ int plotCityXY(const CvCity* pCity, const CvPlot* pPlot)
 
 	iDX = dxWrap(iPlotHexX - iCityHexX);
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	if(hexDistance(iDX, iDY) > pCity->getBuyPlotDistance())
+#else
 	if(hexDistance(iDX, iDY) > CITY_PLOTS_RADIUS)
+#endif
 	{
 		return -1;
 	}
 	else
 	{
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		// Regardless of the working radius, we need to offset into the array by the maximum radius
+		return GC.getXYCityPlot((iDX + MAX_CITY_RADIUS), (iDY + MAX_CITY_RADIUS));
+#else
 		return GC.getXYCityPlot((iDX + CITY_PLOTS_RADIUS), (iDY + CITY_PLOTS_RADIUS));
+#endif
 	}
 }
 

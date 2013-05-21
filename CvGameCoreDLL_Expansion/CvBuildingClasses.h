@@ -87,6 +87,10 @@ public:
 	int GetPlotCultureCostModifier() const;
 	int GetGlobalPlotBuyCostModifier() const;
 	int GetPlotBuyCostModifier() const;
+#if defined(MOD_BUILDINGS_CITY_WORKING)
+	int GetGlobalCityWorkingChange() const;
+	int GetCityWorkingChange() const;
+#endif
 	int GetMinAreaSize() const;
 	int GetConquestProbability() const;
 	int GetHealRateChange() const;
@@ -275,6 +279,10 @@ private:
 	int m_iPlotCultureCostModifier;
 	int m_iGlobalPlotBuyCostModifier;
 	int m_iPlotBuyCostModifier;
+#if defined(MOD_BUILDINGS_CITY_WORKING)
+	int m_iGlobalCityWorkingChange;
+	int m_iCityWorkingChange;
+#endif
 	int m_iMinAreaSize;
 	int m_iConquestProbability;
 	int m_iHealRateChange;

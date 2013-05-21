@@ -1923,9 +1923,19 @@ int CvGameReligions::GetAdjacentCityReligiousPressure (ReligionTypes eReligion, 
 #if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 	if (MOD_RELIGION_CONVERSION_MODIFIERS) {
 		// Modify iPressure based on city defenses, but only against hostile cities (ie any not the same player as this city)
+		PlayerTypes eFromPlayer = pFromCity->getOwner();
 		PlayerTypes eToPlayer = pToCity->getOwner();
-		if (pFromCity->getOwner() != eToPlayer) {
-			iPressure *= (100 + (pToCity->GetConversionModifier() + GET_PLAYER(eToPlayer).GetConversionModifier() + GET_PLAYER(eToPlayer).GetPlayerPolicies()->GetNumericModifier(POLICYMOD_CONVERSION_MODIFIER)));
+		
+		if (eFromPlayer != eToPlayer) {
+			CvPlayer& pToPlayer = GET_PLAYER(eToPlayer);
+			int iCityModifier = pToCity->GetConversionModifier();
+			
+			if (pToPlayer.isMinorCiv() && pToPlayer.GetMinorCivAI()->IsActiveQuestForPlayer(eFromPlayer, MINOR_CIV_QUEST_SPREAD_RELIGION)) {
+				// The City State actively wants this religion
+				iCityModifier *= -1;
+			}
+
+			iPressure *= (100 + (iCityModifier + pToPlayer.GetConversionModifier() + pToPlayer.GetPlayerPolicies()->GetNumericModifier(POLICYMOD_CONVERSION_MODIFIER)));
 			iPressure /= 100;
 		}
 	}

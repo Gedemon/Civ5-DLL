@@ -39,6 +39,9 @@ CvTraitEntry::CvTraitEntry() :
 	m_iSeaBarbarianConversionPercent(0),
 	m_iCapitalBuildingModifier(0),
 	m_iPlotBuyCostModifier(0),
+#if defined(MOD_TRAITS_CITY_WORKING)
+	m_iCityWorkingChange(0),
+#endif
 	m_iPlotCultureCostModifier(0),
 	m_iCultureFromKills(0),
 	m_iCityCultureBonus(0),
@@ -226,6 +229,14 @@ int CvTraitEntry::GetPlotBuyCostModifier() const
 {
 	return m_iPlotBuyCostModifier;
 }
+
+#if defined(MOD_TRAITS_CITY_WORKING)
+/// Accessor:: greater border expansion
+int CvTraitEntry::GetCityWorkingChange() const
+{
+	return m_iCityWorkingChange;
+}
+#endif
 
 /// Accessor:: increased rate of culture border expansion
 int CvTraitEntry::GetPlotCultureCostModifier() const
@@ -704,6 +715,9 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 	m_iSeaBarbarianConversionPercent        = kResults.GetInt("SeaBarbarianConversionPercent");
 	m_iCapitalBuildingModifier				= kResults.GetInt("CapitalBuildingModifier");
 	m_iPlotBuyCostModifier					= kResults.GetInt("PlotBuyCostModifier");
+#if defined(MOD_TRAITS_CITY_WORKING)
+	m_iCityWorkingChange					= kResults.GetInt("CityWorkingChange");
+#endif
 	m_iPlotCultureCostModifier              = kResults.GetInt("PlotCultureCostModifier");
 	m_iCultureFromKills						= kResults.GetInt("CultureFromKills");
 	m_iCityCultureBonus						= kResults.GetInt("CityCultureBonus");
@@ -1091,6 +1105,9 @@ void CvPlayerTraits::InitPlayerTraits()
 			m_iSeaBarbarianConversionPercent += trait->GetSeaBarbarianConversionPercent();
 			m_iCapitalBuildingModifier += trait->GetCapitalBuildingModifier();
 			m_iPlotBuyCostModifier += trait->GetPlotBuyCostModifier();
+#if defined(MOD_TRAITS_CITY_WORKING)
+			m_iCityWorkingChange += trait->GetCityWorkingChange();
+#endif
 			m_iPlotCultureCostModifier += trait->GetPlotCultureCostModifier();
 			m_iCultureFromKills += trait->GetCultureFromKills();
 			m_iCityCultureBonus += trait->GetCityCultureBonus();
@@ -1303,6 +1320,9 @@ void CvPlayerTraits::Reset()
 	m_iSeaBarbarianConversionPercent = 0;
 	m_iCapitalBuildingModifier = 0;
 	m_iPlotBuyCostModifier = 0;
+#if defined(MOD_TRAITS_CITY_WORKING)
+	m_iCityWorkingChange = 0;
+#endif
 	m_iPlotCultureCostModifier = 0;
 	m_iCultureFromKills = 0;
 	m_iCityCultureBonus = 0;
@@ -2059,6 +2079,9 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 	{
 		m_iPlotBuyCostModifier = 0;
 	}
+#if defined(MOD_TRAITS_CITY_WORKING)
+    MOD_SERIALIZE_FROM(kStream, m_iCityWorkingChange);
+#endif
 	kStream >> m_iPlotCultureCostModifier;
 	kStream >> m_iCultureFromKills;
 	kStream >> m_iCityCultureBonus;
@@ -2546,6 +2569,9 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 	kStream << m_iSeaBarbarianConversionPercent;
 	kStream << m_iCapitalBuildingModifier;
 	kStream << m_iPlotBuyCostModifier;
+#if defined(MOD_TRAITS_CITY_WORKING)
+    MOD_SERIALIZE_TO(kStream, m_iCityWorkingChange);
+#endif
 	kStream << m_iPlotCultureCostModifier;
 	kStream << m_iCultureFromKills;
 	kStream << m_iCityCultureBonus;

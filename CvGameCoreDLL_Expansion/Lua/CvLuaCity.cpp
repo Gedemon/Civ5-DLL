@@ -3753,7 +3753,12 @@ int CvLuaCity::lSetBuildingYieldChange(lua_State* L)
 //------------------------------------------------------------------------------
 int CvLuaCity::lGetNumCityPlots(lua_State* L)
 {
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	CvCity* pkCity = GetInstance(L);
+	lua_pushinteger(L, pkCity->GetNumWorkablePlots());
+#else
 	lua_pushinteger(L, NUM_CITY_PLOTS);
+#endif
 	return 1;
 }
 

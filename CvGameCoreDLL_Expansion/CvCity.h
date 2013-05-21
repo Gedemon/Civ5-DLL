@@ -80,6 +80,11 @@ public:
 
 	void chooseProduction(UnitTypes eTrainUnit = NO_UNIT, BuildingTypes eConstructBuilding = NO_BUILDING, ProjectTypes eCreateProject = NO_PROJECT, bool bFinish = false, bool bFront = false);
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	int getBuyPlotDistance() const;
+	int GetNumWorkablePlots() const;
+#endif
+
 	void clearWorkingOverride(int iIndex);
 	int countNumImprovedPlots(ImprovementTypes eImprovement = NO_IMPROVEMENT, bool bPotential = false) const;
 	int countNumWaterPlots() const;
@@ -403,6 +408,10 @@ public:
 
 	int getPlotBuyCostModifier() const;
 	void changePlotBuyCostModifier(int iChange);
+#if defined(MOD_BUILDINGS_CITY_WORKING)
+	int GetCityWorkingChange() const;
+	void changeCityWorkingChange(int iChange);
+#endif
 
 	int getHealRate() const;
 	void changeHealRate(int iChange);
@@ -845,6 +854,9 @@ protected:
 	FAutoVariable<int, CvCity> m_iCapturePlunderModifier;
 	FAutoVariable<int, CvCity> m_iPlotCultureCostModifier;
 	int m_iPlotBuyCostModifier;
+#if defined(MOD_BUILDINGS_CITY_WORKING)
+	int m_iCityWorkingChange;
+#endif
 	FAutoVariable<int, CvCity> m_iMaintenance;
 	FAutoVariable<int, CvCity> m_iHealRate;
 	FAutoVariable<int, CvCity> m_iNoOccupiedUnhappinessCount;

@@ -9624,7 +9624,11 @@ int CvTacticalAI::ScoreCloseOnPlots(CvPlot* pTarget, bool bLandOnly)
 	// We'll store the hexes we've found here
 	m_TempTargets.clear();
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(int jJ = 0; jJ < AVG_CITY_PLOTS; jJ++)
+#else
 	for(int jJ = 0; jJ < NUM_CITY_PLOTS; jJ++)
+#endif
 	{
 		pPlot = plotCity(pTarget->getX(), pTarget->getY(), jJ);
 
@@ -9721,7 +9725,11 @@ void CvTacticalAI::ScoreHedgehogPlots(CvPlot* pTarget)
 	// We'll store the hexes we've found here
 	m_TempTargets.clear();
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(int jJ = 0; jJ < AVG_CITY_PLOTS; jJ++)
+#else
 	for(int jJ = 0; jJ < NUM_CITY_PLOTS; jJ++)
+#endif
 	{
 		pPlot = plotCity(pTarget->getX(), pTarget->getY(), jJ);
 

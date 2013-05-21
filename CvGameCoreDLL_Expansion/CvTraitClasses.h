@@ -72,6 +72,9 @@ public:
 	int GetSeaBarbarianConversionPercent() const;
 	int GetCapitalBuildingModifier() const;
 	int GetPlotBuyCostModifier() const;
+#if defined(MOD_TRAITS_CITY_WORKING)
+	int GetCityWorkingChange() const;
+#endif
 	int GetPlotCultureCostModifier() const;
 	int GetCultureFromKills() const;
 	int GetCityCultureBonus() const;
@@ -169,6 +172,9 @@ protected:
 	int m_iSeaBarbarianConversionPercent;
 	int m_iCapitalBuildingModifier;
 	int m_iPlotBuyCostModifier;
+#if defined(MOD_TRAITS_CITY_WORKING)
+	int m_iCityWorkingChange;
+#endif
 	int m_iPlotCultureCostModifier;
 	int m_iCultureFromKills;
 	int m_iCityCultureBonus;
@@ -377,6 +383,12 @@ public:
 	{
 		return m_iPlotBuyCostModifier;
 	};
+#if defined(MOD_TRAITS_CITY_WORKING)
+	int GetCityWorkingChange() const
+	{
+		return m_iCityWorkingChange;
+	};
+#endif
 	int GetPlotCultureCostModifier() const
 	{
 		return m_iPlotCultureCostModifier;
@@ -655,6 +667,9 @@ private:
 	int m_iSeaBarbarianConversionPercent;
 	int m_iCapitalBuildingModifier;
 	int m_iPlotBuyCostModifier;
+#if defined(MOD_TRAITS_CITY_WORKING)
+	int m_iCityWorkingChange;
+#endif
 	int m_iPlotCultureCostModifier;
 	int m_iCultureFromKills;
 	int m_iCityCultureBonus;

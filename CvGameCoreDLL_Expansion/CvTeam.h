@@ -196,6 +196,12 @@ public:
 	bool isPermanentAllianceTrading() const;
 	void changePermanentAllianceTradingCount(int iChange);
 
+#if defined(MOD_TECHS_CITY_WORKING)
+	int GetCityWorkingChange() const;
+	bool isCityWorkingChange() const;
+	void changeCityWorkingChange(int iChange);
+#endif
+
 	int getBridgeBuildingCount() const;
 	bool isBridgeBuilding() const;
 	void changeBridgeBuildingCount(int iChange);
@@ -411,6 +417,9 @@ protected:
 	int m_iResearchAgreementTradingAllowedCount;
 	int m_iTradeAgreementTradingAllowedCount;
 	int m_iPermanentAllianceTradingCount;
+#if defined(MOD_TECHS_CITY_WORKING)
+	int m_iCityWorkingChange;
+#endif
 	int m_iBridgeBuildingCount;
 	int m_iWaterWorkCount;
 	int m_iRiverTradeCount;

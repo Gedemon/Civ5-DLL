@@ -73,6 +73,9 @@ CvPolicyEntry::CvPolicyEntry(void):
 	m_iUnhappinessFromUnitsMod(0),
 	m_iNumExtraBuilders(0),
 	m_iPlotGoldCostMod(0),
+#if defined(MOD_POLICIES_CITY_WORKING)
+	m_iCityWorkingChange(0),
+#endif
 	m_iPlotCultureCostModifier(0),
 	m_iPlotCultureExponentModifier(0),
 	m_iNumCitiesPolicyCostDiscount(0),
@@ -249,6 +252,9 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	m_iUnhappinessFromUnitsMod = kResults.GetInt("UnhappinessFromUnitsMod");
 	m_iNumExtraBuilders = kResults.GetInt("NumExtraBuilders");
 	m_iPlotGoldCostMod = kResults.GetInt("PlotGoldCostMod");
+#if defined(MOD_POLICIES_CITY_WORKING)
+	m_iCityWorkingChange = kResults.GetInt("CityWorkingChange");
+#endif
 	m_iPlotCultureCostModifier = kResults.GetInt("PlotCultureCostModifier");
 	m_iPlotCultureExponentModifier = kResults.GetInt("PlotCultureExponentModifier");
 	m_iNumCitiesPolicyCostDiscount = kResults.GetInt("NumCitiesPolicyCostDiscount");
@@ -833,6 +839,14 @@ int CvPolicyEntry::GetPlotGoldCostMod() const
 {
 	return m_iPlotGoldCostMod;
 }
+
+#if defined(MOD_POLICIES_CITY_WORKING)
+/// How many more rings can we work
+int CvPolicyEntry::GetCityWorkingChange() const
+{
+	return m_iCityWorkingChange;
+}
+#endif
 
 /// How much Culture is needed for a City to acquire a new Plot?
 int CvPolicyEntry::GetPlotCultureCostModifier() const

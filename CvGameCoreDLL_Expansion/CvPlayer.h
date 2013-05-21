@@ -90,6 +90,11 @@ public:
 	void getCivilizationCityName(CvString& szBuffer, CivilizationTypes eCivilization) const;
 	bool isCityNameValid(CvString& szName, bool bTestDestroyed = true) const;
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	int getBuyPlotDistance() const;
+	int GetNumWorkablePlots() const;
+#endif
+
 	void DoLiberatePlayer(PlayerTypes ePlayer, int iOldCityID);
 	bool CanLiberatePlayer(PlayerTypes ePlayer);
 	bool CanLiberatePlayerCity(PlayerTypes ePlayer);
@@ -594,7 +599,11 @@ public:
 	void DoUnitKilledCombat(PlayerTypes eKilledPlayer, UnitTypes eUnit);
 
 	// Great People Expenditure
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+	void DoGreatPersonExpended(UnitTypes eGreatPersonUnit, CvUnit* pGreatPersonUnit);
+#else
 	void DoGreatPersonExpended(UnitTypes eGreatPersonUnit);
+#endif
 	int GetGreatPersonExpendGold() const;
 	void ChangeGreatPersonExpendGold(int iChange);
 
@@ -1220,6 +1229,10 @@ public:
 
 	int GetPlotGoldCostMod() const;
 	void ChangePlotGoldCostMod(int iChange);
+#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
+	int GetCityWorkingChange() const;
+	void ChangeCityWorkingChange(int iChange);
+#endif
 
 	int GetPlotCultureCostModifier() const;
 	void ChangePlotCultureCostModifier(int iChange);
@@ -1619,6 +1632,9 @@ protected:
 	FAutoVariable<int, CvPlayer> m_iCapitalGrowthMod;
 	FAutoVariable<int, CvPlayer> m_iNumPlotsBought;
 	FAutoVariable<int, CvPlayer> m_iPlotGoldCostMod;
+#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
+	int m_iCityWorkingChange;
+#endif
 	FAutoVariable<int, CvPlayer> m_iPlotCultureCostModifier;
 	int m_iPlotCultureExponentModifier;
 	int m_iNumCitiesPolicyCostDiscount;

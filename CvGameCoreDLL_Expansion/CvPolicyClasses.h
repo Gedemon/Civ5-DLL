@@ -84,6 +84,9 @@ public:
 	int GetUnhappinessFromUnitsMod() const;
 	int GetNumExtraBuilders() const;
 	int GetPlotGoldCostMod() const;
+#if defined(MOD_POLICIES_CITY_WORKING)
+	int GetCityWorkingChange() const;
+#endif
 	int GetPlotCultureCostModifier() const;
 	int GetPlotCultureExponentModifier() const;
 	int GetNumCitiesPolicyCostDiscount() const;
@@ -242,6 +245,9 @@ private:
 	int m_iUnhappinessFromUnitsMod;
 	int m_iNumExtraBuilders;
 	int m_iPlotGoldCostMod;
+#if defined(MOD_POLICIES_CITY_WORKING)
+	int m_iCityWorkingChange;
+#endif
 	int m_iPlotCultureCostModifier;
 	int m_iPlotCultureExponentModifier;
 	int m_iNumCitiesPolicyCostDiscount;

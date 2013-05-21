@@ -4,13 +4,20 @@
 #ifndef CUSTOM_MODS_H
 #define CUSTOM_MODS_H
 
-/************************
- ***** IMPORTANT!!! *****
- ************************/
-// See the comment in CvDllContext.cpp regarding the DLL GUID value
+/****************************************************************************
+ ****************************************************************************
+ *****                                                                  *****
+ *****                           IMPORTANT!!!                           *****
+ *****                                                                  *****
+ *****                        Modders take note!                        *****
+ *****                                                                  *****
+ ***** See the comment in CvDllContext.cpp regarding the DLL GUID value *****
+ *****                                                                  *****
+ ****************************************************************************
+ ****************************************************************************/
 #define MOD_DLL_GUID {0xc8433b33, 0xc85a, 0x4ecb, { 0x96, 0xa2, 0x8a, 0x14, 0x88, 0x3d, 0x1b, 0x69 }} // {C8433B33-C85A-4ecb-96A2-8A14883D1B69}
 #define MOD_DLL_NAME "Pick'N'Mix GandK DLL"
-#define MOD_DLL_VERSION "16"
+#define MOD_DLL_VERSION "17"
 #define MOD_DLL_BUILD_NAME ""
 
 
@@ -31,8 +38,6 @@
 // Comment these lines out to remove the associated code from the DLL,
 // Alternatively, set the associated entries in the CustomModOptions table to disable(0) or enable(1) at load-time
 
-// Adds a notification when someone circumnavigates the globe
-#define MOD_GLOBAL_ENABLE_MAGELLAN                  gCustomMods.isGLOBAL_ENABLE_MAGELLAN()
 // Great Generals and Admirals gained from combat experience spawn in the war-zone and not in a distant city
 #define MOD_GLOBAL_LOCAL_GENERALS                   gCustomMods.isGLOBAL_LOCAL_GENERALS()
 // Permits units to have promotion trees different from their assigned CombatClass
@@ -43,6 +48,8 @@
 #define MOD_GLOBAL_PASSABLE_FORTS_ANY               (MOD_GLOBAL_PASSABLE_FORTS && gCustomMods.isGLOBAL_PASSABLE_FORTS_ANY())
 // Give initial production boost for cities founded on forests, as if the forest had been chopped down by a worker
 #define MOD_GLOBAL_CITY_FOREST_BONUS                gCustomMods.isGLOBAL_CITY_FOREST_BONUS()
+// Permit cities to work tiles up to MAXIMUM_ACQUIRE_PLOT_DISTANCE - WARNING! Cities take 2.5 times as much memory/file space
+#define MOD_GLOBAL_CITY_WORKING                     gCustomMods.isGLOBAL_CITY_WORKING()
 // Mountain plots return their terrain as TERRAIN_MOUNTAIN and any land unit may enter a mountain that has a road/rail route
 #define MOD_GLOBAL_ALPINE_PASSES                    gCustomMods.isGLOBAL_ALPINE_PASSES()
 // Permits City States to gift ships
@@ -74,6 +81,14 @@
 
 // Permits land units to cross ice - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_TRAITS_CROSSES_ICE                      gCustomMods.isTRAITS_CROSSES_ICE()
+// Permits cities to work more rings - AFFECTS SAVE GAME DATA FORMAT
+#define MOD_TRAITS_CITY_WORKING                     gCustomMods.isTRAITS_CITY_WORKING()
+
+// Permits cities to work more rings - AFFECTS SAVE GAME DATA FORMAT
+#define MOD_POLICIES_CITY_WORKING                   gCustomMods.isPOLICIES_CITY_WORKING()
+
+// Permits cities to work more rings - AFFECTS SAVE GAME DATA FORMAT
+#define MOD_TECHS_CITY_WORKING                      gCustomMods.isTECHS_CITY_WORKING()
 
 // Permits variable recon ranges by creating extra recon range promotions (like extra sight range)
 #define MOD_PROMOTIONS_VARIABLE_RECON               gCustomMods.isPROMOTIONS_VARIABLE_RECON()
@@ -95,6 +110,8 @@
 
 // Purchase of buildings in cities allows for any current production
 #define MOD_BUILDINGS_PRO_RATA_PURCHASE             gCustomMods.isBUILDINGS_PRO_RATA_PURCHASE()
+// Permits cities to work more rings - AFFECTS SAVE GAME DATA FORMAT
+#define MOD_BUILDINGS_CITY_WORKING                  gCustomMods.isBUILDINGS_CITY_WORKING()
 
 // Restricts worker suggestions to local tiles
 #define MOD_UNITS_LOCAL_WORKERS                     gCustomMods.isUNITS_LOCAL_WORKERS()
@@ -109,6 +126,10 @@
 #define MOD_RELIGION_RANDOMISE                      gCustomMods.isRELIGION_RANDOMISE()
 // Adds ConversionModifier and GlobalConversionModifier (in the same vein as espionage modifiers) to buildings - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_RELIGION_CONVERSION_MODIFIERS           gCustomMods.isRELIGION_CONVERSION_MODIFIERS()
+
+// Event sent when a team circumnavigates the globe -->
+//   GameEvents.CircumnavigatedGlobe.Add(function(eTeam) end)
+#define MOD_EVENTS_CIRCUMNAVIGATION                 gCustomMods.isEVENTS_CIRCUMNAVIGATION()
 
 // Event sent when the player enters a new era, see also NewEraPopup.lua and BUTTONPOPUP_NEW_ERA
 //   GameEvents.TeamSetEra.Add(function(eTeam, eEra, bFirst) end)
@@ -132,13 +153,17 @@
 //   GameEvents.GoodyHutTechResearched.Add(function(iPlayer, eTech) end)
 #define MOD_EVENTS_GOODY_TECH                       gCustomMods.isEVENTS_GOODY_TECH()
 
+// Events sent by Great People actions
+//   GameEvents.GreatPersonExpended.Add(function(iPlayer, iUnit, iUnitType, iX, iY) end)
+#define MOD_EVENTS_GREAT_PEOPLE                     gCustomMods.isEVENTS_GREAT_PEOPLE()
+
 // Events sent when a player is about to found a religion
 //   GameEvents.PlayerCanFoundPantheon(function(iPlayer) return true end)
 //   GameEvents.PlayerCanFoundReligion(function(iPlayer, iCity) return true end)
 //   GameEvents.GetReligionToFound.Add(function(iPlayer, iPreferredReligion, bIsAlreadyFounded) return iPreferredReligion end)
-//   GameEvents.PantheonFounded.add(function(iPlayer, iCapitalCity, iReligion, iBelief1) end)
-//   GameEvents.ReligionFounded.add(function(iPlayer, iHolyCity, iReligion, iBelief1, iBelief2, iBelief3, iBelief4, iBelief5) end)
-//   GameEvents.ReligionEnhanced.add(function(iPlayer, iReligion, iBelief1, iBelief2) end)
+//   GameEvents.PantheonFounded.Add(function(iPlayer, iCapitalCity, iReligion, iBelief1) end)
+//   GameEvents.ReligionFounded.Add(function(iPlayer, iHolyCity, iReligion, iBelief1, iBelief2, iBelief3, iBelief4, iBelief5) end)
+//   GameEvents.ReligionEnhanced.Add(function(iPlayer, iReligion, iBelief1, iBelief2) end)
 #define MOD_EVENTS_FOUND_RELIGION                   gCustomMods.isEVENTS_FOUND_RELIGION()
 
 // Events sent when choosing beliefs
@@ -318,12 +343,12 @@ public:
 	void reloadCache();
 	int getOption(const char* szName);
 
-	inline bool isGLOBAL_ENABLE_MAGELLAN()                  { return m_bGLOBAL_ENABLE_MAGELLAN; }
 	inline bool isGLOBAL_LOCAL_GENERALS()                   { return m_bGLOBAL_LOCAL_GENERALS; }
 	inline bool isGLOBAL_PROMOTION_CLASSES()                { return m_bGLOBAL_PROMOTION_CLASSES; }
 	inline bool isGLOBAL_PASSABLE_FORTS()                   { return m_bGLOBAL_PASSABLE_FORTS; }
 	inline bool isGLOBAL_PASSABLE_FORTS_ANY()               { return m_bGLOBAL_PASSABLE_FORTS_ANY; }
 	inline bool isGLOBAL_CITY_FOREST_BONUS()                { return m_bGLOBAL_CITY_FOREST_BONUS; }
+	inline bool isGLOBAL_CITY_WORKING()                     { return m_bGLOBAL_CITY_WORKING; }
 	inline bool isGLOBAL_ALPINE_PASSES()                    { return m_bGLOBAL_ALPINE_PASSES; }
 	inline bool isGLOBAL_CS_GIFT_SHIPS()                    { return m_bGLOBAL_CS_GIFT_SHIPS; }
 	inline bool isGLOBAL_CS_UPGRADES()                      { return m_bGLOBAL_CS_UPGRADES; }
@@ -340,6 +365,11 @@ public:
 	inline bool isGLOBAL_NUKES_MELT_ICE()                   { return m_bGLOBAL_NUKES_MELT_ICE; } 
 
 	inline bool isTRAITS_CROSSES_ICE()                      { return m_bTRAITS_CROSSES_ICE; }
+	inline bool isTRAITS_CITY_WORKING()                     { return m_bTRAITS_CITY_WORKING; }
+
+	inline bool isPOLICIES_CITY_WORKING()                   { return m_bPOLICIES_CITY_WORKING; }
+
+	inline bool isTECHS_CITY_WORKING()                      { return m_bTECHS_CITY_WORKING; }
 
 	inline bool isPROMOTIONS_VARIABLE_RECON()               { return m_bPROMOTIONS_VARIABLE_RECON; }
 	inline bool isPROMOTIONS_CROSS_MOUNTAINS()              { return m_bPROMOTIONS_CROSS_MOUNTAINS; }
@@ -352,6 +382,7 @@ public:
 	inline bool isUI_CITY_EXPANSION()                       { return m_bUI_CITY_EXPANSION; }
 
 	inline bool isBUILDINGS_PRO_RATA_PURCHASE()             { return m_bBUILDINGS_PRO_RATA_PURCHASE; }
+	inline bool isBUILDINGS_CITY_WORKING()                  { return m_bBUILDINGS_CITY_WORKING; }
 
 	inline bool isUNITS_LOCAL_WORKERS()                     { return m_bUNITS_LOCAL_WORKERS; }
 	inline bool isUNITS_HOVERING_LAND_ONLY_HEAL()           { return m_bUNITS_HOVERING_LAND_ONLY_HEAL; }
@@ -361,11 +392,13 @@ public:
 	inline bool isRELIGION_RANDOMISE()                      { return m_bRELIGION_RANDOMISE; }
 	inline bool isRELIGION_CONVERSION_MODIFIERS()           { return m_bRELIGION_CONVERSION_MODIFIERS; }
 
+	inline bool isEVENTS_CIRCUMNAVIGATION()                 { return m_bEVENTS_CIRCUMNAVIGATION; }
 	inline bool isEVENTS_NEW_ERA()                          { return m_bEVENTS_NEW_ERA; }
 	inline bool isEVENTS_NW_DISCOVERY()                     { return m_bEVENTS_NW_DISCOVERY; }
 	inline bool isEVENTS_DIPLO_EVENTS()                     { return m_bEVENTS_DIPLO_EVENTS; }
 	inline bool isEVENTS_MINORS()                           { return m_bEVENTS_MINORS; }
 	inline bool isEVENTS_GOODY_TECH()                       { return m_bEVENTS_GOODY_TECH; }
+	inline bool isEVENTS_GREAT_PEOPLE()                     { return m_bEVENTS_GREAT_PEOPLE; }
 	inline bool isEVENTS_FOUND_RELIGION()                   { return m_bEVENTS_FOUND_RELIGION; }
 	inline bool isEVENTS_ACQUIRE_BELIEFS()                  { return m_bEVENTS_ACQUIRE_BELIEFS; }
 	inline bool isEVENTS_CITY()                             { return m_bEVENTS_CITY; }
@@ -410,12 +443,12 @@ protected:
 	bool m_bInit;
 	std::map<string, int> m_options;
 
-	bool m_bGLOBAL_ENABLE_MAGELLAN;
 	bool m_bGLOBAL_LOCAL_GENERALS;
 	bool m_bGLOBAL_PROMOTION_CLASSES;
 	bool m_bGLOBAL_PASSABLE_FORTS;
 	bool m_bGLOBAL_PASSABLE_FORTS_ANY;
 	bool m_bGLOBAL_CITY_FOREST_BONUS;
+	bool m_bGLOBAL_CITY_WORKING;
 	bool m_bGLOBAL_ALPINE_PASSES;
 	bool m_bGLOBAL_CS_GIFT_SHIPS;
 	bool m_bGLOBAL_CS_UPGRADES;
@@ -432,6 +465,11 @@ protected:
 	bool m_bGLOBAL_NUKES_MELT_ICE;
 
 	bool m_bTRAITS_CROSSES_ICE;
+	bool m_bTRAITS_CITY_WORKING;
+
+	bool m_bPOLICIES_CITY_WORKING;
+
+	bool m_bTECHS_CITY_WORKING;
 
 	bool m_bPROMOTIONS_VARIABLE_RECON;
 	bool m_bPROMOTIONS_CROSS_MOUNTAINS;
@@ -444,6 +482,7 @@ protected:
 	bool m_bUI_CITY_EXPANSION;
 
 	bool m_bBUILDINGS_PRO_RATA_PURCHASE;
+	bool m_bBUILDINGS_CITY_WORKING;
 
 	bool m_bUNITS_LOCAL_WORKERS;
 	bool m_bUNITS_HOVERING_LAND_ONLY_HEAL;
@@ -453,11 +492,13 @@ protected:
 	bool m_bRELIGION_RANDOMISE;
 	bool m_bRELIGION_CONVERSION_MODIFIERS;
 
+	bool m_bEVENTS_CIRCUMNAVIGATION;
 	bool m_bEVENTS_NEW_ERA;
 	bool m_bEVENTS_NW_DISCOVERY;
 	bool m_bEVENTS_DIPLO_EVENTS;
 	bool m_bEVENTS_MINORS;
 	bool m_bEVENTS_GOODY_TECH;
+	bool m_bEVENTS_GREAT_PEOPLE;
 	bool m_bEVENTS_FOUND_RELIGION;
 	bool m_bEVENTS_ACQUIRE_BELIEFS;
 	bool m_bEVENTS_CITY;

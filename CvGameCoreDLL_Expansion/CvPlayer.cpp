@@ -282,6 +282,9 @@ CvPlayer::CvPlayer() :
 	, m_iCapitalGrowthMod("CvPlayer::m_iCapitalGrowthMod", m_syncArchive)
 	, m_iNumPlotsBought("CvPlayer::m_iNumPlotsBought", m_syncArchive)
 	, m_iPlotGoldCostMod("CvPlayer::m_iPlotGoldCostMod", m_syncArchive)
+#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
+	, m_iCityWorkingChange(0)
+#endif
 	, m_iPlotCultureCostModifier("CvPlayer::m_iPlotCultureCostModifier", m_syncArchive)
 	, m_iPlotCultureExponentModifier(0)
 	, m_iNumCitiesPolicyCostDiscount(0)
@@ -556,6 +559,9 @@ void CvPlayer::init(PlayerTypes eID)
 		changeMaxTeamBuildingProductionModifier(GetPlayerTraits()->GetMaxTeamBuildingProductionModifier());
 		changeMaxPlayerBuildingProductionModifier(GetPlayerTraits()->GetMaxPlayerBuildingProductionModifier());
 		ChangePlotGoldCostMod(GetPlayerTraits()->GetPlotBuyCostModifier());
+#if defined(MOD_TRAITS_CITY_WORKING)
+		ChangeCityWorkingChange(GetPlayerTraits()->GetCityWorkingChange());
+#endif
 		ChangePlotCultureCostModifier(GetPlayerTraits()->GetPlotCultureCostModifier());
 		GetTreasury()->ChangeTradeRouteGoldChange(GetPlayerTraits()->GetTradeRouteChange());
 		changeWonderProductionModifier(GetPlayerTraits()->GetWonderProductionModifier());
@@ -858,6 +864,9 @@ void CvPlayer::uninit()
 	m_iCapitalGrowthMod = 0;
 	m_iNumPlotsBought = 0;
 	m_iPlotGoldCostMod = 0;
+#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
+	m_iCityWorkingChange = 0;
+#endif
 	m_iPlotCultureCostModifier = 0;
 	m_iPlotCultureExponentModifier = 0;
 	m_iNumCitiesPolicyCostDiscount = 0;
@@ -1902,6 +1911,10 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 		}
 	}
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	int iOldCityRings = pOldCity->getBuyPlotDistance();
+#endif
+
 	pOldCity->PreKill();
 
 	{
@@ -1930,7 +1943,11 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 		}
 	}
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	GC.getMap().updateWorkingCity(pCityPlot,iOldCityRings*2);
+#else	
 	GC.getMap().updateWorkingCity(pCityPlot,NUM_CITY_RINGS*2);
+#endif
 
 	// Lost the capital!
 	if(bCapital)
@@ -2227,7 +2244,11 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 		}
 	}
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	GC.getMap().updateWorkingCity(pCityPlot,pNewCity->getBuyPlotDistance()*2);
+#else	
 	GC.getMap().updateWorkingCity(pCityPlot,NUM_CITY_RINGS*2);
+#endif
 
 	if(bConquest)
 	{
@@ -2706,6 +2727,34 @@ bool CvPlayer::isCityNameValid(CvString& szName, bool bTestDestroyed) const
 
 	return true;
 }
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+//	--------------------------------------------------------------------------------
+/// How far out this player may buy/work plots
+int CvPlayer::getBuyPlotDistance() const
+{
+	int iDistance = GC.getMAXIMUM_BUY_PLOT_DISTANCE();
+	
+#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING)
+	// Change distance based on traits, policies, wonders, etc
+	iDistance += GetCityWorkingChange();
+#endif
+#if defined(MOD_TECHS_CITY_WORKING)
+	// Change distance based on techs, etc
+	iDistance += GET_TEAM(getTeam()).GetCityWorkingChange();
+#endif
+	
+	iDistance = std::min(MAX_CITY_RADIUS, std::max(MIN_CITY_RADIUS, iDistance));
+	return iDistance;
+}
+
+//	--------------------------------------------------------------------------------
+/// How many plots a generic city may work
+int CvPlayer::GetNumWorkablePlots() const
+{
+	return ((6 * (1+getBuyPlotDistance()) * getBuyPlotDistance() / 2) + 1);
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 /// This player liberates iOldCityID and gives it back to ePlayer
@@ -4596,7 +4645,11 @@ int CvPlayer::countCityFeatures(FeatureTypes eFeature) const
 
 	for(pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
 	{
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		for(iI = 0; iI < pLoopCity->GetNumWorkablePlots(); iI++)
+#else
 		for(iI = 0; iI < NUM_CITY_PLOTS; iI++)
+#endif
 		{
 			pLoopPlot = plotCity(pLoopCity->getX(), pLoopCity->getY(), iI);
 
@@ -7563,6 +7616,9 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 	// Border growth mods
 	ChangePlotCultureCostModifier(pBuildingInfo->GetGlobalPlotCultureCostModifier() * iChange);
 	ChangePlotGoldCostMod(pBuildingInfo->GetGlobalPlotBuyCostModifier() * iChange);
+#if defined(MOD_BUILDINGS_CITY_WORKING)
+	ChangeCityWorkingChange(pBuildingInfo->GetGlobalCityWorkingChange() * iChange);
+#endif
 
 	// City Culture Mod
 	ChangeJONSCultureCityModifier(pBuildingInfo->GetGlobalCultureRateModifier() * iChange);
@@ -9459,7 +9515,11 @@ void CvPlayer::DoRevolt()
 		CvCityCitizens* pCitizens = pBestCity->GetCityCitizens();
 
 		// Start at 1, since ID 0 is the city plot itself
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		for(int iPlotLoop = 1; iPlotLoop < pBestCity->GetNumWorkablePlots(); iPlotLoop++)
+#else
 		for(int iPlotLoop = 1; iPlotLoop < NUM_CITY_PLOTS; iPlotLoop++)
+#endif
 		{
 			pPlot = pCitizens->GetCityPlotFromIndex(iPlotLoop);
 
@@ -11443,7 +11503,11 @@ void CvPlayer::DoUnitKilledCombat(PlayerTypes eKilledPlayer, UnitTypes eUnitType
 
 //	--------------------------------------------------------------------------------
 /// Do effects when a GP is consumed
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+void CvPlayer::DoGreatPersonExpended(UnitTypes eGreatPersonUnit, CvUnit* pGreatPersonUnit)
+#else
 void CvPlayer::DoGreatPersonExpended(UnitTypes /*eGreatPersonUnit*/)
+#endif
 {
 	// Gold gained
 	int iExpendGold = GetGreatPersonExpendGold();
@@ -11495,6 +11559,23 @@ void CvPlayer::DoGreatPersonExpended(UnitTypes /*eGreatPersonUnit*/)
 			}
 		}
 	}
+	
+#if defined(MOD_EVENTS_GREAT_PEOPLE)
+	if (MOD_EVENTS_GREAT_PEOPLE) {
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if (pkScriptSystem) {
+			CvLuaArgsHandle args;
+			args->Push(GetID());
+			args->Push(pGreatPersonUnit->GetID());
+			args->Push(eGreatPersonUnit);
+			args->Push(pGreatPersonUnit->getX());
+			args->Push(pGreatPersonUnit->getY());
+
+			bool bResult;
+			LuaSupport::CallHook(pkScriptSystem, "GreatPersonExpended", args.get(), bResult);
+		}
+	}
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -18918,6 +18999,9 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 	ChangeAlwaysSeeBarbCampsCount(pPolicy->IsAlwaysSeeBarbCamps() * iChange);
 	ChangeMaxNumBuilders(pPolicy->GetNumExtraBuilders() * iChange);
 	ChangePlotGoldCostMod(pPolicy->GetPlotGoldCostMod() * iChange);
+#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
+	ChangeCityWorkingChange(pPolicy->GetCityWorkingChange() * iChange);
+#endif
 	ChangePlotCultureCostModifier(pPolicy->GetPlotCultureCostModifier() * iChange);
 	ChangePlotCultureExponentModifier(pPolicy->GetPlotCultureExponentModifier() * iChange);
 	ChangeNumCitiesPolicyCostDiscount(pPolicy->GetNumCitiesPolicyCostDiscount() * iChange);
@@ -19868,6 +19952,9 @@ void CvPlayer::Read(FDataStream& kStream)
 	kStream >> m_iCapitalGrowthMod;
 	kStream >> m_iNumPlotsBought;
 	kStream >> m_iPlotGoldCostMod;
+#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
+	MOD_SERIALIZE_FROM(kStream, m_iCityWorkingChange);
+#endif
 	kStream >> m_iPlotCultureCostModifier;
 	if(uiVersion >= 14)
 	{
@@ -20712,6 +20799,9 @@ void CvPlayer::Write(FDataStream& kStream) const
 	kStream << m_iCapitalGrowthMod;
 	kStream << m_iNumPlotsBought;
 	kStream << m_iPlotGoldCostMod;
+#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
+	MOD_SERIALIZE_TO(kStream, m_iCityWorkingChange);
+#endif
 	kStream << m_iPlotCultureCostModifier;
 	kStream << m_iPlotCultureExponentModifier;
 	kStream << m_iNumCitiesPolicyCostDiscount;
@@ -21017,7 +21107,13 @@ void CvPlayer::createGreatGeneral(UnitTypes eGreatPersonUnit, int iX, int iY)
 		}
 	}
 
+#if defined(MOD_GLOBAL_LOCAL_GENERALS)
+	// TODO - WH - if there is an embarked unit on this plot, relocate the Great General
+
+	CvPlot* pPlot = pGreatPeopleUnit->plot();
+#else
 	CvPlot* pPlot = GC.getMap().plot(iX, iY);
+#endif
 
 #if !defined(NO_ACHIEVEMENTS)
 	//Achievements and Stats
@@ -21655,6 +21751,25 @@ void CvPlayer::ChangePlotGoldCostMod(int iChange)
 		m_iPlotGoldCostMod += iChange;
 	}
 }
+
+#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
+//	--------------------------------------------------------------------------------
+/// How many more city rings can we work
+int CvPlayer::GetCityWorkingChange() const
+{
+	return m_iCityWorkingChange;
+}
+
+//	--------------------------------------------------------------------------------
+/// Changes how many more city rings we can work
+void CvPlayer::ChangeCityWorkingChange(int iChange)
+{
+	if(iChange != 0)
+	{
+		m_iCityWorkingChange += iChange;
+	}
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 /// How much Culture is required for this City to acquire a new Plot

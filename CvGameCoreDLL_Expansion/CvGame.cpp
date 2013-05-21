@@ -4655,7 +4655,11 @@ void CvGame::initScoreCalculation()
 		CvEraInfo& kStartEra = getStartEraInfo();
 		int iNumSettlers = kStartEra.getStartingUnitMultiplier();
 		m_iInitPopulation = getPopulationScore(iNumSettlers * (kStartEra.getFreePopulation() + 1));
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		m_iInitLand = getLandPlotsScore(iNumSettlers *  AVG_CITY_PLOTS);
+#else
 		m_iInitLand = getLandPlotsScore(iNumSettlers *  NUM_CITY_PLOTS);
+#endif
 	}
 	else
 	{

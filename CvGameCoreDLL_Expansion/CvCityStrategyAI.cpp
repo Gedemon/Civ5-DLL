@@ -226,7 +226,11 @@ CvAICityStrategyEntry* CvAICityStrategies::GetEntry(int index)
 //=====================================
 
 /// defining static
+#if defined(MOD_GLOBAL_CITY_WORKING)
+unsigned char  CvCityStrategyAI::m_acBestYields[NUM_YIELD_TYPES][MAX_CITY_PLOTS - 1];
+#else
 unsigned char  CvCityStrategyAI::m_acBestYields[NUM_YIELD_TYPES][NUM_CITY_PLOTS - 1];
+#endif
 
 /// Constructor
 CvCityStrategyAI::CvCityStrategyAI():
@@ -1389,7 +1393,11 @@ void CvCityStrategyAI::ResetBestYields()
 {
 	for(uint uiYields = 0; uiYields < NUM_YIELD_TYPES; uiYields++)
 	{
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		for(uint uiPlots = 0; uiPlots < MAX_CITY_PLOTS - 1; uiPlots++)
+#else
 		for(uint uiPlots = 0; uiPlots < NUM_CITY_PLOTS - 1; uiPlots++)
+#endif
 		{
 			m_acBestYields[uiYields][uiPlots] = MAX_UNSIGNED_CHAR;
 		}
@@ -1404,7 +1412,11 @@ void CvCityStrategyAI::UpdateBestYields()
 
 	ResetBestYields();
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	int iPopulationToEvaluate = min(m_pCity->getPopulation() + 2, m_pCity->GetNumWorkablePlots());
+#else
 	int iPopulationToEvaluate = min(m_pCity->getPopulation() + 2, NUM_CITY_PLOTS);
+#endif
 	CvPlot* pPlot = NULL;
 	uint uiPlotsEvaluated = 0;
 
@@ -1416,7 +1428,11 @@ void CvCityStrategyAI::UpdateBestYields()
 		}
 	};
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(int iPlotLoop = 0; iPlotLoop < m_pCity->GetNumWorkablePlots(); iPlotLoop++)
+#else
 	for(int iPlotLoop = 0; iPlotLoop < NUM_CITY_PLOTS; iPlotLoop++)
+#endif
 	{
 		// we want to evaluate the city plot
 		//if (iPlotLoop == CITY_HOME_PLOT)
@@ -2180,7 +2196,11 @@ bool CityStrategyAIHelpers::IsTestCityStrategy_WantTileImprovers(AICityStrategyT
 		int iNumResources = 0;
 		int iNumImprovedResources = 0;
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		for(int iPlotLoop = 0; iPlotLoop < pCity->GetNumWorkablePlots(); iPlotLoop++)
+#else
 		for(int iPlotLoop = 0; iPlotLoop < NUM_CITY_PLOTS; iPlotLoop++)
+#endif
 		{
 			pLoopPlot = plotCity(pCity->getX(), pCity->getY(), iPlotLoop);
 
@@ -2349,7 +2369,11 @@ bool CityStrategyAIHelpers::IsTestCityStrategy_NeedNavalGrowth(AICityStrategyTyp
 	CvPlot* pLoopPlot;
 
 	// Look at all Tiles this City could potentially work
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(int iPlotLoop = 0; iPlotLoop < pCity->GetNumWorkablePlots(); iPlotLoop++)
+#else
 	for(int iPlotLoop = 0; iPlotLoop < NUM_CITY_PLOTS; iPlotLoop++)
+#endif
 	{
 		pLoopPlot = plotCity(pCity->getX(), pCity->getY(), iPlotLoop);
 
@@ -2395,7 +2419,11 @@ bool CityStrategyAIHelpers::IsTestCityStrategy_NeedNavalTileImprovement(CvCity* 
 	CvPlot* pLoopPlot;
 
 	// Look at all Tiles this City could potentially work to see if there are any Water Resources that could be improved
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(int iPlotLoop = 0; iPlotLoop < pCity->GetNumWorkablePlots(); iPlotLoop++)
+#else
 	for(int iPlotLoop = 0; iPlotLoop < NUM_CITY_PLOTS; iPlotLoop++)
+#endif
 	{
 		pLoopPlot = plotCity(pCity->getX(), pCity->getY(), iPlotLoop);
 

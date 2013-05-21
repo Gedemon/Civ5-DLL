@@ -294,6 +294,10 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	m_iGlobalPlotCultureCostModifier = kResults.GetInt("GlobalPlotCultureCostModifier");
 	m_iPlotBuyCostModifier = kResults.GetInt("PlotBuyCostModifier");
 	m_iGlobalPlotBuyCostModifier = kResults.GetInt("GlobalPlotBuyCostModifier");
+#if defined(MOD_BUILDINGS_CITY_WORKING)
+	m_iCityWorkingChange = kResults.GetInt("CityWorkingChange");
+	m_iGlobalCityWorkingChange = kResults.GetInt("GlobalCityWorkingChange");
+#endif
 	m_iGlobalPopulationChange = kResults.GetInt("GlobalPopulationChange");
 	m_iTechShare = kResults.GetInt("TechShare");
 	m_iFreeTechs = kResults.GetInt("FreeTechs");
@@ -915,6 +919,20 @@ int CvBuildingEntry::GetGlobalPlotBuyCostModifier() const
 {
 	return m_iGlobalPlotBuyCostModifier;
 }
+
+#if defined(MOD_BUILDINGS_CITY_WORKING)
+/// Change in number of rings this city can work
+int CvBuildingEntry::GetCityWorkingChange() const
+{
+	return m_iCityWorkingChange;
+}
+
+/// Change in number of rings any city can work
+int CvBuildingEntry::GetGlobalCityWorkingChange() const
+{
+	return m_iGlobalCityWorkingChange;
+}
+#endif
 
 /// Required Plot count of the CvArea this City belongs to (Usually used for Water Buildings to prevent Harbors in tiny lakes and such)
 int CvBuildingEntry::GetMinAreaSize() const

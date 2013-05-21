@@ -173,7 +173,11 @@ void CvCityAI::AI_stealPlots()
 	CvPlot* pLoopPlot = 0;
 	int iI = 0;
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(iI = 0; iI < GetNumWorkablePlots(); iI++)
+#else
 	for(iI = 0; iI < NUM_CITY_PLOTS; iI++)
+#endif
 	{
 		pLoopPlot = plotCity(getX(),getY(),iI);
 

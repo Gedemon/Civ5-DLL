@@ -3151,6 +3151,7 @@ bool CvUnit::jumpToNearestValidPlot()
 	}
 	else
 	{
+		CUSTOMLOG("jumpToNearestValidPlot failed for unit %s at plot (%i, %i)", getName().GetCString(), getX(), getY());
 		return false;
 	}
 
@@ -3237,6 +3238,7 @@ bool CvUnit::jumpToNearestValidPlotWithinRange(int iRange)
 			strLogString.Format("Can't find a valid plot within range for %s, X: %d, Y: %d", getName().GetCString(), getX(), getY());
 			GET_PLAYER(m_eOwner).GetHomelandAI()->LogHomelandMessage(strLogString);
 		}
+		CUSTOMLOG("jumpToNearestValidPlotWithinRange(%i) failed for unit %s at plot (%i, %i)", iRange, getName().GetCString(), getX(), getY());
 		return false;
 	}
 
@@ -6371,7 +6373,11 @@ bool CvUnit::DoFoundReligion()
 					}
 				}
 				kOwner.GetReligions()->SetFoundingReligion(true);
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+				kOwner.DoGreatPersonExpended(getUnitType(), this);
+#else
 				kOwner.DoGreatPersonExpended(getUnitType());
+#endif
 				kill(true);
 			}
 			else
@@ -6416,7 +6422,11 @@ bool CvUnit::DoFoundReligion()
 					}
 
 					pReligions->FoundReligion(getOwner(), eReligion, NULL, eBeliefs[0], eBeliefs[1], eBeliefs[2], eBeliefs[3], pkCity);
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+					kOwner.DoGreatPersonExpended(getUnitType(), this);
+#else
 					kOwner.DoGreatPersonExpended(getUnitType());
+#endif
 					kill(true);
 				}
 				else
@@ -6529,7 +6539,11 @@ bool CvUnit::DoEnhanceReligion()
 						pNotifications->Add(NOTIFICATION_ENHANCE_RELIGION, strBuffer, strSummary, pkPlot->getX(), pkPlot->getY(), -1, pkCity->GetID());
 					}
 				}
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+				kOwner.DoGreatPersonExpended(getUnitType(), this);
+#else
 				kOwner.DoGreatPersonExpended(getUnitType());
+#endif
 				kill(true);
 			}
 			else
@@ -6548,7 +6562,11 @@ bool CvUnit::DoEnhanceReligion()
 
 					pReligions->EnhanceReligion(getOwner(), eReligion, eBelief1, eBelief2);
 
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+					kOwner.DoGreatPersonExpended(getUnitType(), this);
+#else
 					kOwner.DoGreatPersonExpended(getUnitType());
+#endif
 					kill(true);
 				}
 				else
@@ -6701,7 +6719,11 @@ bool CvUnit::DoSpreadReligion()
 				if(IsGreatPerson())
 				{
 					CvPlayer& kPlayer = GET_PLAYER(getOwner());
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+					kPlayer.DoGreatPersonExpended(getUnitType(), this);
+#else
 					kPlayer.DoGreatPersonExpended(getUnitType());
+#endif
 				}
 
 				kill(true);
@@ -6918,9 +6940,19 @@ int CvUnit::GetConversionStrength() const
 #if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 	if (pCity != NULL && MOD_RELIGION_CONVERSION_MODIFIERS) {
 		// Modify iReligiousStrength based on city defenses, but only against hostile units (ie any not the same team as the city)
+		PlayerTypes eFromPlayer = getOwner();
 		PlayerTypes eToPlayer = pCity->getOwner();
+
 		if (getTeam() != pCity->getTeam()) {
-			iReligiousStrength *= (100 + (pCity->GetConversionModifier() + GET_PLAYER(eToPlayer).GetConversionModifier() + GET_PLAYER(eToPlayer).GetPlayerPolicies()->GetNumericModifier(POLICYMOD_CONVERSION_MODIFIER))); 
+			CvPlayer& pToPlayer = GET_PLAYER(eToPlayer);
+			int iCityModifier = pCity->GetConversionModifier();
+			
+			if (pToPlayer.isMinorCiv() && pToPlayer.GetMinorCivAI()->IsActiveQuestForPlayer(eFromPlayer, MINOR_CIV_QUEST_SPREAD_RELIGION)) {
+				// The City State actively wants this religion
+				iCityModifier *= -1;
+			}
+
+			iReligiousStrength *= (100 + (iCityModifier + pToPlayer.GetConversionModifier() + pToPlayer.GetPlayerPolicies()->GetNumericModifier(POLICYMOD_CONVERSION_MODIFIER))); 
 			iReligiousStrength /= 100;
 		}
 	}
@@ -7011,7 +7043,11 @@ bool CvUnit::discover()
 
 	if(IsGreatPerson())
 	{
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+		pPlayer->DoGreatPersonExpended(getUnitType(), this);
+#else
 		pPlayer->DoGreatPersonExpended(getUnitType());
+#endif
 	}
 
 	kill(true);
@@ -7208,7 +7244,11 @@ bool CvUnit::hurry()
 	if(IsGreatPerson())
 	{
 		CvPlayer& kPlayer = GET_PLAYER(getOwner());
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+		kPlayer.DoGreatPersonExpended(getUnitType(), this);
+#else
 		kPlayer.DoGreatPersonExpended(getUnitType());
+#endif
 	}
 
 	kill(true);
@@ -7306,7 +7346,11 @@ bool CvUnit::trade()
 	if(IsGreatPerson())
 	{
 		CvPlayer& kPlayer = GET_PLAYER(getOwner());
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+		kPlayer.DoGreatPersonExpended(getUnitType(), this);
+#else
 		kPlayer.DoGreatPersonExpended(getUnitType());
+#endif
 	}
 
 	kill(true);
@@ -7379,7 +7423,11 @@ bool CvUnit::repairFleet()
 	if(IsGreatPerson())
 	{
 		CvPlayer& kPlayer = GET_PLAYER(getOwner());
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+		kPlayer.DoGreatPersonExpended(getUnitType(), this);
+#else
 		kPlayer.DoGreatPersonExpended(getUnitType());
+#endif
 	}
 
 	kill(true);
@@ -7532,7 +7580,11 @@ bool CvUnit::DoCultureBomb()
 
 		if(IsGreatPerson())
 		{
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+			kPlayer.DoGreatPersonExpended(getUnitType(), this);
+#else
 			kPlayer.DoGreatPersonExpended(getUnitType());
+#endif
 		}
 
 		kill(true);
@@ -7741,7 +7793,11 @@ bool CvUnit::goldenAge()
 
 	if(IsGreatPerson())
 	{
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+		kPlayer.DoGreatPersonExpended(getUnitType(), this);
+#else
 		kPlayer.DoGreatPersonExpended(getUnitType());
+#endif
 	}
 
 	kill(true);
@@ -7982,7 +8038,11 @@ bool CvUnit::build(BuildTypes eBuild)
 
 				if(IsGreatPerson())
 				{
+#if defined (MOD_EVENTS_GREAT_PEOPLE)
+					kPlayer.DoGreatPersonExpended(getUnitType(), this);
+#else
 					kPlayer.DoGreatPersonExpended(getUnitType());
+#endif
 				}
 
 				kill(true);

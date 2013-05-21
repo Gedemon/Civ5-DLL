@@ -71,6 +71,9 @@ public:
 	bool IsResearchAgreementTradingAllowed() const;
 	bool IsTradeAgreementTradingAllowed() const;
 	bool IsPermanentAllianceTrading() const;
+#if defined(MOD_TECHS_CITY_WORKING)
+	int GetCityWorkingChange() const;
+#endif
 	bool IsBridgeBuilding() const;
 	bool IsWaterWork() const;
 	int IsFreePromotion(int i) const;
@@ -130,6 +133,9 @@ private:
 	bool m_bResearchAgreementTradingAllowed;
 	bool m_bTradeAgreementTradingAllowed;
 	bool m_bPermanentAllianceTrading;
+#if defined(MOD_TECHS_CITY_WORKING)
+	int m_iCityWorkingChange;
+#endif
 	bool m_bBridgeBuilding;
 	bool m_bWaterWork;
 

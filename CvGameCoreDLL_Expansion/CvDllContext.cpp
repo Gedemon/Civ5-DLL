@@ -159,7 +159,7 @@ void CvDllGameContext::InitializeSingleton()
 	s_pSingleton = FNEW(CvDllGameContext(), c_eCiv5GameplayDLL, 0);
 
 #if defined(CUSTOM_MODS_H)
-	CUSTOMLOG("%s - Startup (Version: %s Build: %s %s%s)", MOD_DLL_NAME, MOD_DLL_VERSION, __DATE__, __TIME__, MOD_DLL_BUILD_NAME);
+	CUSTOMLOG("%s - Startup (Version %s - Build %s %s%s)", MOD_DLL_NAME, MOD_DLL_VERSION, __DATE__, __TIME__, MOD_DLL_BUILD_NAME);
 #endif
 }
 //------------------------------------------------------------------------------
@@ -671,7 +671,19 @@ int CvDllGameContext::GetAI_HANDICAP() const
 //------------------------------------------------------------------------------
 int CvDllGameContext::GetNUM_CITY_PLOTS() const
 {
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	int iNumCityPlots = AVG_CITY_PLOTS;
+	
+	auto_ptr<ICvCity1> pCity(gDLL->getInterfaceIFace()->getHeadSelectedCity());
+	if (pCity.get() != NULL) {
+		CvCity* pkCity = GC.UnwrapCityPointer(pCity.get());
+		iNumCityPlots = pkCity->GetNumWorkablePlots();
+	}
+				
+	return iNumCityPlots;
+#else
 	return NUM_CITY_PLOTS;
+#endif
 }
 //------------------------------------------------------------------------------
 const char** CvDllGameContext::GetHexDebugLayerNames()

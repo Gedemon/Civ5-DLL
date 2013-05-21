@@ -5374,7 +5374,11 @@ bool CvPlot::isPotentialCityWorkForArea(CvArea* pArea) const
 	CvPlot* pLoopPlot;
 	int iI;
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(iI = 0; iI < MAX_CITY_PLOTS; ++iI)
+#else
 	for(iI = 0; iI < NUM_CITY_PLOTS; ++iI)
+#endif
 	{
 		pLoopPlot = plotCity(getX(), getY(), iI);
 
@@ -5403,7 +5407,11 @@ void CvPlot::updatePotentialCityWork()
 
 	bValid = false;
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(iI = 0; iI < MAX_CITY_PLOTS; ++iI)
+#else
 	for(iI = 0; iI < NUM_CITY_PLOTS; ++iI)
+#endif
 	{
 		pLoopPlot = plotCity(getX(), getY(), iI);
 
@@ -5967,7 +5975,11 @@ void CvPlot::setPlotType(PlotTypes eNewValue, bool bRecalculate, bool bRebuildGr
 				}
 			}
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+			for(iI = 0; iI < MAX_CITY_PLOTS; ++iI)
+#else
 			for(iI = 0; iI < NUM_CITY_PLOTS; ++iI)
+#endif
 			{
 				pLoopPlot = plotCity(getX(), getY(), iI);
 
@@ -7275,7 +7287,11 @@ void CvPlot::DoFindCityToLinkResourceTo(CvCity* pCityToExclude)
 
 	// Loop through nearby plots to find the closest city to link to
 	CvPlot* pLoopPlot;
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(int iJ = 0; iJ < MAX_CITY_PLOTS; iJ++)
+#else
 	for(int iJ = 0; iJ < NUM_CITY_PLOTS; iJ++)
+#endif
 	{
 		// We're not actually looking around a City but Resources have to be within the RANGE of a City, so we can still use this
 		pLoopPlot = plotCity(getX(), getY(), iJ);
@@ -7336,7 +7352,11 @@ void CvPlot::setPlotCity(CvCity* pNewValue)
 				}
 			}
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+			for(iI = 0; iI < getPlotCity()->GetNumWorkablePlots(); ++iI)
+#else
 			for(iI = 0; iI < NUM_CITY_PLOTS; ++iI)
+#endif
 			{
 				pLoopPlot = plotCity(getX(), getY(), iI);
 
@@ -7359,7 +7379,11 @@ void CvPlot::setPlotCity(CvCity* pNewValue)
 
 		if(isCity())
 		{
+#if defined(MOD_GLOBAL_CITY_WORKING)
+			for(iI = 0; iI < getPlotCity()->GetNumWorkablePlots(); ++iI)
+#else
 			for(iI = 0; iI < NUM_CITY_PLOTS; ++iI)
+#endif
 			{
 				pLoopPlot = plotCity(getX(), getY(), iI);
 
@@ -7415,7 +7439,11 @@ void CvPlot::updateWorkingCity()
 	{
 		iBestPlot = 0;
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		for(iI = 0; iI < MAX_CITY_PLOTS; ++iI)
+#else
 		for(iI = 0; iI < NUM_CITY_PLOTS; ++iI)
+#endif
 		{
 			pLoopPlot = plotCity(getX(), getY(), iI);
 
