@@ -2275,11 +2275,11 @@ void CvUnitCombat::ResolveCombat( const CvCombatInfo& kInfo, uint uiParentEventI
 				// to do : this is a hack, fix that in CvTacticalAI.cpp instead.
 				bCanAttack = false;
 			}
-			else
-			{
-				// If we can attack, send the CombatResult to Lua
-				LuaSupport::CallHook(pkScriptSystem, "CombatResult", args.get(), bResult);
-			}
+		}
+		if(bCanAttack)
+		{
+			// If we can attack, send the CombatResult to Lua
+			LuaSupport::CallHook(pkScriptSystem, "CombatResult", args.get(), bResult);
 		}
 	}
 	if (bCanAttack)
