@@ -10913,6 +10913,10 @@ void CvCity::BuyPlot(int iPlotX, int iPlotY)
 	}
 #endif
 
+#if defined(MOD_UI_CITY_EXPANSION)
+	if (iCost > 0) {
+	// Only do this if we actually paid for the plot (as opposed to getting it fro free via city growth)
+#endif
 	// See if there's anyone else nearby that could get upset by this action
 	CvCity* pNearbyCity;
 #if defined(MOD_GLOBAL_CITY_WORKING)
@@ -10936,6 +10940,9 @@ void CvCity::BuyPlot(int iPlotX, int iPlotY)
 			}
 		}
 	}
+#if defined(MOD_UI_CITY_EXPANSION)
+	}
+#endif
 
 	DoAcquirePlot(iPlotX, iPlotY);
 		

@@ -19,6 +19,7 @@ CustomMods::CustomMods() :
 	m_bGLOBAL_CS_UPGRADES(false),
 	m_bGLOBAL_CS_RAZE_RARELY(false),
 	m_bGLOBAL_CS_GIFTS(false),
+	m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES(false),
 	m_bGLOBAL_NO_CONQUERED_SPACESHIPS(false),
 	m_bGLOBAL_ALLIES_BLOCK_BLOCKADES(false),
 	m_bGLOBAL_SHORT_EMBARKED_BLOCKADES(false),
@@ -67,6 +68,7 @@ CustomMods::CustomMods() :
 	m_bEVENTS_ACQUIRE_BELIEFS(false),
 	m_bEVENTS_CITY(false),
 	m_bEVENTS_PARADROPS(false),
+	m_bEVENTS_UNIT_PREKILL(false),
 	m_bEVENTS_CAN_MOVE_INTO(false),
 	m_bEVENTS_UNIT_UPGRADES(false),
 	m_bEVENTS_WAR_AND_PEACE(false),
@@ -91,6 +93,7 @@ CustomMods::CustomMods() :
 	m_bBUGFIX_FREE_FOOD_BUILDING(false),
 	m_bBUGFIX_NAVAL_FREE_UNITS(false),
 	m_bBUGFIX_NAVAL_NEAREST_WATER(false),
+	m_bBUGFIX_CITY_STACKING(false),
 	m_bBUGFIX_BARB_CAMP_TERRAINS(false),
 	m_bBUGFIX_REMOVE_GHOST_ROUTES(false),
 	m_bBUGFIX_UNITS_AWAKE_IN_DANGER(false),
@@ -145,6 +148,7 @@ int CustomMods::getOption(const char* szOption) {
 		m_bGLOBAL_CS_UPGRADES                     = (m_options[string("GLOBAL_CS_UPGRADES")] == 1);
 		m_bGLOBAL_CS_RAZE_RARELY                  = (m_options[string("GLOBAL_CS_RAZE_RARELY")] == 1);
 		m_bGLOBAL_CS_GIFTS                        = (m_options[string("GLOBAL_CS_GIFTS")] == 1);
+		m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES         = (m_options[string("GLOBAL_NO_FOLLOWUP_FROM_CITIES")] == 1);
 		m_bGLOBAL_NO_CONQUERED_SPACESHIPS         = (m_options[string("GLOBAL_NO_CONQUERED_SPACESHIPS")] == 1);
 		m_bGLOBAL_ALLIES_BLOCK_BLOCKADES          = (m_options[string("GLOBAL_ALLIES_BLOCK_BLOCKADES")] == 1);
 		m_bGLOBAL_SHORT_EMBARKED_BLOCKADES        = (m_options[string("GLOBAL_SHORT_EMBARKED_BLOCKADES")] == 1);
@@ -194,6 +198,7 @@ int CustomMods::getOption(const char* szOption) {
 		m_bEVENTS_ACQUIRE_BELIEFS                 = (m_options[string("EVENTS_ACQUIRE_BELIEFS")] == 1);
 		m_bEVENTS_CITY                            = (m_options[string("EVENTS_CITY")] == 1);
 		m_bEVENTS_PARADROPS                       = (m_options[string("EVENTS_PARADROPS")] == 1);
+		m_bEVENTS_UNIT_PREKILL                    = (m_options[string("EVENTS_UNIT_PREKILL")] == 1);
 		m_bEVENTS_CAN_MOVE_INTO                   = (m_options[string("EVENTS_CAN_MOVE_INTO")] == 1);
 		m_bEVENTS_UNIT_UPGRADES                   = (m_options[string("EVENTS_UNIT_UPGRADES")] == 1);
 		m_bEVENTS_WAR_AND_PEACE                   = (m_options[string("EVENTS_WAR_AND_PEACE")] == 1);
@@ -218,6 +223,7 @@ int CustomMods::getOption(const char* szOption) {
 		m_bBUGFIX_FREE_FOOD_BUILDING              = (m_options[string("BUGFIX_FREE_FOOD_BUILDING")] == 1);
 		m_bBUGFIX_NAVAL_FREE_UNITS                = (m_options[string("BUGFIX_NAVAL_FREE_UNITS")] == 1);
 		m_bBUGFIX_NAVAL_NEAREST_WATER             = (m_options[string("BUGFIX_NAVAL_NEAREST_WATER")] == 1);
+		m_bBUGFIX_CITY_STACKING                   = (m_options[string("BUGFIX_CITY_STACKING")] == 1);
 		m_bBUGFIX_BARB_CAMP_TERRAINS              = (m_options[string("BUGFIX_BARB_CAMP_TERRAINS")] == 1);
 		m_bBUGFIX_REMOVE_GHOST_ROUTES             = (m_options[string("BUGFIX_REMOVE_GHOST_ROUTES")] == 1);
 		m_bBUGFIX_UNITS_AWAKE_IN_DANGER           = (m_options[string("BUGFIX_UNITS_AWAKE_IN_DANGER")] == 1);

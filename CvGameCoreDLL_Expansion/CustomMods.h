@@ -17,7 +17,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xc8433b33, 0xc85a, 0x4ecb, { 0x96, 0xa2, 0x8a, 0x14, 0x88, 0x3d, 0x1b, 0x69 }} // {C8433B33-C85A-4ecb-96A2-8A14883D1B69}
 #define MOD_DLL_NAME "Pick'N'Mix GandK DLL"
-#define MOD_DLL_VERSION "17"
+#define MOD_DLL_VERSION "18"
 #define MOD_DLL_BUILD_NAME ""
 
 
@@ -60,6 +60,8 @@
 #define MOD_GLOBAL_CS_RAZE_RARELY                   gCustomMods.isGLOBAL_CS_RAZE_RARELY()
 // City States give different gifts depending on their type (cultural, religious, maritime, etc)
 #define MOD_GLOBAL_CS_GIFTS                         gCustomMods.isGLOBAL_CS_GIFTS()
+// Units attacking from cities, forts or citadels will not follow-up if they kill the defender
+#define MOD_GLOBAL_NO_FOLLOWUP_FROM_CITIES          gCustomMods.isGLOBAL_NO_FOLLOWUP_FROM_CITIES()
 // Remove assembled spaceship parts from conquered capitals
 #define MOD_GLOBAL_NO_CONQUERED_SPACESHIPS          gCustomMods.isGLOBAL_NO_CONQUERED_SPACESHIPS()
 // Adjacent allied ships block blockades by enemy ships 2 or more tiles away
@@ -180,6 +182,10 @@
 //   GameEvents.ParadropAt.Add(function(iPlayer, iUnit, iFromX, iFromY, iToX, iToY) end)
 #define MOD_EVENTS_PARADROPS                        gCustomMods.isEVENTS_PARADROPS()
 
+// Event sent just before a unit is killed (via CvUnit::kill())
+//   GameEvents.UnitPrekill.Add(function(iPlayer, iUnit, iUnitType, iX, iY, bDelay, iByPlayer) end)
+#define MOD_EVENTS_UNIT_PREKILL                     gCustomMods.isEVENTS_UNIT_PREKILL()
+
 // Event sent to ascertain if a unit can move into a given plot - VERY, VERY CPU INTENSIVE!!!
 //   GameEvents.CanMoveInto.Add(function(iPlayer, iUnit, iPlotX, iPlotY, bAttack, bDeclareWar) return true end)
 #define MOD_EVENTS_CAN_MOVE_INTO                    gCustomMods.isEVENTS_CAN_MOVE_INTO()
@@ -259,6 +265,8 @@
 #define MOD_BUGFIX_NAVAL_FREE_UNITS                 gCustomMods.isBUGFIX_NAVAL_FREE_UNITS()
 // Fixes the bug where the naval units jump to the nearest city and not the nearest available water plot
 #define MOD_BUGFIX_NAVAL_NEAREST_WATER              gCustomMods.isBUGFIX_NAVAL_NEAREST_WATER()
+// Fixes the bug where stacked ranged units may attack out of cities but melee units may not
+#define MOD_BUGFIX_CITY_STACKING                    gCustomMods.isBUGFIX_CITY_STACKING()
 // Fixes the bug where Barb Camps ignore the ValidTerrains and ValidFeatures tables
 #define MOD_BUGFIX_BARB_CAMP_TERRAINS               gCustomMods.isBUGFIX_BARB_CAMP_TERRAINS()
 // Fixes the bug where you can't remove roads in no-mans-land originally built by a now dead player
@@ -354,6 +362,7 @@ public:
 	inline bool isGLOBAL_CS_UPGRADES()                      { return m_bGLOBAL_CS_UPGRADES; }
 	inline bool isGLOBAL_CS_RAZE_RARELY()                   { return m_bGLOBAL_CS_RAZE_RARELY; }
 	inline bool isGLOBAL_CS_GIFTS()                         { return m_bGLOBAL_CS_GIFTS; }
+	inline bool isGLOBAL_NO_FOLLOWUP_FROM_CITIES()          { return m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES; }
 	inline bool isGLOBAL_NO_CONQUERED_SPACESHIPS()          { return m_bGLOBAL_NO_CONQUERED_SPACESHIPS; }
 	inline bool isGLOBAL_ALLIES_BLOCK_BLOCKADES()           { return m_bGLOBAL_ALLIES_BLOCK_BLOCKADES; }
 	inline bool isGLOBAL_SHORT_EMBARKED_BLOCKADES()         { return m_bGLOBAL_SHORT_EMBARKED_BLOCKADES; }
@@ -403,6 +412,7 @@ public:
 	inline bool isEVENTS_ACQUIRE_BELIEFS()                  { return m_bEVENTS_ACQUIRE_BELIEFS; }
 	inline bool isEVENTS_CITY()                             { return m_bEVENTS_CITY; }
 	inline bool isEVENTS_PARADROPS()                        { return m_bEVENTS_PARADROPS; }
+	inline bool isEVENTS_UNIT_PREKILL()                     { return m_bEVENTS_UNIT_PREKILL; }
 	inline bool isEVENTS_CAN_MOVE_INTO()                    { return m_bEVENTS_CAN_MOVE_INTO; }
 	inline bool isEVENTS_UNIT_UPGRADES()                    { return m_bEVENTS_UNIT_UPGRADES; }
 	inline bool isEVENTS_WAR_AND_PEACE()                    { return m_bEVENTS_WAR_AND_PEACE; }
@@ -427,6 +437,7 @@ public:
 	inline bool isBUGFIX_FREE_FOOD_BUILDING()               { return m_bBUGFIX_FREE_FOOD_BUILDING; }
 	inline bool isBUGFIX_NAVAL_FREE_UNITS()                 { return m_bBUGFIX_NAVAL_FREE_UNITS; }
 	inline bool isBUGFIX_NAVAL_NEAREST_WATER()              { return m_bBUGFIX_NAVAL_NEAREST_WATER; }
+	inline bool isBUGFIX_CITY_STACKING()                    { return m_bBUGFIX_CITY_STACKING; }
 	inline bool isBUGFIX_BARB_CAMP_TERRAINS()               { return m_bBUGFIX_BARB_CAMP_TERRAINS; }
 	inline bool isBUGFIX_REMOVE_GHOST_ROUTES()              { return m_bBUGFIX_REMOVE_GHOST_ROUTES; }
 	inline bool isBUGFIX_UNITS_AWAKE_IN_DANGER()            { return m_bBUGFIX_UNITS_AWAKE_IN_DANGER; }
@@ -454,6 +465,7 @@ protected:
 	bool m_bGLOBAL_CS_UPGRADES;
 	bool m_bGLOBAL_CS_RAZE_RARELY;
 	bool m_bGLOBAL_CS_GIFTS;
+	bool m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES;
 	bool m_bGLOBAL_NO_CONQUERED_SPACESHIPS;
 	bool m_bGLOBAL_ALLIES_BLOCK_BLOCKADES;
 	bool m_bGLOBAL_SHORT_EMBARKED_BLOCKADES;
@@ -503,6 +515,7 @@ protected:
 	bool m_bEVENTS_ACQUIRE_BELIEFS;
 	bool m_bEVENTS_CITY;
 	bool m_bEVENTS_PARADROPS;
+	bool m_bEVENTS_UNIT_PREKILL;
 	bool m_bEVENTS_CAN_MOVE_INTO;
 	bool m_bEVENTS_UNIT_UPGRADES;
 	bool m_bEVENTS_WAR_AND_PEACE;
@@ -527,6 +540,7 @@ protected:
 	bool m_bBUGFIX_FREE_FOOD_BUILDING;
 	bool m_bBUGFIX_NAVAL_FREE_UNITS;
 	bool m_bBUGFIX_NAVAL_NEAREST_WATER;
+	bool m_bBUGFIX_CITY_STACKING;
 	bool m_bBUGFIX_BARB_CAMP_TERRAINS;
 	bool m_bBUGFIX_REMOVE_GHOST_ROUTES;
 	bool m_bBUGFIX_UNITS_AWAKE_IN_DANGER;

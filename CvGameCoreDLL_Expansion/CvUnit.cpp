@@ -1265,6 +1265,25 @@ void CvUnit::kill(bool bDelay, PlayerTypes ePlayer /*= NO_PLAYER*/)
 			}
 		}
 	}
+	
+#if defined(MOD_EVENTS_UNIT_PREKILL)
+	if (MOD_EVENTS_UNIT_PREKILL) {
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if (pkScriptSystem) {
+			CvLuaArgsHandle args;
+			args->Push(((int)getOwner()));
+			args->Push(GetID());
+			args->Push(getUnitType());
+			args->Push(getX());
+			args->Push(getY());
+			args->Push(bDelay);
+			args->Push(ePlayer);
+
+			bool bResult;
+			LuaSupport::CallHook(pkScriptSystem, "UnitPrekill", args.get(), bResult);
+		}
+	}
+#endif
 
 	if(bDelay)
 	{
@@ -17341,6 +17360,14 @@ bool CvUnit::canRangeStrike() const
 		return false;
 	}
 
+#if defined(MOD_BUGFIX_CITY_STACKING)
+	// Can't attack out of Cities if there are more units of the same domain type than the stacking limit permits
+	if(MOD_BUGFIX_CITY_STACKING && plot()->isCity() && plot()->getNumFriendlyUnitsOfType(this, true) > GC.getPLOT_UNIT_LIMIT())
+	{
+		return false;
+	}
+#endif
+
 	return true;
 }
 
@@ -17852,7 +17879,11 @@ ActivityTypes CvUnit::GetActivityType() const
 
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
+void CvUnit::SetActivityType(ActivityTypes eNewValue, bool bClearFortify)
+#else
 void CvUnit::SetActivityType(ActivityTypes eNewValue)
+#endif
 {
 	VALIDATE_OBJECT
 	CvPlot* pPlot;
@@ -17868,7 +17899,11 @@ void CvUnit::SetActivityType(ActivityTypes eNewValue)
 		m_eActivityType = eNewValue;
 
 		// If we're waking up a Unit then remove it's fortification bonus
+#if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
+		if(eNewValue == ACTIVITY_AWAKE && bClearFortify)
+#else
 		if(eNewValue == ACTIVITY_AWAKE)
+#endif
 		{
 			setFortifyTurns(0);
 		}
@@ -19147,11 +19182,22 @@ bool CvUnit::IsCanAttackWithMoveNow() const
 		return false;
 	}
 
-	// Can't attack out of Cities if there is more than 1 combat unit in it
-	if(plot()->GetNumCombatUnits() > 1 && plot()->isCity())
-	{
-		return false;
+#if defined(MOD_BUGFIX_CITY_STACKING)
+	// Can't attack out of Cities if there are more units of the same domain type than the stacking limit permits
+	if(MOD_BUGFIX_CITY_STACKING) {
+		if (plot()->isCity() && plot()->getNumFriendlyUnitsOfType(this, true) > GC.getPLOT_UNIT_LIMIT()) {
+			return false;
+		}
+	} else {
+#endif
+		// Can't attack out of Cities if there is more than 1 combat unit in it
+		if(plot()->GetNumCombatUnits() > 1 && plot()->isCity())
+		{
+			return false;
+		}
+#if defined(MOD_BUGFIX_CITY_STACKING)
 	}
+#endif
 
 	return true;
 }

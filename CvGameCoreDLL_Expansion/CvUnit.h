@@ -122,7 +122,11 @@ public:
 	bool IsDoingPartialMove() const;
 
 	ActivityTypes GetActivityType() const;
+#if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
+	void SetActivityType(ActivityTypes eNewValue, bool bClearFortify = true);
+#else
 	void SetActivityType(ActivityTypes eNewValue);
+#endif
 
 	AutomateTypes GetAutomateType() const;
 	bool IsAutomated() const;

@@ -238,10 +238,25 @@ void CvUnitCombat::GenerateMeleeCombatInfo(CvUnit& kAttacker, CvUnit* pkDefender
 				pkCombatInfo->setDefenderCaptured(true);
 			}
 		}
+
+#if defined(MOD_GLOBAL_NO_FOLLOWUP_FROM_CITIES)
+		if (MOD_GLOBAL_NO_FOLLOWUP_FROM_CITIES) {
+			// If the attacker is in a city, fort or citadel, don't advance
+			static ImprovementTypes eImprovementFort = (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_FORT");
+			static ImprovementTypes eImprovementCitadel = (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_CITADEL");
+			CvPlot* attackPlot = kAttacker.plot();
+
+			if (attackPlot->isCity() || attackPlot->getImprovementType() == eImprovementFort || attackPlot->getImprovementType() == eImprovementCitadel) {
+				CUSTOMLOG("Attacker %s is in a city/fort/citadel at (%i, %i) - they will not follow up", kAttacker.getName().GetCString(), attackPlot->getX(), attackPlot->getY());
+				bAdvance = false;
+			}
+		}
+#endif
+
 		pkCombatInfo->setAttackerAdvances(bAdvance);
 		pkCombatInfo->setDefenderRetaliates(true);
 	}
-
+	
 	gDLL->getInterfaceIFace()->setDirty(UnitInfo_DIRTY_BIT, true);
 }
 
@@ -2655,9 +2670,10 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::Attack(CvUnit& kAttacker, CvPlot& targ
 	kAttacker.SetAutomateType(NO_AUTOMATE);
 	pDefender->SetAutomateType(NO_AUTOMATE);
 #if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
+	// We want to "wake up" a unit that is being attacked by a hidden enemy (probably being bombed, indirect naval fire,
+	// or sneaky long-range archers) so the player can consider what to do with them, but without removing any fortification bonus!
 	if (MOD_BUGFIX_UNITS_AWAKE_IN_DANGER) {
-		// Wake units that are under active attack (probably being bombed, indirect naval fire, or sneaky long-range archers)
-		pDefender->SetActivityType(ACTIVITY_AWAKE); 
+		pDefender->SetActivityType(ACTIVITY_AWAKE, false); 
 	}
 #endif
 
@@ -2875,8 +2891,7 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackRanged(CvUnit& kAttacker, int iX
 		pDefender->SetAutomateType(NO_AUTOMATE);
 #if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
 		if (MOD_BUGFIX_UNITS_AWAKE_IN_DANGER) {
-			// Wake units that are under active attack (probably being bombed, indirect naval fire, or sneaky long-range archers)
-			pDefender->SetActivityType(ACTIVITY_AWAKE); 
+			pDefender->SetActivityType(ACTIVITY_AWAKE, false); 
 		}
 #endif
 
@@ -2975,8 +2990,7 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackAir(CvUnit& kAttacker, CvPlot& t
 		pDefender->SetAutomateType(NO_AUTOMATE);
 #if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
 		if (MOD_BUGFIX_UNITS_AWAKE_IN_DANGER) {
-			// Wake units that are under active attack (probably being bombed, indirect naval fire, or sneaky long-range archers)
-			pDefender->SetActivityType(ACTIVITY_AWAKE); 
+			pDefender->SetActivityType(ACTIVITY_AWAKE, false); 
 		}
 #endif
 
@@ -3081,8 +3095,7 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackAirSweep(CvUnit& kAttacker, CvPl
 		pkDefender->SetAutomateType(NO_AUTOMATE);
 #if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
 		if (MOD_BUGFIX_UNITS_AWAKE_IN_DANGER) {
-			// Wake units that are under active attack (probably being bombed, indirect naval fire, or sneaky long-range archers)
-			pkDefender->SetActivityType(ACTIVITY_AWAKE); 
+			pkDefender->SetActivityType(ACTIVITY_AWAKE, false); 
 		}
 #endif
 		CvAssertMsg(!kAttacker.isDelayedDeath() && !pkDefender->isDelayedDeath(), "Trying to battle and one of the units is already dead!");

@@ -4128,6 +4128,7 @@ void CvPlayer::DoUnitReset()
 		pLoopUnit->SetIgnoreDangerWakeup(false);
 		pLoopUnit->setMadeAttack(false);
 		pLoopUnit->setMadeInterception(false);
+		
 
 		if(!isHuman())
 		{
@@ -21108,9 +21109,13 @@ void CvPlayer::createGreatGeneral(UnitTypes eGreatPersonUnit, int iX, int iY)
 	}
 
 #if defined(MOD_GLOBAL_LOCAL_GENERALS)
-	// TODO - WH - if there is an embarked unit on this plot, relocate the Great General
-
 	CvPlot* pPlot = pGreatPeopleUnit->plot();
+
+	// In rare cases we can gain the general from an embarked unit being attacked, or from a hovering unit over coast
+	// so if this plot is water, relocate the Great General
+	if (pPlot->isWater()) {
+		pGreatPeopleUnit->jumpToNearestValidPlot();
+	}
 #else
 	CvPlot* pPlot = GC.getMap().plot(iX, iY);
 #endif
