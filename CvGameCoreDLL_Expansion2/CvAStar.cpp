@@ -924,7 +924,7 @@ int PathDestValid(int iToX, int iToY, const void* pointer, CvAStar* finder)
 		CvCity* pCity = pToPlot->getPlotCity();
 		if(pCity)
 		{
-			if(pCacheData->getOwner() != pCity->getOwner() && !GET_TEAM(eTeam).isAtWar(pCity->getTeam()) && !(finder->GetInfo() & MOVE_IGNORE_STACKING))
+			if(pCacheData->getOwner() != pCity->getOwner() && !GET_TEAM(eTeam).isAtWar(pCity->getTeam()) && !(finder->GetInfo() & MOVE_IGNORE_STACKING) && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY")) // RED
 			{
 				return FALSE;
 			}
@@ -1239,6 +1239,7 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 	int iUnitPlotLimit           = GC.getPLOT_UNIT_LIMIT();
 	bool bFromPlotOwned          = pFromPlot->isOwned();
 	TeamTypes eFromPlotTeam      = pFromPlot->getTeam();
+	bool bCanEnterForeignCity    = GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY");
 
 	// We have determined that this node is not the origin above (parent == NULL)
 	CvAStarNode* pNode = node;
@@ -1313,7 +1314,7 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 
 					if(kNodeCacheData.bIsRevealedToTeam)
 					{
-						if (kNodeCacheData.bContainsOtherFriendlyTeamCity && !(iFinderIgnoreStacking))
+						if (kNodeCacheData.bContainsOtherFriendlyTeamCity && !(iFinderIgnoreStacking) && !bCanEnterForeignCity)
 							return FALSE;
 					}
 				}
