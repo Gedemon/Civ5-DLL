@@ -3889,6 +3889,12 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 {
 	int iNumUnitsOfSameType = 0;
 
+	// RED <<<<<
+	// To do : limit based by unit domain & type of buildings in city...
+	if (isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))
+		return 0;
+	// RED >>>>>
+
 	bool bCombat = false;
 
 	// slewis - trying to break the 1upt for trade units
