@@ -3928,7 +3928,8 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 			if(!kUnitTeam.isAtWar(pLoopUnit->getTeam()))
 			{
 				// Units of the same type OR Units belonging to different civs
-				if(pUnit->getOwner() != pLoopUnit->getOwner() || pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked))
+				// RED : for air unit in foreign cities, we must allows units belonging to different civs
+				if ((pUnit->getOwner() != pLoopUnit->getOwner() && pUnit->getDomainType() != DOMAIN_AIR ) || (pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked) && (!GC.getGame().isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") || pUnit->getDomainType() != DOMAIN_AIR )))
 				{
 					// We should allow as many cargo units as we want
 					if(!pLoopUnit->isCargo())

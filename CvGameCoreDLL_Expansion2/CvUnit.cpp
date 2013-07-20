@@ -6018,6 +6018,23 @@ bool CvUnit::canRebaseAt(const CvPlot* pPlot, int iX, int iY) const
 		{
 			bCityToRebase = true;
 		}
+		// RED <<<<<
+		// Allow air units to rebase in friendly cities.
+		if(GC.getGame().isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") )
+		{
+			CvPlayer& pOwnerPlayer = GET_PLAYER(pToPlot->getPlotCity()->getOwner());
+			CvTeam& pOwnerTeam = GET_TEAM(pOwnerPlayer.getTeam());
+			bool bMinorOpenBorder = false;
+			if (pOwnerPlayer.isMinorCiv())
+			{
+				CvMinorCivAI* pMinorAI = GET_PLAYER(pOwnerTeam.getLeaderID()).GetMinorCivAI();
+				if (pMinorAI->GetEffectiveFriendshipWithMajor(getOwner()) >= pMinorAI->GetAlliesThreshold())
+					bMinorOpenBorder = true;
+			}
+			if ( pOwnerTeam.IsAllowsOpenBordersToTeam(getTeam()) || pOwnerPlayer.getTeam() == getTeam() || bMinorOpenBorder )
+				bCityToRebase = true;
+		}
+		// RED >>>>>
 	}
 
 	// Rebase onto Unit which can hold cargo
