@@ -451,11 +451,67 @@ void CvStartPositioner::SubdivideRegion(CvStartRegion region, int iNumDivisions)
 			break;
 		case 21:
 		case 22:
+		case 23:
+		case 24:
 			iNumDivides = 3;
 			iLaterSubdivisions = 8;
 			break;
+		case 25:
+		case 26:
+		case 27:
+			iNumDivides = 3;
+			iLaterSubdivisions = 9;
+			break;
+		case 28:
+		case 29:
+		case 30:
+			iNumDivides = 3;
+			iLaterSubdivisions = 10;
+			break;
+		case 31:
+		case 32:
+		case 33:
+		case 34:
+		case 35:
+		case 36:
+			iNumDivides = 3;
+			iLaterSubdivisions = 12;
+			break;
+		case 37:
+		case 38:
+		case 39:
+		case 40:
+		case 41:
+		case 42:
+		case 43:
+		case 44:
+		case 45:
+			iNumDivides = 3;
+			iLaterSubdivisions = 15;
+			break;
+		case 46:
+		case 47:
+		case 48:
+		case 49:
+		case 50:
+		case 51:
+		case 52:
+		case 53:
+		case 54:
+		case 55:
+		case 56:
+		case 57:
+		case 58:
+		case 59:
+		case 60:
+		case 61:
+		case 62:
+		case 63:
+			iNumDivides = 3;
+			iLaterSubdivisions = 21;
+			break;
 		default:
-			CvAssertMsg(false, "Trying to create regions for more than 18 major civs.");
+			CvAssertMsg(false, "Trying to create regions for more than 63 major civs.");
 		}
 
 		if(iNumDivides == 2)

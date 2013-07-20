@@ -22,7 +22,7 @@
 #define MAX_CIV_PLAYERS										(63)
 #define MAX_CIV_TEAMS										(MAX_CIV_PLAYERS)
 
-#define MAX_MAJOR_CIVS										(22)
+#define MAX_MAJOR_CIVS										(34)
 #define MAX_MINOR_CIVS										(MAX_CIV_PLAYERS - MAX_MAJOR_CIVS)
 
 #define MAX_PLAYERS											(MAX_CIV_PLAYERS + 1)
