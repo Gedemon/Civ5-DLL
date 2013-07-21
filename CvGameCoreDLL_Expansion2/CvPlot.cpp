@@ -3890,6 +3890,14 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 	int iNumUnitsOfSameType = 0;
 
 	bool bCombat = false;
+	
+	// RED <<<<<
+	// Unlimited stack for this unit
+	if (pUnit->getUnitMaxStack() == -1 )
+	{
+		return 0;
+	}
+	// RED >>>>>
 
 	// slewis - trying to break the 1upt for trade units
 	if (pUnit->isTrade())
@@ -3916,6 +3924,14 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 	pUnitNode = headUnitNode();
 
 	int iPlotUnitLimit = GC.getPLOT_UNIT_LIMIT();
+
+	// RED <<<<<
+	// Specific stack limit for this unit
+	if (pUnit->getUnitMaxStack() > 0 )
+	{
+		iPlotUnitLimit = pUnit->getUnitMaxStack();
+	}
+	// RED >>>>>
 
 	while(pUnitNode != NULL)
 	{
