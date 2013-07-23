@@ -3753,7 +3753,7 @@ bool CvUnit::canHold(const CvPlot* pPlot) const // skip turn
 	VALIDATE_OBJECT
 	if(isHuman() && !getFortifyTurns())  // we aren't fortified
 	{
-		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))) // RED
+		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT());
 		{
 			return false;
 		}
@@ -3775,7 +3775,7 @@ bool CvUnit::canSleep(const CvPlot* pPlot) const
 
 	if(isHuman() && !getFortifyTurns())  // we aren't fortified
 	{
-		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))) // RED
+		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT());
 		{
 			return false;
 		}
@@ -3801,7 +3801,7 @@ bool CvUnit::canFortify(const CvPlot* pPlot) const
 	VALIDATE_OBJECT
 	if(isHuman() && !getFortifyTurns())  // we aren't fortified
 	{
-		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))) // RED
+		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT());
 		{
 			return false;
 		}
@@ -4709,7 +4709,7 @@ bool CvUnit::canSentry(const CvPlot* pPlot) const
 	VALIDATE_OBJECT
 	if(isHuman() && !getFortifyTurns())  // we aren't fortified
 	{
-		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))) // RED
+		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT());
 		{
 			return false;
 		}
@@ -8881,7 +8881,7 @@ bool CvUnit::CanUpgradeRightNow(bool bOnlyTestVisible) const
 	// Show the upgrade, but don't actually allow it
 	if(!bOnlyTestVisible)
 	{
-		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))) // RED
+		if(pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT());
 		{
 			return false;
 		}

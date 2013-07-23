@@ -2017,7 +2017,6 @@ void CvGame::updateTestEndTurn()
 				{
 					if(!pUnit->canHold(pUnit->plot()))
 					{
-						if (!(pUnit->plot()->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))) // RED
 						eEndTurnBlockingType = ENDTURN_BLOCKING_STACKED_UNITS;
 					}
 					else
