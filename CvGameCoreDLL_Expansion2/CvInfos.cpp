@@ -4728,6 +4728,9 @@ CvFeatureInfo::CvFeatureInfo() :
 	m_iInfluenceCost(0),
 	m_iAdvancedStartRemoveCost(0),
 	m_iTurnDamage(0),
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+	m_iExtraTurnDamage(0),
+#endif
 	m_iFirstFinderGold(0),
 	m_iInBorderHappiness(0),
 	m_iOccurrenceFrequency(0),
@@ -4820,6 +4823,13 @@ int CvFeatureInfo::getTurnDamage() const
 {
 	return m_iTurnDamage;
 }
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+//------------------------------------------------------------------------------
+int CvFeatureInfo::getExtraTurnDamage() const
+{
+	return m_iExtraTurnDamage;
+}
+#endif
 //------------------------------------------------------------------------------
 int CvFeatureInfo::getFirstFinderGold() const
 {
@@ -5005,6 +5015,9 @@ bool CvFeatureInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	m_iInfluenceCost = kResults.GetInt("InfluenceCost");
 	m_iAdvancedStartRemoveCost = kResults.GetInt("AdvancedStartRemoveCost");
 	m_iTurnDamage = kResults.GetInt("TurnDamage");
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+	m_iExtraTurnDamage = MOD_API_PLOT_BASED_DAMAGE ? kResults.GetInt("ExtraTurnDamage") : 0;
+#endif
 	m_iAppearanceProbability = kResults.GetInt("AppearanceProbability");
 	m_iDisappearanceProbability = kResults.GetInt("DisappearanceProbability");
 	m_iGrowthProbability = kResults.GetInt("Growth");
@@ -5170,6 +5183,10 @@ CvTerrainInfo::CvTerrainInfo() :
 	m_iBuildModifier(0),
 	m_iDefenseModifier(0),
 	m_iInfluenceCost(0),
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+	m_iTurnDamage(0),
+	m_iExtraTurnDamage(0),
+#endif
 	m_bWater(false),
 	m_bImpassable(false),
 	m_bFound(false),
@@ -5220,6 +5237,18 @@ int CvTerrainInfo::getInfluenceCost() const
 {
 	return m_iInfluenceCost;
 }
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+//------------------------------------------------------------------------------
+int CvTerrainInfo::getTurnDamage() const
+{
+	return m_iTurnDamage;
+}
+//------------------------------------------------------------------------------
+int CvTerrainInfo::getExtraTurnDamage() const
+{
+	return m_iExtraTurnDamage;
+}
+#endif
 //------------------------------------------------------------------------------
 bool CvTerrainInfo::isWater() const
 {
@@ -5313,6 +5342,10 @@ bool CvTerrainInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	m_iBuildModifier = kResults.GetInt("BuildModifier");
 	m_iDefenseModifier = kResults.GetInt("Defense");
 	m_iInfluenceCost = kResults.GetInt("InfluenceCost");
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+	m_iTurnDamage = MOD_API_PLOT_BASED_DAMAGE ? kResults.GetInt("TurnDamage") : 0;
+	m_iExtraTurnDamage = MOD_API_PLOT_BASED_DAMAGE ? kResults.GetInt("ExtraTurnDamage") : 0;
+#endif
 
 	const char* szTextVal = kResults.GetText("WorldSoundscapeAudioScript");
 	if(szTextVal != NULL)

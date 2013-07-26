@@ -8761,7 +8761,11 @@ bool CvTacticalAI::MoveToEmptySpaceTwoFromTarget(UnitHandle pUnit, CvPlot* pTarg
 	CvPlot* pLoopPlot;
 
 	// Look at spaces adjacent to target
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(int iI = 0; iI < AVG_CITY_PLOTS; iI++)
+#else
 	for(int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+#endif
 	{
 		pLoopPlot = plotCity(pTarget->getX(), pTarget->getY(), iI);
 		if(pLoopPlot != NULL && pLoopPlot->isWater() != bLand && plotDistance(pLoopPlot->getX(), pLoopPlot->getY(), pTarget->getX(), pTarget->getY() == 2))
@@ -10061,7 +10065,11 @@ int CvTacticalAI::ScoreCloseOnPlots(CvPlot* pTarget, bool bLandOnly)
 	// We'll store the hexes we've found here
 	m_TempTargets.clear();
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(int jJ = 0; jJ < AVG_CITY_PLOTS; jJ++)
+#else
 	for(int jJ = 0; jJ < NUM_CITY_PLOTS; jJ++)
+#endif
 	{
 		pPlot = plotCity(pTarget->getX(), pTarget->getY(), jJ);
 
@@ -10158,7 +10166,11 @@ void CvTacticalAI::ScoreHedgehogPlots(CvPlot* pTarget)
 	// We'll store the hexes we've found here
 	m_TempTargets.clear();
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(int jJ = 0; jJ < AVG_CITY_PLOTS; jJ++)
+#else
 	for(int jJ = 0; jJ < NUM_CITY_PLOTS; jJ++)
+#endif
 	{
 		pPlot = plotCity(pTarget->getX(), pTarget->getY(), jJ);
 

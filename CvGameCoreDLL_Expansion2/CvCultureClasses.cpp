@@ -2126,11 +2126,13 @@ void CvPlayerCulture::DoTurn()
 										if (!bDupe)
 										{
 											aiCityStateArtifact.push_back(eCreatingPlayer);
+#if !defined(NO_ACHIEVEMENTS)
 											if (aiCityStateArtifact.size() >= 10)
 											{
 												gDLL->UnlockAchievement(ACHIEVEMENT_XP2_35);
 												break;
 											}
+#endif
 										}
 									}
 								}
@@ -2181,10 +2183,12 @@ void CvPlayerCulture::DoTurn()
 				}
 			}
 
+#if !defined(NO_ACHIEVEMENTS)
 			if (iNumWorksInBroadcastTowers >= 10)
 			{
 				gDLL->UnlockAchievement(ACHIEVEMENT_XP2_38);
 			}
+#endif
 		}
 	}	
 
@@ -4372,10 +4376,12 @@ int CvCityCulture::GetThemingBonus(BuildingClassTypes eBuildingClass) const
 					{
 						iRtnValue = iRtnValue * (100 + iModifier) / 100;
 
+#if !defined(NO_ACHIEVEMENTS)
 						if (kPlayer.isHuman() && !GC.getGame().isGameMultiPlayer() && iRtnValue >= 16)
 						{
 							gDLL->UnlockAchievement(ACHIEVEMENT_XP2_40);
 						}
+#endif
 					}
 				}
 			}
@@ -4502,7 +4508,11 @@ int CvCityCulture::GetCultureFromNaturalWonders() const
 	CvPlot* pLoopPlot;
 
 	// Look at all workable Plots
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(int iPlotLoop = 0; iPlotLoop < m_pCity->GetNumWorkablePlots(); iPlotLoop++)
+#else
 	for(int iPlotLoop = 0; iPlotLoop < NUM_CITY_PLOTS; iPlotLoop++)
+#endif
 	{
 		if(iPlotLoop != CITY_HOME_PLOT)
 		{
@@ -4535,7 +4545,11 @@ int CvCityCulture::GetCultureFromImprovements() const
 	CvPlot* pLoopPlot;
 
 	// Look at all workable Plots
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(int iPlotLoop = 0; iPlotLoop < m_pCity->GetNumWorkablePlots(); iPlotLoop++)
+#else
 	for(int iPlotLoop = 0; iPlotLoop < NUM_CITY_PLOTS; iPlotLoop++)
+#endif
 	{
 		if(iPlotLoop != CITY_HOME_PLOT)
 		{

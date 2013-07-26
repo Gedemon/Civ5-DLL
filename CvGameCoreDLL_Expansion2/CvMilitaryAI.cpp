@@ -4522,8 +4522,14 @@ bool MilitaryAIHelpers::IsTestStrategy_EnoughAntiAirUnits(CvPlayer* pPlayer, int
 
 	if(bAnyAirforce)
 	{
+#if defined(MOD_CONFIG_AI_IN_XML)
+		// This original code simplifies to 4*iNumAA > iNumMelee
+		int iFactor = GC.getAI_CONFIG_MILITARY_MELEE_PER_AA();
+		return (iFactor*iNumAA > iNumMelee);
+#else
 		int iRatio = (iNumAA * 10) / max(1,iNumMelee+iNumAA);
 		return (iRatio > 2);
+#endif
 	}
 	else
 	{
@@ -4551,8 +4557,14 @@ bool MilitaryAIHelpers::IsTestStrategy_NeedAntiAirUnits(CvPlayer* pPlayer, int i
 
 	if(bAnyAirforce)
 	{
+#if defined(MOD_CONFIG_AI_IN_XML)
+		// This original code simplifies to 4*iNumAA <= iNumMelee
+		int iFactor = GC.getAI_CONFIG_MILITARY_MELEE_PER_AA();
+		return (iFactor*iNumAA <= iNumMelee);
+#else
 		int iRatio = (iNumAA * 10) / max(1,iNumMelee+iNumAA);
 		return (iRatio <= 2);
+#endif
 	}
 	else
 	{
@@ -4599,7 +4611,13 @@ bool MilitaryAIHelpers::IsTestStrategy_NeedAirCarriers(CvPlayer* pPlayer)
 		}
 	}
 
+#if defined(MOD_CONFIG_AI_IN_XML)
+	// Why would we ever want to load EVERY plane onto a carrier?
+	int iFactor = GC.getAI_CONFIG_MILITARY_AIRCRAFT_PER_CARRIER_SPACE();
+	if (iNumLoadableAirUnits > iFactor*iNumTotalCargoSpace)
+#else
 	if (iNumLoadableAirUnits > iNumTotalCargoSpace)
+#endif
 	{
 		return true;
 	}

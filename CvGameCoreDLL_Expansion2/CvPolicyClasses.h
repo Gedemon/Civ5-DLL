@@ -91,6 +91,9 @@ public:
 	int GetUnhappinessFromUnitsMod() const;
 	int GetNumExtraBuilders() const;
 	int GetPlotGoldCostMod() const;
+#if defined(MOD_POLICIES_CITY_WORKING)
+	int GetCityWorkingChange() const;
+#endif
 	int GetPlotCultureCostModifier() const;
 	int GetPlotCultureExponentModifier() const;
 	int GetNumCitiesPolicyCostDiscount() const;
@@ -104,6 +107,9 @@ public:
 	int GetStealTechSlowerModifier() const;
 	int GetStealTechFasterModifier() const;
 	int GetCatchSpiesModifier() const;
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	int GetConversionModifier() const;
+#endif
 	int GetGoldPerUnit() const;
 	int GetGoldPerMilitaryUnit() const;
 	int GetCityStrengthMod() const;
@@ -278,6 +284,9 @@ private:
 	int m_iUnhappinessFromUnitsMod;
 	int m_iNumExtraBuilders;
 	int m_iPlotGoldCostMod;
+#if defined(MOD_POLICIES_CITY_WORKING)
+	int m_iCityWorkingChange;
+#endif
 	int m_iPlotCultureCostModifier;
 	int m_iPlotCultureExponentModifier;
 	int m_iNumCitiesPolicyCostDiscount;
@@ -291,6 +300,9 @@ private:
 	int m_iStealTechSlowerModifier;
 	int m_iStealTechFasterModifier;
 	int m_iCatchSpiesModifier;
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	int m_iConversionModifier;
+#endif
 	int m_iGoldPerUnit;
 	int m_iGoldPerMilitaryUnit;
 	int m_iCityStrengthMod;
@@ -522,6 +534,9 @@ enum PolicyModifierType
 	POLICYMOD_STEAL_TECH_FASTER_MODIFIER,
 	POLICYMOD_THEMING_BONUS,
 	POLICYMOD_CITY_STATE_TRADE_CHANGE,
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+    POLICYMOD_CONVERSION_MODIFIER,
+#endif
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

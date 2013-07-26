@@ -365,6 +365,10 @@ void CvBarbarians::DoCamps()
 				{
 					if(!pLoopPlot->isImpassable() && !pLoopPlot->isMountain())
 					{
+#if defined(MOD_BUGFIX_BARB_CAMP_TERRAINS)
+						CvImprovementEntry* pkImprovementInfo = GC.getImprovementInfo(eCamp);
+						if(MOD_BUGFIX_BARB_CAMP_TERRAINS == false || pkImprovementInfo == NULL || (pkImprovementInfo->GetTerrainMakesValid(pLoopPlot->getTerrainType()) && pkImprovementInfo->GetFeatureMakesValid(pLoopPlot->getFeatureType()))) {
+#endif
 						if(!pLoopPlot->isOwned() && !pLoopPlot->isVisibleToCivTeam())
 						{
 							// JON: NO RESOURCES FOR NOW, MAY REPLACE WITH SOMETHING COOLER
@@ -487,6 +491,9 @@ void CvBarbarians::DoCamps()
 								}
 							}
 						}
+#if defined(MOD_BUGFIX_BARB_CAMP_TERRAINS)
+						}
+#endif
 					}
 				}
 			}

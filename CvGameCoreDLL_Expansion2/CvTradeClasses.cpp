@@ -94,6 +94,8 @@ bool CvGameTrade::CanCreateTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, Do
 	TeamTypes eOriginTeam = pOriginCity->getTeam();
 	TeamTypes eDestTeam = pDestCity->getTeam();
 
+	// TODO - WH - add a TRADE_CONNECTION_WONDER_RESOURCE
+	
 	if (eConnectionType == TRADE_CONNECTION_INTERNATIONAL)
 	{
 		// can't have an international trade route within the same team
@@ -2566,6 +2568,7 @@ bool CvPlayerTrade::CreateTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, Dom
 		}
 	}
 
+#if !defined(NO_ACHIEVEMENTS)
 	if (m_pPlayer->isHuman() && !GC.getGame().isGameMultiPlayer())
 	{
 		bool bConnectedToArabs = false;
@@ -2620,6 +2623,7 @@ bool CvPlayerTrade::CreateTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, Dom
 			gDLL->UnlockAchievement(ACHIEVEMENT_XP2_29);
 		}
 	}
+#endif
 
 	return true;
 }
@@ -3101,10 +3105,12 @@ bool CvPlayerTrade::PlunderTradeRoute(int iTradeConnectionID)
 		}
 	}
 
+#if !defined(NO_ACHIEVEMENTS)
 	if (eDomain == DOMAIN_LAND && m_pPlayer->isHuman() && !GC.getGame().isGameMultiPlayer())
 	{
 		gDLL->UnlockAchievement(ACHIEVEMENT_XP2_28);
 	}
+#endif
 
 	return true;
 }

@@ -101,11 +101,19 @@ void CvDllNetMessageHandler::ResponseChangeWar(PlayerTypes ePlayer, TeamTypes eR
 
 	if(bWar)
 	{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+		kTeam.declareWar(eRivalTeam, false, ePlayer);
+#else
 		kTeam.declareWar(eRivalTeam);
+#endif
 	}
 	else
 	{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+		kTeam.makePeace(eRivalTeam, true, false, ePlayer);
+#else
 		kTeam.makePeace(eRivalTeam);
+#endif
 	}
 }
 //------------------------------------------------------------------------------
@@ -945,6 +953,21 @@ void CvDllNetMessageHandler::ResponseSellBuilding(PlayerTypes ePlayer, int iCity
 	if(pCity)
 	{
 		pCity->GetCityBuildings()->DoSellBuilding(eBuilding);
+
+#if defined(MOD_EVENTS_CITY)
+		if (MOD_EVENTS_CITY) {
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem) {
+				CvLuaArgsHandle args;
+				args->Push(ePlayer);
+				args->Push(iCityID);
+				args->Push(eBuilding);
+
+				bool bResult;
+				LuaSupport::CallHook(pkScriptSystem, "CitySoldBuilding", args.get(), bResult);
+			}
+		}
+#endif
 	}
 }
 //------------------------------------------------------------------------------

@@ -1305,7 +1305,11 @@ int CvDealAI::GetCityValue(int iX, int iY, bool bFromMe, PlayerTypes eOtherPlaye
 		int iGoldValueOfPlots = 0;
 		int iGoldValueOfImprovedPlots = 0;
 		int iGoldValueOfResourcePlots = 0;
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		for(int iI = 0; iI < pCity->GetNumWorkablePlots(); iI++)
+#else
 		for(int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+#endif
 		{
 			CvPlot* pLoopPlot = pCity->GetCityCitizens()->GetCityPlotFromIndex(iI);
 			if(NULL != pLoopPlot && pCity->GetID() == pLoopPlot->GetCityPurchaseID())

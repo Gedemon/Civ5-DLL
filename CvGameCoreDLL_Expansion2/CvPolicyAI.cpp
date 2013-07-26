@@ -560,6 +560,7 @@ void CvPolicyAI::DoConsiderIdeologySwitch(CvPlayer* pPlayer)
 			pPlayer->SetAnarchyNumTurns(GC.getSWITCH_POLICY_BRANCHES_ANARCHY_TURNS());
 			pPlayer->GetPlayerPolicies()->DoSwitchIdeologies(ePreferredIdeology);	
 
+#if !defined(NO_ACHIEVEMENTS)
 			if (ePreferredIdeology == GC.getPOLICY_BRANCH_FREEDOM() && eCurrentIdeology == GC.getPOLICY_BRANCH_ORDER())
 			{
 				if (GET_PLAYER(eMostPressure).GetID() == GC.getGame().getActivePlayer())
@@ -567,6 +568,7 @@ void CvPolicyAI::DoConsiderIdeologySwitch(CvPlayer* pPlayer)
 					gDLL->UnlockAchievement(ACHIEVEMENT_XP2_39);
 				}
 			}
+#endif
 		}
 	}
 }

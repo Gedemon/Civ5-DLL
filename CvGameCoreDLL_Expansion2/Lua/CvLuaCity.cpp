@@ -163,6 +163,9 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(IsOriginalCapital);
 	Method(IsOriginalMajorCapital);
 	Method(IsCoastal);
+#if defined(MOD_API_EXTENSIONS)
+	Method(IsAddsFreshWater);
+#endif
 
 	Method(FoodConsumption);
 	Method(FoodDifference);
@@ -287,6 +290,11 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(ChangeWonderProductionModifier);
 
 	Method(GetLocalResourceWonderProductionMod);
+
+#if defined(MOD_BUILDINGS_CITY_WORKING)
+	Method(GetCityWorkingChange);
+	Method(ChangeCityWorkingChange);
+#endif
 
 	Method(ChangeHealRate);
 
@@ -444,6 +452,9 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(GetNumRealBuilding);
 	Method(SetNumRealBuilding);
 	Method(GetNumFreeBuilding);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(SetNumFreeBuilding);
+#endif
 	Method(IsBuildingSellable);
 	Method(GetSellBuildingRefund);
 	Method(GetTotalBaseBuildingMaintenance);
@@ -462,6 +473,11 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 
 	Method(GetBuildingEspionageModifier);
 	Method(GetBuildingGlobalEspionageModifier);
+
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	Method(GetBuildingConversionModifier);
+	Method(GetBuildingGlobalConversionModifier);
+#endif
 
 	Method(GetNumCityPlots);
 	Method(CanPlaceUnitHere);
@@ -1569,6 +1585,14 @@ int CvLuaCity::lIsCoastal(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvCity::isCoastal);
 }
+#if defined(MOD_API_EXTENSIONS)
+//------------------------------------------------------------------------------
+//bool isAddsFreshWater();
+int CvLuaCity::lIsAddsFreshWater(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvCity::isAddsFreshWater);
+}
+#endif
 //------------------------------------------------------------------------------
 //int foodConsumption(bool bNoAngry, int iExtra);
 int CvLuaCity::lFoodConsumption(lua_State* L)
@@ -2504,6 +2528,22 @@ int CvLuaCity::lGetLocalResourceWonderProductionMod(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvCity::GetLocalResourceWonderProductionMod);
 }
+
+#if defined(MOD_BUILDINGS_CITY_WORKING)
+//------------------------------------------------------------------------------
+//int getCityWorkingChange();
+int CvLuaCity::lGetCityWorkingChange(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvCity::GetCityWorkingChange);
+}
+
+//------------------------------------------------------------------------------
+//void changeCityWorkingChange(int iChange);
+int CvLuaCity::lChangeCityWorkingChange(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvCity::changeCityWorkingChange);
+}
+#endif
 
 //------------------------------------------------------------------------------
 //void changeHealRate(int iChange);
@@ -3638,6 +3678,22 @@ int CvLuaCity::lGetNumFreeBuilding(lua_State* L)
 	}
 	return 1;
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//void setNumRealBuilding(BuildingTypes iIndex, int iNewValue);
+int CvLuaCity::lSetNumFreeBuilding(lua_State* L)
+{
+	CvCity* pkCity = GetInstance(L);
+	const BuildingTypes iIndex = toValue<BuildingTypes>(L, 2);
+	if(iIndex != NO_BUILDING)
+	{
+		const int iNewValue = lua_tointeger(L, 3);
+		pkCity->GetCityBuildings()->SetNumFreeBuilding(iIndex, iNewValue);
+	}
+
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //bool IsBuildingSellable(BuildingTypes iIndex);
 int CvLuaCity::lIsBuildingSellable(lua_State* L)
@@ -3853,6 +3909,43 @@ int CvLuaCity::lGetBuildingGlobalEspionageModifier(lua_State* L)
 	return 1;
 }
 
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+//int GetBuildingConversionModifier(BuildingClassTypes eBuildingClass)
+int CvLuaCity::lGetBuildingConversionModifier(lua_State* L)
+{
+	//CvCity* pkCity = GetInstance(L);
+	const BuildingTypes eBuilding = (BuildingTypes) lua_tointeger(L, 2);
+	CvBuildingEntry* pBuildingInfo = GC.getBuildingInfo(eBuilding);
+	CvAssertMsg(pBuildingInfo, "pBuildingInfo is null!");
+	if (pBuildingInfo)
+	{
+		lua_pushinteger(L, pBuildingInfo->GetConversionModifier());
+	}
+	else
+	{
+		lua_pushinteger(L, 0);
+	}
+	return 1;
+}
+
+// int GetBuildingGlobalConversionModifier(BuildingClassTypes eBuildingClass)
+int CvLuaCity::lGetBuildingGlobalConversionModifier(lua_State* L)
+{
+	const BuildingTypes eBuilding = (BuildingTypes)lua_tointeger(L, 2);
+	CvBuildingEntry* pBuildingInfo = GC.getBuildingInfo(eBuilding);
+	CvAssertMsg(pBuildingInfo, "pBuildingInfo is null!");
+	if (pBuildingInfo)
+	{
+		lua_pushinteger(L, pBuildingInfo->GetGlobalConversionModifier());
+	}
+	else
+	{
+		lua_pushinteger(L, 0);
+	}
+	return 1;
+}
+#endif
+
 //------------------------------------------------------------------------------
 //void setBuildingYieldChange(BuildingClassTypes eBuildingClass, YieldTypes eYield, int iChange);
 int CvLuaCity::lSetBuildingYieldChange(lua_State* L)
@@ -3870,7 +3963,12 @@ int CvLuaCity::lSetBuildingYieldChange(lua_State* L)
 //------------------------------------------------------------------------------
 int CvLuaCity::lGetNumCityPlots(lua_State* L)
 {
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	CvCity* pkCity = GetInstance(L);
+	lua_pushinteger(L, pkCity->GetNumWorkablePlots());
+#else
 	lua_pushinteger(L, NUM_CITY_PLOTS);
+#endif
 	return 1;
 }
 

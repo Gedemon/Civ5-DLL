@@ -1276,7 +1276,11 @@ void CvGame::initDiplomacy()
 				const TeamTypes eTeamB = static_cast<TeamTypes>(iJ);
 				if(iI != iJ)
 				{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+					kTeamA.declareWar(eTeamB, false, kTeamA.getLeaderID());
+#else
 					kTeamA.declareWar(eTeamB);
+#endif
 				}
 			}
 		}
@@ -1931,6 +1935,24 @@ bool CvGame::hasTurnTimerExpired(PlayerTypes playerID, bool gameLoopUpdate)
 						CvAssertMsg(playerID == getActivePlayer(), "Tried to force end the turn of a player who isn't the active player.");
 						curPlayer.GetPlayerAchievements().EndTurn();
 
+#if defined(MOD_EVENTS_RED_TURN)
+			if (MOD_EVENTS_RED_TURN)
+			// RED <<<<<
+			{
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if(pkScriptSystem)
+				{	
+					CvLuaArgsHandle args;
+
+					args->Push(getActivePlayer());
+
+					bool bResult;
+					LuaSupport::CallHook(pkScriptSystem, "TurnComplete", args.get(), bResult);
+				}
+			}
+			// RED >>>>>
+#endif
+
 						gDLL->sendTurnComplete();
 						CvAchievementUnlocker::EndTurn();
 					}
@@ -1986,6 +2008,25 @@ void CvGame::updateTestEndTurn()
 					if(pkIface->canEndTurn() && gDLL->allAICivsProcessedThisTurn() && allUnitAIProcessed() && !gDLL->HasSentTurnComplete())
 					{
 						activePlayer.GetPlayerAchievements().EndTurn();
+
+#if defined(MOD_EVENTS_RED_TURN)
+						if (MOD_EVENTS_RED_TURN)
+						// RED <<<<<
+						{
+							ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+							if(pkScriptSystem)
+							{	
+								CvLuaArgsHandle args;
+
+								args->Push(getActivePlayer());
+
+								bool bResult;
+								LuaSupport::CallHook(pkScriptSystem, "TurnComplete", args.get(), bResult);
+							}
+						}
+						// RED >>>>>
+#endif
+
 						gDLL->sendTurnComplete();
 						CvAchievementUnlocker::EndTurn();
 						m_endTurnTimer.Start();
@@ -2068,6 +2109,25 @@ void CvGame::updateTestEndTurn()
 								if(!gDLL->HasSentTurnComplete() && gDLL->allAICivsProcessedThisTurn() && allUnitAIProcessed() && pkIface && pkIface->IsMPAutoEndTurnEnabled())
 								{
 									activePlayer.GetPlayerAchievements().EndTurn();
+
+#if defined(MOD_EVENTS_RED_TURN)
+									if (MOD_EVENTS_RED_TURN)
+									// RED <<<<<
+									{
+										ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+										if(pkScriptSystem)
+										{	
+											CvLuaArgsHandle args;
+
+											args->Push(getActivePlayer());
+
+											bool bResult;
+											LuaSupport::CallHook(pkScriptSystem, "TurnComplete", args.get(), bResult);
+										}
+									}
+									// RED >>>>>
+#endif
+
 									gDLL->sendTurnComplete();
 									CvAchievementUnlocker::EndTurn();
 								}
@@ -2541,6 +2601,28 @@ void CvGame::selectionListGameNetMessage(int eMessage, int iData2, int iData3, i
 					}
 					else
 					{
+#if defined(MOD_EVENTS_RED_COMBAT_MISSION)
+						if (MOD_EVENTS_RED_COMBAT_MISSION)
+						// RED <<<<<
+						{
+							ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+							if(pkScriptSystem && pPlot)
+							{						
+								CvLuaArgsHandle args;
+
+								args->Push(pkSelectedUnit->getOwner());
+								args->Push(pkSelectedUnit->GetID());
+								args->Push(pPlot->getX());
+								args->Push(pPlot->getY());
+								args->Push(iData2);
+
+								bool bResult;
+								LuaSupport::CallHook(pkScriptSystem, "PushingMissionTo", args.get(), bResult);
+							}
+						}
+						// RED >>>>>
+#endif
+
 						gDLL->sendPushMission(pkSelectedUnit->GetID(), ((MissionTypes)iData2), iData3, iData4, iFlags, bShift);
 					}
 				}
@@ -3414,6 +3496,24 @@ void CvGame::doControl(ControlTypes eControl)
 			{
 				gDLL->AutoSave(false, true);
 			}
+#if defined(MOD_EVENTS_RED_TURN)
+			if (MOD_EVENTS_RED_TURN)
+			// RED <<<<<
+			{
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if(pkScriptSystem)
+				{	
+					CvLuaArgsHandle args;
+
+					args->Push(getActivePlayer());
+
+					bool bResult;
+					LuaSupport::CallHook(pkScriptSystem, "TurnComplete", args.get(), bResult);
+				}
+			}
+			// RED >>>>>
+#endif
+
 			kActivePlayer.GetPlayerAchievements().EndTurn();
 			gDLL->sendTurnComplete();
 			CvAchievementUnlocker::EndTurn();
@@ -3428,6 +3528,25 @@ void CvGame::doControl(ControlTypes eControl)
 		{
 			CvPlayerAI& kActivePlayer = GET_PLAYER(getActivePlayer());
 			kActivePlayer.GetPlayerAchievements().EndTurn();
+
+#if defined(MOD_EVENTS_RED_TURN)
+				if (MOD_EVENTS_RED_TURN)
+				// RED <<<<<
+				{
+					ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+					if(pkScriptSystem)
+					{	
+						CvLuaArgsHandle args;
+
+						args->Push(getActivePlayer());
+
+						bool bResult;
+						LuaSupport::CallHook(pkScriptSystem, "TurnComplete", args.get(), bResult);
+					}
+				}
+				// RED >>>>>
+#endif
+
 			gDLL->sendTurnComplete();
 			CvAchievementUnlocker::EndTurn();
 			SetForceEndingTurn(true);
@@ -4854,7 +4973,11 @@ void CvGame::initScoreCalculation()
 		CvEraInfo& kStartEra = getStartEraInfo();
 		int iNumSettlers = kStartEra.getStartingUnitMultiplier();
 		m_iInitPopulation = getPopulationScore(iNumSettlers * (kStartEra.getFreePopulation() + 1));
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		m_iInitLand = getLandPlotsScore(iNumSettlers *  AVG_CITY_PLOTS);
+#else
 		m_iInitLand = getLandPlotsScore(iNumSettlers *  NUM_CITY_PLOTS);
+#endif
 	}
 	else
 	{
@@ -5011,6 +5134,23 @@ bool CvGame::circumnavigationAvailable() const
 /// Message from UI to gameplay about something that should happen with regards to diplomacy
 void CvGame::DoFromUIDiploEvent(FromUIDiploEventTypes eEvent, PlayerTypes eAIPlayer, int iArg1, int iArg2)
 {
+#if defined(MOD_EVENTS_DIPLO_EVENTS)
+	if (MOD_EVENTS_DIPLO_EVENTS) {
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if(pkScriptSystem)
+		{
+			CvLuaArgsHandle args;
+			args->Push(eEvent);
+			args->Push(eAIPlayer);
+			args->Push(iArg1);
+			args->Push(iArg2);
+
+			bool bResult;
+			LuaSupport::CallHook(pkScriptSystem, "UiDiploEvent", args.get(), bResult);
+		}
+	}
+#endif
+
 	gDLL->sendFromUIDiploEvent(eAIPlayer, eEvent, iArg1, iArg2);
 }
 
@@ -5787,6 +5927,7 @@ void CvGame::setWinner(TeamTypes eNewWinner, VictoryTypes eNewVictory)
 					pNotifications->Add(NOTIFICATION_VICTORY, localizedText.toUTF8(), localizedSummary.toUTF8(), -1, -1, -1);
 				}
 
+#if !defined(NO_ACHIEVEMENTS)
 				//--Start Achievements
 				//--Don't allow most in multiplayer so friends can't achieve-whore it up together
 				if(!GC.getGame().isGameMultiPlayer() && kWinningTeamLeader.isHuman() && kWinningTeamLeader.isLocalPlayer())
@@ -6522,7 +6663,7 @@ void CvGame::setWinner(TeamTypes eNewWinner, VictoryTypes eNewVictory)
 				{
 					gDLL->UnlockAchievement(ACHIEVEMENT_WIN_MULTIPLAYER);
 				}
-
+#endif
 			}
 
 			if((getAIAutoPlay() > 0) || gDLL->GetAutorun())
@@ -6837,6 +6978,7 @@ void CvGame::setGameState(GameStateTypes eNewValue)
 	{
 		m_eGameState = eNewValue;
 
+#if !defined(NO_ACHIEVEMENTS)
 		if(eNewValue == GAMESTATE_OVER || eNewValue == GAMESTATE_EXTENDED)
 		{
 			if (!isGameMultiPlayer())
@@ -6854,10 +6996,12 @@ void CvGame::setGameState(GameStateTypes eNewValue)
 				}
 			}
 		}
+#endif
 
 		if(eNewValue == GAMESTATE_OVER)
 		{
 
+#if !defined(NO_ACHIEVEMENTS)
 			if(!isGameMultiPlayer())
 			{
 				bool bLocalPlayerLost = true;
@@ -6893,6 +7037,7 @@ void CvGame::setGameState(GameStateTypes eNewValue)
 					}
 				}
 			}
+#endif
 
 			//Write out time spent playing.
 			long iHours = getMinutesPlayed() / 60;
@@ -7719,7 +7864,11 @@ UnitTypes CvGame::GetRandomSpawnUnitType(PlayerTypes ePlayer, bool bIncludeUUs, 
 
 //	--------------------------------------------------------------------------------
 /// Pick a random a Unit type that is ranked by unit power and restricted to units available to ePlayer's technology
+#if defined(MOD_GLOBAL_CS_GIFT_SHIPS)
+UnitTypes CvGame::GetCompetitiveSpawnUnitType(PlayerTypes ePlayer, bool bIncludeUUs, bool bIncludeRanged, bool bIncludeShips)
+#else
 UnitTypes CvGame::GetCompetitiveSpawnUnitType(PlayerTypes ePlayer, bool bIncludeUUs, bool bIncludeRanged)
+#endif
 {
 	CvAssertMsg(ePlayer >= 0, "ePlayer is expected to be non-negative (invalid Index)");
 	CvAssertMsg(ePlayer < MAX_CIV_PLAYERS, "ePlayer is expected to be within maximum bounds (invalid Index)");
@@ -7812,7 +7961,11 @@ UnitTypes CvGame::GetCompetitiveSpawnUnitType(PlayerTypes ePlayer, bool bInclude
 			continue;
 
 		// Must be land Unit
+#if defined(MOD_GLOBAL_CS_GIFT_SHIPS)
+		if(!(pkUnitInfo->GetDomainType() == DOMAIN_LAND || (pkUnitInfo->GetDomainType() == DOMAIN_SEA && bIncludeShips && (GC.getMap().GetAIMapHint() & 5) != 0)))
+#else
 		if(pkUnitInfo->GetDomainType() != DOMAIN_LAND)
+#endif
 			continue;
 
 		// Must be able to train this thing
@@ -7830,6 +7983,65 @@ UnitTypes CvGame::GetCompetitiveSpawnUnitType(PlayerTypes ePlayer, bool bInclude
 
 	return eChosenUnit;
 }
+
+#if defined(MOD_GLOBAL_CS_GIFTS)
+//	--------------------------------------------------------------------------------
+/// Pick a random a Unit type that is ranked by unit power and restricted to recon units available to ePlayer's technology
+#if defined(MOD_GLOBAL_CS_GIFT_SHIPS)
+UnitTypes CvGame::GetCsGiftSpawnUnitType(PlayerTypes ePlayer, bool bIncludeShips)
+#else
+UnitTypes CvGame::GetCsGiftSpawnUnitType(PlayerTypes ePlayer)
+#endif
+{
+	CvAssertMsg(ePlayer >= 0, "ePlayer is expected to be non-negative (invalid Index)");
+	CvAssertMsg(ePlayer < MAX_CIV_PLAYERS, "ePlayer is expected to be within maximum bounds (invalid Index)");
+
+	CvWeightedVector<UnitTypes, SAFE_ESTIMATE_NUM_UNITS, true> veUnitRankings;
+
+	// Loop through all Unit Classes
+	for (int iUnitLoop = 0; iUnitLoop < GC.getNumUnitInfos(); iUnitLoop++) {
+		const UnitTypes eLoopUnit = (UnitTypes) iUnitLoop;
+		CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eLoopUnit);
+		if (pkUnitInfo == NULL) continue;
+		
+		bool bValid = (pkUnitInfo->GetUnitCombatType() == (UnitCombatTypes)GC.getInfoTypeForString("UNITCOMBAT_RECON", true));
+		bValid = bValid || (pkUnitInfo->GetUnitCombatType() == (UnitCombatTypes)GC.getInfoTypeForString("UNITCOMBAT_ARCHER", true));
+		bValid = bValid || (pkUnitInfo->GetUnitCombatType() == (UnitCombatTypes)GC.getInfoTypeForString("UNITCOMBAT_MOUNTED", true));
+		bValid = bValid || (pkUnitInfo->GetUnitCombatType() == (UnitCombatTypes)GC.getInfoTypeForString("UNITCOMBAT_HELICOPTER", true));
+
+#if defined(MOD_GLOBAL_CS_GIFT_SHIPS)
+		// Exclude carrier units
+		if (pkUnitInfo->GetSpecialCargo() == (SpecialUnitTypes) GC.getInfoTypeForString("SPECIALUNIT_FIGHTER")) continue;
+
+		// Include shipping
+		bValid = bValid || (bIncludeShips && (pkUnitInfo->GetUnitCombatType() == (UnitCombatTypes)GC.getInfoTypeForString("UNITCOMBAT_NAVALMELEE", true)));
+		bValid = bValid || (bIncludeShips && (pkUnitInfo->GetUnitCombatType() == (UnitCombatTypes)GC.getInfoTypeForString("UNITCOMBAT_NAVALRANGED", true)));
+#endif
+
+		if (!bValid) continue;
+
+		CvUnitClassInfo* pkUnitClassInfo = GC.getUnitClassInfo((UnitClassTypes) pkUnitInfo->GetUnitClassType());
+		if (pkUnitClassInfo == NULL) continue;
+
+		// Exclude unique units
+		if (eLoopUnit != pkUnitClassInfo->getDefaultUnitIndex()) continue;
+
+		// Must be able to train this thing
+		if (!GET_PLAYER(ePlayer).canTrain(eLoopUnit, false, false, false, /*bIgnoreUniqueUnitStatus*/ true)) continue;
+
+		// CUSTOMLOG("CS Gift considering unit type %i", eLoopUnit);
+		veUnitRankings.push_back(eLoopUnit, pkUnitInfo->GetPower());
+	}
+
+	// Choose from weighted unit types
+	veUnitRankings.SortItems();
+	int iNumChoices = GC.getUNIT_SPAWN_NUM_CHOICES();
+	RandomNumberDelegate randFn = MakeDelegate(&GC.getGame(), &CvGame::getJonRandNum);
+	UnitTypes eChosenUnit = veUnitRankings.ChooseFromTopChoices(iNumChoices, &randFn, "Choosing competitive unit from top choices");
+
+	return eChosenUnit;
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 UnitTypes CvGame::GetRandomUniqueUnitType(bool bIncludeCivsInGame, bool bIncludeStartEra, bool bIncludeOldEras, bool bIncludeRanged)
@@ -8002,7 +8214,11 @@ void CvGame::updateWar()
 									{
 										if(!atWar(((TeamTypes)iI), ((TeamTypes)iJ)))
 										{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+											teamI.declareWar(((TeamTypes)iJ), false, teamI.getLeaderID());
+#else
 											teamI.declareWar(((TeamTypes)iJ));
+#endif
 										}
 									}
 								}

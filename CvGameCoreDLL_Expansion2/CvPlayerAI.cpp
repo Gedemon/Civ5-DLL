@@ -329,7 +329,13 @@ void CvPlayerAI::AI_conquerCity(CvCity* pCity, PlayerTypes eOldOwner)
 	{
 		// Burn the city if the empire is unhappy - keeping the city will only make things worse or if map hint dictates
 		// Huns will burn down everything possible once they have a core of a few cities (was 3, but this put Attila out of the running long term as a conqueror)
+#if defined(MOD_GLOBAL_CS_RAZE_RARELY)
+		CUSTOMLOG("AI_conquerCity: City=%s, Player=%d, ExcessHappiness=%d", pCity->getName().GetCString(), GetID(), GetExcessHappiness());
+		bool bUnhappy = isMinorCiv() ? IsEmpireVeryUnhappy() : IsEmpireUnhappy();
+		if (bUnhappy || (GC.getMap().GetAIMapHint() & 2) || (GetPlayerTraits()->GetRazeSpeedModifier() > 0 && getNumCities() >= 3 + (GC.getGame().getGameTurn() / 100)) )
+#else
 		if (IsEmpireUnhappy() || (GC.getMap().GetAIMapHint() & 2) || (GetPlayerTraits()->GetRazeSpeedModifier() > 0 && getNumCities() >= 3 + (GC.getGame().getGameTurn() / 100)) )
+#endif
 		{
 			pCity->doTask(TASK_RAZE);
 			return;
@@ -1378,7 +1384,11 @@ CvPlot* CvPlayerAI::FindBestMusicianTargetPlot(CvUnit* pGreatMusician, bool bOnl
 	{
 		iBestTurnsToReach = MAX_INT;
 		CvPlot *pLoopPlot;
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		for(int iJ = 0; iJ < pBestTargetCity->GetNumWorkablePlots(); iJ++)
+#else
 		for(int iJ = 0; iJ < NUM_CITY_PLOTS; iJ++)
+#endif
 		{
 			pLoopPlot = plotCity(pBestTargetCity->getX(), pBestTargetCity->getY(), iJ);
 			if(pLoopPlot != NULL)

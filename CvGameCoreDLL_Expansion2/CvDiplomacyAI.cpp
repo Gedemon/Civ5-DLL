@@ -3405,7 +3405,11 @@ MajorCivApproachTypes CvDiplomacyAI::GetBestApproachTowardsMajorCiv(PlayerTypes 
 	// CAN WE DECLARE WAR?
 	////////////////////////////////////
 
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+	if(!GET_TEAM(GetTeam()).canDeclareWar(GET_PLAYER(ePlayer).getTeam(), GetPlayer()->GetID()))
+#else
 	if(!GET_TEAM(GetTeam()).canDeclareWar(GET_PLAYER(ePlayer).getTeam()))
+#endif
 	{
 		// If we're already at war with this player don't cancel out the weight for them!
 		if(!GET_TEAM(GetTeam()).isAtWar(GET_PLAYER(ePlayer).getTeam()))
@@ -4189,7 +4193,11 @@ MinorCivApproachTypes CvDiplomacyAI::GetBestApproachTowardsMinorCiv(PlayerTypes 
 	////////////////////////////////////
 	// CAN WE DECLARE WAR?
 	////////////////////////////////////
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+	if(!GET_TEAM(GetTeam()).canDeclareWar(GET_PLAYER(ePlayer).getTeam(), GetPlayer()->GetID()))
+#else
 	if(!GET_TEAM(GetTeam()).canDeclareWar(GET_PLAYER(ePlayer).getTeam()))
+#endif
 	{
 		if(!GET_TEAM(GetTeam()).isAtWar(GET_PLAYER(ePlayer).getTeam()))
 		{
@@ -4491,7 +4499,11 @@ void CvDiplomacyAI::DoStartDemandProcess(PlayerTypes ePlayer)
 	{
 		if(!GET_TEAM(GetTeam()).isAtWar(GET_PLAYER(ePlayer).getTeam()))
 		{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+			if(GET_TEAM(GetTeam()).canDeclareWar(GET_PLAYER(ePlayer).getTeam(), GetPlayer()->GetID()))
+#else
 			if(GET_TEAM(GetTeam()).canDeclareWar(GET_PLAYER(ePlayer).getTeam()))
+#endif
 			{
 				GetPlayer()->GetMilitaryAI()->RequestShowOfForce(ePlayer);
 				SetWarGoal(ePlayer, WAR_GOAL_DEMAND);
@@ -4933,7 +4945,11 @@ void CvDiplomacyAI::DoMakePeaceWithMinors()
 					{
 						if(!GET_PLAYER(eLoopPlayer).GetMinorCivAI()->IsPeaceBlocked(GetPlayer()->getTeam()))
 						{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+							GET_TEAM(GetTeam()).makePeace(GET_PLAYER(eLoopPlayer).getTeam(), true, false, GetPlayer()->GetID());
+#else
 							GET_TEAM(GetTeam()).makePeace(GET_PLAYER(eLoopPlayer).getTeam());
+#endif
 
 							LogPeaceMade(eLoopPlayer);
 						}
@@ -5322,7 +5338,11 @@ void CvDiplomacyAI::DoMakeWarOnPlayer(PlayerTypes eTargetPlayer)
 	{
 		if(!GET_TEAM(GetTeam()).isAtWar(GET_PLAYER(eTargetPlayer).getTeam()))
 		{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+			if(GET_TEAM(GetTeam()).canDeclareWar(GET_PLAYER(eTargetPlayer).getTeam(), GetPlayer()->GetID()))
+#else
 			if(GET_TEAM(GetTeam()).canDeclareWar(GET_PLAYER(eTargetPlayer).getTeam()))
+#endif
 			{
 				// Want to declare war on someone
 				if(bWantToAttack)
@@ -5347,7 +5367,11 @@ void CvDiplomacyAI::DoMakeWarOnPlayer(PlayerTypes eTargetPlayer)
 		{
 			if(!IsAtWar(eTargetPlayer))
 			{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+				if(GET_TEAM(GetTeam()).canDeclareWar(GET_PLAYER(eTargetPlayer).getTeam(), GetPlayer()->GetID()))
+#else
 				if(GET_TEAM(GetTeam()).canDeclareWar(GET_PLAYER(eTargetPlayer).getTeam()))
+#endif
 				{
 					// If we're at least 85% of the way to our objective, let loose the dogs of war!
 					if(IsMusteringForAttack(eTargetPlayer) || (pOperation != NULL && pOperation->PercentFromMusterPointToTarget() >= 85))	// If we're "mustering" it means we have a Sneak Attack Operation that's in position to attack
@@ -5476,7 +5500,11 @@ void CvDiplomacyAI::DeclareWar(PlayerTypes ePlayer)
 	// Only do it if we are not already at war.
 	if(!kMyTeam.isAtWar(eTheirTeam))
 	{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+		kMyTeam.declareWar(eTheirTeam, false, GetPlayer()->GetID());
+#else
 		kMyTeam.declareWar(eTheirTeam);
+#endif
 
 		m_pPlayer->GetCitySpecializationAI()->SetSpecializationsDirty(SPECIALIZATION_UPDATE_NOW_AT_WAR);
 
@@ -10122,12 +10150,14 @@ void CvDiplomacyAI::DoKilledByPlayer(PlayerTypes ePlayer)
 		const char* szText = GetDiploStringForMessage(DIPLO_MESSAGE_DEFEATED);
 		gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_DEFEATED);
 
+#if !defined(NO_ACHIEVEMENTS)
 		if(!GC.getGame().isGameMultiPlayer())
 		{
 			gDLL->UnlockAchievement(ACHIEVEMENT_DESTROY_CIV);
 
 			CvAchievementUnlocker::AlexanderConquest(ePlayer);
 		}
+#endif
 	}
 }
 //	-------------------------------------------------------------------------------------------------------------------
@@ -12579,7 +12609,11 @@ void CvDiplomacyAI::DoAggressiveMilitaryStatement(PlayerTypes ePlayer, DiploStat
 		bool bSendStatement = false;
 
 		// They must be able to declare war on us
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+		if(!GET_TEAM(GET_PLAYER(ePlayer).getTeam()).canDeclareWar(GetPlayer()->getTeam(), ePlayer))
+#else
 		if(!GET_TEAM(GET_PLAYER(ePlayer).getTeam()).canDeclareWar(GetPlayer()->getTeam()))
+#endif
 			return;
 
 		// Don't threaten if this person resurrected us
@@ -16262,7 +16296,11 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		// *********************************************
 	case FROM_UI_DIPLO_EVENT_HUMAN_DECLARES_WAR:
 	{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+		GET_TEAM(eFromTeam).declareWar(GetTeam(), false, eFromPlayer);
+#else
 		GET_TEAM(eFromTeam).declareWar(GetTeam());
+#endif
 
 		if(bActivePlayer)
 		{
@@ -16605,7 +16643,11 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		{
 			bDeclareWar = true;
 
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+			GET_TEAM(GetTeam()).declareWar(GET_PLAYER(eFromPlayer).getTeam(), false, GetPlayer()->GetID());
+#else
 			GET_TEAM(GetTeam()).declareWar(GET_PLAYER(eFromPlayer).getTeam());
+#endif
 			m_pPlayer->GetCitySpecializationAI()->SetSpecializationsDirty(SPECIALIZATION_UPDATE_NOW_AT_WAR);
 			LogWarDeclaration(eFromPlayer);
 
@@ -16671,7 +16713,11 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		// Human told the AI to die
 		else if(iArg1 == 2)
 		{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+			GET_TEAM(eFromTeam).declareWar(GetTeam(), false, eFromPlayer);
+#else
 			GET_TEAM(eFromTeam).declareWar(GetTeam());
+#endif
 
 			SetPlayerIgnoredMilitaryPromise(eFromPlayer, true);
 
@@ -17114,7 +17160,11 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 				// Human declaration
 				TeamTypes eAgainstTeam = GET_PLAYER(eAgainstPlayer).getTeam();
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+				GET_TEAM(eFromTeam).declareWar(eAgainstTeam, false, eFromPlayer);
+#else
 				GET_TEAM(eFromTeam).declareWar(eAgainstTeam);
+#endif
 
 				int iLockedTurns = /*15*/ GC.getCOOP_WAR_LOCKED_LENGTH();
 				GET_TEAM(GetPlayer()->getTeam()).ChangeNumTurnsLockedIntoWar(eAgainstTeam, iLockedTurns);
@@ -17198,7 +17248,11 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			// Human declaration
 			TeamTypes eAgainstTeam = GET_PLAYER(eAgainstPlayer).getTeam();
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+			GET_TEAM(eFromTeam).declareWar(eAgainstTeam, false, eFromPlayer);
+#else
 			GET_TEAM(eFromTeam).declareWar(eAgainstTeam);
+#endif
 
 			int iLockedTurns = /*15*/ GC.getCOOP_WAR_LOCKED_LENGTH();
 			GET_TEAM(GetPlayer()->getTeam()).ChangeNumTurnsLockedIntoWar(eAgainstTeam, iLockedTurns);
@@ -17236,7 +17290,11 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			// Human declaration
 			TeamTypes eAgainstTeam = GET_PLAYER(eAgainstPlayer).getTeam();
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+			GET_TEAM(eFromTeam).declareWar(eAgainstTeam, false, eFromPlayer);
+#else
 			GET_TEAM(eFromTeam).declareWar(eAgainstTeam);
+#endif
 
 			int iLockedTurns = /*15*/ GC.getCOOP_WAR_LOCKED_LENGTH();
 			GET_TEAM(GetPlayer()->getTeam()).ChangeNumTurnsLockedIntoWar(eAgainstTeam, iLockedTurns);
@@ -17440,6 +17498,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		GET_PLAYER(eFromPlayer).GetEspionage()->MarkRecentIntrigueAsShared(eMyPlayer, ePlottingPlayer, eIntrigueType);
 		if (bActivePlayer)
 		{
+#if !defined(NO_ACHIEVEMENTS)
 			if(GET_PLAYER(eFromPlayer).GetEspionage()->HasSharedIntrigueAboutMe(eMyPlayer))
 			{
 				gDLL->UnlockAchievement(ACHIEVEMENT_XP1_37);
@@ -17450,6 +17509,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 				gDLL->UnlockAchievement(ACHIEVEMENT_XP1_45);
 			}
+#endif
 
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_WARNED_ABOUT_INTRIGUE, NO_PLAYER, GET_PLAYER(ePlottingPlayer).getCivilizationAdjectiveKey());
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -18151,9 +18211,17 @@ int CvDiplomacyAI::GetCoopWarScore(PlayerTypes ePlayer, PlayerTypes eTargetPlaye
 
 	// Both players must be able to declare war
 	TeamTypes eTargetTeam = GET_PLAYER(eTargetPlayer).getTeam();
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+	if(!GET_TEAM(GetPlayer()->getTeam()).canDeclareWar(eTargetTeam, ePlayer))
+#else
 	if(!GET_TEAM(GetPlayer()->getTeam()).canDeclareWar(eTargetTeam))
+#endif
 		return 0;
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+	if(!GET_TEAM(GET_PLAYER(ePlayer).getTeam()).canDeclareWar(eTargetTeam, ePlayer))
+#else
 	if(!GET_TEAM(GET_PLAYER(ePlayer).getTeam()).canDeclareWar(eTargetTeam))
+#endif
 		return 0;
 
 	// If player is inquiring, he has to be planning a war already
@@ -20931,6 +20999,7 @@ void CvDiplomacyAI::ChangeNegativeArchaeologyPoints(PlayerTypes ePlayer, int iCh
 		m_paiNegativeArchaeologyPoints[ePlayer] += iChange;
 		CvAssertMsg(m_paiNegativeArchaeologyPoints[ePlayer] >= 0, "DIPLOMACY_AI: Invalid # of Digs in Other Player's Lands returned. Please send Ed this with your last 5 autosaves and what changelist # you're playing.");
 
+#if !defined(NO_ACHIEVEMENTS)
 		if(!GC.getGame().isGameMultiPlayer() && GET_PLAYER(ePlayer).isHuman() && ePlayer == GC.getGame().getActivePlayer())
 		{
 			if (m_paiNegativeArchaeologyPoints[ePlayer] >= 50 ||
@@ -20939,6 +21008,7 @@ void CvDiplomacyAI::ChangeNegativeArchaeologyPoints(PlayerTypes ePlayer, int iCh
 				gDLL->UnlockAchievement(ACHIEVEMENT_XP2_34);
 			}
 		}
+#endif
 	}
 }
 

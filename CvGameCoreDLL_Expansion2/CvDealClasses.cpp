@@ -618,6 +618,28 @@ bool CvDeal::IsPossibleToTradeItem(PlayerTypes ePlayer, PlayerTypes eToPlayer, T
 
 		if(!pToTeam->isAtWar(eFromTeam))
 			return false;
+			
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+		if (MOD_EVENTS_WAR_AND_PEACE) {
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem) {
+				// Construct and push in some event arguments.
+				CvLuaArgsHandle args(2);
+				args->Push(ePlayer);
+				args->Push(eToTeam);
+
+				// Attempt to execute the game events.
+				// Will return false if there are no registered listeners.
+				bool bResult = false;
+				if (LuaSupport::CallTestAll(pkScriptSystem, "IsAbleToMakePeace", args.get(), bResult)) {
+					// Check the result.
+					if (bResult == false) {
+						return false;
+					}
+				}
+			}
+		}
+#endif
 	}
 	// Third Party Peace
 	else if(eItem == TRADE_ITEM_THIRD_PARTY_PEACE)
@@ -712,7 +734,11 @@ bool CvDeal::IsPossibleToTradeItem(PlayerTypes ePlayer, PlayerTypes eToPlayer, T
 			return false;
 
 		// Can this player actually declare war?
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+		if(!pFromTeam->canDeclareWar(eThirdTeam, ePlayer))
+#else
 		if(!pFromTeam->canDeclareWar(eThirdTeam))
+#endif
 			return false;
 
 		// Can't already have this in the deal
@@ -2127,6 +2153,7 @@ bool CvGameDeals::FinalizeDeal(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, b
 					GET_PLAYER(eAcceptedFromPlayer).changeResourceExport(eResource, iResourceQuantity);
 					GET_PLAYER(eAcceptedToPlayer).changeResourceImport(eResource, iResourceQuantity);
 
+#if !defined(NO_ACHIEVEMENTS)
 					//Resource Trading Achievements
 					if(!GC.getGame().isGameMultiPlayer())
 					{
@@ -2161,6 +2188,7 @@ bool CvGameDeals::FinalizeDeal(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, b
 							}
 						}
 					}
+#endif
 				}
 				// City
 				else if(it->m_eItemType == TRADE_ITEM_CITIES)
@@ -2220,7 +2248,11 @@ bool CvGameDeals::FinalizeDeal(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, b
 				{
 					TeamTypes eTargetTeam = (TeamTypes) it->m_iData1;
 					bool bTargetTeamIsMinor = GET_TEAM(eTargetTeam).isMinorCiv();
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+					GET_TEAM(eFromTeam).makePeace(eTargetTeam, /*bBumpUnits*/ true, /*bSuppressNotification*/ bTargetTeamIsMinor, eFromPlayer);
+#else
 					GET_TEAM(eFromTeam).makePeace(eTargetTeam, /*bBumpUnits*/ true, /*bSuppressNotification*/ bTargetTeamIsMinor);
+#endif
 					GET_TEAM(eFromTeam).setForcePeace(eTargetTeam, true);
 					GET_TEAM(eTargetTeam).setForcePeace(eFromTeam, true);
 
@@ -2231,7 +2263,11 @@ bool CvGameDeals::FinalizeDeal(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, b
 				else if(it->m_eItemType == TRADE_ITEM_THIRD_PARTY_WAR)
 				{
 					TeamTypes eTargetTeam = (TeamTypes) it->m_iData1;
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+					GET_TEAM(eFromTeam).declareWar(eTargetTeam, false, eFromPlayer);
+#else
 					GET_TEAM(eFromTeam).declareWar(eTargetTeam);
+#endif
 
 					int iLockedTurns = /*15*/ GC.getCOOP_WAR_LOCKED_LENGTH();
 					GET_TEAM(eFromTeam).ChangeNumTurnsLockedIntoWar(eTargetTeam, iLockedTurns);
@@ -2239,7 +2275,11 @@ bool CvGameDeals::FinalizeDeal(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, b
 				// **** Peace Treaty **** this should always be the last item processed!!!
 				else if(it->m_eItemType == TRADE_ITEM_PEACE_TREATY)
 				{
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+					GET_TEAM(eFromTeam).makePeace(eToTeam, true, false, eFromPlayer);
+#else
 					GET_TEAM(eFromTeam).makePeace(eToTeam);
+#endif
 					GET_TEAM(eFromTeam).setForcePeace(eToTeam, true);
 				}
 				//////////////////////////////////////////////////////////////////////

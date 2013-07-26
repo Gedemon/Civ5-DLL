@@ -145,10 +145,19 @@ void CvDllGameContext::InitializeSingleton()
 
 	}
 	s_pSingleton = FNEW(CvDllGameContext(), c_eCiv5GameplayDLL, 0);
+
+#if defined(CUSTOM_MODS_H)
+	CUSTOMLOG("%s - Startup (Version %s - Build %s %s%s)", MOD_DLL_NAME, MOD_DLL_VERSION, __DATE__, __TIME__, MOD_DLL_CUSTOM_BUILD_NAME);
+#endif
 }
 //------------------------------------------------------------------------------
 void CvDllGameContext::DestroySingleton()
 {
+#if defined(CUSTOM_MODS_H)
+	// Call this first, in case the logging sub-system needs the memory we are about to free
+	CUSTOMLOG("%s - Shutdown", MOD_DLL_NAME);
+#endif
+
 	SAFE_DELETE(s_pSingleton);
 	HeapDestroy(s_hHeap);
 	s_hHeap = INVALID_HANDLE_VALUE;
@@ -650,7 +659,19 @@ int CvDllGameContext::GetAI_HANDICAP() const
 //------------------------------------------------------------------------------
 int CvDllGameContext::GetNUM_CITY_PLOTS() const
 {
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	int iNumCityPlots = AVG_CITY_PLOTS;
+	
+	auto_ptr<ICvCity1> pCity(GC.GetEngineUserInterface()->getHeadSelectedCity());
+	if (pCity.get() != NULL) {
+		CvCity* pkCity = GC.UnwrapCityPointer(pCity.get());
+		iNumCityPlots = pkCity->GetNumWorkablePlots();
+	}
+				
+	return iNumCityPlots;
+#else
 	return NUM_CITY_PLOTS;
+#endif
 }
 //------------------------------------------------------------------------------
 const char** CvDllGameContext::GetHexDebugLayerNames()

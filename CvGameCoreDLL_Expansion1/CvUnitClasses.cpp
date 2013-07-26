@@ -1128,6 +1128,7 @@ void CvUnitEntry::DoUpdatePower()
 		iPower /= 2;
 	}
 #endif
+
 // ***************
 // Other modifiers
 // ***************

@@ -76,6 +76,9 @@ public:
 	int GetRequiresXAdjacentLand() const;
 
 	bool IsHillsMakesValid() const;
+#if defined(MOD_GLOBAL_ALPINE_PASSES)
+	bool IsMountainsMakesValid() const;
+#endif
 	bool IsFreshWaterMakesValid() const;
 	bool IsRiverSideMakesValid() const;
 	bool IsNoFreshWater() const;
@@ -183,6 +186,9 @@ protected:
 	int m_iRequiresXAdjacentLand;
 
 	bool m_bHillsMakesValid;
+#if defined(MOD_GLOBAL_ALPINE_PASSES)
+	bool m_bMountainsMakesValid;
+#endif
 	bool m_bFreshWaterMakesValid;
 	bool m_bRiverSideMakesValid;
 	bool m_bNoFreshWater;

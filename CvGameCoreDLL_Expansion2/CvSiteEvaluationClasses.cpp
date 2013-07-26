@@ -341,7 +341,11 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 							iResourceValue = 0;
 							iStrategicValue = 0;
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+							if (iDistance > 0 && iDistance <= pPlayer->getBuyPlotDistance())
+#else	
 							if (iDistance > 0 && iDistance <= NUM_CITY_RINGS)
+#endif
 							{
 								if (eYield == NO_YIELD || eYield == YIELD_FOOD)
 								{
@@ -393,7 +397,11 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 							iPlotValue += iStrategicValue;
 
 							// if this tile is a NW boost the value just so that we force the AI to claim them (if we can work it)
+#if defined(MOD_GLOBAL_CITY_WORKING)
+							if (pLoopPlot->IsNaturalWonder() && iDistance > 0 && iDistance <= pPlayer->getBuyPlotDistance())
+#else	
 							if (pLoopPlot->IsNaturalWonder() && iDistance > 0 && iDistance <= NUM_CITY_RINGS)
+#endif
 							{
 								iPlotValue += iPlotValue * 2 + 10;
 							}
@@ -1013,7 +1021,11 @@ int CvSiteEvaluatorForStart::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, Yi
 	}
 
 	// We have our own special method of scoring, so don't call the base class for that (like settler version does)
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for(iI = 0; iI < pPlayer->GetNumWorkablePlots(); iI++)
+#else
 	for(iI = 0; iI < NUM_CITY_PLOTS; iI++)
+#endif
 	{
 		pLoopPlot = plotCity(pPlot->getX(), pPlot->getY(), iI);
 
@@ -1025,8 +1037,13 @@ int CvSiteEvaluatorForStart::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, Yi
 		else
 		{
 			int iDistance = plotDistance(pPlot->getX(), pPlot->getY(), pLoopPlot->getX(), pLoopPlot->getY());
+#if defined(MOD_GLOBAL_CITY_WORKING)
+			CvAssert(iDistance <= pPlayer->getBuyPlotDistance());
+			if(iDistance > pPlayer->getBuyPlotDistance()) continue;
+#else	
 			CvAssert(iDistance <= NUM_CITY_RINGS);
 			if(iDistance > NUM_CITY_RINGS) continue;
+#endif
 			int iRingModifier = m_iRingModifier[iDistance];
 
 			// Skip the city plot itself for now

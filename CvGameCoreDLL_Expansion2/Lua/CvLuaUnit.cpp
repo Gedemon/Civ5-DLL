@@ -72,6 +72,9 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(CanEmbarkOnto);
 	Method(CanDisembarkOnto);
 	Method(CanRebaseAt);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(RebaseAt);
+#endif
 	Method(Embark);
 
 	Method(IsRangeAttackIgnoreLOS);
@@ -129,6 +132,9 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetUpgradeUnitType);
 	Method(UpgradePrice);
 	Method(CanUpgradeRightNow);
+#if defined(MOD_GLOBAL_CS_UPGRADES)
+	Method(CanUpgradeInTerritory);
+#endif
 	Method(GetNumResourceNeededToUpgrade);
 
 	Method(GetHandicapType);
@@ -136,6 +142,9 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetSpecialUnitType);
 	Method(GetCaptureUnitType);
 	Method(GetUnitCombatType);
+#if defined(MOD_GLOBAL_PROMOTION_CLASSES)
+	Method(GetUnitPromotionType);
+#endif
 	Method(GetUnitAIType);
 	Method(SetUnitAIType);
 	Method(GetDomainType);
@@ -234,8 +243,26 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(IgnoreBuildingDefense);
 	Method(CanMoveImpassable);
 	Method(CanMoveAllTerrain);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(IsHoveringUnit);
+#endif
 	Method(FlatMovementCost);
 	Method(IgnoreTerrainCost);
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+	Method(IgnoreTerrainDamage);
+	Method(IgnoreFeatureDamage);
+	Method(ExtraTerrainDamage);
+	Method(ExtraFeatureDamage);
+#endif
+#if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
+	Method(CanCrossMountains);
+#endif
+#if defined(MOD_PROMOTIONS_CROSS_OCEANS)
+	Method(CanCrossOceans);
+#endif
+#if defined(MOD_PROMOTIONS_CROSS_ICE)
+	Method(CanCrossIce);
+#endif
 	Method(IsNeverInvisible);
 	Method(IsInvisible);
 	Method(IsNukeImmune);
@@ -339,6 +366,9 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetGarrisonedCity);
 
 	Method(GetExtraVisibilityRange);
+#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
+	Method(GetExtraReconRange);
+#endif
 	Method(GetExtraMoves);
 	Method(GetExtraMoveDiscount);
 	Method(GetExtraRange);
@@ -420,6 +450,10 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(SetName);
 	Method(IsTerrainDoubleMove);
 	Method(IsFeatureDoubleMove);
+#if defined(MOD_PROMOTIONS_HALF_MOVE)
+	Method(IsTerrainHalfMove);
+	Method(IsFeatureHalfMove);
+#endif
 
 	Method(GetScriptData);
 	Method(SetScriptData);
@@ -448,6 +482,11 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetSpreadsLeft);
 	Method(GetNumFollowersAfterSpread);
 	Method(GetMajorityReligionAfterSpread);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(SetReligion);
+	Method(SetConversionStrength);
+	Method(SetSpreadsLeft);
+#endif
 
 	Method(GetTourismBlastStrength);
 
@@ -712,6 +751,19 @@ int CvLuaUnit::lCanRebaseAt(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//bool rebase(x,y);
+int CvLuaUnit::lRebaseAt(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const int iX = lua_tointeger(L, 2);
+	const int iY = lua_tointeger(L, 3);
+	const bool bResult = pkUnit->rebase(iX,iY);
+
+	return 0;
+}
+#endif
 //------------------------------------------------------------------------------
 //bool canScrap();
 int CvLuaUnit::lCanScrap(lua_State* L)
@@ -1487,6 +1539,18 @@ int CvLuaUnit::lCanUpgradeRightNow(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+#if defined(MOD_GLOBAL_CS_UPGRADES)
+//------------------------------------------------------------------------------
+int CvLuaUnit::lCanUpgradeInTerritory(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bTestVisible = luaL_optint(L, 2, 0);
+	const bool bResult = pkUnit->CanUpgradeInTerritory(bTestVisible);
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 int CvLuaUnit::lGetNumResourceNeededToUpgrade(lua_State* L)
 {
@@ -1558,6 +1622,18 @@ int CvLuaUnit::lGetUnitCombatType(lua_State* L)
 	lua_pushinteger(L, eResult);
 	return 1;
 }
+#if defined(MOD_GLOBAL_PROMOTION_CLASSES)
+//------------------------------------------------------------------------------
+//int /*UnitCombatTypes*/ getUnitPromotionType();
+int CvLuaUnit::lGetUnitPromotionType(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+
+	const UnitCombatTypes eResult = pkUnit->getUnitPromotionType();
+	lua_pushinteger(L, eResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //int /*UnitAITypes*/ getUnitAIType();
 int CvLuaUnit::lGetUnitAIType(lua_State* L)
@@ -2415,6 +2491,18 @@ int CvLuaUnit::lCanMoveAllTerrain(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//bool isHoveringUnit();
+int CvLuaUnit::lIsHoveringUnit(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->IsHoveringUnit();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //bool flatMovementCost();
 int CvLuaUnit::lFlatMovementCost(lua_State* L)
@@ -2435,6 +2523,84 @@ int CvLuaUnit::lIgnoreTerrainCost(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+#if defined(MOD_API_PLOT_BASED_DAMAGE)
+//------------------------------------------------------------------------------
+//bool ignoreTerrainDamage();
+int CvLuaUnit::lIgnoreTerrainDamage(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->ignoreTerrainDamage();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//bool ignoreFeatureDamage();
+int CvLuaUnit::lIgnoreFeatureDamage(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->ignoreFeatureDamage();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//bool extraTerrainDamage();
+int CvLuaUnit::lExtraTerrainDamage(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->extraTerrainDamage();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//bool extraFeatureDamage();
+int CvLuaUnit::lExtraFeatureDamage(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->extraFeatureDamage();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
+#if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
+//------------------------------------------------------------------------------
+//bool canCrossMountains();
+int CvLuaUnit::lCanCrossMountains(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->canCrossMountains();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
+#if defined(MOD_PROMOTIONS_CROSS_OCEANS)
+//------------------------------------------------------------------------------
+//bool canCrossOceans();
+int CvLuaUnit::lCanCrossOceans(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->canCrossOceans();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
+#if defined(MOD_PROMOTIONS_CROSS_ICE)
+//------------------------------------------------------------------------------
+//bool canCrossIce();
+int CvLuaUnit::lCanCrossIce(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->canCrossIce();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //bool isNeverInvisible();
 int CvLuaUnit::lIsNeverInvisible(lua_State* L)
@@ -3387,6 +3553,18 @@ int CvLuaUnit::lGetExtraVisibilityRange(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
+#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
+//------------------------------------------------------------------------------
+//int getExtraReconRange();
+int CvLuaUnit::lGetExtraReconRange(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+
+	const int iResult = pkUnit->getExtraReconRange();
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //int getExtraMoves();
 int CvLuaUnit::lGetExtraMoves(lua_State* L)
@@ -4054,6 +4232,30 @@ int CvLuaUnit::lIsFeatureDoubleMove(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+#if defined(MOD_PROMOTIONS_HALF_MOVE)
+//------------------------------------------------------------------------------
+//bool isTerrainHalfMove(int /*TerrainTypes*/ eIndex);
+int CvLuaUnit::lIsTerrainHalfMove(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const TerrainTypes eIndex = (TerrainTypes)lua_tointeger(L, 2);
+	const bool bResult = pkUnit->isTerrainHalfMove(eIndex);
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//bool isFeatureHalfMove(int /*FeatureTypes*/ eIndex);
+int CvLuaUnit::lIsFeatureHalfMove(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const FeatureTypes eIndex = (FeatureTypes)lua_tointeger(L, 2);
+	const bool bResult = pkUnit->isFeatureHalfMove(eIndex);
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //string getScriptData() const;
 int CvLuaUnit::lGetScriptData(lua_State* L)
@@ -4229,7 +4431,12 @@ int CvLuaUnit::lGetReligion(lua_State* L)
 int CvLuaUnit::lGetConversionStrength(lua_State* L)
 {
 	CvUnit* pkUnit = GetInstance(L);
+#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	CvCity* pkCity = CvLuaCity::GetInstance(L, 2, false);
+	int iReligiousStrength = pkUnit->GetConversionStrength(pkCity);
+#else
 	int iReligiousStrength = pkUnit->GetConversionStrength();
+#endif
 
 	lua_pushinteger(L, iReligiousStrength);
 
@@ -4265,6 +4472,38 @@ int CvLuaUnit::lGetMajorityReligionAfterSpread(lua_State* L)
 	lua_pushinteger(L, iData);
 	return 1;
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//void SetReligion(ReligionTypes);
+int CvLuaUnit::lSetReligion(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const int iReligion = lua_tointeger(L, 2);
+
+	pkUnit->GetReligionData()->SetReligion((ReligionTypes) iReligion);
+	return 0;
+}
+//------------------------------------------------------------------------------
+//void SetConversionStrength(int);
+int CvLuaUnit::lSetConversionStrength(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const int iStrength = lua_tointeger(L, 2);
+
+	pkUnit->GetReligionData()->SetReligiousStrength(iStrength);
+	return 0;
+}
+//------------------------------------------------------------------------------
+//void SetReligionSpreads(int);
+int CvLuaUnit::lSetSpreadsLeft(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const int iSpreads = lua_tointeger(L, 2);
+
+	pkUnit->GetReligionData()->SetSpreadsLeft(iSpreads);
+	return 0;
+}
+#endif
 //------------------------------------------------------------------------------
 //int GetTourismBlastStrength();
 int CvLuaUnit::lGetTourismBlastStrength(lua_State* L)

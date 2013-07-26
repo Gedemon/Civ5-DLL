@@ -31,6 +31,7 @@ int CvAchievementUnlocker::ms_iNumImprovementsPillagedPerTurn = 0;
 //	Test the conditions for the ACHIEVEMENT_PSG
 bool CvAchievementUnlocker::Check_PSG()
 {
+#if !defined(NO_ACHIEVEMENTS)
 	const int PSG_STAT_MATCH_VALUE = 100;
 
 	int32 iGeneralsStat = 0;
@@ -46,15 +47,18 @@ bool CvAchievementUnlocker::Check_PSG()
 			return true;
 		}
 	}
+#endif
 	return false;
 }
 //------------------------------------------------------------------------------
 void CvAchievementUnlocker::FarmImprovementPillaged()
 {
+#if !defined(NO_ACHIEVEMENTS)
 	ms_iNumImprovementsPillagedPerTurn++;
 
 	if(ms_iNumImprovementsPillagedPerTurn >= 9)
 		gDLL->UnlockAchievement(ACHIEVEMENT_SCENARIO_04_PILLAGE);
+#endif
 }
 //------------------------------------------------------------------------------
 void CvAchievementUnlocker::EndTurn()
@@ -66,6 +70,7 @@ void CvAchievementUnlocker::EndTurn()
 //------------------------------------------------------------------------------
 void CvAchievementUnlocker::AlexanderConquest(PlayerTypes ePlayer)
 {
+#if !defined(NO_ACHIEVEMENTS)
 	//Test For Alexander Conquest
 	CvGame& kGame = GC.getGame();
 	if (ePlayer == kGame.getActivePlayer())
@@ -96,6 +101,7 @@ void CvAchievementUnlocker::AlexanderConquest(PlayerTypes ePlayer)
 			}
 		}
 	}
+#endif
 }
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -125,6 +131,7 @@ CvPlayerAchievements::CvPlayerAchievements(const CvPlayer& kPlayer)
 //------------------------------------------------------------------------------
 void CvPlayerAchievements::AlliedWithCityState(PlayerTypes eNewCityStateAlly)
 {
+#if !defined(NO_ACHIEVEMENTS)
 	if(m_kPlayer.GetID() != GC.getGame().getActivePlayer())
 		return;
 
@@ -166,10 +173,12 @@ void CvPlayerAchievements::AlliedWithCityState(PlayerTypes eNewCityStateAlly)
 			}
 		}
 	}
+#endif
 }
 //------------------------------------------------------------------------------
 void CvPlayerAchievements::AddUnit(CvUnit* pUnit)
 {
+#if !defined(NO_ACHIEVEMENTS)
 	if(m_kPlayer.GetID() != GC.getGame().getActivePlayer())
 		return;
 
@@ -196,10 +205,12 @@ void CvPlayerAchievements::AddUnit(CvUnit* pUnit)
 			}
 		}	
 	}
+#endif
 }
 //------------------------------------------------------------------------------
 void CvPlayerAchievements::AttackedUnitWithUnit(CvUnit* pAttackingUnit, CvUnit* pDefendingUnit)
 {
+#if !defined(NO_ACHIEVEMENTS)
 	if(m_kPlayer.GetID() != GC.getGame().getActivePlayer())
 		return;
 
@@ -228,18 +239,22 @@ void CvPlayerAchievements::AttackedUnitWithUnit(CvUnit* pAttackingUnit, CvUnit* 
 			gDLL->UnlockAchievement(ACHIEVEMENT_XP1_29);
 		}
 	}
+#endif
 }
 //------------------------------------------------------------------------------
 void CvPlayerAchievements::BoughtCityState(int iNumUnits)
 {
+#if !defined(NO_ACHIEVEMENTS)
 	if (iNumUnits >= 15)
 	{
 		gDLL->UnlockAchievement(ACHIEVEMENT_XP1_35);
 	}
+#endif
 }
 //------------------------------------------------------------------------------
 void CvPlayerAchievements::KilledUnitWithUnit(CvUnit* pKillingUnit, CvUnit* pKilledUnit)
 {
+#if !defined(NO_ACHIEVEMENTS)
 	if(m_kPlayer.GetID() != GC.getGame().getActivePlayer())
 		return;
 
@@ -302,10 +317,12 @@ void CvPlayerAchievements::KilledUnitWithUnit(CvUnit* pKillingUnit, CvUnit* pKil
 			}
 		}
 	}
+#endif
 }
 //------------------------------------------------------------------------------
 void CvPlayerAchievements::StartTurn()
 {
+#if !defined(NO_ACHIEVEMENTS)
 	if(m_kPlayer.GetID() != GC.getGame().getActivePlayer())
 		return;
 
@@ -352,6 +369,7 @@ void CvPlayerAchievements::StartTurn()
 		}
 		
 	}
+#endif
 }
 //------------------------------------------------------------------------------
 void CvPlayerAchievements::EndTurn()
@@ -360,6 +378,7 @@ void CvPlayerAchievements::EndTurn()
 //-------------------------------------------------------------------------
 void CvPlayerAchievements::FinishedBuilding(CvCity* pkCity, BuildingTypes eBuilding)
 {
+#if !defined(NO_ACHIEVEMENTS)
 	if(m_eCollossusType == UNDEFINED_TYPE)
 	{
 		m_eCollossusType = (BuildingTypes)GC.getInfoTypeForString("BUILDING_COLOSSUS", true);
@@ -394,6 +413,7 @@ void CvPlayerAchievements::FinishedBuilding(CvCity* pkCity, BuildingTypes eBuild
 			}
 		}
 	}
+#endif
 }
 //------------------------------------------------------------------------------
 void CvPlayerAchievements::Read(FDataStream& kStream)

@@ -57,6 +57,9 @@ CvTechEntry::CvTechEntry(void):
 	m_bResearchAgreementTradingAllowed(false),
 	m_bTradeAgreementTradingAllowed(false),
 	m_bPermanentAllianceTrading(false),
+#if defined(MOD_TECHS_CITY_WORKING)
+	m_iCityWorkingChange(0),
+#endif
 	m_bBridgeBuilding(false),
 	m_bWaterWork(false),
 	m_bTriggersArchaeologicalSites(false),
@@ -123,6 +126,9 @@ bool CvTechEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	m_bResearchAgreementTradingAllowed = kResults.GetBool("ResearchAgreementTradingAllowed");
 	m_bTradeAgreementTradingAllowed = kResults.GetBool("TradeAgreementTradingAllowed");
 	m_bPermanentAllianceTrading = kResults.GetBool("PermanentAllianceTradingAllowed");
+#if defined(MOD_TECHS_CITY_WORKING)
+	m_iCityWorkingChange = kResults.GetInt("CityWorkingChange");
+#endif
 	m_bBridgeBuilding = kResults.GetBool("BridgeBuilding");
 	m_bWaterWork = kResults.GetBool("WaterWork");
 	m_iGridX = kResults.GetInt("GridX");
@@ -443,6 +449,14 @@ bool CvTechEntry::IsPermanentAllianceTrading() const
 {
 	return m_bPermanentAllianceTrading;
 }
+
+#if defined(MOD_TECHS_CITY_WORKING)
+/// Change in number of rings a city can work
+int CvTechEntry::GetCityWorkingChange() const
+{
+	return m_iCityWorkingChange;
+}
+#endif
 
 /// Are river crossings treated as bridges?
 bool CvTechEntry::IsBridgeBuilding() const
@@ -971,7 +985,11 @@ void CvPlayerTechs::SetLocalePriorities()
 	for(pCity = m_pPlayer->firstCity(&iLoop); pCity != NULL; pCity = m_pPlayer->nextCity(&iLoop))
 	{
 		// Look at all Tiles this City could potentially work to see if there are any non-water resources that could be improved
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		for(int iPlotLoop = 0; iPlotLoop < pCity->GetNumWorkablePlots(); iPlotLoop++)
+#else
 		for(int iPlotLoop = 0; iPlotLoop < NUM_CITY_PLOTS; iPlotLoop++)
+#endif
 		{
 			CvPlot* pLoopPlot = plotCity(pCity->getX(), pCity->getY(), iPlotLoop);
 
@@ -1263,6 +1281,7 @@ bool CvPlayerTechs::IsNoResearchAvailable() const
 ///Check for Achievement
 void CvPlayerTechs::CheckForTechAchievement() const
 {
+#if !defined(NO_ACHIEVEMENTS)
 	if(m_pPlayer->isHuman() && !GC.getGame().isGameMultiPlayer())
 	{
 		//Check for Catherine Achievement
@@ -1324,6 +1343,7 @@ void CvPlayerTechs::CheckForTechAchievement() const
 			gDLL->UnlockAchievement(ACHIEVEMENT_ALL_TECHS);
 		}
 	}
+#endif
 }
 
 /// Accessor: How many turns of research left?
