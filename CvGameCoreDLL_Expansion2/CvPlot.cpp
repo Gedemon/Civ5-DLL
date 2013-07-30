@@ -3890,8 +3890,7 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 	int iNumUnitsOfSameType = 0;
 
 	// RED <<<<<
-	// To do : limit based by unit domain & type of buildings in city...
-	if (isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))
+	if (isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")) // Unlimited unit stacking in cities
 		return 0;
 	// RED >>>>>
 
@@ -3945,7 +3944,7 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 				}
 
 				// Does the calling function want us to break out? (saves processing time)
-				if(bBreakOnUnitLimit)
+				if(bBreakOnUnitLimit && !isCity()) // RED stack in cities are checked below 
 				{
 					if(iNumUnitsOfSameType > iPlotUnitLimit)
 					{
@@ -3955,6 +3954,46 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 			}
 		}
 	}
+
+	// RED <<<<<	
+	if (isCity())
+	{
+		CvCity* pkCity = getPlotCity();
+		if(pkCity)
+		{
+			int iDefineLimit = 0;
+			int iCityLimit = 0;
+			DomainTypes eDomain = pUnit->getDomainType();
+			switch(eDomain)
+			{
+			case DOMAIN_AIR:
+				iDefineLimit = GC.getCITY_AIR_UNIT_LIMIT();
+				iCityLimit = pkCity->getAirStackLimit();
+				break;
+			case DOMAIN_LAND:
+				iDefineLimit = GC.getCITY_LAND_UNIT_LIMIT();
+				iCityLimit = pkCity->getLandStackLimit();
+				break;
+			case DOMAIN_SEA:
+				iDefineLimit = GC.getCITY_SEA_UNIT_LIMIT();
+				iCityLimit = pkCity->getSeaStackLimit();
+				break;
+			default:
+				break;
+			}
+			
+			if (iDefineLimit == -1 || iCityLimit == -1) // unlimited stacking allowed in this city for this unit's domain
+				return 0;
+
+			if (std::max(iDefineLimit, iCityLimit) > iNumUnitsOfSameType) // under stacking limit in this city
+				return 0;
+
+			if (std::max(iDefineLimit, iCityLimit) == iNumUnitsOfSameType) // reached stacking limit in this city
+				return 1;
+		}
+	}
+	// RED >>>>>
+
 	return iNumUnitsOfSameType;
 }
 

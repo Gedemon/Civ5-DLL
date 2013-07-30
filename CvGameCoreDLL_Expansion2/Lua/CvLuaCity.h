@@ -429,6 +429,18 @@ protected:
 	static int lUpdateStrengthValue(lua_State* L);
 	static int lGetStrengthValue(lua_State* L);
 
+	// RED <<<<<
+	static int lGetAirStackLimit(lua_State* L);
+	static int lSetAirStackLimit(lua_State* L);
+	static int lChangeAirStackLimit(lua_State* L);
+	static int lGetLandStackLimit(lua_State* L);
+	static int lSetLandStackLimit(lua_State* L);
+	static int lChangeLandStackLimit(lua_State* L);
+	static int lGetSeaStackLimit(lua_State* L);
+	static int lSetSeaStackLimit(lua_State* L);
+	static int lChangeSeaStackLimit(lua_State* L);
+	// RED >>>>>
+
 	static int lGetDamage(lua_State* L);
 	static int lSetDamage(lua_State* L);
 	static int lChangeDamage(lua_State* L);

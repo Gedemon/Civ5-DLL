@@ -6017,6 +6017,12 @@ bool CvUnit::canRebaseAt(const CvPlot* pPlot, int iX, int iY) const
 		if(pToPlot->getPlotCity()->getOwner() == getOwner())
 		{
 			bCityToRebase = true;
+			// RED <<<<<
+			if(pToPlot->getNumFriendlyUnitsOfType(this) >= GC.getPLOT_UNIT_LIMIT()) // this is the civ5 way of testing stacking limit... 
+ 			{
+ 				return false;
+ 			}
+			// RED >>>>>
 		}
 	}
 
