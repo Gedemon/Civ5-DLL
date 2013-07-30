@@ -642,6 +642,23 @@ void CvTacticalAI::LaunchAttack(void* pAttacker, CvTacticalTarget* pTarget, bool
 		bool bSendAttack = pUnit->getMoves() > 0 && !pUnit->isOutOfAttacks();
 		if(bSendAttack)
 		{
+			// RED <<<<<
+			{
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if(pkScriptSystem)
+				{	
+					CvLuaArgsHandle args;
+
+					args->Push(pUnit->getOwner());
+					args->Push(pUnit->GetID());
+					args->Push(pTarget->GetTargetX());
+					args->Push(pTarget->GetTargetY());
+
+					bool bResult;
+					LuaSupport::CallHook(pkScriptSystem, "TacticalAILaunchUnitAttack", args.get(), bResult);
+				}
+			}
+			// RED >>>>>
 			if(bRanged && pUnit->getDomainType() != DOMAIN_AIR)	// Air attack is ranged, but it goes through the 'move to' mission.
 			{
 				pUnit->PushMission(CvTypes::getMISSION_RANGE_ATTACK(), pTarget->GetTargetX(), pTarget->GetTargetY());
