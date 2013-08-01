@@ -3943,8 +3943,8 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 			// Don't include an enemy unit, or else it won't let us attack it :)
 			if(!kUnitTeam.isAtWar(pLoopUnit->getTeam()))
 			{
-				// Units of the same type OR Units belonging to different civs
-				if(pUnit->getOwner() != pLoopUnit->getOwner() || pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked))
+				// Units of the same type
+				if(pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked))
 				{
 					// We should allow as many cargo units as we want
 					if(!pLoopUnit->isCargo())
