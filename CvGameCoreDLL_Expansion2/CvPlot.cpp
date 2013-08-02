@@ -3984,6 +3984,9 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 			
 			if (iDefineLimit == -1 || iCityLimit == -1) // unlimited stacking allowed in this city for this unit's domain
 				return 0;
+			
+			if (iDefineLimit == 0 && iCityLimit == 0) // use default stacking limit
+				return iNumUnitsOfSameType;
 
 			if (std::max(iDefineLimit, iCityLimit) > iNumUnitsOfSameType) // under stacking limit in this city
 				return 0;
