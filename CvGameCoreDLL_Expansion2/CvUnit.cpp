@@ -263,6 +263,7 @@ CvUnit::CvUnit() :
 	, m_strName("")
 	, m_eGreatWork(NO_GREAT_WORK)
 	, m_iTourismBlastStrength(0)
+	, m_bBestDefender("CvUnit::m_bBestDefender", m_syncArchive) // RED
 	, m_bPromotionReady("CvUnit::m_bPromotionReady", m_syncArchive)
 	, m_bDeathDelay("CvUnit::m_bDeathDelay", m_syncArchive)
 	, m_bCombatFocus("CvUnit::m_bCombatFocus", m_syncArchive)
@@ -860,6 +861,7 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	m_iTradeMissionInfluenceModifier = 0;
 	m_iTradeMissionGoldModifier = 0;
 
+	m_bBestDefender = false; // RED
 	m_bPromotionReady = false;
 	m_bDeathDelay = false;
 	m_bCombatFocus = false;
@@ -1815,6 +1817,63 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 		{
 			return true;
 		}
+		// RED <<<<<
+		// Get the unit that will have the most Health left after the attack
+		if(GC.getGame().isOption("GAMEOPTION_BEST_DEFENDER_BY_HEALTH"))
+		{
+			int iOldDefenderStrength = pDefender->GetMaxDefenseStrength(pDefender->plot(), pAttacker);
+			int iDefenderStrength = GetMaxDefenseStrength(plot(), pAttacker);
+			int iOldAttackerStrength = 0;
+			int iAttackerStrength = 0;
+
+			if (pAttacker->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true) > 0 && pAttacker->getDomainType() == DOMAIN_AIR)
+			{
+				iAttackerStrength = pAttacker->GetMaxRangedCombatStrength(NULL, /*pCity*/ NULL, true, true);
+				iOldAttackerStrength = iAttackerStrength;
+				if (pDefender->getDomainType() != DOMAIN_AIR)
+				{
+					iOldDefenderStrength /= 2;
+				}
+				if (getDomainType() != DOMAIN_AIR)
+				{
+					iDefenderStrength /= 2;
+				}
+			}
+			else
+			{
+				iAttackerStrength = pAttacker->GetMaxAttackStrength(pAttacker->plot(), plot(), this);
+				iOldAttackerStrength = pAttacker->GetMaxAttackStrength(pAttacker->plot(), pDefender->plot(), pDefender);
+			}
+
+			int iAttackerDamageInflicted = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+			int iOldAttackerDamageInflicted = pAttacker->getCombatDamage(iOldAttackerStrength, iOldDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+
+			int iDefenderDamageInflicted = getCombatDamage(iDefenderStrength, iAttackerStrength, getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+			int iOldDefenderDamageInflicted = pDefender->getCombatDamage(iOldDefenderStrength, iOldAttackerStrength, pDefender->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+
+			if (pAttacker->getDomainType() == DOMAIN_AIR && getDomainType() != DOMAIN_AIR)
+			{
+				iAttackerDamageInflicted /= 2;
+				iDefenderDamageInflicted /= 3;
+			}
+			if (pAttacker->getDomainType() == DOMAIN_AIR && pDefender->getDomainType() != DOMAIN_AIR)
+			{
+				iOldAttackerDamageInflicted /= 2;
+				iOldDefenderDamageInflicted /= 3;
+			}
+
+			int iAttackerTotalDamageInflicted = iAttackerDamageInflicted + getDamage();
+			int iOldAttackerTotalDamageInflicted = iOldAttackerDamageInflicted + pDefender->getDamage();
+
+			//int iDefenderTotalDamageInflicted = iDefenderDamageInflicted + pAttacker->getDamage();
+			//int iOldDefenderTotalDamageInflicted = iOldDefenderDamageInflicted + pAttacker->getDamage();
+
+			if (iAttackerTotalDamageInflicted < iOldAttackerTotalDamageInflicted)
+			{
+				return true;
+			}
+		}
+		// RED >>>>>
 	}
 
 	iOurDefense = GetMaxDefenseStrength(plot(), pAttacker);
@@ -15767,6 +15826,26 @@ void CvUnit::rotateFacingDirectionCounterClockwise()
 	DirectionTypes newDirection = (DirectionTypes)((m_eFacingDirection + NUM_DIRECTION_TYPES - 1) % NUM_DIRECTION_TYPES);
 	setFacingDirection(newDirection);
 }
+
+// RED <<<<<
+//	--------------------------------------------------------------------------------
+bool CvUnit::isMarkedBestDefender() const
+{
+	VALIDATE_OBJECT
+
+	return m_bBestDefender;
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setMarkedBestDefender(bool bNewValue)
+{
+	VALIDATE_OBJECT
+	if (bNewValue != isMarkedBestDefender())
+	{
+		m_bBestDefender = bNewValue;
+	}
+}
+// RED >>>>>
 
 //	--------------------------------------------------------------------------------
 bool CvUnit::isOutOfAttacks() const

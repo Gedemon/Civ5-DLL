@@ -930,6 +930,11 @@ public:
 	int getDropRange() const;
 	void changeDropRange(int iChange);
 
+	// RED <<<<<<
+	bool isMarkedBestDefender() const;
+	void setMarkedBestDefender(bool bNewValue);
+	// RED >>>>>>
+
 	bool isOutOfAttacks() const;
 	void setMadeAttack(bool bNewValue);
 
@@ -1388,6 +1393,7 @@ protected:
 	int m_iCanHeavyCharge;
 	int m_iNumExoticGoods;
 
+	FAutoVariable<bool, CvUnit> m_bBestDefender; // RED
 	FAutoVariable<bool, CvUnit> m_bPromotionReady;
 	FAutoVariable<bool, CvUnit> m_bDeathDelay;
 	FAutoVariable<bool, CvUnit> m_bCombatFocus;

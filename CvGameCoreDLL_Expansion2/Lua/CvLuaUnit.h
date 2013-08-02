@@ -386,6 +386,11 @@ protected:
 	static int lGetExperiencePercent(lua_State* L);
 	static int lGetKamikazePercent(lua_State* L);
 
+	// RED <<<<<
+	static int lIsMarkedBestDefender(lua_State* L);
+	static int lSetMarkedBestDefender(lua_State* L);
+	// RED >>>>>
+
 	static int lIsOutOfAttacks(lua_State* L);
 	static int lSetMadeAttack(lua_State* L);
 	static int lisOutOfInterceptions(lua_State* L);
