@@ -3944,7 +3944,7 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 			if(!kUnitTeam.isAtWar(pLoopUnit->getTeam()))
 			{
 				// Units of the same type
-				if(pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked))
+				if(pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked) && (pLoopUnit->getUnitMaxStack() != -1))
 				{
 					// We should allow as many cargo units as we want
 					if(!pLoopUnit->isCargo())
