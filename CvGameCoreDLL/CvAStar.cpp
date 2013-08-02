@@ -1195,6 +1195,7 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 	int iUnitPlotLimit           = GC.getPLOT_UNIT_LIMIT();
 	bool bFromPlotOwned          = pFromPlot->isOwned();
 	TeamTypes eFromPlotTeam      = pFromPlot->getTeam();
+	bool bCivilianBlocked        = !GC.getGame().isOption("GAMEOPTION_CIVILIAN_MOVE_THROUGH");
 
 	CvAStarNode* pNode = node;
 	bool bPreviousNodeHostile = false;
@@ -1303,7 +1304,7 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 		}
 	}
 
-	if (!bUnitIsCombat && unit_domain_type != DOMAIN_AIR)
+	if (!bUnitIsCombat && unit_domain_type != DOMAIN_AIR && bCivilianBlocked) // RED add bCivilianBlocked
 	{
 		const PlayerTypes eUnitPlayer = unit_owner;
 		const int iUnitCount = pToPlot->getNumUnits();
@@ -3160,6 +3161,7 @@ int TacticalAnalysisMapPathValid(CvAStarNode* parent, CvAStarNode* node, int dat
 	int iUnitPlotLimit           = GC.getPLOT_UNIT_LIMIT();
 	bool bFromPlotOwned          = !pFromPlotCell->IsUnclaimedTerritory();
 	TeamTypes eFromPlotTeam      = pFromPlot->getTeam();
+	bool bCivilianBlocked        = !GC.getGame().isOption("GAMEOPTION_CIVILIAN_MOVE_THROUGH");
 
 	CvAStarNode* pNode = node;
 	bool bPreviousNodeHostile = false;
@@ -3270,8 +3272,8 @@ int TacticalAnalysisMapPathValid(CvAStarNode* parent, CvAStarNode* node, int dat
 			}
 		}
 	}
-
-	if (!bUnitIsCombat && unit_domain_type != DOMAIN_AIR)
+	
+	if (!bUnitIsCombat && unit_domain_type != DOMAIN_AIR && bCivilianBlocked) // RED add bCivilianBlocked
 	{
 		const PlayerTypes eUnitPlayer = unit_owner;
 		const int iUnitCount = pToPlot->getNumUnits();
