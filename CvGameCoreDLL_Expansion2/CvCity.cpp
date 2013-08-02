@@ -2321,7 +2321,7 @@ bool CvCity::canTrain(UnitTypes eUnit, bool bContinue, bool bTestVisible, bool b
 		// RED <<<<<
 		// Do not allow Aircraft construction when the stacking limit is reached (Air units are just killed when checking for nearest valid plot in case of over-stacking...)
 		// Another solution would be to change the jumpToNearestValidPlot function to move Air units to other cities, but what if all cities are over-limit ?
-		if(pkUnitEntry->GetDomainType() == DOMAIN_AIR)
+		if((pkUnitEntry->GetDomainType() == DOMAIN_AIR) && (pkUnitEntry->GetUnitMaxStack() != -1))
 		{
 			CvPlot* pPlot = plot();
 
