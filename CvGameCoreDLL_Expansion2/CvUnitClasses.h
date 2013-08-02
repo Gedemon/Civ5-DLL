@@ -73,6 +73,8 @@ public:
 	bool IsNoMaintenance() const;
 	int GetUnhappiness() const;
 	int GetUnitClassType() const;
+	const char* GetUnitStackClassType() const; // RED
+	int GetUnitMaxStack() const; // RED
 	int GetSpecialUnitType() const;
 	int GetUnitCaptureClassType() const;
 	int GetUnitCombatType() const;
@@ -201,6 +203,8 @@ private:
 	bool m_bNoMaintenance;
 	int m_iUnhappiness;
 	int m_iUnitClassType;
+	CvString m_strUnitStackClassType; // RED
+	int m_iUnitMaxStack; // RED
 	int m_iSpecialUnitType;
 	int m_iUnitCaptureClassType;
 	int m_iUnitCombatType;

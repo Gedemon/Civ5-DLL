@@ -984,6 +984,8 @@ public:
 	const UnitTypes getUnitType() const;
 	CvUnitEntry& getUnitInfo() const;
 	UnitClassTypes getUnitClassType() const;
+	const CvString getUnitStackClassType() const; // RED
+	int getUnitMaxStack() const; // RED
 
 	const UnitTypes getLeaderUnitType() const;
 	void setLeaderUnitType(UnitTypes leaderUnitType);

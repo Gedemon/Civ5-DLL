@@ -399,6 +399,8 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 
 	Method(GetUnitType);
 	Method(GetUnitClassType);
+	Method(GetUnitStackClassType); // RED
+	Method(GetUnitMaxStack); // RED
 	Method(GetLeaderUnitType);
 	Method(SetLeaderUnitType);
 	Method(IsNearGreatGeneral);
@@ -3870,6 +3872,30 @@ int CvLuaUnit::lGetUnitClassType(lua_State* L)
 	lua_pushinteger(L, eResult);
 	return 1;
 }
+
+// RED <<<<<
+//------------------------------------------------------------------------------
+//int /*UnitClassTypes*/ getUnitClassType();
+int CvLuaUnit::lGetUnitStackClassType(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+
+	const char* eResult = pkUnit->getUnitStackClassType();
+	lua_pushstring(L, eResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//int /*UnitClassTypes*/ getUnitClassType();
+int CvLuaUnit::lGetUnitMaxStack(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+
+	const int eResult = pkUnit->getUnitMaxStack();
+	lua_pushinteger(L, eResult);
+	return 1;
+}
+// RED >>>>>
+
 //------------------------------------------------------------------------------
 //int /*UnitTypes*/ getLeaderUnitType();
 int CvLuaUnit::lGetLeaderUnitType(lua_State* L)

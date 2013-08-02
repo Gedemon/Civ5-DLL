@@ -3895,7 +3895,20 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 {
 	int iNumUnitsOfSameType = 0;
 
+	// RED <<<<<
+	if (isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")) // Unlimited unit stacking in cities
+		return 0;
+	// RED >>>>>
+
 	bool bCombat = false;
+	
+	// RED <<<<<
+	// Unlimited stack for this unit
+	if (pUnit->getUnitMaxStack() == -1 )
+	{
+		return 0;
+	}
+	// RED >>>>>
 
 	// slewis - trying to break the 1upt for trade units
 	if (pUnit->isTrade())
@@ -3923,6 +3936,14 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 
 	int iPlotUnitLimit = GC.getPLOT_UNIT_LIMIT();
 
+	// RED <<<<<
+	// Specific stack limit for this unit
+	if (pUnit->getUnitMaxStack() > 0 )
+	{
+		iPlotUnitLimit = pUnit->getUnitMaxStack();
+	}
+	// RED >>>>>
+
 	while(pUnitNode != NULL)
 	{
 		pLoopUnit = GetPlayerUnit(*pUnitNode);
@@ -3933,8 +3954,8 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 			// Don't include an enemy unit, or else it won't let us attack it :)
 			if(!kUnitTeam.isAtWar(pLoopUnit->getTeam()))
 			{
-				// Units of the same type OR Units belonging to different civs
-				if(pUnit->getOwner() != pLoopUnit->getOwner() || pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked))
+				// Units of the same type
+				if(pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked) && (pLoopUnit->getUnitMaxStack() != -1))
 				{
 					// We should allow as many cargo units as we want
 					if(!pLoopUnit->isCargo())
@@ -3945,7 +3966,7 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 				}
 
 				// Does the calling function want us to break out? (saves processing time)
-				if(bBreakOnUnitLimit)
+				if(bBreakOnUnitLimit && !isCity()) // RED stack in cities are checked below 
 				{
 					if(iNumUnitsOfSameType > iPlotUnitLimit)
 					{
@@ -3955,6 +3976,49 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 			}
 		}
 	}
+
+	// RED <<<<<	
+	if (isCity())
+	{
+		CvCity* pkCity = getPlotCity();
+		if(pkCity)
+		{
+			int iDefineLimit = 0;
+			int iCityLimit = 0;
+			DomainTypes eDomain = pUnit->getDomainType();
+			switch(eDomain)
+			{
+			case DOMAIN_AIR:
+				iDefineLimit = GC.getCITY_AIR_UNIT_LIMIT();
+				iCityLimit = pkCity->getAirStackLimit();
+				break;
+			case DOMAIN_LAND:
+				iDefineLimit = GC.getCITY_LAND_UNIT_LIMIT();
+				iCityLimit = pkCity->getLandStackLimit();
+				break;
+			case DOMAIN_SEA:
+				iDefineLimit = GC.getCITY_SEA_UNIT_LIMIT();
+				iCityLimit = pkCity->getSeaStackLimit();
+				break;
+			default:
+				break;
+			}
+			
+			if (iDefineLimit == -1 || iCityLimit == -1) // unlimited stacking allowed in this city for this unit's domain
+				return 0;
+			
+			if (iDefineLimit == 0 && iCityLimit == 0) // use default stacking limit
+				return iNumUnitsOfSameType;
+
+			if (std::max(iDefineLimit, iCityLimit) > iNumUnitsOfSameType) // under stacking limit in this city
+				return 0;
+
+			if (std::max(iDefineLimit, iCityLimit) == iNumUnitsOfSameType) // reached stacking limit in this city
+				return 1;
+		}
+	}
+	// RED >>>>>
+
 	return iNumUnitsOfSameType;
 }
 
