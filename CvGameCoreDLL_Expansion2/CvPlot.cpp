@@ -3895,6 +3895,14 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 	// RED >>>>>
 
 	bool bCombat = false;
+	
+	// RED <<<<<
+	// Unlimited stack for this unit
+	if (pUnit->getUnitMaxStack() == -1 )
+	{
+		return 0;
+	}
+	// RED >>>>>
 
 	// slewis - trying to break the 1upt for trade units
 	if (pUnit->isTrade())
@@ -3922,6 +3930,14 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 
 	int iPlotUnitLimit = GC.getPLOT_UNIT_LIMIT();
 
+	// RED <<<<<
+	// Specific stack limit for this unit
+	if (pUnit->getUnitMaxStack() > 0 )
+	{
+		iPlotUnitLimit = pUnit->getUnitMaxStack();
+	}
+	// RED >>>>>
+
 	while(pUnitNode != NULL)
 	{
 		pLoopUnit = GetPlayerUnit(*pUnitNode);
@@ -3932,8 +3948,8 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit* pUnit, bool bBreakOnUnitLimi
 			// Don't include an enemy unit, or else it won't let us attack it :)
 			if(!kUnitTeam.isAtWar(pLoopUnit->getTeam()))
 			{
-				// Units of the same type OR Units belonging to different civs
-				if(pUnit->getOwner() != pLoopUnit->getOwner() || pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked))
+				// Units of the same type
+				if(pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked) && (pLoopUnit->getUnitMaxStack() != -1))
 				{
 					// We should allow as many cargo units as we want
 					if(!pLoopUnit->isCargo())

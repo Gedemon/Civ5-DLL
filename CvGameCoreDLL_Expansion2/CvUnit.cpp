@@ -16092,6 +16092,23 @@ UnitClassTypes CvUnit::getUnitClassType() const
 	return (UnitClassTypes)getUnitInfo().GetUnitClassType();
 }
 
+
+// RED <<<<<
+//	--------------------------------------------------------------------------------
+const CvString CvUnit::getUnitStackClassType() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().GetUnitStackClassType();
+}
+
+//	--------------------------------------------------------------------------------
+int CvUnit::getUnitMaxStack() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().GetUnitMaxStack();
+}
+// RED >>>>>
+
 //	--------------------------------------------------------------------------------
 const UnitTypes CvUnit::getLeaderUnitType() const
 {
@@ -17213,6 +17230,12 @@ bool CvUnit::AreUnitsOfSameType(const CvUnit& pUnit2, const bool bPretendEmbarke
 	if(bUnit1isEmbarked && bUnit2isEmbarked)
 	{
 		return true;
+	}
+
+	// Different stacking classes can stack...
+	if(getUnitStackClassType() != pUnit2.getUnitStackClassType())
+	{
+		return false;
 	}
 
 	return CvGameQueries::AreUnitsSameType(getUnitType(), pUnit2.getUnitType());
