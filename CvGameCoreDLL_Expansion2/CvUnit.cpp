@@ -14971,10 +14971,10 @@ void CvUnit::setDamage(int iNewValue, PlayerTypes ePlayer, float fAdditionalText
 
 	if(IsDead())
 	{
+#if !defined(NO_ACHIEVEMENTS)
 		CvGame& game = GC.getGame();
 		const PlayerTypes eActivePlayer = game.getActivePlayer();
 		CvPlayerAI& activePlayer = GET_PLAYER(eActivePlayer);
-#if !defined(NO_ACHIEVEMENTS)
 		if(m_iLastGameTurnAtFullHealth != -1 && m_iLastGameTurnAtFullHealth == game.getGameTurn() && getOwner() == eActivePlayer && activePlayer.isHuman())
 		{
 			CvUnitEntry* pUnitInfo = GC.getUnitInfo(getUnitType());

@@ -11285,39 +11285,42 @@ void CvCity::BuyPlot(int iPlotX, int iPlotY)
 			bWithGold = false;
 		}
 	} else {
+		if (iCost > 0) {
+		// Only do this if we actually paid for the plot (as opposed to getting it for free via city growth)
 #endif
-		thisPlayer.ChangeNumPlotsBought(1);
+			thisPlayer.ChangeNumPlotsBought(1);
 #if defined(MOD_UI_CITY_EXPANSION)
+		}
 	}
 #endif
 
 #if defined(MOD_UI_CITY_EXPANSION)
 	if (iCost > 0) {
-	// Only do this if we actually paid for the plot (as opposed to getting it fro free via city growth)
+	// Only do this if we actually paid for the plot (as opposed to getting it for free via city growth)
 #endif
-	// See if there's anyone else nearby that could get upset by this action
-	CvCity* pNearbyCity;
+		// See if there's anyone else nearby that could get upset by this action
+		CvCity* pNearbyCity;
 #if defined(MOD_GLOBAL_CITY_WORKING)
-	for(int iI = 0; iI < GetNumWorkablePlots(); iI++)
+		for(int iI = 0; iI < GetNumWorkablePlots(); iI++)
 #else
-	for(int iI = 0; iI < NUM_CITY_PLOTS; iI++)
+		for(int iI = 0; iI < NUM_CITY_PLOTS; iI++)
 #endif
-	{
-		pPlot = plotCity(iPlotX, iPlotY, iI);
-
-		if(pPlot != NULL)
 		{
-			pNearbyCity = pPlot->getPlotCity();
+			pPlot = plotCity(iPlotX, iPlotY, iI);
 
-			if(pNearbyCity)
+			if(pPlot != NULL)
 			{
-				if(pNearbyCity->getOwner() != getOwner())
+				pNearbyCity = pPlot->getPlotCity();
+
+				if(pNearbyCity)
 				{
-					pNearbyCity->AI_ChangeNumPlotsAcquiredByOtherPlayer(getOwner(), 1);
+					if(pNearbyCity->getOwner() != getOwner())
+					{
+						pNearbyCity->AI_ChangeNumPlotsAcquiredByOtherPlayer(getOwner(), 1);
+					}
 				}
 			}
 		}
-	}
 #if defined(MOD_UI_CITY_EXPANSION)
 	}
 #endif

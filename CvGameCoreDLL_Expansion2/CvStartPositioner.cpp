@@ -385,6 +385,29 @@ void CvStartPositioner::SubdivideRegion(CvStartRegion region, int iNumDivisions)
 			bTaller = false;
 		}
 
+#if defined(MOD_GLOBAL_MAX_MAJOR_CIVS)
+		// CUSTOMLOG("CvStartPositioner::SubdivideRegion into %i divisions (by algorithm)", iNumDivisions);
+		// Gives a slightly different pattern to the hard-coded switch below, but it really doesn't matter
+		if (iNumDivisions > 32) {
+			iNumDivides = 2;
+			iLaterSubdivisions = (iNumDivisions+1) / 2;
+		} else if (iNumDivisions % 3 == 0) {
+			iNumDivides = 3;
+			iLaterSubdivisions = iNumDivisions / 3;
+		} else if (iNumDivisions % 2 == 0) {
+			iNumDivides = 2;
+			iLaterSubdivisions = iNumDivisions / 2;
+		} else if ((iNumDivisions+1) % 3 == 0) {
+			iNumDivides = 3;
+			iLaterSubdivisions = (iNumDivisions+1) / 3;
+		} else {
+			iNumDivides = 2;
+			iLaterSubdivisions = (iNumDivisions+1) / 2;
+		}
+
+		// DUH!!!  I'm so stooopid that I can't work out a simple algorithm for this, jeez Firaxis, employ some apes with brains!
+#else
+		// CUSTOMLOG("CvStartPositioner::SubdivideRegion into %i divisions (by switch)", iNumDivisions);
 		// If number of divisions is greater than 3...
 		//
 		// Number       First Divide     Each Subdivision
@@ -457,6 +480,8 @@ void CvStartPositioner::SubdivideRegion(CvStartRegion region, int iNumDivisions)
 		default:
 			CvAssertMsg(false, "Trying to create regions for more than 18 major civs.");
 		}
+#endif
+		// CUSTOMLOG(" divide now %i, divide later %i", iNumDivides, iLaterSubdivisions);
 
 		if(iNumDivides == 2)
 		{

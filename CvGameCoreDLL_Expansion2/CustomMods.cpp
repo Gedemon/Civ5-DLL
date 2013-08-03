@@ -58,6 +58,7 @@ CustomMods::CustomMods() :
 	m_bRELIGION_NO_PREFERRENCES(false),
 	m_bRELIGION_RANDOMISE(false),
 	m_bRELIGION_CONVERSION_MODIFIERS(false),
+	m_bRELIGION_KEEP_PROPHET_OVERFLOW(false),
 
 	m_bEVENTS_NEW_ERA(false),
 	m_bEVENTS_NW_DISCOVERY(false),
@@ -99,6 +100,7 @@ CustomMods::CustomMods() :
 	m_bBUGFIX_NAVAL_NEAREST_WATER(false),
 	m_bBUGFIX_CITY_STACKING(false),
 	m_bBUGFIX_BARB_CAMP_TERRAINS(false),
+	m_bBUGFIX_BARB_CAMP_SPAWNING(false),
 	m_bBUGFIX_REMOVE_GHOST_ROUTES(false),
 	m_bBUGFIX_UNITS_AWAKE_IN_DANGER(false),
 	m_bBUGFIX_WORKERS_VISIBLE_DANGER(false),
@@ -191,6 +193,7 @@ int CustomMods::getOption(const char* szOption) {
 		m_bRELIGION_NO_PREFERRENCES               = (m_options[string("RELIGION_NO_PREFERRENCES")] == 1);
 		m_bRELIGION_RANDOMISE                     = (m_options[string("RELIGION_RANDOMISE")] == 1);
 		m_bRELIGION_CONVERSION_MODIFIERS          = (m_options[string("RELIGION_CONVERSION_MODIFIERS")] == 1);
+		m_bRELIGION_KEEP_PROPHET_OVERFLOW         = (m_options[string("RELIGION_KEEP_PROPHET_OVERFLOW")] == 1);
 
 		m_bEVENTS_CIRCUMNAVIGATION                = (m_options[string("EVENTS_CIRCUMNAVIGATION")] == 1);
 		m_bEVENTS_NEW_ERA                         = (m_options[string("EVENTS_NEW_ERA")] == 1);
@@ -233,6 +236,7 @@ int CustomMods::getOption(const char* szOption) {
 		m_bBUGFIX_NAVAL_NEAREST_WATER             = (m_options[string("BUGFIX_NAVAL_NEAREST_WATER")] == 1);
 		m_bBUGFIX_CITY_STACKING                   = (m_options[string("BUGFIX_CITY_STACKING")] == 1);
 		m_bBUGFIX_BARB_CAMP_TERRAINS              = (m_options[string("BUGFIX_BARB_CAMP_TERRAINS")] == 1);
+		m_bBUGFIX_BARB_CAMP_SPAWNING              = (m_options[string("BUGFIX_BARB_CAMP_SPAWNING")] == 1);
 		m_bBUGFIX_REMOVE_GHOST_ROUTES             = (m_options[string("BUGFIX_REMOVE_GHOST_ROUTES")] == 1);
 		m_bBUGFIX_UNITS_AWAKE_IN_DANGER           = (m_options[string("BUGFIX_UNITS_AWAKE_IN_DANGER")] == 1);
 		m_bBUGFIX_WORKERS_VISIBLE_DANGER          = (m_options[string("BUGFIX_WORKERS_VISIBLE_DANGER")] == 1);

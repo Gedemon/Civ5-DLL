@@ -96,6 +96,13 @@ void CvBarbarians::DoCampActivationNotice(CvPlot* pPlot)
 	if (kGame.isOption(GAMEOPTION_RAGING_BARBARIANS))
 		iNumTurnsToSpawn /= 2;
 
+#if defined(MOD_BUGFIX_BARB_CAMP_SPAWNING)
+	if (m_aiPlotBarbCampNumUnitsSpawned == NULL) {
+		// Probably means we are being called as CvWorldBuilderMapLoaded is adding camps, MapInit() will follow soon and set everything up correctly
+		return;
+	}
+#endif
+		
 	// Num Units Spawned
 	int iNumUnitsSpawned = m_aiPlotBarbCampNumUnitsSpawned[pPlot->GetPlotIndex()];
 
@@ -449,7 +456,10 @@ void CvBarbarians::DoCamps()
 														continue;
 
 													pLoopPlot->setImprovementType(eCamp);
+#if !defined(MOD_BUGFIX_BARB_CAMP_SPAWNING)
+													// The notification has been moved into the CvPlot::setImprovementType() method
 													DoCampActivationNotice(pLoopPlot);
+#endif
 
 													eBestUnit = GetRandomBarbarianUnitType(kMap.getArea(pLoopPlot->getArea()), UNITAI_DEFENSE);
 

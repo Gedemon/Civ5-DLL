@@ -1584,7 +1584,7 @@ void CvUnitEntry::DoUpdatePower()
 #if defined(MOD_BUGFIX_UNIT_POWER_CALC)
 	}
 
-	CUSTOMLOG("UnitClass::Power\t%s\t%i", GetDescription(), iPower);
+	// CUSTOMLOG("UnitClass::Power\t%s\t%i", GetDescription(), iPower);
 #endif
 
 	// Debug output

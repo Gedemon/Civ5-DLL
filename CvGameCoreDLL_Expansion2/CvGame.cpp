@@ -657,7 +657,11 @@ void CvGame::InitPlayers()
 
 			if(iI < MAX_MAJOR_CIVS + iNumMinors)
 			{
+#if defined(MOD_GLOBAL_MAX_MAJOR_CIVS)
+				CvMinorCivInfo* pMinorCivInfo = GC.getMinorCivInfo(CvPreGame::minorCivType((PlayerTypes) (eMinorPlayer + (MAX_PREGAME_MAJOR_CIVS - MAX_MAJOR_CIVS))));
+#else
 				CvMinorCivInfo* pMinorCivInfo = GC.getMinorCivInfo(CvPreGame::minorCivType(eMinorPlayer));
+#endif
 
 				CvPreGame::setSlotStatus(eMinorPlayer, SS_COMPUTER);
 				CvPreGame::setNetID(eMinorPlayer, -1);

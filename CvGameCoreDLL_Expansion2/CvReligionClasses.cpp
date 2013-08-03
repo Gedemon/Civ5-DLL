@@ -2367,7 +2367,12 @@ bool CvGameReligions::CheckSpawnGreatProphet(CvPlayer& kPlayer)
 		return false;
 	}
 
+#if defined(MOD_RELIGION_KEEP_PROPHET_OVERFLOW)
+	int iBaseChance = GC.getRELIGION_BASE_CHANCE_PROPHET_SPAWN();
+	int iChance = iBaseChance;
+#else
 	int iChance = GC.getRELIGION_BASE_CHANCE_PROPHET_SPAWN();
+#endif
 	iChance += (iFaith - iCost);
 
 	int iRand = GC.getGame().getJonRandNum(100, "Religion: spawn Great Prophet roll.");
@@ -2385,7 +2390,15 @@ bool CvGameReligions::CheckSpawnGreatProphet(CvPlayer& kPlayer)
 	if(pSpawnCity != NULL && pSpawnCity->getOwner() == kPlayer.GetID())
 	{
 		pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, false /*bIncrementCount*/, true);
-		kPlayer.SetFaith(0);
+#if defined(MOD_RELIGION_KEEP_PROPHET_OVERFLOW)
+		if (MOD_RELIGION_KEEP_PROPHET_OVERFLOW && iBaseChance >= 100) {
+			kPlayer.ChangeFaith(-1 * iCost);
+		} else {
+#endif
+			kPlayer.SetFaith(0);
+#if defined(MOD_RELIGION_KEEP_PROPHET_OVERFLOW)
+		}
+#endif
 	}
 	else
 	{
@@ -2393,7 +2406,15 @@ bool CvGameReligions::CheckSpawnGreatProphet(CvPlayer& kPlayer)
 		if(pSpawnCity != NULL)
 		{
 			pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, false /*bIncrementCount*/, true);
+#if defined(MOD_RELIGION_KEEP_PROPHET_OVERFLOW)
+		if (MOD_RELIGION_KEEP_PROPHET_OVERFLOW && iBaseChance >= 100) {
+			kPlayer.ChangeFaith(-1 * iCost);
+		} else {
+#endif
 			kPlayer.SetFaith(0);
+#if defined(MOD_RELIGION_KEEP_PROPHET_OVERFLOW)
+		}
+#endif
 		}
 	}
 

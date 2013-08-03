@@ -1609,7 +1609,11 @@ CvMinorCivAI::~CvMinorCivAI(void)
 void CvMinorCivAI::Init(CvPlayer* pPlayer)
 {
 	m_pPlayer = pPlayer;
+#if defined(MOD_GLOBAL_MAX_MAJOR_CIVS)
+	m_minorCivType = GetMinorCivType();
+#else
 	m_minorCivType = CvPreGame::minorCivType(m_pPlayer->GetID());
+#endif
 
 	Reset();
 }
@@ -1873,7 +1877,11 @@ CvPlayer* CvMinorCivAI::GetPlayer()
 MinorCivTypes CvMinorCivAI::GetMinorCivType() const
 {
 	//	return m_minorCivType;
+#if defined(MOD_GLOBAL_MAX_MAJOR_CIVS)
+	return CvPreGame::minorCivType((PlayerTypes) (m_pPlayer->GetID() + (MAX_PREGAME_MAJOR_CIVS - MAX_MAJOR_CIVS)));
+#else
 	return CvPreGame::minorCivType(m_pPlayer->GetID());
+#endif
 }
 
 /// What is the personality of this Minor

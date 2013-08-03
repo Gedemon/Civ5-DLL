@@ -4,6 +4,9 @@
 #ifndef CUSTOM_MODS_H
 #define CUSTOM_MODS_H
 
+// Custom #defines used by all DLLs
+#include "..\CvGameCoreDLLUtil\include\CustomModsGlobal.h"
+
 /****************************************************************************
  ****************************************************************************
  *****                                                                  *****
@@ -17,7 +20,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION "20"
+#define MOD_DLL_VERSION "21"
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
 
@@ -133,6 +136,8 @@
 #define MOD_RELIGION_RANDOMISE                      gCustomMods.isRELIGION_RANDOMISE()
 // Adds ConversionModifier and GlobalConversionModifier (in the same vein as espionage modifiers) to buildings - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_RELIGION_CONVERSION_MODIFIERS           gCustomMods.isRELIGION_CONVERSION_MODIFIERS()
+// Keeps overflow faith from spawning a Great Prophet if the base spawn chance is 100%
+#define MOD_RELIGION_KEEP_PROPHET_OVERFLOW          gCustomMods.isRELIGION_KEEP_PROPHET_OVERFLOW()
 
 // Event sent when a team circumnavigates the globe -->
 //   GameEvents.CircumnavigatedGlobe.Add(function(eTeam) end)
@@ -288,6 +293,8 @@
 #define MOD_BUGFIX_CITY_STACKING                    gCustomMods.isBUGFIX_CITY_STACKING()
 // Fixes the bug where Barb Camps ignore the ValidTerrains and ValidFeatures tables
 #define MOD_BUGFIX_BARB_CAMP_TERRAINS               gCustomMods.isBUGFIX_BARB_CAMP_TERRAINS()
+// Fixes the bug where Barb Camps won't spawn units if they are added via pPlot:SetImprovementType()
+#define MOD_BUGFIX_BARB_CAMP_SPAWNING               gCustomMods.isBUGFIX_BARB_CAMP_SPAWNING()
 // Fixes the bug where you can't remove roads in no-mans-land originally built by a now dead player
 #define MOD_BUGFIX_REMOVE_GHOST_ROUTES              gCustomMods.isBUGFIX_REMOVE_GHOST_ROUTES()
 // Fixes healing units ignoring enemy units and sleeping units under direct fire remaining asleep - thanks to hulkster for highlighting the latter issue
@@ -339,8 +346,14 @@
 //
 
 // Serialization wrappers (makes it easier to find save breaking code)
+#define MOD_SERIALIZE
+#if defined(MOD_SERIALIZE)
 #define MOD_SERIALIZE_TO(stream, member) stream << member
 #define MOD_SERIALIZE_FROM(stream, member) stream >> member
+#else
+#define MOD_SERIALIZE_TO(stream, member) ((void)0)
+#define MOD_SERIALIZE_FROM(stream, member) ((void)0)
+#endif
 
 
 // Custom database table name and columns
@@ -350,7 +363,7 @@
 #define MOD_DB_COL_CLASS "Class"
 
 // Custom mod logger
-#ifdef CUSTOMLOGDEBUG
+#if defined(CUSTOMLOGDEBUG)
 #define	CUSTOMLOG(sFmt, ...) {															\
 	CvString sMsg;																		\
 	CvString::format(sMsg, sFmt, __VA_ARGS__);											\
@@ -420,6 +433,7 @@ public:
 	inline bool isRELIGION_NO_PREFERRENCES()                { return m_bRELIGION_NO_PREFERRENCES; }
 	inline bool isRELIGION_RANDOMISE()                      { return m_bRELIGION_RANDOMISE; }
 	inline bool isRELIGION_CONVERSION_MODIFIERS()           { return m_bRELIGION_CONVERSION_MODIFIERS; }
+	inline bool isRELIGION_KEEP_PROPHET_OVERFLOW()          { return m_bRELIGION_KEEP_PROPHET_OVERFLOW; }
 
 	inline bool isEVENTS_CIRCUMNAVIGATION()                 { return m_bEVENTS_CIRCUMNAVIGATION; }
 	inline bool isEVENTS_NEW_ERA()                          { return m_bEVENTS_NEW_ERA; }
@@ -462,6 +476,7 @@ public:
 	inline bool isBUGFIX_NAVAL_NEAREST_WATER()              { return m_bBUGFIX_NAVAL_NEAREST_WATER; }
 	inline bool isBUGFIX_CITY_STACKING()                    { return m_bBUGFIX_CITY_STACKING; }
 	inline bool isBUGFIX_BARB_CAMP_TERRAINS()               { return m_bBUGFIX_BARB_CAMP_TERRAINS; }
+	inline bool isBUGFIX_BARB_CAMP_SPAWNING()               { return m_bBUGFIX_BARB_CAMP_SPAWNING; }
 	inline bool isBUGFIX_REMOVE_GHOST_ROUTES()              { return m_bBUGFIX_REMOVE_GHOST_ROUTES; }
 	inline bool isBUGFIX_UNITS_AWAKE_IN_DANGER()            { return m_bBUGFIX_UNITS_AWAKE_IN_DANGER; }
 	inline bool isBUGFIX_WORKERS_VISIBLE_DANGER()           { return m_bBUGFIX_WORKERS_VISIBLE_DANGER; }
@@ -527,6 +542,7 @@ protected:
 	bool m_bRELIGION_NO_PREFERRENCES;
 	bool m_bRELIGION_RANDOMISE;
 	bool m_bRELIGION_CONVERSION_MODIFIERS;
+	bool m_bRELIGION_KEEP_PROPHET_OVERFLOW;
 
 	bool m_bEVENTS_CIRCUMNAVIGATION;
 	bool m_bEVENTS_NEW_ERA;
@@ -569,6 +585,7 @@ protected:
 	bool m_bBUGFIX_NAVAL_NEAREST_WATER;
 	bool m_bBUGFIX_CITY_STACKING;
 	bool m_bBUGFIX_BARB_CAMP_TERRAINS;
+	bool m_bBUGFIX_BARB_CAMP_SPAWNING;
 	bool m_bBUGFIX_REMOVE_GHOST_ROUTES;
 	bool m_bBUGFIX_UNITS_AWAKE_IN_DANGER;
 	bool m_bBUGFIX_WORKERS_VISIBLE_DANGER;

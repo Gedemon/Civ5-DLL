@@ -996,6 +996,13 @@ void CvSiteEvaluatorForStart::ComputeFlavorMultipliers(CvPlayer*)
 	}
 }
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+// *****
+// ***** WARNING!!!
+// *****
+// ***** This method gets called pre-game if using a WB map (.civ5map), in which case pPlayer is NULL
+// *****
+#endif
 /// Value of this site for a civ starting location
 int CvSiteEvaluatorForStart::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldTypes, bool)
 {
@@ -1022,7 +1029,8 @@ int CvSiteEvaluatorForStart::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, Yi
 
 	// We have our own special method of scoring, so don't call the base class for that (like settler version does)
 #if defined(MOD_GLOBAL_CITY_WORKING)
-	for(iI = 0; iI < pPlayer->GetNumWorkablePlots(); iI++)
+	int iLimit = (pPlayer != NULL) ? pPlayer->GetNumWorkablePlots() : AVG_CITY_PLOTS;
+	for(iI = 0; iI < iLimit; iI++)
 #else
 	for(iI = 0; iI < NUM_CITY_PLOTS; iI++)
 #endif
@@ -1038,8 +1046,13 @@ int CvSiteEvaluatorForStart::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, Yi
 		{
 			int iDistance = plotDistance(pPlot->getX(), pPlot->getY(), pLoopPlot->getX(), pLoopPlot->getY());
 #if defined(MOD_GLOBAL_CITY_WORKING)
-			CvAssert(iDistance <= pPlayer->getBuyPlotDistance());
-			if(iDistance > pPlayer->getBuyPlotDistance()) continue;
+			if (pPlayer != NULL) {
+				CvAssert(iDistance <= pPlayer->getBuyPlotDistance());
+				if(iDistance > pPlayer->getBuyPlotDistance()) continue;
+			} else {
+				CvAssert(iDistance <= AVG_CITY_RADIUS);
+				if(iDistance > AVG_CITY_RADIUS) continue;
+			}
 #else	
 			CvAssert(iDistance <= NUM_CITY_RINGS);
 			if(iDistance > NUM_CITY_RINGS) continue;

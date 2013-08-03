@@ -6525,6 +6525,11 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 		if(eNewValue == GC.getBARBARIAN_CAMP_IMPROVEMENT())
 		{
 			SetPlayerThatClearedBarbCampHere(NO_PLAYER);
+			
+#if defined(MOD_BUGFIX_BARB_CAMP_SPAWNING)
+			// Alert the barbarian spawning code to this new camp
+			CvBarbarians::DoCampActivationNotice(this);
+#endif
 		}
 
 		setUpgradeProgress(0);

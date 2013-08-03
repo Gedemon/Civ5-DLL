@@ -148,6 +148,9 @@ void CvDllGameContext::InitializeSingleton()
 
 #if defined(CUSTOM_MODS_H)
 	CUSTOMLOG("%s - Startup (Version %s - Build %s %s%s)", MOD_DLL_NAME, MOD_DLL_VERSION, __DATE__, __TIME__, MOD_DLL_CUSTOM_BUILD_NAME);
+#if defined(MOD_GLOBAL_MAX_MAJOR_CIVS)
+	CUSTOMLOG(" - supporting %i major civilizations", MAX_MAJOR_CIVS);
+#endif
 #endif
 }
 //------------------------------------------------------------------------------
