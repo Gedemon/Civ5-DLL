@@ -221,7 +221,15 @@ void CvUnitCombat::GenerateMeleeCombatInfo(CvUnit &kAttacker, CvUnit *pkDefender
 		pkCombatInfo->setUpdateGlobal( BATTLE_UNIT_DEFENDER, !pkDefender->isBarbarian() );
 
 		pkCombatInfo->setAttackIsRanged(false);
-		pkCombatInfo->setAttackerAdvances(true);
+		// RED <<<<<
+		bool bAdvance = true;
+		if(plot.getNumDefenders(pkDefender->getOwner()) > 1)
+		{
+			bAdvance = false;
+		}
+		pkCombatInfo->setAttackerAdvances(bAdvance);
+		// RED >>>>>
+		//pkCombatInfo->setAttackerAdvances(true);
 		pkCombatInfo->setDefenderRetaliates(true);
 	}
 
