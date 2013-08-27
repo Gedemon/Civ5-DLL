@@ -96,7 +96,7 @@ void InitTypeDesc()
 		sg_kMapTypeDesc.m_kUnits.Clear();
 		const int iUnitCount = GC.getNumUnitInfos();
 		for( int i = 0; i < iUnitCount; ++i )
-		{
+		{	
 			const CvUnitEntry *pkUnitInfo = GC.getUnitInfo((UnitTypes)i);
 			if( pkUnitInfo != NULL )
 			{
