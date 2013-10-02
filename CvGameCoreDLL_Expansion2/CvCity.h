@@ -53,8 +53,13 @@ public:
 	void setupSpaceshipGraphics();
 
 
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+	void kill(bool bVenice = false);
+	void PreKill(bool bVenice = false);
+#else
 	void kill();
 	void PreKill();
+#endif
 	void PostKill(bool bCapital, CvPlot* pPlot, PlayerTypes eOwner);
 
 	CvPlayer* GetPlayer();
@@ -377,6 +382,11 @@ public:
 	void changeCultureRateModifier(int iChange);
 
 	// END Culture
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	int getTourismRateModifier() const;
+	void changeTourismRateModifier(int iChange);
+#endif
 
 	int GetFaithPerTurn() const;
 	int GetFaithPerTurnFromBuildings() const;

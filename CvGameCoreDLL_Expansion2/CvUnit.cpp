@@ -3239,10 +3239,18 @@ bool CvUnit::jumpToNearestValidPlot()
 						if((getDomainType() != DOMAIN_AIR) || pLoopPlot->isFriendlyCity(*this, true))
 						{
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
+#if defined(MOD_BUGFIX_NAVAL_NEAREST_WATER)
 							bool bCanEnter = getDomainType() != DOMAIN_SEA || (pLoopPlot->isFriendlyCityOrPassableFort(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || pLoopPlot->isCoastalLand())) || pLoopPlot->isWater();
+#else
+							bool bCanEnter = getDomainType() != DOMAIN_SEA || (pLoopPlot->isFriendlyCityOrPassableFort(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || pLoopPlot->isCoastalLand())) || (pLoopPlot->isWater() && !pLoopPlot->isLake());
+#endif
 							if(bCanEnter)
 #else
+#if defined(MOD_BUGFIX_NAVAL_NEAREST_WATER)
+							if(getDomainType() != DOMAIN_SEA || (pLoopPlot->isFriendlyCity(*this, true) && pLoopPlot->isCoastalLand()) || (pLoopPlot->isWater() && !pLoopPlot->isLake()))
+#else
 							if(getDomainType() != DOMAIN_SEA || (pLoopPlot->isFriendlyCity(*this, true) && pLoopPlot->isCoastalLand()) || pLoopPlot->isWater())
+#endif
 #endif
 							{
 								if(pLoopPlot->isRevealed(getTeam()))
@@ -8366,7 +8374,12 @@ bool CvUnit::buyCityState()
 		{
 			pMinorCapital = NULL; // we shouldn't use this pointer because DoAcquire invalidates it
 			int iNumUnits, iCapitalX, iCapitalY;
+#if defined (MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+			// CvUnit::buyCityState() is only ever called via CvTypes::getMISSION_BUY_CITY_STATE(), so this MUST be a "Merchant of Venice" type unit
+			GET_PLAYER(eMinor).GetMinorCivAI()->DoAcquire(getOwner(), iNumUnits, iCapitalX, iCapitalY, true);
+#else
 			GET_PLAYER(eMinor).GetMinorCivAI()->DoAcquire(getOwner(), iNumUnits, iCapitalX, iCapitalY);
+#endif
 			pMinorCapital = GC.getMap().plot(iCapitalX, iCapitalY)->getPlotCity();
 			if (pMinorCapital)
 			{
@@ -9709,10 +9722,20 @@ bool CvUnit::CanUpgradeRightNow(bool bOnlyTestVisible) const
 
 	// Tech requirement
 	TechTypes ePrereqTech = (TechTypes) pUpgradeUnitInfo->GetPrereqAndTech();
-
+	
 	if(ePrereqTech != NO_TECH && !GET_TEAM(getTeam()).GetTeamTechs()->HasTech(ePrereqTech))
 		return false;
 
+#if defined(MOD_BUGFIX_UNIT_PREREQ_PROJECT)
+	// Project requirement
+	ProjectTypes ePrereqProject = (ProjectTypes) pUpgradeUnitInfo->GetProjectPrereq();
+	if (ePrereqProject != NO_PROJECT) {
+		CvProjectEntry* pkProjectInfo = GC.getProjectInfo(ePrereqProject);
+		if (pkProjectInfo && GET_TEAM(getTeam()).getProjectCount(ePrereqProject) == 0)
+			return false;
+	}
+#endif
+		
 	CvPlot* pPlot = plot();
 
 	// Show the upgrade, but don't actually allow it

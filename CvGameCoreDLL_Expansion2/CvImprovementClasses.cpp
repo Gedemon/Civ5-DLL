@@ -67,6 +67,9 @@ CvImprovementEntry::CvImprovementEntry(void):
 	m_iGoldMaintenance(0),
 	m_iCultureBombRadius(0),
 	m_iRequiresXAdjacentLand(-1),
+#if defined(MOD_GLOBAL_STACKING_RULES)
+	m_iAdditionalUnits(0),
+#endif
 	m_iCultureAdjacentSameType(0),
 	m_iTilesPerGoody(0),
 	m_iGoodyUniqueRange(0),
@@ -195,6 +198,9 @@ bool CvImprovementEntry::CacheResults(Database::Results& kResults, CvDatabaseUti
 	m_iGoldMaintenance = kResults.GetInt("GoldMaintenance");
 	m_iCultureBombRadius = kResults.GetInt("CultureBombRadius");
 	m_iRequiresXAdjacentLand = kResults.GetInt("RequiresXAdjacentLand");
+#if defined(MOD_GLOBAL_STACKING_RULES)
+	m_iAdditionalUnits = kResults.GetInt("AdditionalUnits");
+#endif
 	m_iCultureAdjacentSameType = kResults.GetInt("CultureAdjacentSameType");
 	m_bHillsMakesValid = kResults.GetBool("HillsMakesValid");
 #if defined(MOD_GLOBAL_ALPINE_PASSES)
@@ -496,6 +502,14 @@ int CvImprovementEntry::GetRequiresXAdjacentLand() const
 {
 	return m_iRequiresXAdjacentLand;
 }
+
+#if defined(MOD_GLOBAL_STACKING_RULES)
+/// Additional units that can stack in this improvement
+int CvImprovementEntry::GetAdditionalUnits() const
+{
+	return m_iAdditionalUnits;
+}
+#endif
 
 /// Bonus culture if another Improvement of same type is adjacent
 int CvImprovementEntry::GetCultureAdjacentSameType() const

@@ -40,6 +40,9 @@ struct TradeConnection
 	int m_iCircuitsCompleted;
 	int m_iCircuitsToComplete;
 	int m_iTurnRouteComplete;
+#if defined(MOD_API_TRADEROUTES)
+	bool m_bTradeUnitRecalled;
+#endif
 	int m_aiOriginYields[NUM_YIELD_TYPES];
 	int m_aiDestYields[NUM_YIELD_TYPES];
 };
@@ -115,6 +118,10 @@ public:
 
 	void CreateVis (int iIndex); // Create the trade unit vis unit
 	CvUnit* GetVis(int iIndex);
+#if defined(MOD_API_TRADEROUTES)
+	bool IsRecalledUnit (int iIndex); // has the unit been recalled
+	void RecallUnit (int iIndex, bool bImmediate = false); // recall a trade unit
+#endif
 	// trade unit movement
 	bool MoveUnit (int iIndex); // move a trade unit along its path for all its movement points
 	bool StepUnit (int iIndex); // move a trade unit a single step along its path (called by MoveUnit)

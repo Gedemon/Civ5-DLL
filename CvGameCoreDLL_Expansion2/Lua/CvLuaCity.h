@@ -245,6 +245,11 @@ protected:
 	static int lGetCultureRateModifier(lua_State* L);
 	static int lChangeCultureRateModifier(lua_State* L);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	static int lGetTourismRateModifier(lua_State* L);
+	static int lChangeTourismRateModifier(lua_State* L);
+#endif
+
 	static int lGetNumGreatWorks(lua_State* L);
 	static int lGetNumGreatWorkSlots(lua_State* L);
 	static int lGetBaseTourism(lua_State* L);

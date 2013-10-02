@@ -97,6 +97,14 @@ protected:
 	static int lCanMakeTradeRoute(lua_State* L);
 	static int lCanMakeTradeRouteAt(lua_State* L);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	static int lCanPlunderTradeRoute(lua_State* L);
+	static int lPlunderTradeRoute(lua_State* L);
+
+	static int lCanCreateGreatWork(lua_State* L);
+	static int lCreateGreatWork(lua_State* L);
+#endif
+
 	static int lGetExoticGoodsGoldAmount(lua_State* L);
 	static int lGetExoticGoodsXPAmount(lua_State* L);
 
@@ -217,6 +225,11 @@ protected:
 	static int lIsEnemyInMovementRange(lua_State* L);
 
 	static int lIsTrade(lua_State* L);
+#if defined(MOD_API_TRADEROUTES)
+	static int lGetTradeRouteIndex(lua_State* L);
+	static int lIsRecalledTrader(lua_State* L);
+	static int lRecallTrader(lua_State* L);
+#endif
 
 	static int lGetBaseRangedCombatStrength(lua_State* L);
 	static int lGetMaxRangedCombatStrength(lua_State* L);

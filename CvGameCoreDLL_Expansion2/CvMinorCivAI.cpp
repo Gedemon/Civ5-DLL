@@ -2682,7 +2682,11 @@ void CvMinorCivAI::DoAddStartingResources(CvPlot* pCityPlot)
 }
 
 /// Our city got destroyed or taken! Do cleanup for special starting resources we had.
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+void CvMinorCivAI::DoRemoveStartingResources(CvPlot* pCityPlot, bool bVenice)
+#else
 void CvMinorCivAI::DoRemoveStartingResources(CvPlot* pCityPlot)
+#endif
 {
 	CvAssertMsg(pCityPlot != NULL, "City's plot should not be NULL. Please send Anton your save file and version.");
 	if (pCityPlot == NULL) return;
@@ -2692,6 +2696,9 @@ void CvMinorCivAI::DoRemoveStartingResources(CvPlot* pCityPlot)
 	// Mercantile
 	if(eTrait == MINOR_CIV_TRAIT_MERCANTILE)
 	{
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+		pCityPlot->removeMinorResources(bVenice);
+#else
 		bool bRemoveUniqueLuxury = false;
 
 		if (GC.getMINOR_CIV_MERCANTILE_RESOURCES_KEEP_ON_CAPTURE_DISABLED() == 1)
@@ -2709,6 +2716,7 @@ void CvMinorCivAI::DoRemoveStartingResources(CvPlot* pCityPlot)
 				}
 			}
 		}
+#endif
 	}
 }
 
@@ -8119,7 +8127,11 @@ void CvMinorCivAI::DoBuyout(PlayerTypes eMajor)
 	kMajorPlayer.GetPlayerAchievements().BoughtCityState(iNumUnits);
 }
 
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+void CvMinorCivAI::DoAcquire(PlayerTypes eMajor, int &iNumUnits, int& iCapitalX, int& iCapitalY, bool bVenice)
+#else
 void CvMinorCivAI::DoAcquire(PlayerTypes eMajor, int &iNumUnits, int& iCapitalX, int& iCapitalY)
+#endif
 {
 	// Take their units
 	CvUnit* pLoopUnit = NULL;
@@ -8152,7 +8164,11 @@ void CvMinorCivAI::DoAcquire(PlayerTypes eMajor, int &iNumUnits, int& iCapitalX,
 				iCapitalX = pCity->getX();
 				iCapitalY = pCity->getY();
 			}
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+			GET_PLAYER(eMajor).acquireCity(pCity, false, true, bVenice); // deletes pCity, don't reuse the pointer
+#else
 			GET_PLAYER(eMajor).acquireCity(pCity, false, true); // deletes pCity, don't reuse the pointer
+#endif
 		}
 	}
 	SetDisableNotifications(false);

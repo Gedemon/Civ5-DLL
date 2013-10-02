@@ -20,7 +20,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION "21"
+#define MOD_DLL_VERSION "23"
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
 
@@ -31,6 +31,7 @@
 #define CUSTOMLOGDEBUG "CustomMods.log"
 
 // Comment out this line to remove minidumps - see http://forums.civfanatics.com/showthread.php?t=498919
+// If minidumps are enabled, do NOT set GenerateDebugInfo=No (Props -> Config Props -> Linker -> Debugging)
 #define MOD_DEBUG_MINIDUMP
 
 // Uncomment this line for the WWII specific version of the DLL
@@ -54,6 +55,8 @@
 #define MOD_GLOBAL_PASSABLE_FORTS                   gCustomMods.isGLOBAL_PASSABLE_FORTS()
 // Permits ships to enter any forts/citadels (based on code supplied by 12monkeys)
 #define MOD_GLOBAL_PASSABLE_FORTS_ANY               (MOD_GLOBAL_PASSABLE_FORTS && gCustomMods.isGLOBAL_PASSABLE_FORTS_ANY())
+// Goody Huts can always give gold, stops the late-game issue where entering a goody hut can result in nothing being awarded
+#define MOD_GLOBAL_ANYTIME_GOODY_GOLD               gCustomMods.isGLOBAL_ANYTIME_GOODY_GOLD()
 // Give initial production boost for cities founded on forests, as if the forest had been chopped down by a worker
 #define MOD_GLOBAL_CITY_FOREST_BONUS                gCustomMods.isGLOBAL_CITY_FOREST_BONUS()
 // Permit cities to work tiles up to MAXIMUM_ACQUIRE_PLOT_DISTANCE - WARNING! Cities take 2.5 times as much memory/file space
@@ -68,6 +71,8 @@
 #define MOD_GLOBAL_CS_RAZE_RARELY                   gCustomMods.isGLOBAL_CS_RAZE_RARELY()
 // City States give different gifts depending on their type (cultural, religious, maritime, etc)
 #define MOD_GLOBAL_CS_GIFTS                         gCustomMods.isGLOBAL_CS_GIFTS()
+// Mercantile City States acquired via a Merchant of Venice do not lose their unique resources
+#define MOD_GLOBAL_VENICE_KEEPS_RESOURCES           gCustomMods.isGLOBAL_VENICE_KEEPS_RESOURCES()
 // Units attacking from cities, forts or citadels will not follow-up if they kill the defender
 #define MOD_GLOBAL_NO_FOLLOWUP_FROM_CITIES          gCustomMods.isGLOBAL_NO_FOLLOWUP_FROM_CITIES()
 // Remove assembled spaceship parts from conquered capitals
@@ -263,16 +268,14 @@
 #define MOD_EVENTS_RED_COMBAT_RESULT                (MOD_EVENTS_RED_COMBAT && gCustomMods.isEVENTS_RED_COMBAT_RESULT())
 #define MOD_EVENTS_RED_COMBAT_ENDED                 (MOD_EVENTS_RED_COMBAT && gCustomMods.isEVENTS_RED_COMBAT_ENDED())
 
-#if defined(WWII_CUSTOM_BUILD)
-#undef MOD_EVENTS_RED_COMBAT_MISSION
-#undef MOD_EVENTS_RED_COMBAT_ABORT
-#undef MOD_EVENTS_RED_COMBAT_RESULT
-#endif
-
+#if !defined(WWII_CUSTOM_BUILD)
 // Enables the Espionage API - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_API_ESPIONAGE                           gCustomMods.isAPI_ESPIONAGE()
+// Enables the Trade Routes API - AFFECTS SAVE GAME DATA FORMAT
+#define MOD_API_TRADEROUTES                         gCustomMods.isAPI_TRADEROUTES()
 // Enables the Religion API
 #define MOD_API_RELIGION                            gCustomMods.isAPI_RELIGION()
+#endif
 // Enabes the Plot Based Damage API (replaces fixed damage from mountains)
 #define MOD_API_PLOT_BASED_DAMAGE                   gCustomMods.isAPI_PLOT_BASED_DAMAGE()
 // Enables the Extensions API
@@ -283,11 +286,13 @@
 // Push various hard-coded values controlling the AI out into XML
 #define MOD_CONFIG_AI_IN_XML                        gCustomMods.isCONFIG_AI_IN_XML()
 
+// Fixes the bug in the Lua Plot:ChangeVisibilityCount() method where iChange is treated as a boolean and not a signed int
+#define MOD_BUGFIX_LUA_CHANGE_VISIBILITY_COUNT      gCustomMods.isBUGFIX_LUA_CHANGE_VISIBILITY_COUNT()
 // Fixes the NumCitiesFreeFoodBuilding (policy finisher) bug where the civilization has a UB for the Aquaduct
 #define MOD_BUGFIX_FREE_FOOD_BUILDING               gCustomMods.isBUGFIX_FREE_FOOD_BUILDING()
 // Fixes the bug where the naval Civilization_FreeUnits start on land
 #define MOD_BUGFIX_NAVAL_FREE_UNITS                 gCustomMods.isBUGFIX_NAVAL_FREE_UNITS()
-// Fixes the bug where the naval units jump to the nearest city and not the nearest available water plot
+// Fixes the bug where the naval units jump to the nearest city and not the nearest available non-lake water plot
 #define MOD_BUGFIX_NAVAL_NEAREST_WATER              gCustomMods.isBUGFIX_NAVAL_NEAREST_WATER()
 // Fixes the bug where stacked ranged units may attack out of cities but melee units may not
 #define MOD_BUGFIX_CITY_STACKING                    gCustomMods.isBUGFIX_CITY_STACKING()
@@ -309,6 +314,8 @@
 #define MOD_BUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY  gCustomMods.isBUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY()
 // Fixes the naval imbalance in a unit's power calculation, requires BUGFIX_UNIT_POWER_CALC to be enabled
 #define MOD_BUGFIX_UNIT_POWER_NAVAL_CONSISTENCY     gCustomMods.isBUGFIX_UNIT_POWER_NAVAL_CONSISTENCY()
+// Fixes the bug where units can upgrade even without any pre-req project being available
+#define MOD_BUGFIX_UNIT_PREREQ_PROJECT              gCustomMods.isBUGFIX_UNIT_PREREQ_PROJECT()
 // Fixes a bug in the pathfinder code for hovering units at the seaside!
 #define MOD_BUGFIX_HOVERING_PATHFINDER              gCustomMods.isBUGFIX_HOVERING_PATHFINDER()
 // Fixes a bug in the pathfinder code for embarking
@@ -346,6 +353,7 @@
 //
 
 // Serialization wrappers (makes it easier to find save breaking code)
+#if !defined(WWII_CUSTOM_BUILD)
 #define MOD_SERIALIZE
 #if defined(MOD_SERIALIZE)
 #define MOD_SERIALIZE_TO(stream, member) stream << member
@@ -353,6 +361,7 @@
 #else
 #define MOD_SERIALIZE_TO(stream, member) ((void)0)
 #define MOD_SERIALIZE_FROM(stream, member) ((void)0)
+#endif
 #endif
 
 
@@ -388,6 +397,7 @@ public:
 	inline bool isGLOBAL_PROMOTION_CLASSES()                { return m_bGLOBAL_PROMOTION_CLASSES; }
 	inline bool isGLOBAL_PASSABLE_FORTS()                   { return m_bGLOBAL_PASSABLE_FORTS; }
 	inline bool isGLOBAL_PASSABLE_FORTS_ANY()               { return m_bGLOBAL_PASSABLE_FORTS_ANY; }
+	inline bool isGLOBAL_ANYTIME_GOODY_GOLD()               { return m_bGLOBAL_ANYTIME_GOODY_GOLD; }
 	inline bool isGLOBAL_CITY_FOREST_BONUS()                { return m_bGLOBAL_CITY_FOREST_BONUS; }
 	inline bool isGLOBAL_CITY_WORKING()                     { return m_bGLOBAL_CITY_WORKING; }
 	inline bool isGLOBAL_ALPINE_PASSES()                    { return m_bGLOBAL_ALPINE_PASSES; }
@@ -395,6 +405,7 @@ public:
 	inline bool isGLOBAL_CS_UPGRADES()                      { return m_bGLOBAL_CS_UPGRADES; }
 	inline bool isGLOBAL_CS_RAZE_RARELY()                   { return m_bGLOBAL_CS_RAZE_RARELY; }
 	inline bool isGLOBAL_CS_GIFTS()                         { return m_bGLOBAL_CS_GIFTS; }
+	inline bool isGLOBAL_VENICE_KEEPS_RESOURCES()           { return m_bGLOBAL_VENICE_KEEPS_RESOURCES; }
 	inline bool isGLOBAL_NO_FOLLOWUP_FROM_CITIES()          { return m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES; }
 	inline bool isGLOBAL_NO_CONQUERED_SPACESHIPS()          { return m_bGLOBAL_NO_CONQUERED_SPACESHIPS; }
 	inline bool isGLOBAL_ALLIES_BLOCK_BLOCKADES()           { return m_bGLOBAL_ALLIES_BLOCK_BLOCKADES; }
@@ -464,6 +475,7 @@ public:
 	inline bool isEVENTS_RED_COMBAT_ENDED()                 { return m_bEVENTS_RED_COMBAT_ENDED; }
 
 	inline bool isAPI_ESPIONAGE()                           { return m_bAPI_ESPIONAGE; }
+	inline bool isAPI_TRADEROUTES()                         { return m_bAPI_TRADEROUTES; }
 	inline bool isAPI_RELIGION()                            { return m_bAPI_RELIGION; }
 	inline bool isAPI_PLOT_BASED_DAMAGE()                   { return m_bAPI_PLOT_BASED_DAMAGE; }
 	inline bool isAPI_EXTENSIONS()                          { return m_bAPI_EXTENSIONS; }
@@ -471,6 +483,7 @@ public:
 
 	inline bool isCONFIG_AI_IN_XML()                        { return m_bCONFIG_AI_IN_XML; }
 
+	inline bool isBUGFIX_LUA_CHANGE_VISIBILITY_COUNT()      { return m_bBUGFIX_LUA_CHANGE_VISIBILITY_COUNT; }
 	inline bool isBUGFIX_FREE_FOOD_BUILDING()               { return m_bBUGFIX_FREE_FOOD_BUILDING; }
 	inline bool isBUGFIX_NAVAL_FREE_UNITS()                 { return m_bBUGFIX_NAVAL_FREE_UNITS; }
 	inline bool isBUGFIX_NAVAL_NEAREST_WATER()              { return m_bBUGFIX_NAVAL_NEAREST_WATER; }
@@ -484,6 +497,7 @@ public:
 	inline bool isBUGFIX_UNIT_POWER_CALC()                  { return m_bBUGFIX_UNIT_POWER_CALC; }
 	inline bool isBUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY()  { return m_bBUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY; }
 	inline bool isBUGFIX_UNIT_POWER_NAVAL_CONSISTENCY()     { return m_bBUGFIX_UNIT_POWER_NAVAL_CONSISTENCY; }
+	inline bool isBUGFIX_UNIT_PREREQ_PROJECT()              { return m_bBUGFIX_UNIT_PREREQ_PROJECT; }
 	inline bool isBUGFIX_HOVERING_PATHFINDER()              { return m_bBUGFIX_HOVERING_PATHFINDER; }
 	inline bool isBUGFIX_EMBARKING_PATHFINDER()             { return m_bBUGFIX_EMBARKING_PATHFINDER; }
 	inline bool isBUGFIX_RANGE_3_TARGETTING()               { return m_bBUGFIX_RANGE_3_TARGETTING; }
@@ -497,6 +511,7 @@ protected:
 	bool m_bGLOBAL_PROMOTION_CLASSES;
 	bool m_bGLOBAL_PASSABLE_FORTS;
 	bool m_bGLOBAL_PASSABLE_FORTS_ANY;
+	bool m_bGLOBAL_ANYTIME_GOODY_GOLD;
 	bool m_bGLOBAL_CITY_FOREST_BONUS;
 	bool m_bGLOBAL_CITY_WORKING;
 	bool m_bGLOBAL_ALPINE_PASSES;
@@ -504,6 +519,7 @@ protected:
 	bool m_bGLOBAL_CS_UPGRADES;
 	bool m_bGLOBAL_CS_RAZE_RARELY;
 	bool m_bGLOBAL_CS_GIFTS;
+	bool m_bGLOBAL_VENICE_KEEPS_RESOURCES;
 	bool m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES;
 	bool m_bGLOBAL_NO_CONQUERED_SPACESHIPS;
 	bool m_bGLOBAL_ALLIES_BLOCK_BLOCKADES;
@@ -573,6 +589,7 @@ protected:
 	bool m_bEVENTS_RED_COMBAT_ENDED;
 
 	bool m_bAPI_ESPIONAGE;
+	bool m_bAPI_TRADEROUTES;
 	bool m_bAPI_RELIGION;
 	bool m_bAPI_PLOT_BASED_DAMAGE;
 	bool m_bAPI_EXTENSIONS;
@@ -580,6 +597,7 @@ protected:
 
 	bool m_bCONFIG_AI_IN_XML;
 
+	bool m_bBUGFIX_LUA_CHANGE_VISIBILITY_COUNT;
 	bool m_bBUGFIX_FREE_FOOD_BUILDING;
 	bool m_bBUGFIX_NAVAL_FREE_UNITS;
 	bool m_bBUGFIX_NAVAL_NEAREST_WATER;
@@ -593,6 +611,7 @@ protected:
 	bool m_bBUGFIX_UNIT_POWER_CALC;
 	bool m_bBUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY;
 	bool m_bBUGFIX_UNIT_POWER_NAVAL_CONSISTENCY;
+	bool m_bBUGFIX_UNIT_PREREQ_PROJECT;
 	bool m_bBUGFIX_HOVERING_PATHFINDER;
 	bool m_bBUGFIX_EMBARKING_PATHFINDER;
 	bool m_bBUGFIX_RANGE_3_TARGETTING;

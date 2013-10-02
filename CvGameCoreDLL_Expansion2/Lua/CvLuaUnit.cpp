@@ -95,6 +95,16 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(CanMakeTradeRoute);
 	Method(CanMakeTradeRouteAt);
 
+#if defined(MOD_API_TRADEROUTES)
+	Method(CanPlunderTradeRoute);
+	Method(PlunderTradeRoute);
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(CanCreateGreatWork);
+	Method(CreateGreatWork);
+#endif
+
 	Method(GetExoticGoodsGoldAmount);
 	Method(GetExoticGoodsXPAmount);
 
@@ -209,6 +219,11 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(IsEnemyInMovementRange);
 
 	Method(IsTrade);
+#if defined(MOD_API_TRADEROUTES)
+	Method(GetTradeRouteIndex);
+	Method(IsRecalledTrader);
+	Method(RecallTrader);
+#endif
 
 	Method(GetBaseRangedCombatStrength);
 	Method(GetMaxRangedCombatStrength);
@@ -1161,6 +1176,53 @@ int CvLuaUnit::lCanMakeTradeRouteAt(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+#if defined(MOD_API_TRADEROUTES)
+//------------------------------------------------------------------------------
+//bool canPlunderTradeRoute(CvPlot* pPlot)
+int CvLuaUnit::lCanPlunderTradeRoute(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	CvPlot* pkPlot = CvLuaPlot::GetInstance(L, 2);
+	const bool bResult = pkUnit->canPlunderTradeRoute(pkPlot);
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//bool plunderTradeRoute()
+int CvLuaUnit::lPlunderTradeRoute(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->plunderTradeRoute();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//bool canCreateGreatWork(CvPlot* pPlot)
+int CvLuaUnit::lCanCreateGreatWork(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	CvPlot* pkPlot = CvLuaPlot::GetInstance(L, 2);
+	const bool bResult = pkUnit->canCreateGreatWork(pkPlot);
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//bool createGreatWork()
+int CvLuaUnit::lCreateGreatWork(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bResult = pkUnit->createGreatWork();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //int GetExoticGoodsGoldAmount()
 int CvLuaUnit::lGetExoticGoodsGoldAmount(lua_State* L)
@@ -2156,6 +2218,57 @@ int CvLuaUnit::lIsTrade(lua_State* L)
 	lua_pushboolean(L, pkUnit->isTrade());
 	return 1;
 }
+
+#if defined(MOD_API_TRADEROUTES)
+//------------------------------------------------------------------------------
+int CvLuaUnit::lGetTradeRouteIndex(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	int iRouteIndex = -1;
+
+	if (pkUnit->isTrade()) {
+		iRouteIndex = GC.getGame().GetGameTrade()->GetIndexFromUnitID(pkUnit->GetID(), pkUnit->getOwner());
+	}
+
+	lua_pushinteger(L, iRouteIndex);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+int CvLuaUnit::lIsRecalledTrader(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	bool bRecalled = false;
+
+	if (pkUnit->isTrade()) {
+		CvGameTrade* pkTrades = GC.getGame().GetGameTrade();
+		int iRouteIndex = pkTrades->GetIndexFromUnitID(pkUnit->GetID(), pkUnit->getOwner());
+		if (iRouteIndex >= 0) {
+			bRecalled = pkTrades->IsRecalledUnit(iRouteIndex);
+		}
+	}
+
+	lua_pushboolean(L, bRecalled);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+int CvLuaUnit::lRecallTrader(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const bool bImmediate = lua_toboolean(L, 2);
+
+	if (pkUnit->isTrade()) {
+		CvGameTrade* pkTrades = GC.getGame().GetGameTrade();
+		int iRouteIndex = pkTrades->GetIndexFromUnitID(pkUnit->GetID(), pkUnit->getOwner());
+		if (iRouteIndex >= 0) {
+			pkTrades->RecallUnit(iRouteIndex, bImmediate);
+		}
+	}
+
+	return 0;
+}
+#endif
 
 //------------------------------------------------------------------------------
 //int airBaseCombatStr();

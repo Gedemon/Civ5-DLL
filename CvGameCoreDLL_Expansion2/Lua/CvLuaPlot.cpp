@@ -1530,7 +1530,11 @@ int CvLuaPlot::lChangeVisibilityCount(lua_State* L)
 {
 	CvPlot* pkPlot = GetInstance(L);
 	const TeamTypes eTeam = (TeamTypes)lua_tointeger(L, 2);
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
+	const int iChange = lua_tointeger(L, 3);
+#else
 	const int iChange = lua_toboolean(L, 3);
+#endif
 	const int eSeeInvisible = lua_tointeger(L, 4);
 	const bool bInformExplorationTracking = lua_toboolean(L, 5);
 	const bool bAlwaysSeeInvisible = lua_toboolean(L, 6);

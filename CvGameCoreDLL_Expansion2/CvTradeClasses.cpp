@@ -837,6 +837,9 @@ bool CvGameTrade::EmptyTradeRoute(int iIndex)
 	kTradeConnection.m_iCircuitsCompleted = 0;
 	kTradeConnection.m_iCircuitsToComplete = 0;
 	kTradeConnection.m_iTurnRouteComplete = 0;
+#if defined(MOD_API_TRADEROUTES)
+	kTradeConnection.m_bTradeUnitRecalled = false;
+#endif
 	kTradeConnection.m_aPlotList.clear();
 	kTradeConnection.m_unitID = -1;
 
@@ -1265,6 +1268,37 @@ int CvGameTrade::GetTechDifference (PlayerTypes ePlayer, PlayerTypes ePlayer2)
 	return m_aaiTechDifference[ePlayer][ePlayer2];
 }
 
+#if defined(MOD_API_TRADEROUTES)
+bool CvGameTrade::IsRecalledUnit (int iIndex) {
+	CvAssertMsg(iIndex >= 0 && iIndex < (int)m_aTradeConnections.size(), "iIndex out of bounds");
+	if (iIndex < 0 || iIndex >= (int)m_aTradeConnections.size())
+	{
+		return false;
+	}
+
+	TradeConnection &kTradeConnection = m_aTradeConnections[iIndex];
+	return kTradeConnection.m_bTradeUnitRecalled;
+}
+
+//	--------------------------------------------------------------------------------
+/// recall a trade unit
+void CvGameTrade::RecallUnit (int iIndex, bool bImmediate) {
+	CvAssertMsg(iIndex >= 0 && iIndex < (int)m_aTradeConnections.size(), "iIndex out of bounds");
+	if (iIndex < 0 || iIndex >= (int)m_aTradeConnections.size())
+	{
+		return;
+	}
+
+	TradeConnection &kTradeConnection = m_aTradeConnections[iIndex];
+	kTradeConnection.m_iCircuitsCompleted = kTradeConnection.m_iCircuitsToComplete-1;
+	kTradeConnection.m_bTradeUnitRecalled = true;
+
+	if (bImmediate) {
+		kTradeConnection.m_bTradeUnitMovingForward = false;
+	}
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 /// move a trade unit along its path for all its movement points
 bool CvGameTrade::MoveUnit (int iIndex) 
@@ -1333,6 +1367,7 @@ bool CvGameTrade::StepUnit (int iIndex)
 		kTradeConnection.m_iTradeUnitLocationIndex -= 1;
 		if (kTradeConnection.m_iTradeUnitLocationIndex == 0)
 		{
+			// TODO - WH - make the AI recall all trade units before going to war with a team, and when war is declared
 			kTradeConnection.m_iCircuitsCompleted += 1;
 		}
 	}
@@ -1558,6 +1593,11 @@ FDataStream& operator>>(FDataStream& loadFrom, CvGameTrade& writeTo)
 			writeTo.m_aTradeConnections[i].m_iTurnRouteComplete = 0;
 		}
 
+#if defined(MOD_API_TRADEROUTES)
+		writeTo.m_aTradeConnections[i].m_bTradeUnitRecalled = false;
+        // MOD_SERIALIZE_FROM(loadFrom, writeTo.m_aTradeConnections[i].m_bTradeUnitRecalled); // TODO - WH - reinstate after testing
+#endif
+
 		int iNum2 = 0;
 		loadFrom >> iNum2;
 
@@ -1641,6 +1681,9 @@ FDataStream& operator<<(FDataStream& saveTo, const CvGameTrade& readFrom)
 		saveTo << readFrom.m_aTradeConnections[ui].m_iCircuitsCompleted;
 		saveTo << readFrom.m_aTradeConnections[ui].m_iCircuitsToComplete;
 		saveTo << readFrom.m_aTradeConnections[ui].m_iTurnRouteComplete;
+#if defined(MOD_API_TRADEROUTES)
+        // MOD_SERIALIZE_TO(saveTo, readFrom.m_aTradeConnections[ui].m_bTradeUnitRecalled); // TODO - WH - reinstate after testing
+#endif
 
 		saveTo << readFrom.m_aTradeConnections[ui].m_aPlotList.size();
 		for (uint ui2 = 0; ui2 < readFrom.m_aTradeConnections[ui].m_aPlotList.size(); ui2++)

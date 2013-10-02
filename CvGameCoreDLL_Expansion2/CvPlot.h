@@ -178,7 +178,7 @@ public:
 #if defined(MOD_GLOBAL_STACKING_RULES)
 	inline int getUnitLimit() const 
 	{
-		return isCity() ? GC.getCITY_UNIT_LIMIT() : GC.getPLOT_UNIT_LIMIT();
+		return isCity() ? GC.getCITY_UNIT_LIMIT() : (GC.getPLOT_UNIT_LIMIT() + getAdditionalUnitsFromImprovement());
 	}
 #endif
 
@@ -361,6 +361,10 @@ public:
 	void changeUpgradeProgress(int iChange);
 
 	int ComputeCultureFromAdjacentImprovement(CvImprovementEntry& kImprovement, ImprovementTypes eValue) const;
+
+#if defined(MOD_GLOBAL_STACKING_RULES)
+	int getAdditionalUnitsFromImprovement() const;
+#endif
 
 	int getNumMajorCivsRevealed() const;
 	void setNumMajorCivsRevealed(int iNewValue);
@@ -556,6 +560,9 @@ public:
 	void setNumResource(int iNum);
 	void changeNumResource(int iChange);
 	int getNumResourceForPlayer(PlayerTypes ePlayer) const;
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+	void removeMinorResources(bool bVenice = false);
+#endif
 
 	ImprovementTypes getImprovementType() const;
 	ImprovementTypes getImprovementTypeNeededToImproveResource(PlayerTypes ePlayer = NO_PLAYER, bool bTestPlotOwner = true);

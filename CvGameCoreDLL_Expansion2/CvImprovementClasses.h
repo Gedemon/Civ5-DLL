@@ -56,6 +56,10 @@ public:
 	int GetCultureBombRadius() const;
 	int GetCultureAdjacentSameType() const;
 
+#if defined(MOD_GLOBAL_STACKING_RULES)
+	int GetAdditionalUnits() const;
+#endif
+
 	int GetTilesPerGoody() const;
 	int GetGoodyUniqueRange() const;
 	int GetFeatureGrowthProbability() const;
@@ -167,6 +171,10 @@ protected:
 	int m_iGoldMaintenance;
 	int m_iCultureBombRadius;
 	int m_iCultureAdjacentSameType;
+
+#if defined(MOD_GLOBAL_STACKING_RULES)
+	int m_iAdditionalUnits;
+#endif
 
 	int m_iTilesPerGoody;
 	int m_iGoodyUniqueRange;

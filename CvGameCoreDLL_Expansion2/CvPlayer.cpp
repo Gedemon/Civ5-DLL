@@ -1675,7 +1675,11 @@ CvCity* CvPlayer::initCity(int iX, int iY, bool bBumpUnits)
 
 //	--------------------------------------------------------------------------------
 // NOTE: bGift set to true if the city is given as a gift, as in the case for trades and Austria UA of annexing city-states
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift, bool bVenice)
+#else
 void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
+#endif
 {
 	if(pOldCity == NULL)
 		return;
@@ -2122,8 +2126,12 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 	int iOldCityRings = pOldCity->getBuyPlotDistance();
 #endif
 
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+	pOldCity->PreKill(bVenice);
+#else
 	pOldCity->PreKill();
-
+#endif
+	
 	{
 		auto_ptr<ICvCity1> pkDllOldCity(new CvDllCity(pOldCity));
 		gDLL->GameplayCityCaptured(pkDllOldCity.get(), GetID());

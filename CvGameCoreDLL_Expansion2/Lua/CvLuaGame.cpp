@@ -367,6 +367,9 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 
 	Method(IsProcessingMessages);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(CreateGreatWork);
+#endif
 	Method(GetGreatWorkTooltip);
 	Method(GetGreatWorkName);
 	Method(GetGreatWorkType);
@@ -384,6 +387,9 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 
 	Method(GetLongestCityConnectionPlots);
 
+#if defined(MOD_API_TRADEROUTES)
+	Method(GetTradeRoute);
+#endif
 	Method(SelectedUnit_SpeculativePopupTradeRoute_Display);
 	Method(SelectedUnit_SpeculativePopupTradeRoute_Hide);
 	Method(MouseoverUnit);
@@ -2590,6 +2596,21 @@ int CvLuaGame::lIsProcessingMessages(lua_State* L)
 	lua_pushboolean(L, gDLL->IsProcessingGameCoreMessages());
 	return 1;
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaGame::lCreateGreatWork(lua_State* L)
+{
+	GreatWorkType eType = (GreatWorkType)lua_tointeger(L, 1);
+	PlayerTypes eOwner = (PlayerTypes)lua_tointeger(L, 2);
+	EraTypes eEra = (EraTypes)lua_tointeger(L, 3);
+	CvString szCreator = lua_tostring(L, 4);
+	
+	int iGWindex = 	GC.getGame().GetGameCulture()->CreateGreatWork(eType, CultureHelpers::GetGreatWorkClass(eType), eOwner, eEra, szCreator);
+
+	lua_pushinteger(L, iGWindex);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 int CvLuaGame::lGetGreatWorkTooltip(lua_State* L)
 {
@@ -2836,6 +2857,104 @@ int CvLuaGame::lGetLongestCityConnectionPlots(lua_State* L)
 	CvLuaPlot::Push(L, pPlot2);
 	return 2;
 }
+
+#if defined(MOD_API_TRADEROUTES)
+//------------------------------------------------------------------------------
+// Mostt of this came from CvLuaPlayer::lGetTradeRoutes(lua_State* L)
+int CvLuaGame::lGetTradeRoute(lua_State* L)
+{
+	const int iRouteIndex = lua_tointeger(L, 1);
+
+	CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+	if (!pTrade->IsTradeRouteIndexEmpty(iRouteIndex)) {
+		TradeConnection* pConnection = &(pTrade->m_aTradeConnections[iRouteIndex]);
+		CvCity* pFromCity = GC.getMap().plot(pConnection->m_iOriginX, pConnection->m_iOriginY)->getPlotCity();
+		CvPlayer* pFromPlayer = &GET_PLAYER(pFromCity->getOwner());
+		CvCity* pToCity = GC.getMap().plot(pConnection->m_iDestX, pConnection->m_iDestY)->getPlotCity();
+		CvPlayer* pToPlayer = &GET_PLAYER(pToCity->getOwner());
+
+		lua_createtable(L, 0, 0);
+		const int t = lua_gettop(L);
+
+		lua_pushinteger(L, pConnection->m_eDomain);
+		lua_setfield(L, t, "Domain");
+		lua_pushinteger(L, pFromPlayer->getCivilizationType());
+		lua_setfield(L, t, "FromCivilizationType");
+		lua_pushinteger(L , pFromPlayer->GetID());
+		lua_setfield(L, t, "FromID");
+		lua_pushstring(L, pFromCity->getName());
+		lua_setfield(L, t, "FromCityName");
+		CvLuaCity::Push(L, pFromCity);
+		lua_setfield(L, t, "FromCity");
+		lua_pushinteger(L, GET_PLAYER(pConnection->m_eDestOwner).getCivilizationType());
+		lua_setfield(L, t, "ToCivilizationType");
+		lua_pushinteger(L, pToPlayer->GetID());
+		lua_setfield(L, t, "ToID");
+		lua_pushstring(L, pToCity->getName());
+		lua_setfield(L, t, "ToCityName");
+		CvLuaCity::Push(L, pToCity);
+		lua_setfield(L, t, "ToCity");
+		lua_pushinteger(L, pFromPlayer->GetTrade()->GetTradeConnectionValueTimes100(*pConnection, YIELD_GOLD, true));
+		lua_setfield(L, t, "FromGPT");
+		lua_pushinteger(L, pToPlayer->GetTrade()->GetTradeConnectionValueTimes100(*pConnection, YIELD_GOLD, false));
+		lua_setfield(L, t, "ToGPT");
+		lua_pushinteger(L, pToPlayer->GetTrade()->GetTradeConnectionValueTimes100(*pConnection, YIELD_FOOD, false));
+		lua_setfield(L, t, "ToFood");
+		lua_pushinteger(L, pToPlayer->GetTrade()->GetTradeConnectionValueTimes100(*pConnection, YIELD_PRODUCTION, false));
+		lua_setfield(L, t, "ToProduction");
+		lua_pushinteger(L, pFromPlayer->GetTrade()->GetTradeConnectionValueTimes100(*pConnection, YIELD_SCIENCE, true));
+		lua_setfield(L, t, "FromScience");
+		lua_pushinteger(L, pToPlayer->GetTrade()->GetTradeConnectionValueTimes100(*pConnection, YIELD_SCIENCE, false));
+		lua_setfield(L, t, "ToScience");
+
+		ReligionTypes eToReligion = NO_RELIGION;
+		int iToPressure = 0;
+		ReligionTypes eFromReligion = NO_RELIGION;
+		int iFromPressure = 0;
+
+		pFromCity->GetCityReligions()->WouldExertTradeRoutePressureToward(pToCity, eToReligion, iToPressure);
+		pToCity->GetCityReligions()->WouldExertTradeRoutePressureToward(pFromCity, eFromReligion, iFromPressure);
+		
+		// Internally pressure is now 10 times greater than what is shown to user
+		iToPressure /= GC.getRELIGION_MISSIONARY_PRESSURE_MULTIPLIER();
+		iFromPressure /= GC.getRELIGION_MISSIONARY_PRESSURE_MULTIPLIER();
+
+		lua_pushinteger(L, eToReligion);
+		lua_setfield(L, t, "ToReligion");
+		lua_pushinteger(L, iToPressure);
+		lua_setfield(L, t, "ToPressure");
+		lua_pushinteger(L, eFromReligion);
+		lua_setfield(L, t, "FromReligion");
+		lua_pushinteger(L, iFromPressure);
+		lua_setfield(L, t, "FromPressure");
+
+		int iToDelta = pFromCity->GetCityCulture()->GetBaseTourism() * pFromCity->GetCityCulture()->GetTourismMultiplier(pToPlayer->GetID(), true, true, false, true, true);
+		int iFromDelta = pToCity->GetCityCulture()->GetBaseTourism() * pToCity->GetCityCulture()->GetTourismMultiplier(pFromPlayer->GetID(), true, true, false, true, true);
+		lua_pushinteger(L, iFromDelta);
+		lua_setfield(L, t, "FromTourism");
+		lua_pushinteger(L, iToDelta);
+		lua_setfield(L, t, "ToTourism");
+
+		lua_pushinteger(L, pConnection->m_iTurnRouteComplete - GC.getGame().getGameTurn());
+		lua_setfield(L, t, "TurnsLeft");
+		lua_pushinteger(L, pConnection->m_unitID);
+		lua_setfield(L, t, "UnitID");
+		lua_pushboolean(L, pConnection->m_bTradeUnitRecalled);
+		lua_setfield(L, t, "IsRecalled");
+		lua_pushinteger(L, pConnection->m_iCircuitsCompleted);
+		lua_setfield(L, t, "CircuitsCompleted");
+		lua_pushinteger(L, pConnection->m_iCircuitsToComplete);
+		lua_setfield(L, t, "CircuitsToComplete");
+	    lua_pushboolean(L, pConnection->m_bTradeUnitMovingForward);
+		lua_setfield(L, t, "MovingForward");
+
+
+		return 1;
+	}
+
+	return 0;
+}
+#endif
 
 //------------------------------------------------------------------------------
 int CvLuaGame::lSelectedUnit_SpeculativePopupTradeRoute_Display(lua_State* L)

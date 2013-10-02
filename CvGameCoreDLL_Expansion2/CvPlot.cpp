@@ -4939,6 +4939,22 @@ int CvPlot::ComputeCultureFromAdjacentImprovement(CvImprovementEntry& kImproveme
 	return iRtnValue;
 }
 
+#if defined(MOD_GLOBAL_STACKING_RULES)
+//	--------------------------------------------------------------------------------
+int CvPlot::getAdditionalUnitsFromImprovement() const
+{
+	int iRtnValue = 0;
+
+	if(MOD_GLOBAL_STACKING_RULES && getImprovementType() != NO_IMPROVEMENT)
+	{
+		// TODO - WH - this should be persisted data, updated as improvements are added/removed
+		iRtnValue += (ImprovementTypes)GC.getImprovementInfo(getImprovementType())->GetAdditionalUnits();
+	}
+
+	return iRtnValue;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 int CvPlot::getNumMajorCivsRevealed() const
 {
@@ -6356,6 +6372,35 @@ int CvPlot::getNumResourceForPlayer(PlayerTypes ePlayer) const
 
 	return iRtnValue;
 }
+
+//	--------------------------------------------------------------------------------
+
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+// Lifted from CvMinorCivAI::DoRemoveStartingResources()
+void CvPlot::removeMinorResources(bool bVenice)
+{
+	bool bRemoveUniqueLuxury = false;
+
+	if (GC.getMINOR_CIV_MERCANTILE_RESOURCES_KEEP_ON_CAPTURE_DISABLED() == 1)
+		bRemoveUniqueLuxury = true;
+		
+	if (bVenice)
+		bRemoveUniqueLuxury = false;
+
+	if (bRemoveUniqueLuxury)
+	{
+		ResourceTypes eOldResource = getResourceType();
+		if (eOldResource != NO_RESOURCE)
+		{
+			CvResourceInfo* pkResourceInfo = GC.getResourceInfo(eOldResource);
+			if (pkResourceInfo && pkResourceInfo->isOnlyMinorCivs())
+			{
+				setResourceType(NO_RESOURCE, 0, true);
+			}
+		}
+	}
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 ImprovementTypes CvPlot::getImprovementType() const

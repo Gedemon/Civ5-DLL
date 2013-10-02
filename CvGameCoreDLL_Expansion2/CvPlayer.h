@@ -87,7 +87,11 @@ public:
 	CvPlot* addFreeUnit(UnitTypes eUnit, UnitAITypes eUnitAI = NO_UNITAI);
 
 	CvCity* initCity(int iX, int iY, bool bBumpUnits = true);
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+	void acquireCity(CvCity* pCity, bool bConquest, bool bGift, bool bVenice = false);
+#else
 	void acquireCity(CvCity* pCity, bool bConquest, bool bGift);
+#endif
 	void killCities();
 	CvString getNewCityName() const;
 	CvString GetBorrowedCityName(CivilizationTypes eCivToBorrowFrom) const;

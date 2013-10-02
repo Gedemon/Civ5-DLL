@@ -362,6 +362,9 @@ protected:
 	
 	static int lIsProcessingMessages(lua_State* L);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	static int lCreateGreatWork(lua_State* L);
+#endif
 	static int lGetGreatWorkTooltip(lua_State* L);
 	static int lGetGreatWorkName(lua_State* L);
 	static int lGetGreatWorkType(lua_State* L);
@@ -379,6 +382,9 @@ protected:
 
 	static int lGetLongestCityConnectionPlots(lua_State* L);
 
+#if defined(MOD_API_TRADEROUTES)
+	static int lGetTradeRoute(lua_State* L);
+#endif
 	static int lSelectedUnit_SpeculativePopupTradeRoute_Display(lua_State* L);
 	static int lSelectedUnit_SpeculativePopupTradeRoute_Hide(lua_State* L);
 

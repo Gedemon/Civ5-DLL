@@ -1220,7 +1220,11 @@ void CvCity::setupSpaceshipGraphics()
 }
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+void CvCity::PreKill(bool bVenice)
+#else
 void CvCity::PreKill()
+#endif
 {
 	VALIDATE_OBJECT
 
@@ -1275,10 +1279,14 @@ void CvCity::PreKill()
 		}
 	}
 
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+	plot()->removeMinorResources(bVenice);
+#else
 	if(GET_PLAYER(getOwner()).isMinorCiv())
 	{
 		GET_PLAYER(getOwner()).GetMinorCivAI()->DoRemoveStartingResources(plot());
 	}
+#endif
 
 	for(int iI = 0; iI < GC.getNumBuildingInfos(); iI++)
 	{
@@ -1407,7 +1415,11 @@ void CvCity::PostKill(bool bCapital, CvPlot* pPlot, PlayerTypes eOwner)
 }
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+void CvCity::kill(bool bVenice)
+#else
 void CvCity::kill()
+#endif
 {
 	VALIDATE_OBJECT
 	CvPlot* pPlot = plot();
@@ -1442,7 +1454,11 @@ void CvCity::kill()
 		}
 	}
 
+#if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+	PreKill(bVenice);
+#else
 	PreKill();
+#endif
 
 	// get spies out of city
 	CvCityEspionage* pCityEspionage = GetCityEspionage();
@@ -7971,6 +7987,24 @@ void CvCity::changeCultureRateModifier(int iChange)
 	}
 }
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+//	--------------------------------------------------------------------------------
+int CvCity::getTourismRateModifier() const
+{
+	VALIDATE_OBJECT
+	return GetCityBuildings()->GetGreatWorksTourismModifier();
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::changeTourismRateModifier(int iChange)
+{
+	VALIDATE_OBJECT
+	if(iChange != 0)
+	{
+		GetCityBuildings()->ChangeGreatWorksTourismModifier(iChange);
+	}
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 int CvCity::getNumWorldWonders() const
@@ -11271,6 +11305,7 @@ void CvCity::BuyPlot(int iPlotX, int iPlotY)
 	}
 
 	int iCost = GetBuyPlotCost(iPlotX, iPlotY);
+	CUSTOMLOG("Cost of plot at (%i, %i) is %i gold", iPlotX, iPlotY, iCost)
 	CvPlayer& thisPlayer = GET_PLAYER(getOwner());
 	thisPlayer.GetTreasury()->ChangeGold(-iCost);
 	thisPlayer.GetTreasury()->LogExpenditure("", iCost, 1);
@@ -11284,20 +11319,15 @@ void CvCity::BuyPlot(int iPlotX, int iPlotY)
 			ChangeJONSCultureLevel(1);
 			bWithGold = false;
 		}
-	} else {
-		if (iCost > 0) {
-		// Only do this if we actually paid for the plot (as opposed to getting it for free via city growth)
-#endif
-			thisPlayer.ChangeNumPlotsBought(1);
-#if defined(MOD_UI_CITY_EXPANSION)
-		}
 	}
 #endif
 
 #if defined(MOD_UI_CITY_EXPANSION)
 	if (iCost > 0) {
-	// Only do this if we actually paid for the plot (as opposed to getting it for free via city growth)
+		// Only do this if we actually paid for the plot (as opposed to getting it for free via city growth)
 #endif
+		thisPlayer.ChangeNumPlotsBought(1);
+
 		// See if there's anyone else nearby that could get upset by this action
 		CvCity* pNearbyCity;
 #if defined(MOD_GLOBAL_CITY_WORKING)

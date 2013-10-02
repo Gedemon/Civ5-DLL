@@ -13,6 +13,7 @@ CustomMods::CustomMods() :
 	m_bGLOBAL_PROMOTION_CLASSES(false),
 	m_bGLOBAL_PASSABLE_FORTS(false),
 	m_bGLOBAL_PASSABLE_FORTS_ANY(false),
+	m_bGLOBAL_ANYTIME_GOODY_GOLD(false),
 	m_bGLOBAL_CITY_FOREST_BONUS(false),
 	m_bGLOBAL_CITY_WORKING(false),
 	m_bGLOBAL_ALPINE_PASSES(false),
@@ -20,6 +21,7 @@ CustomMods::CustomMods() :
 	m_bGLOBAL_CS_UPGRADES(false),
 	m_bGLOBAL_CS_RAZE_RARELY(false),
 	m_bGLOBAL_CS_GIFTS(false),
+	m_bGLOBAL_VENICE_KEEPS_RESOURCES(false),
 	m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES(false),
 	m_bGLOBAL_NO_CONQUERED_SPACESHIPS(false),
 	m_bGLOBAL_ALLIES_BLOCK_BLOCKADES(false),
@@ -88,6 +90,7 @@ CustomMods::CustomMods() :
 	m_bEVENTS_RED_COMBAT_ENDED(false),
 
 	m_bAPI_ESPIONAGE(false),
+	m_bAPI_TRADEROUTES(false),
 	m_bAPI_RELIGION(false),
 	m_bAPI_PLOT_BASED_DAMAGE(false),
 	m_bAPI_EXTENSIONS(false),
@@ -95,6 +98,7 @@ CustomMods::CustomMods() :
 
 	m_bCONFIG_AI_IN_XML(false),
 
+	m_bBUGFIX_LUA_CHANGE_VISIBILITY_COUNT(false),
 	m_bBUGFIX_FREE_FOOD_BUILDING(false),
 	m_bBUGFIX_NAVAL_FREE_UNITS(false),
 	m_bBUGFIX_NAVAL_NEAREST_WATER(false),
@@ -108,6 +112,7 @@ CustomMods::CustomMods() :
 	m_bBUGFIX_UNIT_POWER_CALC(false),
 	m_bBUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY(false),
 	m_bBUGFIX_UNIT_POWER_NAVAL_CONSISTENCY(false),
+	m_bBUGFIX_UNIT_PREREQ_PROJECT(false),
 	m_bBUGFIX_HOVERING_PATHFINDER(false),
 	m_bBUGFIX_EMBARKING_PATHFINDER(false),
 	m_bBUGFIX_RANGE_3_TARGETTING(false),
@@ -148,6 +153,7 @@ int CustomMods::getOption(const char* szOption) {
 		m_bGLOBAL_PROMOTION_CLASSES               = (m_options[string("GLOBAL_PROMOTION_CLASSES")] == 1);
 		m_bGLOBAL_PASSABLE_FORTS                  = (m_options[string("GLOBAL_PASSABLE_FORTS")] == 1);
 		m_bGLOBAL_PASSABLE_FORTS_ANY              = (m_options[string("GLOBAL_PASSABLE_FORTS_ANY")] == 1);
+		m_bGLOBAL_ANYTIME_GOODY_GOLD              = (m_options[string("GLOBAL_ANYTIME_GOODY_GOLD")] == 1);
 		m_bGLOBAL_CITY_FOREST_BONUS               = (m_options[string("GLOBAL_CITY_FOREST_BONUS")] == 1);
 		m_bGLOBAL_CITY_WORKING                    = (m_options[string("GLOBAL_CITY_WORKING")] == 1);
 		m_bGLOBAL_ALPINE_PASSES                   = (m_options[string("GLOBAL_ALPINE_PASSES")] == 1);
@@ -155,6 +161,7 @@ int CustomMods::getOption(const char* szOption) {
 		m_bGLOBAL_CS_UPGRADES                     = (m_options[string("GLOBAL_CS_UPGRADES")] == 1);
 		m_bGLOBAL_CS_RAZE_RARELY                  = (m_options[string("GLOBAL_CS_RAZE_RARELY")] == 1);
 		m_bGLOBAL_CS_GIFTS                        = (m_options[string("GLOBAL_CS_GIFTS")] == 1);
+		m_bGLOBAL_VENICE_KEEPS_RESOURCES          = (m_options[string("GLOBAL_VENICE_KEEPS_RESOURCES")] == 1);
 		m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES         = (m_options[string("GLOBAL_NO_FOLLOWUP_FROM_CITIES")] == 1);
 		m_bGLOBAL_NO_CONQUERED_SPACESHIPS         = (m_options[string("GLOBAL_NO_CONQUERED_SPACESHIPS")] == 1);
 		m_bGLOBAL_ALLIES_BLOCK_BLOCKADES          = (m_options[string("GLOBAL_ALLIES_BLOCK_BLOCKADES")] == 1);
@@ -224,6 +231,7 @@ int CustomMods::getOption(const char* szOption) {
 		m_bEVENTS_RED_COMBAT_ENDED                = (m_options[string("EVENTS_RED_COMBAT_ENDED")] == 1);
 
 		m_bAPI_ESPIONAGE                          = (m_options[string("API_ESPIONAGE")] == 1);
+		m_bAPI_TRADEROUTES                        = (m_options[string("API_TRADEROUTES")] == 1);
 		m_bAPI_RELIGION                           = (m_options[string("API_RELIGION")] == 1);
 		m_bAPI_PLOT_BASED_DAMAGE                  = (m_options[string("API_PLOT_BASED_DAMAGE")] == 1);
 		m_bAPI_EXTENSIONS                         = (m_options[string("API_EXTENSIONS")] == 1);
@@ -231,6 +239,7 @@ int CustomMods::getOption(const char* szOption) {
 
 		m_bCONFIG_AI_IN_XML                       = (m_options[string("CONFIG_AI_IN_XML")] == 1);
 
+		m_bBUGFIX_LUA_CHANGE_VISIBILITY_COUNT     = (m_options[string("BUGFIX_LUA_CHANGE_VISIBILITY_COUNT")] == 1);
 		m_bBUGFIX_FREE_FOOD_BUILDING              = (m_options[string("BUGFIX_FREE_FOOD_BUILDING")] == 1);
 		m_bBUGFIX_NAVAL_FREE_UNITS                = (m_options[string("BUGFIX_NAVAL_FREE_UNITS")] == 1);
 		m_bBUGFIX_NAVAL_NEAREST_WATER             = (m_options[string("BUGFIX_NAVAL_NEAREST_WATER")] == 1);
@@ -244,6 +253,7 @@ int CustomMods::getOption(const char* szOption) {
 		m_bBUGFIX_UNIT_POWER_CALC                 = (m_options[string("BUGFIX_UNIT_POWER_CALC")] == 1);
 		m_bBUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY = (m_options[string("BUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY")] == 1);
 		m_bBUGFIX_UNIT_POWER_NAVAL_CONSISTENCY    = (m_options[string("BUGFIX_UNIT_POWER_NAVAL_CONSISTENCY")] == 1);
+		m_bBUGFIX_UNIT_PREREQ_PROJECT             = (m_options[string("BUGFIX_UNIT_PREREQ_PROJECT")] == 1);
 		m_bBUGFIX_HOVERING_PATHFINDER             = (m_options[string("BUGFIX_HOVERING_PATHFINDER")] == 1);
 		m_bBUGFIX_EMBARKING_PATHFINDER            = (m_options[string("BUGFIX_EMBARKING_PATHFINDER")] == 1);
 		m_bBUGFIX_RANGE_3_TARGETTING              = (m_options[string("BUGFIX_RANGE_3_TARGETTING")] == 1);

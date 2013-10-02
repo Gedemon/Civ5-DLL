@@ -954,6 +954,9 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetInternationalTradeRoutePlotMouseoverToolTip);
 	Method(GetNumInternationalTradeRoutesUsed);
 	Method(GetNumInternationalTradeRoutesAvailable);
+#if defined(MOD_API_TRADEROUTES)
+	Method(GetPotentialInternationalTradeRouteDestinationsFrom);
+#endif
 	Method(GetPotentialInternationalTradeRouteDestinations);
 	Method(GetInternationalTradeRouteBaseBonus);
 	Method(GetInternationalTradeRouteGPTBonus);
@@ -3152,11 +3155,33 @@ int CvLuaPlayer::lGetNumInternationalTradeRoutesAvailable(lua_State* L)
 }
 
 //------------------------------------------------------------------------------
+#if defined(MOD_API_TRADEROUTES)
+int CvLuaPlayer::lGetPotentialInternationalTradeRouteDestinationsFrom(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	CvUnit* pkUnit = CvLuaUnit::GetInstance(L, 2, false);
+	CvCity* pkCity = CvLuaCity::GetInstance(L, 3, false);;
+
+	return GetPotentialInternationalTradeRouteDestinationsHelper(L, pkPlayer, pkUnit, pkCity->plot());
+}
+
+int CvLuaPlayer::lGetPotentialInternationalTradeRouteDestinations(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	CvUnit* pkUnit = CvLuaUnit::GetInstance(L, 2, false);
+
+	return GetPotentialInternationalTradeRouteDestinationsHelper(L, pkPlayer, pkUnit, pkUnit->plot());
+}
+
+int CvLuaPlayer::GetPotentialInternationalTradeRouteDestinationsHelper(lua_State* L, CvPlayerAI* pkPlayer, CvUnit* pkUnit, CvPlot* pkUnitPlot)
+{
+#else
 int CvLuaPlayer::lGetPotentialInternationalTradeRouteDestinations(lua_State* L)
 {
 	CvPlayerAI* pkPlayer = GetInstance(L);
 	CvUnit* pkUnit = CvLuaUnit::GetInstance(L, 2, false);
 	CvPlot* pkUnitPlot = pkUnit->plot();
+#endif
 
 	CvPlayerTrade* pPlayerTrade = pkPlayer->GetTrade();
 
@@ -4041,6 +4066,18 @@ int CvLuaPlayer::lGetTradeRoutes(lua_State* L)
 
 		lua_pushinteger(L, pConnection->m_iTurnRouteComplete - GC.getGame().getGameTurn());
 		lua_setfield(L, t, "TurnsLeft");
+#if defined(MOD_API_LUA_EXTENSIONS)
+		lua_pushinteger(L, pConnection->m_unitID);
+		lua_setfield(L, t, "UnitID");
+		lua_pushboolean(L, pConnection->m_bTradeUnitRecalled);
+		lua_setfield(L, t, "IsRecalled");
+		lua_pushinteger(L, pConnection->m_iCircuitsCompleted);
+		lua_setfield(L, t, "CircuitsCompleted");
+		lua_pushinteger(L, pConnection->m_iCircuitsToComplete);
+		lua_setfield(L, t, "CircuitsToComplete");
+		lua_pushboolean(L, pConnection->m_bTradeUnitMovingForward);
+		lua_setfield(L, t, "MovingForward");
+#endif
 
 		lua_rawseti(L, -2, index++);
 	}

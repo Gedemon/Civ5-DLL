@@ -245,6 +245,11 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(GetCultureRateModifier);
 	Method(ChangeCultureRateModifier);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(GetTourismRateModifier);
+	Method(ChangeTourismRateModifier);
+#endif
+
 	Method(GetNumGreatWorks);
 	Method(GetNumGreatWorkSlots);
 	Method(GetBaseTourism);
@@ -2137,6 +2142,20 @@ int CvLuaCity::lChangeCultureRateModifier(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvCity::changeCultureRateModifier);
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//int getTourismRateModifier() const;
+int CvLuaCity::lGetTourismRateModifier(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvCity::getTourismRateModifier);
+}
+//------------------------------------------------------------------------------
+//void changeTourismRateModifier(int iChange);
+int CvLuaCity::lChangeTourismRateModifier(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvCity::changeTourismRateModifier);
+}
+#endif
 //------------------------------------------------------------------------------
 //int GetNumGreatWorks();
 int CvLuaCity::lGetNumGreatWorks(lua_State* L)

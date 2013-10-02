@@ -960,6 +960,10 @@ protected:
 	static int lGetInternationalTradeRoutePlotMouseoverToolTip(lua_State* L);
 	static int lGetNumInternationalTradeRoutesUsed(lua_State* L);
 	static int lGetNumInternationalTradeRoutesAvailable(lua_State* L);
+#if defined(MOD_API_TRADEROUTES)
+    static int GetPotentialInternationalTradeRouteDestinationsHelper(lua_State* L, CvPlayerAI* pkPlayer, CvUnit* pkUnit, CvPlot* pkUnitPlot);
+	static int lGetPotentialInternationalTradeRouteDestinationsFrom(lua_State* L);
+#endif
 	static int lGetPotentialInternationalTradeRouteDestinations(lua_State* L);
 	static int lGetInternationalTradeRouteBaseBonus(lua_State* L);
 	static int lGetInternationalTradeRouteGPTBonus(lua_State* L);
