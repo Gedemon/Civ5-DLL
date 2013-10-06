@@ -12,8 +12,6 @@
 #ifndef CIV5_PLAYER_H
 #define CIV5_PLAYER_H
 
-#include "CustomMods.h"
-
 #define SAFE_ESTIMATE_NUM_IMPROVEMENTS 50
 #define SAFE_ESTIMATE_NUM_CITIES       64
 #define MAX_INCOMING_UNITS	20
@@ -89,11 +87,6 @@ public:
 	CvString GetBorrowedCityName(CivilizationTypes eCivToBorrowFrom) const;
 	void getCivilizationCityName(CvString& szBuffer, CivilizationTypes eCivilization) const;
 	bool isCityNameValid(CvString& szName, bool bTestDestroyed = true) const;
-
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	int getBuyPlotDistance() const;
-	int GetNumWorkablePlots() const;
-#endif
 
 	void DoLiberatePlayer(PlayerTypes ePlayer, int iOldCityID);
 	bool CanLiberatePlayer(PlayerTypes ePlayer);
@@ -195,9 +188,6 @@ public:
 
 	bool IsCapitalConnectedToPlayer(PlayerTypes ePlayer, RouteTypes eRestrictRouteType = NO_ROUTE);
 	bool IsCapitalConnectedToCity(CvCity* pCity, RouteTypes eRestrictRouteType = NO_ROUTE);
-#if defined(MOD_API_EXTENSIONS)
-	bool IsPlotConnectedToPlot(CvPlot* pFromPlot, CvPlot* pToPlot, RouteTypes eRestrictRoute = NO_ROUTE);
-#endif
 
 	void findNewCapital();
 
@@ -463,11 +453,6 @@ public:
 	void ChangeStartingSpyRank(int iChange);
 	// END Espionage
 
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	int GetConversionModifier() const;
-	void ChangeConversionModifier(int iChange);
-#endif
-
 	int GetWoundedUnitDamageMod() const;
 	void SetWoundedUnitDamageMod(int iValue);
 	void ChangeWoundedUnitDamageMod(int iChange);
@@ -603,11 +588,7 @@ public:
 	void DoUnitKilledCombat(PlayerTypes eKilledPlayer, UnitTypes eUnit);
 
 	// Great People Expenditure
-#if defined (MOD_EVENTS_GREAT_PEOPLE)
-	void DoGreatPersonExpended(UnitTypes eGreatPersonUnit, CvUnit* pGreatPersonUnit);
-#else
 	void DoGreatPersonExpended(UnitTypes eGreatPersonUnit);
-#endif
 	int GetGreatPersonExpendGold() const;
 	void ChangeGreatPersonExpendGold(int iChange);
 
@@ -812,9 +793,6 @@ public:
 
 	bool IsHasLostCapital() const;
 	void SetHasLostCapital(bool bValue, PlayerTypes eConqueror);
-#if defined(MOD_GLOBAL_NO_CONQUERED_SPACESHIPS)
-	void disassembleSpaceship();
-#endif
 	PlayerTypes GetCapitalConqueror() const;
 
 	int getCitiesLost() const;
@@ -836,22 +814,12 @@ public:
 	void changeWondersScore(int iChange);
 
 	int getCombatExperience() const;
-#if defined(MOD_GLOBAL_LOCAL_GENERALS)
-	void setCombatExperience(int iExperience, CvUnit* pFromUnit = NULL);
-	void changeCombatExperience(int iChange, CvUnit* pFromUnit = NULL);
-#else
 	void setCombatExperience(int iExperience);
 	void changeCombatExperience(int iChange);
-#endif
 	int getLifetimeCombatExperience() const;
 	int getNavalCombatExperience() const;
-#if defined(MOD_GLOBAL_LOCAL_GENERALS)
-	void setNavalCombatExperience(int iExperience, CvUnit* pFromUnit = NULL);
-	void changeNavalCombatExperience(int iChange, CvUnit* pFromUnit = NULL);
-#else
 	void setNavalCombatExperience(int iExperience);
 	void changeNavalCombatExperience(int iChange);
-#endif
 
 	int getBorderObstacleCount() const;
 	bool isBorderObstacle() const;
@@ -1235,10 +1203,6 @@ public:
 
 	int GetPlotGoldCostMod() const;
 	void ChangePlotGoldCostMod(int iChange);
-#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
-	int GetCityWorkingChange() const;
-	void ChangeCityWorkingChange(int iChange);
-#endif
 
 	int GetPlotCultureCostModifier() const;
 	void ChangePlotCultureCostModifier(int iChange);
@@ -1296,9 +1260,6 @@ public:
 	void SetHolyCity(int iCityID);
 
 	PromotionTypes GetEmbarkationPromotion() const;
-#if defined(MOD_PROMOTIONS_DEEP_WATER_EMBARKATION)
-	PromotionTypes GetDeepWaterEmbarkationPromotion() const;
-#endif
 
 	void DoAnnounceReligionAdoption();
 	// End New Religion Stuff
@@ -1521,9 +1482,6 @@ protected:
 	int m_iHappinessPerXPolicies;
 	int m_iEspionageModifier;
 	int m_iSpyStartingRank;
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	int m_iConversionModifier;
-#endif
 	FAutoVariable<int, CvPlayer> m_iAdvancedStartPoints;
 	FAutoVariable<int, CvPlayer> m_iAttackBonusTurns;
 	FAutoVariable<int, CvPlayer> m_iGoldenAgeProgressMeter;
@@ -1641,9 +1599,6 @@ protected:
 	FAutoVariable<int, CvPlayer> m_iCapitalGrowthMod;
 	FAutoVariable<int, CvPlayer> m_iNumPlotsBought;
 	FAutoVariable<int, CvPlayer> m_iPlotGoldCostMod;
-#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
-	int m_iCityWorkingChange;
-#endif
 	FAutoVariable<int, CvPlayer> m_iPlotCultureCostModifier;
 	int m_iPlotCultureExponentModifier;
 	int m_iNumCitiesPolicyCostDiscount;

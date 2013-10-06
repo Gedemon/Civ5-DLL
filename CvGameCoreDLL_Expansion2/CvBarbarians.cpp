@@ -239,6 +239,7 @@ void CvBarbarians::Read(FDataStream& kStream, uint uiParentVersion)
 	uint uiVersion = 0;
 
 	kStream >> uiVersion;	
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	int iWorldNumPlots = GC.getMap().numPlots();
 	MapInit(iWorldNumPlots);	// Map will have been initialized/unserialized by now so this is ok.
@@ -254,6 +255,7 @@ void CvBarbarians::Write(FDataStream& kStream)
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	int iWorldNumPlots = GC.getMap().numPlots();
 	kStream << ArrayWrapper<short>(iWorldNumPlots, m_aiPlotBarbCampSpawnCounter);

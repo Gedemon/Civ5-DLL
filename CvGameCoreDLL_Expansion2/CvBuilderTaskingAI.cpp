@@ -49,6 +49,9 @@ void CvBuilderTaskingAI::Init(CvPlayer* pPlayer)
 
 	// special case code so the Dutch don't remove marshes
 	m_bKeepMarshes = false;
+	// special case code so Brazil doesn't remove jungle
+	m_bKeepJungle = false;
+
 	for(int i = 0; i < GC.getNumBuildInfos(); i++)
 	{
 		BuildTypes eBuild = (BuildTypes)i;
@@ -79,6 +82,10 @@ void CvBuilderTaskingAI::Init(CvPlayer* pPlayer)
 				{
 					m_bKeepMarshes = true;
 				}
+				else if (pkImprovementInfo->GetFeatureMakesValid(FEATURE_JUNGLE))
+				{
+					m_bKeepJungle = true;
+				}
 			}
 		}
 	}
@@ -100,6 +107,7 @@ void CvBuilderTaskingAI::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	kStream >> m_eRepairBuild;
 
@@ -115,6 +123,14 @@ void CvBuilderTaskingAI::Read(FDataStream& kStream)
 	}
 
 	kStream >> m_bKeepMarshes;
+	if (uiVersion >= 2)
+	{
+		kStream >> m_bKeepJungle;
+	}
+	else
+	{
+		m_bKeepJungle = false;
+	}
 	m_iNumCities = -1; //Force everyone to do an CvBuilderTaskingAI::Update() after loading
 	m_pTargetPlot = NULL;		//Force everyone to recalculate current yields after loading.
 }
@@ -123,8 +139,9 @@ void CvBuilderTaskingAI::Read(FDataStream& kStream)
 void CvBuilderTaskingAI::Write(FDataStream& kStream)
 {
 	// Current version number
-	uint uiVersion = 1;
+	uint uiVersion = 2;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	kStream << m_eRepairBuild;
 
@@ -136,6 +153,7 @@ void CvBuilderTaskingAI::Write(FDataStream& kStream)
 	}
 
 	kStream << m_bKeepMarshes;
+	kStream << m_bKeepJungle;
 }
 
 /// Update
@@ -1161,6 +1179,23 @@ void CvBuilderTaskingAI::AddImprovingPlotsDirectives(CvUnit* pUnit, CvPlot* pPlo
 					LogInfo(strTemp, m_pPlayer);
 				}
 				continue;
+			}
+		}
+
+		// special case for Brazil
+		if (m_bKeepJungle && eFeature == FEATURE_JUNGLE)
+		{
+			if (pkBuild->isFeatureRemove(FEATURE_JUNGLE))
+			{
+				if(m_bLogging){
+					CvString strTemp;
+					strTemp.Format("Weight,Jungle Remove,%s,,,,%i, %i", GC.getBuildInfo(eBuild)->GetType(), pPlot->getX(), pPlot->getY());
+					LogInfo(strTemp, m_pPlayer);
+				}
+				if (pPlot->getResourceType(m_pPlayer->getTeam()) == NO_RESOURCE)
+				{
+					continue;
+				}
 			}
 		}
 

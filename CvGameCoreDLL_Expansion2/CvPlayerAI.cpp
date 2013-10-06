@@ -85,6 +85,7 @@ void CvPlayerAI::AI_reset()
 
 void CvPlayerAI::AI_doTurnPre()
 {
+	AI_PERF_FORMAT("AI-perf.csv", ("CvPlayerAI::AI_doTurnPre, Turn %03d, %s", GC.getGame().getElapsedGameTurns(), getCivilizationShortDescription()) );
 	CvAssertMsg(getPersonalityType() != NO_LEADER, "getPersonalityType() is not expected to be equal with NO_LEADER");
 	CvAssertMsg(getLeaderType() != NO_LEADER, "getLeaderType() is not expected to be equal with NO_LEADER");
 	CvAssertMsg(getCivilizationType() != NO_CIVILIZATION, "getCivilizationType() is not expected to be equal with NO_CIVILIZATION");
@@ -103,6 +104,7 @@ void CvPlayerAI::AI_doTurnPre()
 
 void CvPlayerAI::AI_doTurnPost()
 {
+	AI_PERF_FORMAT("AI-perf.csv", ("CvPlayerAI::AI_doTurnPost, Turn %03d, %s", GC.getGame().getElapsedGameTurns(), getCivilizationShortDescription()) );
 	if(isHuman())
 	{
 		return;
@@ -468,6 +470,7 @@ void CvPlayerAI::AI_chooseFreeTech()
 	clearResearchQueue();
 
 	// TODO: script override
+	// TODO - WH - Good idea!  Add to MOD_EVENTS_AI_OVERRIDE
 
 	if(eBestTech == NO_TECH)
 	{
@@ -513,6 +516,7 @@ void CvPlayerAI::AI_chooseResearch()
 	if(GetPlayerTechs()->GetCurrentResearch() == NO_TECH)
 	{
 		//todo: script override
+		// TODO - WH - Good idea!  Add to MOD_EVENTS_AI_OVERRIDE
 
 		if(eBestTech == NO_TECH)
 		{
@@ -693,6 +697,7 @@ void CvPlayerAI::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 }
 
 
@@ -707,6 +712,7 @@ void CvPlayerAI::Write(FDataStream& kStream) const
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 }
 
 void CvPlayerAI::AI_launch(VictoryTypes eVictory)
@@ -1467,6 +1473,20 @@ CvPlot* CvPlayerAI::FindBestArtistTargetPlot(CvUnit* pGreatArtist, int& iResultS
 		if (eFeature != NO_FEATURE && GC.getFeatureInfo(eFeature)->isNoImprovement())
 		{
 			continue;
+		}
+
+		// Improvement already here?
+		ImprovementTypes eImprovement = (ImprovementTypes)pPlot->getImprovementType();
+		if (eImprovement != NO_IMPROVEMENT)
+		{
+			CvImprovementEntry* pkImprovementInfo = GC.getImprovementInfo(eImprovement);
+			if(pkImprovementInfo)
+			{
+				if (pkImprovementInfo->GetCultureBombRadius() > 0)
+				{
+					continue;
+				}
+			}
 		}
 
 		int iScore = 0;

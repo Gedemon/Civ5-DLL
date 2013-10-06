@@ -18,7 +18,7 @@
 #include "Fireworks/FVariableSystem.h"
 #include "CvEnumSerialization.h"
 #include "CvInfosSerializationHelper.h"
-
+#include "cvStopWatch.h"
 // must be included after all other headers
 #include "LintFree.h"
 
@@ -327,6 +327,7 @@ void CvCityStrategyAI::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	CvAssertMsg(m_piLatestFlavorValues != NULL && GC.getNumFlavorTypes() > 0, "Number of flavor values to serialize is expected to greater than 0");
 
@@ -354,6 +355,7 @@ void CvCityStrategyAI::Write(FDataStream& kStream)
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	CvAssertMsg(GC.getNumFlavorTypes() > 0, "Number of flavor values to serialize is expected to greater than 0");
 	int iNumFlavors = GC.getNumFlavorTypes();
@@ -1108,6 +1110,8 @@ void CvCityStrategyAI::ChooseProduction(bool bUseAsyncRandom, BuildingTypes eIgn
 /// Called every turn to see what CityStrategies this City should using (or not)
 void CvCityStrategyAI::DoTurn()
 {
+	AI_PERF_FORMAT("City-AI-perf.csv", ("CvCityStrategyAI::DoTurn, Turn %03d, %s, %s", GC.getGame().getElapsedGameTurns(), m_pCity->GetPlayer()->getCivilizationShortDescription(), m_pCity->getName().c_str()) );
+
 	int iCityStrategiesLoop = 0;
 
 	// Loop through all CityStrategies
@@ -2057,6 +2061,12 @@ bool CityStrategyAIHelpers::IsTestCityStrategy_SmallCity(CvCity* pCity)
 /// "Medium City" City Strategy: If a City is 8 or above Population boost science
 bool CityStrategyAIHelpers::IsTestCityStrategy_MediumCity(CvCity* pCity)
 {
+	// Never consider the capital to be a medium city (so with late game starts at least one city retains high flavors for SPACESHIP, etc.)
+	if (pCity->isCapital())
+	{
+		return false;
+	}
+
 	// City Population is getting larger, increase science
 	if(pCity->getPopulation() >= GC.getAI_CITYSTRATEGY_MEDIUM_CITY_POP_THRESHOLD() &&   // 5 to 11
 	        pCity->getPopulation() < GC.getAI_CITYSTRATEGY_LARGE_CITY_POP_THRESHOLD())

@@ -226,11 +226,7 @@ private:
 
 	CvWeightedVector<CvCityBuildable, (SAFE_ESTIMATE_NUM_BUILDINGS + SAFE_ESTIMATE_NUM_UNITS), true> m_Buildables;
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	static unsigned char  m_acBestYields[NUM_YIELD_TYPES][MAX_CITY_PLOTS - 1];
-#else
 	static unsigned char  m_acBestYields[NUM_YIELD_TYPES][NUM_CITY_PLOTS - 1];
-#endif
 	unsigned short m_asBestYieldAverageTimes100[NUM_YIELD_TYPES];
 	short m_asYieldDeltaTimes100[NUM_YIELD_TYPES];
 	YieldTypes m_eFocusYield;

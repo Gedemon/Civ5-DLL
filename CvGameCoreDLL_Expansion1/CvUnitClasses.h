@@ -74,12 +74,6 @@ public:
 	int GetSpecialUnitType() const;
 	int GetUnitCaptureClassType() const;
 	int GetUnitCombatType() const;
-#if defined(MOD_GLOBAL_PROMOTION_CLASSES)
-	int GetUnitPromotionType() const;
-#endif
-#if defined(MOD_EVENTS_CAN_MOVE_INTO)
-	bool IsSendCanMoveIntoEvent() const;
-#endif
 	int GetDomainType() const;
 	int GetCivilianAttackPriority() const;
 	int GetDefaultUnitAIType() const;
@@ -200,12 +194,6 @@ private:
 	int m_iSpecialUnitType;
 	int m_iUnitCaptureClassType;
 	int m_iUnitCombatType;
-#if defined(MOD_GLOBAL_PROMOTION_CLASSES)
-	int m_iUnitPromotionType;
-#endif
-#if defined(MOD_EVENTS_CAN_MOVE_INTO)
-	bool m_bSendCanMoveIntoEvent;
-#endif
 	int m_iDomainType;
 	int m_iCivilianAttackPriority;
 	int m_iDefaultUnitAIType;

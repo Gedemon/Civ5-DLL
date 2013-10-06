@@ -805,6 +805,7 @@ void CvPlayerTechs::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	// TODO: If m_pTechs is NULL then the stream will not be advanced causing errors to occur.
 	CvAssertMsg(m_pTechs != NULL && m_pTechs->GetNumTechs() > 0, "Number of techs to serialize is expected to greater than 0");
@@ -839,6 +840,7 @@ void CvPlayerTechs::Write(FDataStream& kStream)
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	// TODO: If m_pTechs is NULL then the stream will not advance
 	CvAssertMsg(m_pTechs != NULL && m_pTechs->GetNumTechs() > 0, "Number of techs to serialize is expected to greater than 0");
@@ -1765,6 +1767,7 @@ void CvTeamTechs::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	kStream >> m_eLastTechAcquired;
 
@@ -1779,7 +1782,7 @@ void CvTeamTechs::Read(FDataStream& kStream)
 		// Next is an array of the tech IDs that were available when the save was made.
 		CvAssert(m_pTechs == GC.GetGameTechs());	// The hash to indices conversion will convert the hash to the index in the main game techs array, so these better be the same.
 		int* paTechIDs = (int*)_malloca(iNumSavedTechs * sizeof(int));
-		CvInfosSerializationHelper::ReadHashedTypeArray(kStream, iNumActiveTechs, paTechIDs, iNumSavedTechs);
+		CvInfosSerializationHelper::ReadHashedTypeArray(kStream, iNumSavedTechs, paTechIDs, iNumSavedTechs);
 
 		CvInfosSerializationHelper::ReadAndRemapDataArray(kStream, iNumSavedTechs, m_pabHasTech, iNumActiveTechs, paTechIDs);
 		CvInfosSerializationHelper::ReadAndRemapDataArray(kStream, iNumSavedTechs, m_pabNoTradeTech, iNumActiveTechs, paTechIDs);
@@ -1797,6 +1800,7 @@ void CvTeamTechs::Write(FDataStream& kStream)
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	kStream << m_eLastTechAcquired;
 

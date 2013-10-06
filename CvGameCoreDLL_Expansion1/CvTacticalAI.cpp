@@ -4552,7 +4552,7 @@ void CvTacticalAI::ExecuteGatherMoves(CvArmyAI* pArmy)
 	}
 
 	// Now ready to make the assignments
-	AssignDeployingUnits(iUnits);
+	AssignDeployingUnits(iUnits - iUnitsToPlace);
 
 	PerformChosenMoves();
 
@@ -5058,6 +5058,7 @@ void CvTacticalAI::ExecuteNavalFormationMoves(CvArmyAI* pArmy, CvPlot* pTurnTarg
 		std::stable_sort(m_TempTargets.begin(), m_TempTargets.end());
 		m_PotentialBlocks.clear();
 		bool bDone = false;
+		int iMostUnitsToPlace = iMostUnits;
 
 		for(unsigned int iI = 0; iI < m_TempTargets.size() && !bDone; iI++)
 		{
@@ -5073,11 +5074,16 @@ void CvTacticalAI::ExecuteNavalFormationMoves(CvArmyAI* pArmy, CvPlot* pTurnTarg
 					block.SetDistanceToTarget(m_CurrentMoveUnits[jJ].GetMovesToTarget());
 					m_PotentialBlocks.push_back(block);
 				}
+				iMostUnitsToPlace--;
+				if(iMostUnitsToPlace == 0)
+				{
+					bDone = true;
+				}
 			}
 		}
 
 		// Now ready to make the assignments
-		AssignDeployingUnits(iMostUnits);
+		AssignDeployingUnits(iMostUnits - iMostUnitsToPlace);
 		PerformChosenMoves();
 
 		// Log if someone in army didn't get a move assigned (how do we address this in the future?)
@@ -5105,6 +5111,8 @@ void CvTacticalAI::ExecuteNavalFormationMoves(CvArmyAI* pArmy, CvPlot* pTurnTarg
 			}
 
 			m_PotentialBlocks.clear();
+			bDone = false;
+			int iLeastUnitsToPlace = iLeastUnits;
 
 			for(unsigned int iI = 0; iI < m_TempTargets.size() && !bDone; iI++)
 			{
@@ -5120,11 +5128,16 @@ void CvTacticalAI::ExecuteNavalFormationMoves(CvArmyAI* pArmy, CvPlot* pTurnTarg
 						block.SetDistanceToTarget(m_CurrentMoveUnits[jJ].GetMovesToTarget());
 						m_PotentialBlocks.push_back(block);
 					}
+					iLeastUnitsToPlace--;
+					if(iLeastUnitsToPlace == 0)
+					{
+						bDone = true;
+					}
 				}
 			}
 
 			// Now ready to make the assignments
-			AssignDeployingUnits(iLeastUnits);
+			AssignDeployingUnits(iLeastUnits - iLeastUnitsToPlace);
 			PerformChosenMoves();
 
 			if(m_ChosenBlocks.size() < (unsigned int)iLeastUnits)
@@ -9624,11 +9637,7 @@ int CvTacticalAI::ScoreCloseOnPlots(CvPlot* pTarget, bool bLandOnly)
 	// We'll store the hexes we've found here
 	m_TempTargets.clear();
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	for(int jJ = 0; jJ < AVG_CITY_PLOTS; jJ++)
-#else
 	for(int jJ = 0; jJ < NUM_CITY_PLOTS; jJ++)
-#endif
 	{
 		pPlot = plotCity(pTarget->getX(), pTarget->getY(), jJ);
 
@@ -9725,11 +9734,7 @@ void CvTacticalAI::ScoreHedgehogPlots(CvPlot* pTarget)
 	// We'll store the hexes we've found here
 	m_TempTargets.clear();
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	for(int jJ = 0; jJ < AVG_CITY_PLOTS; jJ++)
-#else
 	for(int jJ = 0; jJ < NUM_CITY_PLOTS; jJ++)
-#endif
 	{
 		pPlot = plotCity(pTarget->getX(), pTarget->getY(), jJ);
 

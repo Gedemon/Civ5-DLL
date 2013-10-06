@@ -315,9 +315,6 @@ protected:
 	static int lGetMinimumFaithNextPantheon(lua_State* L);
 	static int lSetMinimumFaithNextPantheon(lua_State* L);
 
-#if defined(MOD_API_RELIGION)
-	static int lIsInSomeReligion(lua_State* L);
-#endif
 	static int lGetAvailablePantheonBeliefs(lua_State* L);
 	static int lGetAvailableFounderBeliefs(lua_State* L);
 	static int lGetAvailableFollowerBeliefs(lua_State* L);
@@ -335,9 +332,6 @@ protected:
 	static int lGetFounderBenefitsReligion(lua_State* L);
 
 	static int lFoundPantheon(lua_State* L);
-#if defined(MOD_API_RELIGION)
-	static int lEnhancePantheon(lua_State* L);
-#endif
 	static int lFoundReligion(lua_State* L);
 	static int lEnhanceReligion(lua_State* L);
 	static int lSetHolyCity(lua_State* L);
@@ -346,18 +340,8 @@ protected:
 
 	static int lGetTurnsBetweenMinorCivElections(lua_State* L);
 	static int lGetTurnsUntilMinorCivElection(lua_State* L);
-	
-#if defined(MOD_API_LUA_EXTENSIONS)
-	static int lIsAchievementUnlocked(lua_State* L);
-	static int lGetSteamStat(lua_State* L);
-#endif
 
 	static int lIsProcessingMessages(lua_State* L);
-
-#if defined(MOD_API_LUA_EXTENSIONS)
-	static int lReloadGameDataDefines(lua_State* L);
-	static int lReloadCustomModOptions(lua_State* L);
-#endif
 };
 
 #endif //CVLUAGAME_H

@@ -124,6 +124,7 @@ void CvGoodyHuts::Read(FDataStream& kStream, uint uiParentVersion)
 
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	for (int iI = 0; iI < MAX_MAJOR_CIVS; iI++)
 	{
@@ -137,6 +138,7 @@ void CvGoodyHuts::Write(FDataStream& kStream)
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	for (int iI = 0; iI < MAX_MAJOR_CIVS; iI++)
 	{

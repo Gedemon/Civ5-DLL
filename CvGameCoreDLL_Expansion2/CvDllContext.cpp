@@ -100,7 +100,8 @@ void* CvDllGameContext::QueryInterface(GUID guidInterface)
 {
 	if(	guidInterface == ICvUnknown::GetInterfaceId() ||
         guidInterface == ICvGameContext1::GetInterfaceId() ||
-		guidInterface == ICvGameContext2::GetInterfaceId())
+		guidInterface == ICvGameContext2::GetInterfaceId() ||
+		guidInterface == ICvGameContext3::GetInterfaceId())
 	{
 		return this;
 	}
@@ -147,7 +148,7 @@ void CvDllGameContext::InitializeSingleton()
 	s_pSingleton = FNEW(CvDllGameContext(), c_eCiv5GameplayDLL, 0);
 
 #if defined(CUSTOM_MODS_H)
-	CUSTOMLOG("%s - Startup (Version %s - Build %s %s%s)", MOD_DLL_NAME, MOD_DLL_VERSION, __DATE__, __TIME__, MOD_DLL_CUSTOM_BUILD_NAME);
+	CUSTOMLOG("%s - Startup (Version %u%s - Build %s %s%s)", MOD_DLL_NAME, MOD_DLL_VERSION_NUMBER, MOD_DLL_VERSION_STATUS, __DATE__, __TIME__, MOD_DLL_CUSTOM_BUILD_NAME);
 #if defined(MOD_GLOBAL_MAX_MAJOR_CIVS)
 	CUSTOMLOG(" - supporting %i major civilizations", MAX_MAJOR_CIVS);
 #endif
@@ -172,6 +173,11 @@ CvDllGameContext* CvDllGameContext::GetSingleton()
 }
 //------------------------------------------------------------------------------
 HANDLE CvDllGameContext::GetHeap()
+{
+	return s_hHeap;
+}
+//------------------------------------------------------------------------------
+HANDLE CvDllGameContext::Debug_GetHeap() const
 {
 	return s_hHeap;
 }
@@ -859,13 +865,13 @@ void CvDllGameContext::SetGameDatabase(Database::Connection* pGameDatabase)
 bool CvDllGameContext::SetDLLIFace(ICvEngineUtility1* pDll)
 {
 	//Since we're using QueryInterface to allocate a new instance, we need to explicitly clean up the old reference.
-	ICvEngineUtility3* pOldDll = GC.getDLLIFace();
+	ICvEngineUtility4* pOldDll = GC.getDLLIFace();
 	if(pOldDll != NULL)
 	{
 		delete pOldDll;
 	}
 
-	ICvEngineUtility3* pDllInterface = (pDll != NULL)? pDll->QueryInterface<ICvEngineUtility3>() : NULL;
+	ICvEngineUtility4* pDllInterface = (pDll != NULL)? pDll->QueryInterface<ICvEngineUtility4>() : NULL;
 	GC.setDLLIFace(pDllInterface);	//GameCore will claim ownership.
 
 	return pDllInterface != NULL;

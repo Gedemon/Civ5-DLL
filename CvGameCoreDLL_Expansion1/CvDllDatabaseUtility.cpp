@@ -179,11 +179,6 @@ bool CvDllDatabaseUtility::CacheGameDatabaseData()
 
 	if(bSuccess)
 		m_bGameDatabaseNeedsCaching = false;
-		
-#if defined(CUSTOM_MODS_H)
-	// Load up the CustomModOptions configuration
-	gCustomMods.preloadCache();
-#endif
 
 	return bSuccess;
 }
@@ -265,21 +260,10 @@ bool CvDllDatabaseUtility::PerformDatabasePostProcessing()
 		InsertGameDefine(kInsertDefine, "BARBARIAN_PLAYER", BARBARIAN_PLAYER);
 		InsertGameDefine(kInsertDefine, "BARBARIAN_TEAM", BARBARIAN_TEAM);
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
-		InsertGameDefine(kInsertDefine, "NUM_CITY_PLOTS", AVG_CITY_PLOTS);
-		InsertGameDefine(kInsertDefine, "MIN_CITY_RADIUS", MIN_CITY_RADIUS);
-		InsertGameDefine(kInsertDefine, "MAX_CITY_RADIUS", MAX_CITY_RADIUS);
-#else
 		InsertGameDefine(kInsertDefine, "NUM_CITY_PLOTS", NUM_CITY_PLOTS);
-#endif
 		InsertGameDefine(kInsertDefine, "CITY_HOME_PLOT", CITY_HOME_PLOT);
-#if defined(MOD_GLOBAL_CITY_WORKING)
-		InsertGameDefine(kInsertDefine, "MAX_CITY_RADIUS", MAX_CITY_RADIUS);
-		InsertGameDefine(kInsertDefine, "MAX_CITY_DIAMETER", (2*MAX_CITY_RADIUS+1));
-#else
 		InsertGameDefine(kInsertDefine, "CITY_PLOTS_RADIUS", CITY_PLOTS_RADIUS);
 		InsertGameDefine(kInsertDefine, "CITY_PLOTS_DIAMETER", CITY_PLOTS_DIAMETER);
-#endif
 	}
 
 	db->EndTransaction();
@@ -387,13 +371,19 @@ bool CvDllDatabaseUtility::PrefetchGameData()
 		//GC.getNumFlavorTypes() = iNumFlavors;
 		GC.setNumFlavorTypes(iNumFlavors);
 		paFlavors = FNEW(CvString[iNumFlavors], c_eCiv5GameplayDLL, 0);
-		Database::Results kResults("Type");
-		if(DB.SelectAll(kResults, "Flavors"))
+
+		Database::Results kResults;
+		if(DB.SelectWhere(kResults, "Flavors", "ID > -1"))
 		{
-			int i = 0;
 			while(kResults.Step())
 			{
-				paFlavors[i++] = kResults.GetText(0);
+				const int iFlavor = kResults.GetInt("ID");
+				CvAssert(iFlavor >= 0 && iFlavor < iNumFlavors);
+				if(iFlavor >= 0 && iFlavor < iNumFlavors)
+				{
+					paFlavors[iFlavor] = kResults.GetText("Type");
+
+				}
 			}
 		}
 		else
@@ -648,7 +638,7 @@ bool CvDllDatabaseUtility::ValidatePrefetchProcess()
 	ValidateVectorSize(getNumVictoryInfos);
 
 	// The domains are a special case in that the contents must match a populated enum exactly.
-#define ValidateDomain(domain) { CvDomainInfo* pkDomainInfo; if (GC.getNumUnitDomainInfos() < (int)domain || (pkDomainInfo = GC.getUnitDomainInfo(domain)) == NULL || strcmp(pkDomainInfo->GetType(), #domain) != 0) bError = true; }
+#define ValidateDomain(domain) { CvDomainInfo* pkDomainInfo; if (GC.getNumUnitDomainInfos() <= (int)domain || (pkDomainInfo = GC.getUnitDomainInfo(domain)) == NULL || strcmp(pkDomainInfo->GetType(), #domain) != 0) bError = true; }
 
 	ValidateDomain(DOMAIN_SEA);
 	ValidateDomain(DOMAIN_AIR);

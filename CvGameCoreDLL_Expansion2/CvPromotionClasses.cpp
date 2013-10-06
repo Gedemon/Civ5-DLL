@@ -1940,6 +1940,7 @@ void CvUnitPromotions::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	// Read number of promotions
 	int iNumPromotions;
@@ -1955,6 +1956,7 @@ void CvUnitPromotions::Write(FDataStream& kStream) const
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	// Write out number of promotions to save
 	int iNumPromotions = m_pPromotions->GetNumPromotions();

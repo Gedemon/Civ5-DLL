@@ -80,11 +80,6 @@ public:
 
 	void chooseProduction(UnitTypes eTrainUnit = NO_UNIT, BuildingTypes eConstructBuilding = NO_BUILDING, ProjectTypes eCreateProject = NO_PROJECT, bool bFinish = false, bool bFront = false);
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	int getBuyPlotDistance() const;
-	int GetNumWorkablePlots() const;
-#endif
-
 	void clearWorkingOverride(int iIndex);
 	int countNumImprovedPlots(ImprovementTypes eImprovement = NO_IMPROVEMENT, bool bPotential = false) const;
 	int countNumWaterPlots() const;
@@ -257,9 +252,6 @@ public:
 	void SetEverCapital(bool bValue);
 
 	bool isCoastal(int iMinWaterSize = -1) const;
-#if defined(MOD_API_EXTENSIONS)
-	bool isAddsFreshWater() const;
-#endif
 
 	int foodConsumption(bool bNoAngry = false, int iExtra = 0) const;
 	int foodDifference(bool bBottom = true) const;
@@ -408,21 +400,12 @@ public:
 
 	int getPlotBuyCostModifier() const;
 	void changePlotBuyCostModifier(int iChange);
-#if defined(MOD_BUILDINGS_CITY_WORKING)
-	int GetCityWorkingChange() const;
-	void changeCityWorkingChange(int iChange);
-#endif
 
 	int getHealRate() const;
 	void changeHealRate(int iChange);
 
 	int GetEspionageModifier() const;
 	void ChangeEspionageModifier(int iChange);
-
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	int GetConversionModifier() const;
-	void ChangeConversionModifier(int iChange);
-#endif
 
 	bool IsNoOccupiedUnhappiness() const;
 	int GetNoOccupiedUnhappinessCount() const;
@@ -854,9 +837,6 @@ protected:
 	FAutoVariable<int, CvCity> m_iCapturePlunderModifier;
 	FAutoVariable<int, CvCity> m_iPlotCultureCostModifier;
 	int m_iPlotBuyCostModifier;
-#if defined(MOD_BUILDINGS_CITY_WORKING)
-	int m_iCityWorkingChange;
-#endif
 	FAutoVariable<int, CvCity> m_iMaintenance;
 	FAutoVariable<int, CvCity> m_iHealRate;
 	FAutoVariable<int, CvCity> m_iNoOccupiedUnhappinessCount;
@@ -889,9 +869,6 @@ protected:
 	FAutoVariable<int, CvCity> m_iCountExtraLuxuries;
 	FAutoVariable<int, CvCity> m_iCheapestPlotInfluence;
 	int m_iEspionageModifier;
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	int m_iConversionModifier;
-#endif
 
 	OperationSlot m_unitBeingBuiltForOperation;
 

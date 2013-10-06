@@ -81,9 +81,6 @@ CvImprovementEntry::CvImprovementEntry(void):
 	m_iImprovementPillage(NO_IMPROVEMENT),
 	m_iImprovementUpgrade(NO_IMPROVEMENT),
 	m_bHillsMakesValid(false),
-#if defined(MOD_GLOBAL_ALPINE_PASSES)
-	m_bMountainsMakesValid(false),
-#endif
 	m_bFreshWaterMakesValid(false),
 	m_bRiverSideMakesValid(false),
 	m_bNoFreshWater(false),
@@ -180,9 +177,6 @@ bool CvImprovementEntry::CacheResults(Database::Results& kResults, CvDatabaseUti
 	m_iCultureBombRadius = kResults.GetInt("CultureBombRadius");
 	m_iCultureAdjacentSameType = kResults.GetInt("CultureAdjacentSameType");
 	m_bHillsMakesValid = kResults.GetBool("HillsMakesValid");
-#if defined(MOD_GLOBAL_ALPINE_PASSES)
-	m_bMountainsMakesValid = kResults.GetBool("MountainsMakesValid");
-#endif
 	m_bFreshWaterMakesValid = kResults.GetBool("FreshWaterMakesValid");
 	m_bRiverSideMakesValid = kResults.GetBool("RiverSideMakesValid");
 	m_bNoFreshWater = kResults.GetBool("NoFreshWater");
@@ -563,14 +557,6 @@ bool CvImprovementEntry::IsHillsMakesValid() const
 {
 	return m_bHillsMakesValid;
 }
-
-#if defined(MOD_GLOBAL_ALPINE_PASSES)
-/// Requires mountains to be constructed
-bool CvImprovementEntry::IsMountainsMakesValid() const
-{
-	return m_bMountainsMakesValid;
-}
-#endif
 
 /// Requires fresh water to build
 bool CvImprovementEntry::IsFreshWaterMakesValid() const

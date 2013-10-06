@@ -2860,7 +2860,7 @@ int CvLuaGame::lGetLongestCityConnectionPlots(lua_State* L)
 
 #if defined(MOD_API_TRADEROUTES)
 //------------------------------------------------------------------------------
-// Mostt of this came from CvLuaPlayer::lGetTradeRoutes(lua_State* L)
+// Most of this came from CvLuaPlayer::lGetTradeRoutes(lua_State* L)
 int CvLuaGame::lGetTradeRoute(lua_State* L)
 {
 	const int iRouteIndex = lua_tointeger(L, 1);

@@ -1007,6 +1007,7 @@ void CvTreasury::Read(FDataStream& kStream)
 	uint uiVersion;
 
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	kStream >> m_iGold;
 	kStream >> m_iGoldPerTurnFromDiplomacy;
@@ -1028,6 +1029,7 @@ void CvTreasury::Write(FDataStream& kStream)
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	kStream << m_iGold;
 	kStream << m_iGoldPerTurnFromDiplomacy;

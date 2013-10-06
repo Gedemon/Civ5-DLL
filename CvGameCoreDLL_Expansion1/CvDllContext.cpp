@@ -100,7 +100,8 @@ void* CvDllGameContext::QueryInterface(GUID guidInterface)
 {
 	if(	guidInterface == ICvUnknown::GetInterfaceId() ||
 		guidInterface == ICvGameContext1::GetInterfaceId() ||
-		guidInterface == ICvGameContext2::GetInterfaceId())
+		guidInterface == ICvGameContext2::GetInterfaceId() ||
+		guidInterface == ICvGameContext3::GetInterfaceId())
 	{
 		return this;
 	}
@@ -145,19 +146,10 @@ void CvDllGameContext::InitializeSingleton()
 
 	}
 	s_pSingleton = FNEW(CvDllGameContext(), c_eCiv5GameplayDLL, 0);
-
-#if defined(CUSTOM_MODS_H)
-	CUSTOMLOG("%s - Startup (Version %s - Build %s %s%s)", MOD_DLL_NAME, MOD_DLL_VERSION, __DATE__, __TIME__, MOD_DLL_CUSTOM_BUILD_NAME);
-#endif
 }
 //------------------------------------------------------------------------------
 void CvDllGameContext::DestroySingleton()
 {
-#if defined(CUSTOM_MODS_H)
-	// Call this first, in case the logging sub-system needs the memory we are about to free
-	CUSTOMLOG("%s - Shutdown", MOD_DLL_NAME);
-#endif
-
 	SAFE_DELETE(s_pSingleton);
 	HeapDestroy(s_hHeap);
 	s_hHeap = INVALID_HANDLE_VALUE;
@@ -169,6 +161,11 @@ CvDllGameContext* CvDllGameContext::GetSingleton()
 }
 //------------------------------------------------------------------------------
 HANDLE CvDllGameContext::GetHeap()
+{
+	return s_hHeap;
+}
+//------------------------------------------------------------------------------
+HANDLE CvDllGameContext::Debug_GetHeap() const
 {
 	return s_hHeap;
 }
@@ -659,19 +656,7 @@ int CvDllGameContext::GetAI_HANDICAP() const
 //------------------------------------------------------------------------------
 int CvDllGameContext::GetNUM_CITY_PLOTS() const
 {
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	int iNumCityPlots = AVG_CITY_PLOTS;
-	
-	auto_ptr<ICvCity1> pCity(GC.GetEngineUserInterface()->getHeadSelectedCity());
-	if (pCity.get() != NULL) {
-		CvCity* pkCity = GC.UnwrapCityPointer(pCity.get());
-		iNumCityPlots = pkCity->GetNumWorkablePlots();
-	}
-				
-	return iNumCityPlots;
-#else
 	return NUM_CITY_PLOTS;
-#endif
 }
 //------------------------------------------------------------------------------
 const char** CvDllGameContext::GetHexDebugLayerNames()
@@ -856,13 +841,13 @@ void CvDllGameContext::SetGameDatabase(Database::Connection* pGameDatabase)
 bool CvDllGameContext::SetDLLIFace(ICvEngineUtility1* pDll)
 {
 	//Since we're using QueryInterface to allocate a new instance, we need to explicitly clean up the old reference.
-	ICvEngineUtility3* pOldDll = GC.getDLLIFace();
+	ICvEngineUtility4* pOldDll = GC.getDLLIFace();
 	if(pOldDll != NULL)
 	{
 		delete pOldDll;
 	}
 
-	ICvEngineUtility3* pDllInterface = (pDll != NULL)? pDll->QueryInterface<ICvEngineUtility3>() : NULL;
+	ICvEngineUtility4* pDllInterface = (pDll != NULL)? pDll->QueryInterface<ICvEngineUtility4>() : NULL;
 	GC.setDLLIFace(pDllInterface);
 
 	return pDllInterface != NULL;

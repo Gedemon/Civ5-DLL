@@ -223,7 +223,19 @@ bool CvDllNetInitInfo::Write(FDataStream& kStream)
 bool CvDllNetInitInfo::Commit()
 {
 	// Copy the settings into our initialization data structure
-	CvPreGame::setMapScriptName(m_szMapScriptName);
+
+	//The map script path cannot be trusted since this structure is sent over the network.
+	//Have the app search for the best candidate.
+	FILogFile* logFile = LOGFILEMGR.GetLog("net_message_debug.log", 0);
+
+	char szMapScriptPath[1040] = {0};
+	const bool bResult = gDLL->GetEvaluatedMapScriptPath(m_szMapScriptName.c_str(), szMapScriptPath, 1040);
+
+	CvString strMapScriptPath = szMapScriptPath;
+
+	logFile->DebugMsg("Evaluating Map Path: (%s)\nOriginal Path: %s\nNew Path: %s", (bResult)? "Success": "Failed", m_szMapScriptName.c_str(), strMapScriptPath.c_str());
+
+	CvPreGame::setMapScriptName(strMapScriptPath);
 	CvPreGame::setRandomMapScript(m_bIsRandomMapScript);
 	CvPreGame::setEarthMap(m_bIsEarthMap);
 	CvPreGame::setTransferredMap(false);		// We'll always set this manually

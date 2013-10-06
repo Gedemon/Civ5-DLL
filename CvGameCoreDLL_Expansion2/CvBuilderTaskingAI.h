@@ -79,6 +79,7 @@ public:
 #else
 	bool EvaluateBuilder(CvUnit* pUnit, BuilderDirective* paDirectives, UINT uaDirectives, bool bKeepOnlyBest = false, bool bOnlyEvaluateWorkersPlot = false);
 #endif
+
 	void AddImprovingResourcesDirectives(CvUnit* pUnit, CvPlot* pPlot, int iMoveTurnsAway);
 	void AddImprovingPlotsDirectives(CvUnit* pUnit, CvPlot* pPlot, int iMoveTurnsAway);
 	void AddRouteDirectives(CvUnit* pUnit, CvPlot* pPlot, int iMoveTurnsAway);
@@ -143,6 +144,7 @@ protected:
 	BuildTypes m_eFalloutRemove;
 
 	bool m_bKeepMarshes;
+	bool m_bKeepJungle;
 };
 
 #endif //CIV5_BUILDER_TASKING_AI_H

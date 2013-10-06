@@ -102,6 +102,7 @@ GameMapTypes                               gameMapType();
 GameStartTypes                             gameStartType();
 int                                        gameUpdateTime();                    // setupdata
 HandicapTypes                              handicap(PlayerTypes p);
+HandicapTypes                              lastHumanHandicap(PlayerTypes p);
 bool										 isDLCAllowed(const GUID& kDLCID);
 bool										 isDLCAvailable(PlayerTypes p, const GUID& kDLCID);
 bool										 isEarthMap();
@@ -215,6 +216,7 @@ void                                       setGameType(const CvString& g);
 void                                       setGameStartType(GameStartTypes g);
 void                                       setGameUpdateTime(int updateTime);                 // setupdata
 void                                       setHandicap(PlayerTypes p, HandicapTypes h);
+void																			 setLastHumanHandicap(PlayerTypes p, HandicapTypes h);
 void                                       setInternetGame(bool isInternetGame);
 void                                       setLeaderHead(PlayerTypes p, LeaderHeadTypes l);
 void                                       setLeaderName(PlayerTypes p, const CvString& n);

@@ -16,11 +16,15 @@
  *****                                                                  *****
  *****  See the comment in CvDllVersion.h regarding the DLL GUID value  *****
  *****                                                                  *****
+ *****                                                                  *****
+ *****      This DLL is based on the 1.0.3.128 (beta) source code       *****
+ *****                                                                  *****
  ****************************************************************************
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION "23"
+#define MOD_DLL_VERSION_NUMBER ((uint) 24)
+#define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta), r (released) or blank
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
 
@@ -320,8 +324,9 @@
 #define MOD_BUGFIX_HOVERING_PATHFINDER              gCustomMods.isBUGFIX_HOVERING_PATHFINDER()
 // Fixes a bug in the pathfinder code for embarking
 #define MOD_BUGFIX_EMBARKING_PATHFINDER             gCustomMods.isBUGFIX_EMBARKING_PATHFINDER()
+// TODO - WH - this got moved to CvTargeting, the question is did Firaxis also fix the bug?
 // Fixes the Range-3 targetting bug - code by DaveMcW (http://forums.civfanatics.com/showthread.php?t=479509)
-#define MOD_BUGFIX_RANGE_3_TARGETTING               gCustomMods.isBUGFIX_RANGE_3_TARGETTING()
+// #define MOD_BUGFIX_RANGE_3_TARGETTING               gCustomMods.isBUGFIX_RANGE_3_TARGETTING()
 
 
 //
@@ -352,16 +357,23 @@
 // NOTHING BELOW HERE SHOULD NEED CHANGING
 //
 
-// Serialization wrappers (makes it easier to find save breaking code)
-#if !defined(WWII_CUSTOM_BUILD)
+// Serialization wrappers
 #define MOD_SERIALIZE
-#if defined(MOD_SERIALIZE)
-#define MOD_SERIALIZE_TO(stream, member) stream << member
-#define MOD_SERIALIZE_FROM(stream, member) stream >> member
-#else
-#define MOD_SERIALIZE_TO(stream, member) ((void)0)
-#define MOD_SERIALIZE_FROM(stream, member) ((void)0)
+
+#if defined(WWII_CUSTOM_BUILD)
+#undef MOD_SERIALIZE
 #endif
+
+#if defined(MOD_SERIALIZE)
+#define MOD_SERIALIZE_INIT_READ(stream) uint uDllSaveVersion; stream >> uDllSaveVersion
+#define MOD_SERIALIZE_READ(version, stream, member, def) if (MOD_DLL_VERSION_NUMBER >= uDllSaveVersion) { stream >> member; } else { member = def; }
+#define MOD_SERIALIZE_INIT_WRITE(stream) uint uDllSaveVersion = MOD_DLL_VERSION_NUMBER ; stream << uDllSaveVersion
+#define MOD_SERIALIZE_WRITE(stream, member) CvAssert(uDllSaveVersion == MOD_DLL_VERSION_NUMBER); stream << member
+#else
+#define MOD_SERIALIZE_INIT_READ(stream, member) __noop
+#define MOD_SERIALIZE_READ(stream, member) __noop
+#define MOD_SERIALIZE_INIT_WRITE(stream, member) __noop
+#define MOD_SERIALIZE_WRITE(stream, member) __noop
 #endif
 
 

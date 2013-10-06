@@ -83,9 +83,6 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(SetNumWondersBeatenTo);
 
 	Method(IsCapitalConnectedToCity);
-#if defined(MOD_API_EXTENSIONS)
-	Method(IsPlotConnectedToPlot);
-#endif
 
 	Method(IsTurnActive);
 	Method(IsSimultaneousTurns);
@@ -235,9 +232,6 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetFaithPerTurnFromReligion);
 	Method(HasCreatedPantheon);
 	Method(GetBeliefInPantheon);
-#if defined(MOD_API_RELIGION)
-	Method(GetBeliefsInPantheon);
-#endif
 	Method(HasCreatedReligion);
 	Method(CanCreatePantheon);
 	Method(GetReligionCreatedByPlayer);
@@ -671,11 +665,6 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetBuyPlotCost);
 	Method(GetPlotDanger);
 
-#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
-	Method(GetCityWorkingChange);
-	Method(ChangeCityWorkingChange);
-#endif
-
 	Method(DoBeginDiploWithHuman);
 	Method(DoTradeScreenOpened);
 	Method(DoTradeScreenClosed);
@@ -761,9 +750,6 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetNotificationTurn);
 	Method(GetNotificationDismissed);
 	Method(AddNotification);
-#if defined(MOD_API_LUA_EXTENSIONS)
-	Method(DismissNotification);
-#endif
 
 	Method(GetRecommendedWorkerPlots);
 	Method(GetRecommendedFoundCityPlots);
@@ -827,10 +813,6 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetPolicyEspionageModifier);
 	Method(GetPolicyEspionageCatchSpiesModifier);
 
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	Method(GetPolicyConversionModifier);
-#endif
-
 	Method(GetPlayerBuildingClassYieldChange);
 	Method(GetPlayerBuildingClassHappiness);
 
@@ -846,12 +828,6 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetNumSpies);
 	Method(GetNumUnassignedSpies);
 	Method(GetEspionageSpies);
-#if defined(MOD_API_ESPIONAGE)
-	Method(EspionageCreateSpy);
-	Method(EspionagePromoteSpy);
-	Method(EspionageSetPassive);
-	Method(EspionageSetOutcome);
-#endif
 	Method(HasSpyEstablishedSurveillance);
 	Method(CanSpyStageCoup);
 	Method(GetAvailableSpyRelocationCities);
@@ -1210,19 +1186,6 @@ int CvLuaPlayer::lIsCapitalConnectedToCity(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
-#if defined(MOD_API_EXTENSIONS)
-//------------------------------------------------------------------------------
-int CvLuaPlayer::lIsPlotConnectedToPlot(lua_State* L)
-{
-	CvPlayerAI* pkPlayer = GetInstance(L);
-	CvPlot* pkFromPlot = CvLuaPlot::GetInstance(L, 2);
-	CvPlot* pkToPlot = CvLuaPlot::GetInstance(L, 3);
-
-	const bool bResult = pkPlayer->IsPlotConnectedToPlot(pkFromPlot, pkToPlot);
-	lua_pushboolean(L, bResult);
-	return 1;
-}
-#endif
 //------------------------------------------------------------------------------
 //bool isTurnActive( void );
 int CvLuaPlayer::lIsTurnActive(lua_State* L)
@@ -2151,27 +2114,6 @@ int CvLuaPlayer::lGetBeliefInPantheon(lua_State* L)
 
 	return 1;
 }
-#if defined(MOD_API_RELIGION)
-//------------------------------------------------------------------------------
-int CvLuaPlayer::lGetBeliefsInPantheon(lua_State* L)
-{
-	CvPlayerAI* pkPlayer = GetInstance(L);
-
-	lua_createtable(L, 0, 0);
-	const int t = lua_gettop(L);
-	int idx = 1;
-
-	CvReligionBeliefs beliefs = GC.getGame().GetGameReligions()->GetReligion(RELIGION_PANTHEON, pkPlayer->GetID())->m_Beliefs;
-	for(int iI = 0; iI < beliefs.GetNumBeliefs(); iI++)
-	{
-		const BeliefTypes eBelief = beliefs.GetBelief(iI);
-		lua_pushinteger(L, eBelief);
-		lua_rawseti(L, t, idx++);
-	}
-
-	return 1;
-}
-#endif
 //------------------------------------------------------------------------------
 //bool CanCreatePantheon();
 int CvLuaPlayer::lCanCreatePantheon(lua_State* L)
@@ -5086,21 +5028,6 @@ int CvLuaPlayer::lGetPlotDanger(lua_State* L)
 	lua_pushinteger(L, pkPlayer->GetPlotDanger(*pkPlot));
 	return 1;
 }
-#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
-//------------------------------------------------------------------------------
-//int getCityWorkingChange();
-int CvLuaPlayer::lGetCityWorkingChange(lua_State* L)
-{
-	return BasicLuaMethod(L, &CvPlayerAI::GetCityWorkingChange);
-}
-
-//------------------------------------------------------------------------------
-//void changeCityWorkingChange(int iChange);
-int CvLuaPlayer::lChangeCityWorkingChange(lua_State* L)
-{
-	return BasicLuaMethod(L, &CvPlayerAI::ChangeCityWorkingChange);
-}
-#endif
 //------------------------------------------------------------------------------
 //void DoBeginDiploWithHuman();
 int CvLuaPlayer::lDoBeginDiploWithHuman(lua_State* L)
@@ -5965,24 +5892,6 @@ int CvLuaPlayer::lAddNotification(lua_State* L)
 	return 1;
 }
 
-#if defined(MOD_API_LUA_EXTENSIONS)
-//------------------------------------------------------------------------------
-//void DismissNotification()
-int CvLuaPlayer::lDismissNotification(lua_State* L)
-{
-	CvPlayerAI* pkPlayer = GetInstance(L);
-	CvNotifications* pNotifications = pkPlayer->GetNotifications();
-	if (pNotifications) {
-		int iIndex = lua_tointeger(L, 2);
-		bool bUserInvoked = lua_toboolean(L, 3);
-		
-		pNotifications->Dismiss(iIndex, bUserInvoked);
-	}
-
-	return 0;
-}
-#endif
-
 //------------------------------------------------------------------------------
 //int GetNumNotifications();
 int CvLuaPlayer::lGetNumNotifications(lua_State* L)
@@ -6046,31 +5955,21 @@ int CvLuaPlayer::lGetRecommendedWorkerPlots(lua_State* L)
 
 	CvUnit* pWorkerUnit = NULL;
 
-#if defined(MOD_UNITS_LOCAL_WORKERS)
-	if (MOD_UNITS_LOCAL_WORKERS) {
-		//Get head selected unit (which will be a worker).
-		auto_ptr<ICvUnit1> pSelectedUnit(DLLUI->GetHeadSelectedUnit());
-		pWorkerUnit = GC.UnwrapUnitPointer(pSelectedUnit.get());
-	} else {
-#endif
-		//Get first selected worker.
-		CvEnumerator<ICvUnit1> selectedUnits(GC.GetEngineUserInterface()->GetSelectedUnits());
-		while(selectedUnits.MoveNext())
+	//Get first selected worker.
+	CvEnumerator<ICvUnit1> selectedUnits(GC.GetEngineUserInterface()->GetSelectedUnits());
+	while(selectedUnits.MoveNext())
+	{
+		auto_ptr<ICvUnit1> pUnit(selectedUnits.GetCurrent());
+		if(pUnit.get() != NULL)
 		{
-			auto_ptr<ICvUnit1> pUnit(selectedUnits.GetCurrent());
-			if(pUnit.get() != NULL)
+			CvUnitEntry* pUnitEntry = GC.getUnitInfo(pUnit->GetUnitType());
+			if(pUnitEntry && pUnitEntry->GetWorkRate() > 0)
 			{
-				CvUnitEntry* pUnitEntry = GC.getUnitInfo(pUnit->GetUnitType());
-				if(pUnitEntry && pUnitEntry->GetWorkRate() > 0)
-				{
-					pWorkerUnit = GC.UnwrapUnitPointer(pUnit.get());
-					break;
-				}
+				pWorkerUnit = GC.UnwrapUnitPointer(pUnit.get());
+				break;
 			}
 		}
-#if defined(MOD_UNITS_LOCAL_WORKERS)
 	}
-#endif
 
 	//Early out
 	if(pWorkerUnit == NULL)
@@ -6084,15 +5983,7 @@ int CvLuaPlayer::lGetRecommendedWorkerPlots(lua_State* L)
 	bool bUseDirective[cuiDirectiveSize];
 	CvPlot* pDirectivePlots[cuiDirectiveSize] = {0};
 
-#if defined(MOD_UNITS_LOCAL_WORKERS)
-	if (MOD_UNITS_LOCAL_WORKERS) {
-		pkPlayer->GetBuilderTaskingAI()->EvaluateBuilder(pWorkerUnit, aDirective, cuiDirectiveSize, true, false, pkPlayer->isHuman());
-	} else {
-#endif
-		pkPlayer->GetBuilderTaskingAI()->EvaluateBuilder(pWorkerUnit, aDirective, cuiDirectiveSize, true);
-#if defined(MOD_UNITS_LOCAL_WORKERS)
-	}
-#endif
+	pkPlayer->GetBuilderTaskingAI()->EvaluateBuilder(pWorkerUnit, aDirective, cuiDirectiveSize, true);
 
 	for(uint ui = 0; ui < cuiDirectiveSize; ui++)
 	{
@@ -7043,23 +6934,6 @@ int CvLuaPlayer::lGetPolicyEspionageCatchSpiesModifier(lua_State* L)
 	lua_pushinteger(L, pkPolicyInfo->GetCatchSpiesModifier());
 	return 1;
 }
-
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-//------------------------------------------------------------------------------
-int CvLuaPlayer::lGetPolicyConversionModifier(lua_State* L)
-{
-	const PolicyTypes iIndex = (PolicyTypes)lua_tointeger(L, 2);
-	CvPolicyEntry* pkPolicyInfo = GC.getPolicyInfo(iIndex);
-	CvAssertMsg(pkPolicyInfo, "pkPolicyInfo is null!");
-	if (!pkPolicyInfo)
-	{
-		return 0;
-	}
-
-	lua_pushinteger(L, pkPolicyInfo->GetConversionModifier());
-	return 1;
-}
-#endif
 
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lGetPlayerBuildingClassYieldChange(lua_State* L)
@@ -8137,11 +8011,6 @@ int CvLuaPlayer::lGetEspionageSpies(lua_State* L)
 		case SPY_STATE_DEAD:
 			lua_pushstring(L, "TXT_KEY_SPY_STATE_DEAD");
 			break;
-#if defined(MOD_API_ESPIONAGE)
-		case SPY_STATE_TERMINATED:
-			lua_pushstring(L, "TXT_KEY_SPY_STATE_TERMINATED");
-			break;
-#endif
 		default:
 			CvAssertMsg(false, "pSpy->m_eSpyState not in case statement");
 			break;
@@ -8157,54 +8026,10 @@ int CvLuaPlayer::lGetEspionageSpies(lua_State* L)
 		lua_pushboolean(L, pkPlayerEspionage->HasEstablishedSurveillance(uiSpy));
 		lua_setfield(L, t, "EstablishedSurveillance");
 
-#if defined(MOD_API_ESPIONAGE)
-		lua_pushboolean(L, pSpy->m_bPassive);
-		lua_setfield(L, t, "Passive");
-#endif
 		lua_rawseti(L, -2, index++);
 	}
 	return 1;
 }
-#if defined(MOD_API_ESPIONAGE)
-//------------------------------------------------------------------------------
-int CvLuaPlayer::lEspionageCreateSpy(lua_State* L)
-{
-	CvPlayer* pkPlayer = GetInstance(L);
-	pkPlayer->GetEspionage()->CreateSpy();
-
-	return 1;
-}
-//------------------------------------------------------------------------------
-int CvLuaPlayer::lEspionagePromoteSpy(lua_State* L)
-{
-	CvPlayer* pkPlayer = GetInstance(L);
-	int iSpyIndex = lua_tointeger(L, 2);
-	pkPlayer->GetEspionage()->LevelUpSpy(iSpyIndex);
-
-	return 1;
-}
-//------------------------------------------------------------------------------
-int CvLuaPlayer::lEspionageSetPassive(lua_State* L)
-{
-	CvPlayer* pkPlayer = GetInstance(L);
-	int iSpyIndex = lua_tointeger(L, 2);
-	bool bPassive = lua_toboolean(L, 3);
-	pkPlayer->GetEspionage()->SetPassive(iSpyIndex, bPassive);
-
-	return 1;
-}
-//------------------------------------------------------------------------------
-int CvLuaPlayer::lEspionageSetOutcome(lua_State* L)
-{
-	CvPlayer* pkPlayer = GetInstance(L);
-	int iSpyIndex = lua_tointeger(L, 2);
-	int iSpyResult = lua_tointeger(L, 3);
-	bool bAffectsDiplomacy = lua_toboolean(L, 4);
-	pkPlayer->GetEspionage()->SetOutcome(iSpyIndex, iSpyResult, bAffectsDiplomacy);
-
-	return 1;
-}
-#endif
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lHasSpyEstablishedSurveillance(lua_State* L)
 {

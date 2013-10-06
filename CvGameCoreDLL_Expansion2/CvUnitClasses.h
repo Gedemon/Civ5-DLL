@@ -31,6 +31,8 @@ public:
 	int GetProductionCost() const;
 	int GetFaithCost() const;
 	bool IsRequiresFaithPurchaseEnabled() const;
+	bool IsPurchaseOnly() const;
+	bool CanMoveAfterPurchase() const;
 	int GetHurryCostModifier() const;
 	int GetAdvancedStartCost() const;
 	int GetMinAreaSize() const;
@@ -88,6 +90,7 @@ public:
 	int GetPrereqPillageTech() const;
 	int GetPrereqAndTech() const;
 	int GetObsoleteTech() const;
+	int GetPolicyType() const;
 	int GetGoodyHutUpgradeUnitClass() const;
 	int GetGroupSize() const;			// the initial number of individuals in the unit group
 	int GetGroupDefinitions() const;	// the number of UnitMeshGroups for this unit
@@ -166,6 +169,8 @@ private:
 	int m_iProductionCost;
 	int m_iFaithCost;
 	bool m_bRequiresFaithPurchaseEnabled;
+	bool m_bPurchaseOnly;
+	bool m_bMoveAfterPurchase;
 	int m_iHurryCostModifier;
 	int m_iAdvancedStartCost;
 	int m_iMinAreaSize;
@@ -222,6 +227,7 @@ private:
 	int m_iPrereqPillageTech;
 	int m_iPrereqAndTech;
 	int m_iObsoleteTech;
+	int m_iPolicyType;
 	int m_iGoodyHutUpgradeUnitClass;
 	int m_iGroupSize;
 	int m_iGroupDefinitions;

@@ -98,10 +98,6 @@ CvBuildingEntry::CvBuildingEntry(void):
 	m_iGlobalEspionageModifier(0),
 	m_iExtraSpies(0),
 	m_iSpyRankChange(0),
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	m_iConversionModifier(0),
-	m_iGlobalConversionModifier(0),
-#endif
 	m_iInstantSpyRankChange(0),
 	m_iPreferredDisplayPosition(0),
 	m_iPortraitIndex(-1),
@@ -109,9 +105,6 @@ CvBuildingEntry::CvBuildingEntry(void):
 	m_bWater(false),
 	m_bRiver(false),
 	m_bFreshWater(false),
-#if defined(MOD_API_EXTENSIONS)
-	m_bAddsFreshWater(false),
-#endif
 	m_bMountain(false),
 	m_bHill(false),
 	m_bFlat(false),
@@ -227,9 +220,6 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	m_bWater = kResults.GetBool("Water");
 	m_bRiver = kResults.GetBool("River");
 	m_bFreshWater = kResults.GetBool("FreshWater");
-#if defined(MOD_API_EXTENSIONS)
-	m_bAddsFreshWater = kResults.GetBool("AddsFreshWater");
-#endif
 	m_bMountain = kResults.GetBool("Mountain");
 	m_bHill = kResults.GetBool("Hill");
 	m_bFlat = kResults.GetBool("Flat");
@@ -294,10 +284,6 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	m_iGlobalPlotCultureCostModifier = kResults.GetInt("GlobalPlotCultureCostModifier");
 	m_iPlotBuyCostModifier = kResults.GetInt("PlotBuyCostModifier");
 	m_iGlobalPlotBuyCostModifier = kResults.GetInt("GlobalPlotBuyCostModifier");
-#if defined(MOD_BUILDINGS_CITY_WORKING)
-	m_iCityWorkingChange = kResults.GetInt("CityWorkingChange");
-	m_iGlobalCityWorkingChange = kResults.GetInt("GlobalCityWorkingChange");
-#endif
 	m_iGlobalPopulationChange = kResults.GetInt("GlobalPopulationChange");
 	m_iTechShare = kResults.GetInt("TechShare");
 	m_iFreeTechs = kResults.GetInt("FreeTechs");
@@ -318,10 +304,6 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	m_iGlobalEspionageModifier = kResults.GetInt("GlobalEspionageModifier");
 	m_iExtraSpies = kResults.GetInt("ExtraSpies");
 	m_iSpyRankChange = kResults.GetInt("SpyRankChange");
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	m_iConversionModifier = kResults.GetInt("ConversionModifier");
-	m_iGlobalConversionModifier = kResults.GetInt("GlobalConversionModifier");
-#endif
 	m_iInstantSpyRankChange = kResults.GetInt("InstantSpyRankChange");
 	m_iPreferredDisplayPosition = kResults.GetInt("DisplayPosition");
 	m_iPortraitIndex = kResults.GetInt("PortraitIndex");
@@ -920,20 +902,6 @@ int CvBuildingEntry::GetGlobalPlotBuyCostModifier() const
 	return m_iGlobalPlotBuyCostModifier;
 }
 
-#if defined(MOD_BUILDINGS_CITY_WORKING)
-/// Change in number of rings this city can work
-int CvBuildingEntry::GetCityWorkingChange() const
-{
-	return m_iCityWorkingChange;
-}
-
-/// Change in number of rings any city can work
-int CvBuildingEntry::GetGlobalCityWorkingChange() const
-{
-	return m_iGlobalCityWorkingChange;
-}
-#endif
-
 /// Required Plot count of the CvArea this City belongs to (Usually used for Water Buildings to prevent Harbors in tiny lakes and such)
 int CvBuildingEntry::GetMinAreaSize() const
 {
@@ -1120,20 +1088,6 @@ int CvBuildingEntry::GetInstantSpyRankChange() const
 	return m_iInstantSpyRankChange;
 }
 
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-/// Modifier to chance of conversion against this city
-int CvBuildingEntry::GetConversionModifier() const
-{
-	return m_iConversionModifier;
-}
-
-/// Modifier to chance of conversion against all cities
-int CvBuildingEntry::GetGlobalConversionModifier() const
-{
-	return m_iGlobalConversionModifier;
-}
-#endif
-
 /// wWhat ring the engine will try to display this building
 int CvBuildingEntry::GetPreferredDisplayPosition() const
 {
@@ -1169,14 +1123,6 @@ bool CvBuildingEntry::IsFreshWater() const
 {
 	return m_bFreshWater;
 }
-
-#if defined(MOD_API_EXTENSIONS)
-/// Does this building add FreshWater?
-bool CvBuildingEntry::IsAddsFreshWater() const
-{
-	return m_bAddsFreshWater;
-}
-#endif
 
 /// Must this be built in a city next to Mountain?
 bool CvBuildingEntry::IsMountain() const
@@ -2330,7 +2276,6 @@ void CvCityBuildings::SetNumRealBuildingTimed(BuildingTypes eIndex, int iNewValu
 			pPlayer->GetTreasury()->ChangeBaseBuildingGoldMaintenance(buildingEntry->GetGoldMaintenance() * iChangeNumRealBuilding);
 		}
 
-#if !defined(NO_ACHIEVEMENTS)
 		//Achievement for Temples
 		const char* szBuildingTypeC = buildingEntry->GetType();
 		CvString szBuildingType = szBuildingTypeC;
@@ -2341,7 +2286,6 @@ void CvCityBuildings::SetNumRealBuildingTimed(BuildingTypes eIndex, int iNewValu
 				gDLL->IncrementSteamStatAndUnlock(ESTEAMSTAT_TEMPLES, 1000, ACHIEVEMENT_1000TEMPLES);
 			}
 		}
-#endif
 
 		if(buildingEntry->GetPreferredDisplayPosition() > 0)
 		{
@@ -2447,7 +2391,6 @@ void CvCityBuildings::SetNumRealBuildingTimed(BuildingTypes eIndex, int iNewValu
 								CvPopupInfo kPopup(BUTTONPOPUP_WONDER_COMPLETED_ACTIVE_PLAYER, eIndex);
 								GC.GetEngineUserInterface()->AddPopup(kPopup);
 
-#if !defined(NO_ACHIEVEMENTS)
 								if(GET_PLAYER(GC.getGame().getActivePlayer()).isHuman())
 								{
 									gDLL->UnlockAchievement(ACHIEVEMENT_BUILD_WONDER);
@@ -2456,7 +2399,6 @@ void CvCityBuildings::SetNumRealBuildingTimed(BuildingTypes eIndex, int iNewValu
 									IncrementWonderStats(buildingClassType);
 
 								}
-#endif
 							}
 						}
 
@@ -2494,13 +2436,11 @@ void CvCityBuildings::SetNumRealBuildingTimed(BuildingTypes eIndex, int iNewValu
 								}
 							}
 
-#if !defined(NO_ACHIEVEMENTS)
 							//Achievements!
 							if(pPlayer->GetID() == GC.getGame().getActivePlayer() && strcmp(buildingEntry->GetType(), "BUILDING_GREAT_FIREWALL") == 0)
 							{
 								gDLL->UnlockAchievement(ACHIEVEMENT_XP1_16);
 							}
-#endif
 						}
 					}
 				}
@@ -2845,16 +2785,13 @@ void CvCityBuildings::IncrementWonderStats(BuildingClassTypes eIndex)
 		OutputDebugString("\n");
 	}
 
-#if !defined(NO_ACHIEVEMENTS)
 	bool bCheckForWonders = false;
 	bCheckForWonders = CheckForAllWondersBuilt();
 	if(bCheckForWonders)
 	{
 		gDLL->UnlockAchievement(ACHIEVEMENT_ALL_WONDERS);
 	}
-#endif
 
-#if !defined(NO_ACHIEVEMENTS)
 	//DLC_06
 	bool bCheckForAncientWonders = false;
 	bCheckForAncientWonders = CheckForSevenAncientWondersBuilt();
@@ -2862,7 +2799,7 @@ void CvCityBuildings::IncrementWonderStats(BuildingClassTypes eIndex)
 	{
 		gDLL->UnlockAchievement(ACHIEVEMENT_SPECIAL_ANCIENT_WONDERS);
 	}
-#endif
+
 }
 bool CvCityBuildings::CheckForAllWondersBuilt()
 {

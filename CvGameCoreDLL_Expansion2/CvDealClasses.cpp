@@ -85,6 +85,7 @@ FDataStream& operator>>(FDataStream& loadFrom, CvTradedItem& writeTo)
 {
 	uint uiVersion;
 	loadFrom >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 	loadFrom >> writeTo.m_eItemType;
 	loadFrom >> writeTo.m_iDuration;
 	loadFrom >> writeTo.m_iFinalTurn;
@@ -111,6 +112,7 @@ FDataStream& operator<<(FDataStream& saveTo, const CvTradedItem& readFrom)
 {
 	uint uiVersion = 2;
 	saveTo << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 	saveTo << readFrom.m_eItemType;
 	saveTo << readFrom.m_iDuration;
 	saveTo << readFrom.m_iFinalTurn;
@@ -779,7 +781,6 @@ bool CvDeal::IsPossibleToTradeItem(PlayerTypes ePlayer, PlayerTypes eToPlayer, T
 		//antonjs: todo: verify iChoice is valid as well:
 		//int iChoice = iData2;
 		int iNumVotes = iData3;
-		DBG_UNREFERENCED_LOCAL_VARIABLE(iNumVotes);
 		bool bRepeal = bFlag1;
 
 		if(GC.getGame().GetGameLeagues()->GetNumActiveLeagues() == 0)
@@ -1893,6 +1894,7 @@ FDataStream& operator>>(FDataStream& loadFrom, CvDeal& writeTo)
 	CvTradedItem tempItem;
 
 	loadFrom >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 	loadFrom >> writeTo.m_eFromPlayer;
 	loadFrom >> writeTo.m_eToPlayer;
 	loadFrom >> writeTo.m_iFinalTurn;
@@ -1936,6 +1938,7 @@ FDataStream& operator<<(FDataStream& saveTo, const CvDeal& readFrom)
 	// Current version number
 	uint uiVersion = 3;
 	saveTo << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 	saveTo << readFrom.m_eFromPlayer;
 	saveTo << readFrom.m_eToPlayer;
 	saveTo << readFrom.m_iFinalTurn;
@@ -2228,9 +2231,8 @@ bool CvGameDeals::FinalizeDeal(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, b
 				// Research Agreement
 				else if(it->m_eItemType == TRADE_ITEM_RESEARCH_AGREEMENT)
 				{
-					GET_PLAYER(eAcceptedFromPlayer).GetTreasury()->LogExpenditure(GET_PLAYER(eAcceptedToPlayer).getCivilizationShortDescription(), iCost, 9);
-
 					GET_TEAM(eFromTeam).SetHasResearchAgreement(eToTeam, true);
+					GET_PLAYER(eAcceptedFromPlayer).GetTreasury()->LogExpenditure(GET_PLAYER(eAcceptedToPlayer).getCivilizationShortDescription(), iCost, 9);
 
 					if(!bSentResearchAgreementNotification)
 					{
@@ -2813,8 +2815,8 @@ void CvGameDeals::DoEndTradedItem(CvTradedItem* pItem, PlayerTypes eToPlayer, bo
 			// Beaker boost = ((sum of both players' beakers over term of RA) / 2) / 3) * (median tech percentage rate)
 			CvTeam& kTeam = GET_TEAM(toPlayer.getTeam());
 			int iToPlayerBeakers = toPlayer.GetResearchAgreementCounter(eFromPlayer);
-			int iFromPlayerBeakers = min(fromPlayer.GetResearchAgreementCounter(eToPlayer), iToPlayerBeakers); // Cap other player's contribution by the value of our contribution
-			int iBeakersBonus = (iToPlayerBeakers + iFromPlayerBeakers) / /*6*/GC.getRESEARCH_AGREEMENT_BOOST_DIVISOR();
+			int iFromPlayerBeakers = fromPlayer.GetResearchAgreementCounter(eToPlayer);
+			int iBeakersBonus = min(iToPlayerBeakers, iFromPlayerBeakers) / GC.getRESEARCH_AGREEMENT_BOOST_DIVISOR(); //one (third) of minimum contribution
 			iBeakersBonus = (iBeakersBonus * toPlayer.GetMedianTechPercentage()) / 100;
 
 			TechTypes eCurrentTech = toPlayer.GetPlayerTechs()->GetCurrentResearch();
@@ -3385,6 +3387,7 @@ FDataStream& operator>>(FDataStream& loadFrom, CvGameDeals& writeTo)
 	CvDeal tempItem;
 
 	loadFrom >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 
 	writeTo.m_ProposedDeals.clear();
 	loadFrom >> iEntriesToRead;
@@ -3419,6 +3422,7 @@ FDataStream& operator<<(FDataStream& saveTo, const CvGameDeals& readFrom)
 	uint uiVersion = 1;
 	DealList::const_iterator it;
 	saveTo << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 
 	saveTo << readFrom.m_ProposedDeals.size();
 	for(it = readFrom.m_ProposedDeals.begin(); it != readFrom.m_ProposedDeals.end(); ++it)

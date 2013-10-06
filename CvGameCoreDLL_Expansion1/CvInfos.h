@@ -1414,9 +1414,6 @@ public:
 	int getInfluenceCost() const;
 	int getAdvancedStartRemoveCost() const;
 	int getTurnDamage() const;
-#if defined(MOD_API_PLOT_BASED_DAMAGE)
-	int getExtraTurnDamage() const;
-#endif
 	int getFirstFinderGold() const;
 	int getInBorderHappiness() const;
 	int getOccurrenceFrequency() const;
@@ -1473,9 +1470,6 @@ protected:
 	int m_iInfluenceCost;
 	int m_iAdvancedStartRemoveCost;
 	int m_iTurnDamage;
-#if defined(MOD_API_PLOT_BASED_DAMAGE)
-	int m_iExtraTurnDamage;
-#endif
 	int m_iFirstFinderGold;
 	int m_iInBorderHappiness;
 	int m_iOccurrenceFrequency;
@@ -1574,10 +1568,6 @@ public:
 	int getBuildModifier() const;
 	int getDefenseModifier() const;
 	int getInfluenceCost() const;
-#if defined(MOD_API_PLOT_BASED_DAMAGE)
-	int getTurnDamage() const;
-	int getExtraTurnDamage() const;
-#endif
 
 	bool isWater() const;
 	bool isImpassable() const;
@@ -1607,10 +1597,6 @@ protected:
 	int m_iBuildModifier;
 	int m_iDefenseModifier;
 	int m_iInfluenceCost;
-#if defined(MOD_API_PLOT_BASED_DAMAGE)
-	int m_iTurnDamage;
-	int m_iExtraTurnDamage;
-#endif
 
 	bool m_bWater;
 	bool m_bImpassable;

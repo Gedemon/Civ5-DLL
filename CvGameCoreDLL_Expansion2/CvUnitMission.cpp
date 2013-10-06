@@ -753,7 +753,8 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 					kMissionData.eMissionType == CvTypes::getMISSION_CHANGE_TRADE_UNIT_HOME_CITY() ||
 					kMissionData.eMissionType == CvTypes::getMISSION_SELL_EXOTIC_GOODS() ||
 					kMissionData.eMissionType == CvTypes::getMISSION_GIVE_POLICIES() ||
-					kMissionData.eMissionType == CvTypes::getMISSION_ONE_SHOT_TOURISM())
+					kMissionData.eMissionType == CvTypes::getMISSION_ONE_SHOT_TOURISM() ||
+					kMissionData.eMissionType == CvTypes::getMISSION_CHANGE_ADMIRAL_PORT())
 			{
 				bDone = true;
 			}
@@ -1228,6 +1229,13 @@ bool CvUnitMission::CanStartMission(UnitHandle hUnit, int iMission, int iData1, 
 			return true;
 		}
 	}
+	else if (iMission == CvTypes::getMISSION_CHANGE_ADMIRAL_PORT())
+	{
+		if (hUnit->canChangeAdmiralPort(pPlot))
+		{
+			return true;
+		}
+	}
 
 	return false;
 }
@@ -1661,6 +1669,14 @@ void CvUnitMission::StartMission(UnitHandle hUnit)
 					{
 						bAction = true;
 					}
+				}
+			}
+
+			else if (pkQueueData->eMissionType == CvTypes::getMISSION_CHANGE_ADMIRAL_PORT())
+			{
+				if(hUnit->changeAdmiralPort(pkQueueData->iData1, pkQueueData->iData2))
+				{
+					bAction = true;
 				}
 			}
 		}

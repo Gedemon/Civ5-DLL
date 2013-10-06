@@ -16,6 +16,8 @@ CvUnitEntry::CvUnitEntry(void) :
 	m_iProductionCost(0),
 	m_iFaithCost(0),
 	m_bRequiresFaithPurchaseEnabled(false),
+	m_bPurchaseOnly(false),
+	m_bMoveAfterPurchase(false),
 	m_iHurryCostModifier(0),
 	m_iAdvancedStartCost(0),
 	m_iMinAreaSize(0),
@@ -71,6 +73,7 @@ CvUnitEntry::CvUnitEntry(void) :
 	m_iPrereqPillageTech(NO_TECH),
 	m_iPrereqAndTech(NO_TECH),
 	m_iObsoleteTech(NO_TECH),
+	m_iPolicyType(NO_POLICY),
 	m_iGoodyHutUpgradeUnitClass(NO_UNITCLASS),
 	m_iGroupSize(0),
 	m_iGroupDefinitions(0),
@@ -157,6 +160,8 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	m_iProductionCost = kResults.GetInt("Cost");
 	m_iFaithCost = kResults.GetInt("FaithCost");
 	m_bRequiresFaithPurchaseEnabled = kResults.GetBool("RequiresFaithPurchaseEnabled");
+	m_bPurchaseOnly = kResults.GetBool("PurchaseOnly");
+	m_bMoveAfterPurchase = kResults.GetBool("MoveAfterPurchase");
 	m_iHurryCostModifier = kResults.GetInt("HurryCostModifier");
 	m_iAdvancedStartCost = kResults.GetInt("AdvancedStartCost");
 	m_iMinAreaSize = kResults.GetInt("MinAreaSize");
@@ -268,6 +273,9 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	szTextVal = kResults.GetText("ObsoleteTech");
 	m_iObsoleteTech = GC.getInfoTypeForString(szTextVal, true);
 
+	szTextVal = kResults.GetText("PolicyType");
+	m_iPolicyType = GC.getInfoTypeForString(szTextVal, true);
+
 	szTextVal = kResults.GetText("GoodyHutUpgradeUnitClass");
 	m_iGoodyHutUpgradeUnitClass = GC.getInfoTypeForString(szTextVal, true);
 
@@ -359,7 +367,7 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 			Database::Results* pResults = kUtility.GetResults(strKey);
 			if(pResults == NULL)
 			{
-				pResults = kUtility.PrepareResults(strKey, "select UniqueName, GreatWorkType from Unit_UniqueNames where UnitType = ?");
+				pResults = kUtility.PrepareResults(strKey, "select UniqueName, GreatWorkType from Unit_UniqueNames where UnitType = ? ORDER BY rowid");
 			}
 
 			pResults->Bind(1, szUnitType, -1, false);
@@ -444,6 +452,18 @@ int CvUnitEntry::GetFaithCost() const
 bool CvUnitEntry::IsRequiresFaithPurchaseEnabled() const
 {
 	return m_bRequiresFaithPurchaseEnabled;
+}
+
+/// Do we need to purchase this unit (i.e. can't be built)?
+bool CvUnitEntry::IsPurchaseOnly() const
+{
+	return m_bPurchaseOnly;
+}
+
+/// Do we need to purchase this unit (i.e. can't be built)?
+bool CvUnitEntry::CanMoveAfterPurchase() const
+{
+	return m_bMoveAfterPurchase;
 }
 
 /// Does it cost extra to hurry this init?
@@ -760,6 +780,12 @@ int CvUnitEntry::GetPrereqAndTech() const
 int CvUnitEntry::GetObsoleteTech() const
 {
 	return m_iObsoleteTech;
+}
+
+/// Policy required for this unit
+int CvUnitEntry::GetPolicyType() const
+{
+	return m_iPolicyType;
 }
 
 /// Unitclass that replaces this Unit if the appropriate Goody is received from a Hut

@@ -3611,6 +3611,8 @@ void CvTurnTimerInfo::writeTo(FDataStream& saveTo) const
 	saveTo << m_iCityResource;
 	saveTo << m_iUnitResource;
 	saveTo << m_iFirstTurnMultiplier;
+
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 }
 
 void CvTurnTimerInfo::readFrom(FDataStream& loadFrom)
@@ -3620,6 +3622,8 @@ void CvTurnTimerInfo::readFrom(FDataStream& loadFrom)
 	loadFrom >> m_iCityResource;
 	loadFrom >> m_iUnitResource;
 	loadFrom >> m_iFirstTurnMultiplier;
+
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 }
 
 FDataStream& operator<<(FDataStream& saveTo, const CvTurnTimerInfo& readFrom)
@@ -5821,6 +5825,7 @@ void CvWorldInfo::readFrom(FDataStream& loadFrom)
 {
 	int iVersion;
 	loadFrom >> iVersion;				// Make sure to update versioning if the members change!
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 
 	CvBaseInfo::readFrom(loadFrom);
 
@@ -5880,6 +5885,7 @@ void CvWorldInfo::writeTo(FDataStream& saveTo) const
 {
 	int iVersion = 2;		// Make sure to update the versioning if the members change!
 	saveTo << iVersion;
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 
 	CvBaseInfo::writeTo(saveTo);
 
@@ -5970,6 +5976,8 @@ void CvClimateInfo::readFrom(FDataStream& loadFrom)
 	loadFrom >> m_fDesertTopLatitudeChange;
 	loadFrom >> m_fIceLatitude;
 	loadFrom >> m_fRandIceLatitude;
+
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 }
 
 void CvClimateInfo::writeTo(FDataStream& saveTo) const
@@ -5987,6 +5995,8 @@ void CvClimateInfo::writeTo(FDataStream& saveTo) const
 	saveTo << m_fDesertTopLatitudeChange;
 	saveTo << m_fIceLatitude;
 	saveTo << m_fRandIceLatitude;
+
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 }
 
 FDataStream& operator<<(FDataStream& saveTo, const CvClimateInfo& readFrom)
@@ -6022,12 +6032,16 @@ void CvSeaLevelInfo::readFrom(FDataStream& loadFrom)
 {
 	CvBaseInfo::readFrom(loadFrom);
 	loadFrom >> m_iSeaLevelChange;
+
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 }
 
 void CvSeaLevelInfo::writeTo(FDataStream& saveTo) const
 {
 	CvBaseInfo::writeTo(saveTo);
 	saveTo << m_iSeaLevelChange;
+
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 }
 
 FDataStream& operator<<(FDataStream& saveTo, const CvSeaLevelInfo& readFrom)

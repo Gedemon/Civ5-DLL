@@ -19,8 +19,6 @@
 
 #include "CvLuaScopedInstance.h"
 
-#include "../CustomMods.h"
-
 class CvLuaPlayer : public CvLuaScopedInstance<CvLuaPlayer, CvPlayerAI>
 {
 public:
@@ -80,9 +78,6 @@ protected:
 	static int lSetNumWondersBeatenTo(lua_State* L);
 
 	static int lIsCapitalConnectedToCity(lua_State* L);
-#if defined(MOD_API_EXTENSIONS)
-	static int lIsPlotConnectedToPlot(lua_State* L);
-#endif
 
 	static int lIsTurnActive(lua_State* L);
 	static int lIsSimultaneousTurns(lua_State* L);
@@ -228,9 +223,6 @@ protected:
 	static int lGetFaithPerTurnFromReligion(lua_State* L);
 	static int lHasCreatedPantheon(lua_State* L);
 	static int lGetBeliefInPantheon(lua_State* L);
-#if defined(MOD_API_RELIGION)
-	static int lGetBeliefsInPantheon(lua_State* L);
-#endif
 	static int lCanCreatePantheon(lua_State* L);
 	static int lHasCreatedReligion(lua_State* L);
 	static int lGetReligionCreatedByPlayer(lua_State* L);
@@ -662,11 +654,6 @@ protected:
 	static int lGetBuyPlotCost(lua_State* L);
 	static int lGetPlotDanger(lua_State* L);
 
-#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
-	static int lGetCityWorkingChange(lua_State* L);
-	static int lChangeCityWorkingChange(lua_State* L);
-#endif
-
 	// Diplomacy Stuff
 
 	static int lDoBeginDiploWithHuman(lua_State* L);
@@ -757,9 +744,6 @@ protected:
 	static int lGetNotificationTurn(lua_State* L);
 	static int lGetNotificationDismissed(lua_State* L);
 	static int lAddNotification(lua_State* L);
-#if defined(MOD_API_LUA_EXTENSIONS)
-	static int lDismissNotification(lua_State* L);
-#endif
 
 	static int lGetRecommendedWorkerPlots(lua_State* L);
 	static int lGetRecommendedFoundCityPlots(lua_State* L);
@@ -832,10 +816,6 @@ protected:
 	static int lGetPolicyBuildingClassYieldChange(lua_State* L);
 	static int lGetPolicyEspionageModifier(lua_State* L);
 	static int lGetPolicyEspionageCatchSpiesModifier(lua_State* L);
-	
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	static int lGetPolicyConversionModifier(lua_State* L);
-#endif
 
 	static int lGetPlayerBuildingClassYieldChange(lua_State* L);
 	static int lGetPlayerBuildingClassHappiness(lua_State* L);
@@ -853,12 +833,6 @@ protected:
 	static int lGetNumSpies(lua_State* L);
 	static int lGetNumUnassignedSpies(lua_State* L);
 	static int lGetEspionageSpies(lua_State* L);
-#if defined(MOD_API_ESPIONAGE)
-	static int lEspionageCreateSpy(lua_State* L);
-	static int lEspionagePromoteSpy(lua_State* L);
-	static int lEspionageSetPassive(lua_State* L);
-	static int lEspionageSetOutcome(lua_State* L);
-#endif
 	static int lHasSpyEstablishedSurveillance(lua_State* L);
 	static int lCanSpyStageCoup(lua_State* L);
 	static int lGetAvailableSpyRelocationCities(lua_State* L);

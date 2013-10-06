@@ -52,15 +52,9 @@ public:
 	void updateYield();
 
 	bool canChangeWarPeace(TeamTypes eTeam) const;
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-	bool canDeclareWar(TeamTypes eTeam, PlayerTypes eOriginatingPlayer = NO_PLAYER) const;
-	void declareWar(TeamTypes eTeam, bool bDefensivePact = false, PlayerTypes eOriginatingPlayer = NO_PLAYER);
-	void makePeace(TeamTypes eTeam, bool bBumpUnits = true, bool bSuppressNotification = false, PlayerTypes eOriginatingPlayer = NO_PLAYER);
-#else
 	bool canDeclareWar(TeamTypes eTeam) const;
 	void declareWar(TeamTypes eTeam, bool bDefensivePact = false);
 	void makePeace(TeamTypes eTeam, bool bBumpUnits = true, bool bSuppressNotification = false);
-#endif
 
 	int GetTurnMadePeaceTreatyWithTeam(TeamTypes eTeam) const;
 	void SetTurnMadePeaceTreatyWithTeam(TeamTypes eTeam, int iNewValue);
@@ -196,12 +190,6 @@ public:
 	int getPermanentAllianceTradingCount() const;
 	bool isPermanentAllianceTrading() const;
 	void changePermanentAllianceTradingCount(int iChange);
-
-#if defined(MOD_TECHS_CITY_WORKING)
-	int GetCityWorkingChange() const;
-	bool isCityWorkingChange() const;
-	void changeCityWorkingChange(int iChange);
-#endif
 
 	int getBridgeBuildingCount() const;
 	bool isBridgeBuilding() const;
@@ -394,7 +382,7 @@ public:
 	void setDynamicTurnsSimultMode(bool simultaneousTurns);
 
 	// Wrapper for giving Players on this Team a notification message
-	void AddNotification(NotificationTypes eNotificationType, CvString& strMessage, CvString& strSummary, int iX = -1, int iY = -1, int iGameDataIndex = -1);
+	void AddNotification(NotificationTypes eNotificationType, const char* strMessage, const char* strSummary, int iX = -1, int iY = -1, int iGameDataIndex = -1, int iExtraGameData = -1);
 
 	virtual void Read(FDataStream& kStream);
 	virtual void Write(FDataStream& kStream) const;
@@ -422,9 +410,6 @@ protected:
 	int m_iResearchAgreementTradingAllowedCount;
 	int m_iTradeAgreementTradingAllowedCount;
 	int m_iPermanentAllianceTradingCount;
-#if defined(MOD_TECHS_CITY_WORKING)
-	int m_iCityWorkingChange;
-#endif
 	int m_iBridgeBuildingCount;
 	int m_iWaterWorkCount;
 	int m_iRiverTradeCount;
@@ -530,13 +515,8 @@ protected:
 	void announceTechToPlayers(TechTypes eIndex, bool bPartial = false);
 
 	void DoNowAtWarOrPeace(TeamTypes eTeam, bool bWar);
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-	void DoDeclareWar(PlayerTypes eOriginatingPlayer, TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyPact = false);
-	void DoMakePeace(PlayerTypes eOriginatingPlayer, TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotification = false);
-#else
 	void DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyPact = false);
 	void DoMakePeace(TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotification = false);
-#endif
 };
 
 // helper for accessing static functions

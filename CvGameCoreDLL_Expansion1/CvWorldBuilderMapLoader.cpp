@@ -1736,6 +1736,53 @@ void CvWorldBuilderMapLoader::ClearGoodies()
 	}
 }
 
+WorldSizeTypes CvWorldBuilderMapLoader::GetCurrentWorldSizeType()
+{
+	return GetWorldSizeType(sg_kSave);
+}
+
+WorldSizeTypes CvWorldBuilderMapLoader::GetWorldSizeType(const CvWorldBuilderMap& kMap)
+{
+	WorldSizeTypes eWorldSize = NO_WORLDSIZE;
+	const char* szWorldType = kMap.GetWorldType();
+	if(szWorldType != NULL)
+	{
+		Database::Results kWorldSize;
+		DB.Execute(kWorldSize, "Select ID from Worlds where Type = ? LIMIT 1");
+
+		kWorldSize.Bind(1, szWorldType);
+		if(kWorldSize.Step())
+		{
+			eWorldSize = (WorldSizeTypes)kWorldSize.GetInt(0);
+		}
+	}
+
+	if(eWorldSize == NO_WORLDSIZE)
+	{
+		const int iArea = (int)(kMap.GetWidth() * kMap.GetHeight());
+		int iSmallestAreaDifference = 64000; // Arbitrarily large at start
+
+		Database::Results kWorldSizes;
+		DB.SelectAll(kWorldSizes, "Worlds");
+		while(kWorldSizes.Step())
+		{
+			CvWorldInfo kInfo;
+			kInfo.CacheResult(kWorldSizes);
+
+			int iSizeTypeArea = kInfo.getGridWidth() * kInfo.getGridHeight();
+			int iAreaDifference = abs(iArea - iSizeTypeArea);
+			if(iAreaDifference < iSmallestAreaDifference)
+			{
+				iSmallestAreaDifference = iAreaDifference;
+				eWorldSize = (WorldSizeTypes)kInfo.GetID();
+			}
+		}
+	}
+
+	return eWorldSize;
+}
+
+
 void CvWorldBuilderMapLoader::ResetPlayerSlots()
 {
 	for(uint i = 0; i < MAX_CIV_PLAYERS; ++i)

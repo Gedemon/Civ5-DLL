@@ -15,6 +15,7 @@
 #include "CvMilitaryAI.h"
 #include "CvEnumSerialization.h"
 #include "CvWonderProductionAI.h"
+#include "cvStopWatch.h"
 
 // must be included after all other headers
 #include "LintFree.h"
@@ -263,6 +264,7 @@ void CvCitySpecializationAI::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	kStream >> m_bSpecializationsDirty;
 	kStream >> m_bInterruptWonders;
@@ -278,6 +280,7 @@ void CvCitySpecializationAI::Write(FDataStream& kStream) const
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	kStream << m_bSpecializationsDirty;
 	kStream << m_bInterruptWonders;
@@ -302,6 +305,8 @@ CvCitySpecializationXMLEntries* CvCitySpecializationAI::GetCitySpecializations()
 /// Called every turn to see what Strategies this player should using (or not)
 void CvCitySpecializationAI::DoTurn()
 {
+	AI_PERF_FORMAT("AI-perf.csv", ("CvCitySpecializationAI::DoTurn, Turn %03d, %s", GC.getGame().getElapsedGameTurns(), GetPlayer()->getCivilizationShortDescription()) );
+
 	int iCityLoop = 0;
 
 	// No city specializations for humans!

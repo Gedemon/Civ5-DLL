@@ -47,6 +47,12 @@ void CvCitySiteEvaluator::Init()
 	m_iGrowthIndex = GC.getInfoTypeForString("FLAVOR_GROWTH");
 	m_iExpansionIndex = GC.getInfoTypeForString("FLAVOR_EXPANSION");
 	m_iNavalIndex = GC.getInfoTypeForString("FLAVOR_NAVAL");
+
+	m_iBrazilMultiplier = 1000;	//fertility boost from jungles
+	m_iSpainMultiplier = 55000;	//fertility boost from natural wonders
+	m_iMorrocoMultiplier = 1000; //fertility boost from desert
+	m_iNetherlandsMultiplier = 2000; //fertility boost from marshes and flood plains
+	m_iIncaMultiplier = 500; //fertility boost for hill tiles surrounded my mountains
 }
 
 /// Is it valid for this player to found a city here?
@@ -289,6 +295,10 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 
 	int iCelticForestCount = 0;
 	int iIroquoisForestCount = 0;
+	int iBrazilJungleCount = 0;
+	int iNaturalWonderCount = 0;
+	int iDesertCount = 0;
+	int iWetlandsCount = 0;
 
 	int iTotalFoodValue = 0;
 	int iTotalHappinessValue = 0;
@@ -303,8 +313,27 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 	int iClosestEnemyCity = 999;
 
 	int iCapitalArea = NULL;
+
+	bool bIsInca = false;
+	int iAdjacentMountains = 0;
+
 	if ( pPlayer->getCapitalCity() )
 		iCapitalArea = pPlayer->getCapitalCity()->getArea();
+
+	// Custom code for Inca ideal terrace farm locations
+	ImprovementTypes eIncaImprovement = (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_TERRACE_FARM", true);  
+	if(eIncaImprovement != NO_IMPROVEMENT)
+	{
+		CvImprovementEntry* pkEntry = GC.getImprovementInfo(eIncaImprovement);
+		if(pkEntry != NULL && pkEntry->IsSpecificCivRequired())
+		{
+			CivilizationTypes eCiv = pkEntry->GetRequiredCivilization();
+			if(eCiv == pPlayer->getCivilizationType())
+			{
+				bIsInca = true;
+			}
+		}
+	}
 
 	for (int iDX = -7; iDX <= 7; iDX++)
 	{
@@ -403,7 +432,8 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 							if (pLoopPlot->IsNaturalWonder() && iDistance > 0 && iDistance <= NUM_CITY_RINGS)
 #endif
 							{
-								iPlotValue += iPlotValue * 2 + 10;
+								//iPlotValue += iPlotValue * 2 + 10;
+								iPlotValue += iPlotValue * 2 + 500;
 							}
 
 							// lower value a lot if we already own this tile
@@ -415,18 +445,88 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 							// add this plot into the total
 							rtnValue += iPlotValue;
 
-							if (pLoopPlot->getFeatureType() == FEATURE_FOREST)
+							FeatureTypes ePlotFeature = pLoopPlot->getFeatureType();
+							ImprovementTypes ePlotImprovement = pLoopPlot->getImprovementType();
+							ResourceTypes ePlotResource = pLoopPlot->getResourceType();
+
+							if (ePlotFeature == FEATURE_FOREST)
 							{
 								if (iDistance <= 5)
 								{
 									++iIroquoisForestCount;
 									if (iDistance == 1)
 									{
-										if (pLoopPlot->getImprovementType() == NO_IMPROVEMENT)
+										if (ePlotImprovement == NO_IMPROVEMENT)
 										{
 											++iCelticForestCount;
 										}
 									}
+								}
+							}
+							else if (ePlotFeature == FEATURE_JUNGLE)
+							{
+#if defined(MOD_GLOBAL_CITY_WORKING)
+								if (iDistance <= pPlayer->getBuyPlotDistance())
+#else	
+								if (iDistance <= NUM_CITY_RINGS)
+#endif
+								{
+									++iBrazilJungleCount;
+								}
+							}
+							else if (ePlotFeature == FEATURE_MARSH || ePlotFeature == FEATURE_FLOOD_PLAINS)
+							{
+#if defined(MOD_GLOBAL_CITY_WORKING)
+								if (iDistance <= pPlayer->getBuyPlotDistance())
+#else	
+								if (iDistance <= NUM_CITY_RINGS)
+#endif
+								{
+									++iWetlandsCount;
+								}
+							}
+
+							if (pLoopPlot->IsNaturalWonder())
+							{
+								if (iDistance <= 1)
+								{
+									++iNaturalWonderCount;
+								}
+							}
+
+							if (pLoopPlot->getTerrainType() == TERRAIN_DESERT)
+							{
+#if defined(MOD_GLOBAL_CITY_WORKING)
+								if (iDistance <= pPlayer->getBuyPlotDistance())
+#else	
+								if (iDistance <= NUM_CITY_RINGS)
+#endif
+								{
+									if (ePlotResource == NO_RESOURCE)
+									{
+										++iDesertCount;
+									}
+								}
+							}
+
+							if (bIsInca)
+							{
+								if (pLoopPlot->isHills())
+								{
+#if defined(MOD_GLOBAL_CITY_WORKING)
+								if (iDistance <= pPlayer->getBuyPlotDistance())
+#else	
+								if (iDistance <= NUM_CITY_RINGS)
+#endif
+									{
+										iAdjacentMountains = pLoopPlot->GetNumAdjacentMountains();
+										if (iAdjacentMountains > 0 && iAdjacentMountains < 6)
+										{
+											//give the bonus if it's hills, with additional if bordered by mountains
+											rtnValue += m_iIncaMultiplier + (iAdjacentMountains * m_iIncaMultiplier);
+										}
+									}
+									
 								}
 							}
 						}
@@ -461,6 +561,55 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 	else if (pPlayer->GetPlayerTraits()->IsMoveFriendlyWoodsAsRoad())
 	{
 		rtnValue += iIroquoisForestCount * 10;	
+	}
+	else if (pPlayer->GetPlayerTraits()->GetNaturalWonderYieldModifier() > 0)	//ie: Spain
+	{
+		rtnValue += iNaturalWonderCount * m_iSpainMultiplier;	
+	}
+
+	// Custom code for Brazil
+	ImprovementTypes eBrazilImprovement = (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_BRAZILWOOD_CAMP", true);  
+	if(eBrazilImprovement != NO_IMPROVEMENT)
+	{
+		CvImprovementEntry* pkEntry = GC.getImprovementInfo(eBrazilImprovement);
+		if(pkEntry != NULL && pkEntry->IsSpecificCivRequired())
+		{
+			CivilizationTypes eCiv = pkEntry->GetRequiredCivilization();
+			if(eCiv == pPlayer->getCivilizationType())
+			{
+				rtnValue += iBrazilJungleCount * m_iBrazilMultiplier;
+			}
+		}
+	}
+
+	// Custom code for Morocco
+	ImprovementTypes eMoroccoImprovement = (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_KASBAH", true);  
+	if(eMoroccoImprovement != NO_IMPROVEMENT)
+	{
+		CvImprovementEntry* pkEntry = GC.getImprovementInfo(eMoroccoImprovement);
+		if(pkEntry != NULL && pkEntry->IsSpecificCivRequired())
+		{
+			CivilizationTypes eCiv = pkEntry->GetRequiredCivilization();
+			if(eCiv == pPlayer->getCivilizationType())
+			{
+				rtnValue += iDesertCount * m_iMorrocoMultiplier;
+			}
+		}
+	}
+
+	//Custom code for Netherlands
+	ImprovementTypes ePolderImprovement = (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_POLDER", true);  
+	if(ePolderImprovement != NO_IMPROVEMENT)
+	{
+		CvImprovementEntry* pkEntry = GC.getImprovementInfo(ePolderImprovement);
+		if(pkEntry != NULL && pkEntry->IsSpecificCivRequired())
+		{
+			CivilizationTypes eCiv = pkEntry->GetRequiredCivilization();
+			if(eCiv == pPlayer->getCivilizationType())
+			{
+				rtnValue += iWetlandsCount * m_iNetherlandsMultiplier;
+			}
+		}
 	}
 
 	if (rtnValue < 0) rtnValue = 0;
@@ -969,7 +1118,18 @@ int CvSiteEvaluatorForSettler::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, 
 	// Seems okay for a settler, use base class to determine exact value
 	else
 	{
-		return CvCitySiteEvaluator::PlotFoundValue(pPlot, pPlayer, eYield);
+		// if the civ gets a benefit from settling on a new continent (ie: Indonesia)
+		// double the fertility of that plot
+		int iLuxuryModifier = 0;
+		if (pPlayer->GetPlayerTraits()->WillGetUniqueLuxury(pArea))
+		{
+			iLuxuryModifier = CvCitySiteEvaluator::PlotFoundValue(pPlot, pPlayer, eYield) * 2;
+			return iLuxuryModifier;
+		}
+		else
+		{
+			return CvCitySiteEvaluator::PlotFoundValue(pPlot, pPlayer, eYield);
+		}
 	}
 }
 

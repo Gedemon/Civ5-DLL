@@ -130,11 +130,6 @@ protected:
 	static int lGetPermanentAllianceTradingCount(lua_State* L);
 	static int lIsPermanentAllianceTrading(lua_State* L);
 	static int lChangePermanentAllianceTradingCount(lua_State* L);
-#if defined(MOD_TECHS_CITY_WORKING)
-	static int lGetCityWorkingChange(lua_State* L);
-	static int lIsCityWorkingChange(lua_State* L);
-	static int lChangeCityWorkingChange(lua_State* L);
-#endif
 	static int lGetBridgeBuildingCount(lua_State* L);
 	static int lIsBridgeBuilding(lua_State* L);
 	static int lChangeBridgeBuildingCount(lua_State* L);

@@ -15,6 +15,7 @@
 #define CITY_HOME_PLOT										(0)
 #if defined(MOD_GLOBAL_CITY_WORKING)
 #define MIN_CITY_RADIUS										(2)
+// TODO - WH - Enforce this by updating the database after loading mods
 // MAX_CITY_RADIUS should be the same as MAXIMUM_ACQUIRE_PLOT_DISTANCE in the XML, ie 5
 // If you want to increase this value, you must also add to the arrays aiCityPlotX, aiCityPlotY, aiCityPlotPriority and aaiXYCityPlot in CvGlobals.cpp
 #define AVG_CITY_RADIUS										(3)

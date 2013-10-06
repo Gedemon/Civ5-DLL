@@ -39,9 +39,6 @@ CvTraitEntry::CvTraitEntry() :
 	m_iSeaBarbarianConversionPercent(0),
 	m_iCapitalBuildingModifier(0),
 	m_iPlotBuyCostModifier(0),
-#if defined(MOD_TRAITS_CITY_WORKING)
-	m_iCityWorkingChange(0),
-#endif
 	m_iPlotCultureCostModifier(0),
 	m_iCultureFromKills(0),
 	m_iCityCultureBonus(0),
@@ -90,9 +87,6 @@ CvTraitEntry::CvTraitEntry() :
 	m_bBonusReligiousBelief(false),
 	m_bAbleToAnnexCityStates(false),
 	m_bCrossesMountainsAfterGreatGeneral(false),
-#if defined(MOD_TRAITS_CROSSES_ICE)
-	m_bCrossesIce(false),
-#endif
 	m_bMayaCalendarBonuses(false),
 
 	m_paiExtraYieldThreshold(NULL),
@@ -229,14 +223,6 @@ int CvTraitEntry::GetPlotBuyCostModifier() const
 {
 	return m_iPlotBuyCostModifier;
 }
-
-#if defined(MOD_TRAITS_CITY_WORKING)
-/// Accessor:: greater border expansion
-int CvTraitEntry::GetCityWorkingChange() const
-{
-	return m_iCityWorkingChange;
-}
-#endif
 
 /// Accessor:: increased rate of culture border expansion
 int CvTraitEntry::GetPlotCultureCostModifier() const
@@ -508,14 +494,6 @@ bool CvTraitEntry::IsCrossesMountainsAfterGreatGeneral() const
 	return m_bCrossesMountainsAfterGreatGeneral;
 }
 
-#if defined(MOD_TRAITS_CROSSES_ICE)
-/// Accessor: do combat units have the ability to cross ice?
-bool CvTraitEntry::IsCrossesIce() const
-{
-	return m_bCrossesIce;
-}
-#endif
-
 /// Accessor: is this civ receiving bonuses based on the Maya calendar?
 bool CvTraitEntry::IsMayaCalendarBonuses() const
 {
@@ -715,9 +693,6 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 	m_iSeaBarbarianConversionPercent        = kResults.GetInt("SeaBarbarianConversionPercent");
 	m_iCapitalBuildingModifier				= kResults.GetInt("CapitalBuildingModifier");
 	m_iPlotBuyCostModifier					= kResults.GetInt("PlotBuyCostModifier");
-#if defined(MOD_TRAITS_CITY_WORKING)
-	m_iCityWorkingChange					= kResults.GetInt("CityWorkingChange");
-#endif
 	m_iPlotCultureCostModifier              = kResults.GetInt("PlotCultureCostModifier");
 	m_iCultureFromKills						= kResults.GetInt("CultureFromKills");
 	m_iCityCultureBonus						= kResults.GetInt("CityCultureBonus");
@@ -802,9 +777,6 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 	m_bBonusReligiousBelief = kResults.GetBool("BonusReligiousBelief");
 	m_bAbleToAnnexCityStates = kResults.GetBool("AbleToAnnexCityStates");
 	m_bCrossesMountainsAfterGreatGeneral = kResults.GetBool("CrossesMountainsAfterGreatGeneral");
-#if defined(MOD_TRAITS_CROSSES_ICE)
-	m_bCrossesIce = kResults.GetBool("CrossesIce");
-#endif
 	m_bMayaCalendarBonuses = kResults.GetBool("MayaCalendarBonuses");
 
 	//Arrays
@@ -1105,9 +1077,6 @@ void CvPlayerTraits::InitPlayerTraits()
 			m_iSeaBarbarianConversionPercent += trait->GetSeaBarbarianConversionPercent();
 			m_iCapitalBuildingModifier += trait->GetCapitalBuildingModifier();
 			m_iPlotBuyCostModifier += trait->GetPlotBuyCostModifier();
-#if defined(MOD_TRAITS_CITY_WORKING)
-			m_iCityWorkingChange += trait->GetCityWorkingChange();
-#endif
 			m_iPlotCultureCostModifier += trait->GetPlotCultureCostModifier();
 			m_iCultureFromKills += trait->GetCultureFromKills();
 			m_iCityCultureBonus += trait->GetCityCultureBonus();
@@ -1191,12 +1160,6 @@ void CvPlayerTraits::InitPlayerTraits()
 			{
 				m_bCrossesMountainsAfterGreatGeneral = true;
 			}
-#if defined(MOD_TRAITS_CROSSES_ICE)
-			if(trait->IsCrossesIce())
-			{
-				m_bCrossesIce = true;
-			}
-#endif
 			if(trait->IsMayaCalendarBonuses())
 			{
 				m_bMayaCalendarBonuses = true;
@@ -1320,9 +1283,6 @@ void CvPlayerTraits::Reset()
 	m_iSeaBarbarianConversionPercent = 0;
 	m_iCapitalBuildingModifier = 0;
 	m_iPlotBuyCostModifier = 0;
-#if defined(MOD_TRAITS_CITY_WORKING)
-	m_iCityWorkingChange = 0;
-#endif
 	m_iPlotCultureCostModifier = 0;
 	m_iCultureFromKills = 0;
 	m_iCityCultureBonus = 0;
@@ -1364,9 +1324,6 @@ void CvPlayerTraits::Reset()
 	m_bBonusReligiousBelief = false;
 	m_bAbleToAnnexCityStates = false;
 	m_bCrossesMountainsAfterGreatGeneral = false;
-#if defined(MOD_TRAITS_CROSSES_ICE)
-	m_bCrossesIce = false;
-#endif
 	m_bMayaCalendarBonuses = false;
 
 	m_eCampGuardType = NO_UNIT;
@@ -1684,14 +1641,6 @@ bool CvPlayerTraits::IsAbleToCrossMountains() const
 {
 	return (m_bCrossesMountainsAfterGreatGeneral && m_pPlayer->getGreatGeneralsCreated() > 0);
 }
-
-#if defined(MOD_TRAITS_CROSSES_ICE)
-/// Is this civ currently able to cross ice with combat units?
-bool CvPlayerTraits::IsAbleToCrossIce() const
-{
-	return (m_bCrossesIce);
-}
-#endif
 
 // MAYA TRAIT SPECIAL METHODS
 
@@ -2080,9 +2029,6 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 	{
 		m_iPlotBuyCostModifier = 0;
 	}
-#if defined(MOD_TRAITS_CITY_WORKING)
-    MOD_SERIALIZE_FROM(kStream, m_iCityWorkingChange);
-#endif
 	kStream >> m_iPlotCultureCostModifier;
 	kStream >> m_iCultureFromKills;
 	kStream >> m_iCityCultureBonus;
@@ -2326,9 +2272,6 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 	{
 		m_bCrossesMountainsAfterGreatGeneral = false;
 	}
-#if defined(MOD_TRAITS_CROSSES_ICE)
-	MOD_SERIALIZE_FROM(kStream, m_bCrossesIce);
-#endif
 
 	if(uiVersion >= 35)
 	{
@@ -2570,9 +2513,6 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 	kStream << m_iSeaBarbarianConversionPercent;
 	kStream << m_iCapitalBuildingModifier;
 	kStream << m_iPlotBuyCostModifier;
-#if defined(MOD_TRAITS_CITY_WORKING)
-    MOD_SERIALIZE_TO(kStream, m_iCityWorkingChange);
-#endif
 	kStream << m_iPlotCultureCostModifier;
 	kStream << m_iCultureFromKills;
 	kStream << m_iCityCultureBonus;
@@ -2614,9 +2554,6 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 	kStream << m_bBonusReligiousBelief;
 	kStream << m_bAbleToAnnexCityStates;
 	kStream << m_bCrossesMountainsAfterGreatGeneral;
-#if defined(MOD_TRAITS_CROSSES_ICE)
-	MOD_SERIALIZE_TO(kStream, m_bCrossesIce);
-#endif
 	kStream << m_bMayaCalendarBonuses;
 
 	kStream << m_iBaktunPreviousTurn;
@@ -2711,13 +2648,11 @@ bool CvPlayerTraits::ConvertBarbarianCamp(CvPlot* pPlot)
 		CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_BARB_CAMP_CONVERTS");
 		CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_BARB_CAMP_CONVERTS");
 		m_pPlayer->GetNotifications()->Add(NOTIFICATION_GENERIC, strBuffer, strSummary, pPlot->getX(), pPlot->getY(), -1);
-#if !defined(NO_ACHIEVEMENTS)
 		//Increase Stat
 		if(m_pPlayer->isHuman() &&!GC.getGame().isGameMultiPlayer())
 		{
 			gDLL->IncrementSteamStatAndUnlock(ESTEAMSTAT_BARBSCONVERTED, 10, ACHIEVEMENT_SPECIAL_BARBARIANWARLORD);
 		}
-#endif
 	}
 
 	// Decided not to
@@ -2754,13 +2689,11 @@ bool CvPlayerTraits::ConvertBarbarianNavalUnit(UnitHandle pUnit)
 		pGiftUnit->setupGraphical();
 		pGiftUnit->finishMoves(); // No move first turn
 
-#if !defined(NO_ACHIEVEMENTS)
 		// Validate that the achievement is reached by a live human and active player at the same time
 		if(m_pPlayer->isHuman() && !GC.getGame().isGameMultiPlayer() && m_pPlayer->getLeaderInfo().GetType() && _stricmp(m_pPlayer->getLeaderInfo().GetType(), "LEADER_SULEIMAN") == 0)
 		{
 			gDLL->IncrementSteamStatAndUnlock(ESTEAMSTAT_BARBSNAVALCONVERTED, 10, ACHIEVEMENT_SPECIAL_BARBARYPIRATE);
 		}
-#endif
 
 		if(GC.getLogging() && GC.getAILogging())
 		{

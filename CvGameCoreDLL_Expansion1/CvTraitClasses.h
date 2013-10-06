@@ -72,9 +72,6 @@ public:
 	int GetSeaBarbarianConversionPercent() const;
 	int GetCapitalBuildingModifier() const;
 	int GetPlotBuyCostModifier() const;
-#if defined(MOD_TRAITS_CITY_WORKING)
-	int GetCityWorkingChange() const;
-#endif
 	int GetPlotCultureCostModifier() const;
 	int GetCultureFromKills() const;
 	int GetCityCultureBonus() const;
@@ -122,9 +119,6 @@ public:
 	bool IsBonusReligiousBelief() const;
 	bool IsAbleToAnnexCityStates() const;
 	bool IsCrossesMountainsAfterGreatGeneral() const;
-#if defined(MOD_TRAITS_CROSSES_ICE)
-	bool IsCrossesIce() const;
-#endif
 	bool IsMayaCalendarBonuses() const;
 
 	const char* getShortDescription() const;
@@ -172,9 +166,6 @@ protected:
 	int m_iSeaBarbarianConversionPercent;
 	int m_iCapitalBuildingModifier;
 	int m_iPlotBuyCostModifier;
-#if defined(MOD_TRAITS_CITY_WORKING)
-	int m_iCityWorkingChange;
-#endif
 	int m_iPlotCultureCostModifier;
 	int m_iCultureFromKills;
 	int m_iCityCultureBonus;
@@ -224,9 +215,6 @@ protected:
 	bool m_bBonusReligiousBelief;
 	bool m_bAbleToAnnexCityStates;
 	bool m_bCrossesMountainsAfterGreatGeneral;
-#if defined(MOD_TRAITS_CROSSES_ICE)
-	bool m_bCrossesIce;
-#endif
 	bool m_bMayaCalendarBonuses;
 
 	CvString m_strShortDescription;
@@ -383,12 +371,6 @@ public:
 	{
 		return m_iPlotBuyCostModifier;
 	};
-#if defined(MOD_TRAITS_CITY_WORKING)
-	int GetCityWorkingChange() const
-	{
-		return m_iCityWorkingChange;
-	};
-#endif
 	int GetPlotCultureCostModifier() const
 	{
 		return m_iPlotCultureCostModifier;
@@ -552,12 +534,6 @@ public:
 	{
 		return m_bCrossesMountainsAfterGreatGeneral;
 	};
-#if defined(MOD_TRAITS_CROSSES_ICE)
-	bool IsCrossesIce() const
-	{
-		return m_bCrossesIce;
-	};
-#endif
 	bool IsMayaCalendarBonuses() const
 	{
 		return m_bMayaCalendarBonuses;
@@ -621,9 +597,6 @@ public:
 		return m_eCombatBonusImprovement;
 	};
 	bool IsAbleToCrossMountains() const;
-#if defined(MOD_TRAITS_CROSSES_ICE)
-	bool IsAbleToCrossIce() const;
-#endif
 
 	// Maya calendar routines
 	bool IsUsingMayaCalendar() const;
@@ -667,9 +640,6 @@ private:
 	int m_iSeaBarbarianConversionPercent;
 	int m_iCapitalBuildingModifier;
 	int m_iPlotBuyCostModifier;
-#if defined(MOD_TRAITS_CITY_WORKING)
-	int m_iCityWorkingChange;
-#endif
 	int m_iPlotCultureCostModifier;
 	int m_iCultureFromKills;
 	int m_iCityCultureBonus;
@@ -711,9 +681,6 @@ private:
 	bool m_bBonusReligiousBelief;
 	bool m_bAbleToAnnexCityStates;
 	bool m_bCrossesMountainsAfterGreatGeneral;
-#if defined(MOD_TRAITS_CROSSES_ICE)
-	bool m_bCrossesIce;
-#endif
 	bool m_bMayaCalendarBonuses;
 
 	UnitTypes m_eCampGuardType;

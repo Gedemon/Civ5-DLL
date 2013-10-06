@@ -122,11 +122,7 @@ public:
 	bool IsDoingPartialMove() const;
 
 	ActivityTypes GetActivityType() const;
-#if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
-	void SetActivityType(ActivityTypes eNewValue, bool bClearFortify = true);
-#else
 	void SetActivityType(ActivityTypes eNewValue);
-#endif
 
 	AutomateTypes GetAutomateType() const;
 	bool IsAutomated() const;
@@ -295,11 +291,7 @@ public:
 	int GetNumFollowersAfterSpread() const;
 	ReligionTypes GetMajorityReligionAfterSpread() const;
 	CvCity *GetSpreadReligionTargetCity() const;
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	int GetConversionStrength(const CvCity* pCity) const;
-#else
 	int GetConversionStrength() const;
-#endif
 
 	bool canDiscover(const CvPlot* pPlot, bool bTestVisible = false) const;
 	bool discover();
@@ -345,9 +337,6 @@ public:
 
 	bool isReadyForUpgrade() const;
 	bool CanUpgradeRightNow(bool bOnlyTestVisible) const;
-#if defined(MOD_GLOBAL_CS_UPGRADES)
-	bool CanUpgradeInTerritory(bool bOnlyTestVisible) const;
-#endif
 	UnitTypes GetUpgradeUnitType() const;
 	int upgradePrice(UnitTypes eUnit) const;
 	CvUnit* DoUpgrade();
@@ -360,9 +349,6 @@ public:
 	bool IsGreatPerson() const;
 	UnitTypes getCaptureUnitType(CivilizationTypes eCivilization) const;
 	UnitCombatTypes getUnitCombatType() const;
-#if defined(MOD_GLOBAL_PROMOTION_CLASSES)
-	UnitCombatTypes getUnitPromotionType() const;
-#endif
 	DomainTypes getDomainType() const;
 
 	int flavorValue(FlavorTypes eFlavor) const;
@@ -374,9 +360,7 @@ public:
 	bool IsBarbarianUnitThreateningMinor(PlayerTypes eMinor);
 
 	int visibilityRange() const;
-#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
-	int reconRange() const;
-#endif
+
 	int baseMoves(DomainTypes eIntoDomain = NO_DOMAIN) const;
 	int maxMoves() const;
 	int movesLeft() const;
@@ -442,11 +426,9 @@ public:
 
 	int GetAirStrikeDefenseDamage(const CvUnit* pAttacker, bool bIncludeRand = true) const;
 
-	CvUnit* GetBestInterceptor(const CvPlot& pPlot, CvUnit* pkDefender = NULL) const;
+	CvUnit* GetBestInterceptor(const CvPlot& pPlot, CvUnit* pkDefender = NULL, bool bLandInterceptorsOnly=false, bool bVisibleInterceptorsOnly=false) const;
+	int GetInterceptorCount(const CvPlot& pPlot, CvUnit* pkDefender = NULL, bool bLandInterceptorsOnly=false, bool bVisibleInterceptorsOnly=false) const;
 	int GetInterceptionDamage(const CvUnit* pAttacker, bool bIncludeRand = true) const;
-#if defined(MOD_GLOBAL_PARATROOPS_AA_DAMAGE)
-	int GetParadropInterceptionDamage(const CvUnit* pAttacker, bool bIncludeRand = true) const;
-#endif
 
 	int GetCombatLimit() const;
 	int GetRangedCombatLimit() const;
@@ -472,42 +454,6 @@ public:
 	bool ignoreTerrainCost() const;
 	int getIgnoreTerrainCostCount() const;
 	void changeIgnoreTerrainCostCount(int iValue);
-
-#if defined(MOD_API_PLOT_BASED_DAMAGE)
-	bool ignoreTerrainDamage() const;
-	int getIgnoreTerrainDamageCount() const;
-	void changeIgnoreTerrainDamageCount(int iValue);
-
-	bool ignoreFeatureDamage() const;
-	int getIgnoreFeatureDamageCount() const;
-	void changeIgnoreFeatureDamageCount(int iValue);
-
-	bool extraTerrainDamage() const;
-	int getExtraTerrainDamageCount() const;
-	void changeExtraTerrainDamageCount(int iValue);
-
-	bool extraFeatureDamage() const;
-	int getExtraFeatureDamageCount() const;
-	void changeExtraFeatureDamageCount(int iValue);
-#endif
-
-#if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
-	bool canCrossMountains() const;
-	int getCanCrossMountainsCount() const;
-	void changeCanCrossMountainsCount(int iValue);
-#endif
-
-#if defined(MOD_PROMOTIONS_CROSS_OCEANS)
-	bool canCrossOceans() const;
-	int getCanCrossOceansCount() const;
-	void changeCanCrossOceansCount(int iValue);
-#endif
-
-#if defined(MOD_PROMOTIONS_CROSS_ICE)
-	bool canCrossIce() const;
-	int getCanCrossIceCount() const;
-	void changeCanCrossIceCount(int iValue);
-#endif
 
 	bool IsRoughTerrainEndsTurn() const;
 	int GetRoughTerrainEndsTurnCount() const;
@@ -750,11 +696,6 @@ public:
 
 	int getExtraVisibilityRange() const;
 	void changeExtraVisibilityRange(int iChange);
-
-#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
-	int getExtraReconRange() const;
-	void changeExtraReconRange(int iChange);
-#endif
 
 	int getExtraMoves() const;
 	void changeExtraMoves(int iChange);
@@ -1020,16 +961,6 @@ public:
 	bool isFeatureDoubleMove(FeatureTypes eIndex) const;
 	void changeFeatureDoubleMoveCount(FeatureTypes eIndex, int iChange);
 
-#if defined(MOD_PROMOTIONS_HALF_MOVE)
-	int getTerrainHalfMoveCount(TerrainTypes eIndex) const;
-	bool isTerrainHalfMove(TerrainTypes eIndex) const;
-	void changeTerrainHalfMoveCount(TerrainTypes eIndex, int iChange);
-
-	int getFeatureHalfMoveCount(FeatureTypes eIndex) const;
-	bool isFeatureHalfMove(FeatureTypes eIndex) const;
-	void changeFeatureHalfMoveCount(FeatureTypes eIndex, int iChange);
-#endif
-
 	int getImpassableCount() const;
 
 	int getTerrainImpassableCount(TerrainTypes eIndex) const;
@@ -1186,12 +1117,6 @@ public:
 	void ChangeEmbarkAllWaterCount(int iValue);
 	int GetEmbarkAllWaterCount() const;
 
-#if defined(MOD_PROMOTIONS_DEEP_WATER_EMBARKATION)
-	bool IsEmbarkDeepWater() const;
-	void ChangeEmbarkDeepWaterCount(int iValue);
-	int GetEmbarkDeepWaterCount() const;
-#endif
-
 	void ChangeEmbarkExtraVisibility(int iValue);
 	int GetEmbarkExtraVisibility() const;
 
@@ -1295,9 +1220,6 @@ protected:
 	FAutoVariable<int, CvUnit> m_iHillsDoubleMoveCount;
 	FAutoVariable<int, CvUnit> m_iImmuneToFirstStrikesCount;
 	FAutoVariable<int, CvUnit> m_iExtraVisibilityRange;
-#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
-	FAutoVariable<int, CvUnit> m_iExtraReconRange;
-#endif
 	FAutoVariable<int, CvUnit> m_iExtraMoves;
 	FAutoVariable<int, CvUnit> m_iExtraMoveDiscount;
 	FAutoVariable<int, CvUnit> m_iExtraRange;
@@ -1351,21 +1273,6 @@ protected:
 	FAutoVariable<int, CvUnit> m_iArmyId;
 
 	FAutoVariable<int, CvUnit> m_iIgnoreTerrainCostCount;
-#if defined(MOD_API_PLOT_BASED_DAMAGE)
-	FAutoVariable<int, CvUnit> m_iIgnoreTerrainDamageCount;
-	FAutoVariable<int, CvUnit> m_iIgnoreFeatureDamageCount;
-	FAutoVariable<int, CvUnit> m_iExtraTerrainDamageCount;
-	FAutoVariable<int, CvUnit> m_iExtraFeatureDamageCount;
-#endif
-#if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
-	FAutoVariable<int, CvUnit> m_iCanCrossMountainsCount;
-#endif
-#if defined(MOD_PROMOTIONS_CROSS_OCEANS)
-	FAutoVariable<int, CvUnit> m_iCanCrossOceansCount;
-#endif
-#if defined(MOD_PROMOTIONS_CROSS_ICE)
-	FAutoVariable<int, CvUnit> m_iCanCrossIceCount;
-#endif
 	FAutoVariable<int, CvUnit> m_iRoughTerrainEndsTurnCount;
 	FAutoVariable<int, CvUnit> m_iEmbarkAbilityCount;
 	FAutoVariable<int, CvUnit> m_iHoveringUnitCount;
@@ -1439,10 +1346,6 @@ protected:
 
 	FAutoVariable<std::vector<int>, CvUnit> m_terrainDoubleMoveCount;
 	FAutoVariable<std::vector<int>, CvUnit> m_featureDoubleMoveCount;
-#if defined(MOD_PROMOTIONS_HALF_MOVE)
-	FAutoVariable<std::vector<int>, CvUnit> m_terrainHalfMoveCount;
-	FAutoVariable<std::vector<int>, CvUnit> m_featureHalfMoveCount;
-#endif
 	FAutoVariable<std::vector<int>, CvUnit> m_terrainImpassableCount;
 	FAutoVariable<std::vector<int>, CvUnit> m_featureImpassableCount;
 	FAutoVariable<std::vector<int>, CvUnit> m_extraTerrainAttackPercent;
@@ -1467,9 +1370,6 @@ protected:
 
 	bool m_bIgnoreDangerWakeup; // slewis - make this an autovariable when saved games are broken
 	int m_iEmbarkedAllWaterCount;
-#if defined(MOD_PROMOTIONS_DEEP_WATER_EMBARKATION)
-	int m_iEmbarkedDeepWaterCount;
-#endif
 	int m_iEmbarkExtraVisibility;
 	int m_iEmbarkDefensiveModifier;
 	int m_iCapitalDefenseModifier;

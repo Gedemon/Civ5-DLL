@@ -126,11 +126,6 @@ void CvLuaTeam::PushMethods(lua_State* L, int t)
 	Method(GetPermanentAllianceTradingCount);
 	Method(IsPermanentAllianceTrading);
 	Method(ChangePermanentAllianceTradingCount);
-#if defined(MOD_TECHS_CITY_WORKING)
-	Method(GetCityWorkingChange);
-	Method(IsCityWorkingChange);
-	Method(ChangeCityWorkingChange);
-#endif
 	Method(GetBridgeBuildingCount);
 	Method(IsBridgeBuilding);
 	Method(ChangeBridgeBuildingCount);
@@ -810,29 +805,6 @@ int CvLuaTeam::lChangePermanentAllianceTradingCount(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvTeam::changePermanentAllianceTradingCount);
 }
-
-#if defined(MOD_TECHS_CITY_WORKING)
-//------------------------------------------------------------------------------
-//int getCityWorkingChange();
-int CvLuaTeam::lGetCityWorkingChange(lua_State* L)
-{
-	return BasicLuaMethod(L, &CvTeam::GetCityWorkingChange);
-}
-
-//------------------------------------------------------------------------------
-//bool isCityWorkingChange();
-int CvLuaTeam::lIsCityWorkingChange(lua_State* L)
-{
-	return BasicLuaMethod(L, &CvTeam::isCityWorkingChange);
-}
-
-//------------------------------------------------------------------------------
-//void changeCityWorkingChange(int iChange);
-int CvLuaTeam::lChangeCityWorkingChange(lua_State* L)
-{
-	return BasicLuaMethod(L, &CvTeam::changeCityWorkingChange);
-}
-#endif
 
 //------------------------------------------------------------------------------
 //int getBridgeBuildingCount();

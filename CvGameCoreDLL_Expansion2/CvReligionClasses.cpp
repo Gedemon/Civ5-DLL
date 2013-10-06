@@ -131,6 +131,7 @@ FDataStream& operator>>(FDataStream& loadFrom, CvReligion& writeTo)
 {
 	uint uiVersion;
 	loadFrom >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 
 	loadFrom >> writeTo.m_eReligion;
 	loadFrom >> writeTo.m_eFounder;
@@ -172,6 +173,7 @@ FDataStream& operator<<(FDataStream& saveTo, const CvReligion& readFrom)
 {
 	uint uiVersion = 4;
 	saveTo << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 
 	saveTo << readFrom.m_eReligion;
 	saveTo << readFrom.m_eFounder;
@@ -231,6 +233,7 @@ FDataStream& operator>>(FDataStream& loadFrom, CvReligionInCity& writeTo)
 {
 	uint uiVersion;
 	loadFrom >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 
 	loadFrom >> writeTo.m_eReligion;
 	loadFrom >> writeTo.m_bFoundedHere;
@@ -254,6 +257,7 @@ FDataStream& operator<<(FDataStream& saveTo, const CvReligionInCity& readFrom)
 {
 	uint uiVersion = 2;
 	saveTo << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 
 	saveTo << readFrom.m_eReligion;
 	saveTo << readFrom.m_bFoundedHere;
@@ -377,6 +381,7 @@ void CvGameReligions::SpreadReligionToOneCity(CvCity* pCity)
 /// Religious activities at the start of a player's turn
 void CvGameReligions::DoPlayerTurn(CvPlayer& kPlayer)
 {
+	AI_PERF_FORMAT("AI-perf.csv", ("CvGameReligions::DoPlayerTurn, Turn %03d, %s", GC.getGame().getElapsedGameTurns(), kPlayer.getCivilizationShortDescription()) );
 	bool bCouldAtStartAffordFaithPurchase = kPlayer.GetReligions()->CanAffordFaithPurchase();
 	const PlayerTypes ePlayer = kPlayer.GetID();
 
@@ -388,7 +393,7 @@ void CvGameReligions::DoPlayerTurn(CvPlayer& kPlayer)
 
 	// If just now can afford missionary, add a notification
 	bool bCanNowAffordFaithPurchase = kPlayer.GetReligions()->CanAffordFaithPurchase();
-	if (kPlayer.isLocalPlayer() && kPlayer.GetFaithPurchaseType() == NO_AUTOMATIC_FAITH_PURCHASE && !bCouldAtStartAffordFaithPurchase && bCanNowAffordFaithPurchase)
+	if (kPlayer.GetFaithPurchaseType() == NO_AUTOMATIC_FAITH_PURCHASE && !bCouldAtStartAffordFaithPurchase && bCanNowAffordFaithPurchase)
 	{
 		CvNotifications* pNotifications = kPlayer.GetNotifications();
 		if(pNotifications)
@@ -408,22 +413,17 @@ void CvGameReligions::DoPlayerTurn(CvPlayer& kPlayer)
 			if(kPlayer.isHuman())
 			{
 				//If the player is human then a net message will be received which will pick the pantheon.
-				//If the player is local, notify the engine to popup the UI to pick a pantheon.
-				if(kPlayer.isLocalPlayer())
+				CvNotifications* pNotifications = kPlayer.GetNotifications();
+				if(pNotifications)
 				{
-					CvNotifications* pNotifications = kPlayer.GetNotifications();
-					if(pNotifications)
-					{
-						CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_ENOUGH_FAITH_FOR_PANTHEON");
+					CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_ENOUGH_FAITH_FOR_PANTHEON");
 
-						CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_ENOUGH_FAITH_FOR_PANTHEON");
-						pNotifications->Add(NOTIFICATION_FOUND_PANTHEON, strBuffer, strSummary, -1, -1, -1);
-					}
+					CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_ENOUGH_FAITH_FOR_PANTHEON");
+					pNotifications->Add(NOTIFICATION_FOUND_PANTHEON, strBuffer, strSummary, -1, -1, -1);
 				}
 			}
 			else
 			{
-				const PlayerTypes ePlayer = kPlayer.GetID();
 #if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
 				const BeliefTypes eBelief = kPlayer.GetReligionAI()->ChoosePantheonBelief(ePlayer);
 #else
@@ -625,8 +625,6 @@ CvGameReligions::FOUNDING_RESULT CvGameReligions::CanCreatePantheon(PlayerTypes 
 				CvLuaArgsHandle args;
 				args->Push(ePlayer);
 
-				// Attempt to execute the game events.
-				// Will return false if there are no registered listeners.
 				bool bResult = false;
 				if (LuaSupport::CallTestAll(pkScriptSystem, "PlayerCanFoundPantheon", args.get(), bResult)) {
 					if (bResult == false) {
@@ -852,38 +850,44 @@ void CvGameReligions::FoundPantheon(PlayerTypes ePlayer, BeliefTypes eBelief)
 	// Send out messaging
 	CvReligionEntry* pEntry = GC.getReligionInfo(newReligion.m_eReligion);
 	CvBeliefEntry* pBelief = GC.getBeliefInfo(eBelief);
-	CvNotifications* pNotifications = GET_PLAYER(kGame.getActivePlayer()).GetNotifications();
-	if(pNotifications && pEntry && pBelief)
+	if(pEntry && pBelief)
 	{
+		//Add replay message.
 		Localization::String strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_PANTHEON_FOUNDED_S");
 		Localization::String replayText = Localization::Lookup("TXT_KEY_NOTIFICATION_PANTHEON_FOUNDED");
 		replayText << kPlayer.getCivilizationShortDescriptionKey() << pBelief->getShortDescription() << pBelief->GetDescriptionKey();
 
 		kGame.addReplayMessage(REPLAY_MESSAGE_PANTHEON_FOUNDED, newReligion.m_eFounder, replayText.toUTF8());
 
-		// Message slightly different for active player
-		if(newReligion.m_eFounder == GC.getGame().getActivePlayer())
-		{
-			Localization::String localizedText = GetLocalizedText("TXT_KEY_NOTIFICATION_PANTHEON_FOUNDED_ACTIVE_PLAYER");
-			localizedText << pBelief->getShortDescription() << pBelief->GetDescriptionKey();
+		for(int iNotifyLoop = 0; iNotifyLoop < MAX_MAJOR_CIVS; ++iNotifyLoop){
+			PlayerTypes eNotifyPlayer = (PlayerTypes) iNotifyLoop;
+			CvPlayerAI& kCurNotifyPlayer = GET_PLAYER(eNotifyPlayer);
+			CvNotifications* pNotifications = kCurNotifyPlayer.GetNotifications();
+			if(pNotifications){
+				// Message slightly different for founder player
+				if(newReligion.m_eFounder == eNotifyPlayer)
+				{
+					Localization::String localizedText = GetLocalizedText("TXT_KEY_NOTIFICATION_PANTHEON_FOUNDED_ACTIVE_PLAYER");
+					localizedText << pBelief->getShortDescription() << pBelief->GetDescriptionKey();
 
-			pNotifications->Add(NOTIFICATION_PANTHEON_FOUNDED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
-		}
-		else
-		{
-			//If the active player has not met this civ yet, display a more ambiguous notification.
-			CvPlayerAI& kActivePlayer = GET_PLAYER(GC.getGame().getActivePlayer());
-			CvTeam& kTeam = GET_TEAM(kActivePlayer.getTeam());
-			if(kTeam.isHasMet(kPlayer.getTeam()))
-			{
-				pNotifications->Add(NOTIFICATION_PANTHEON_FOUNDED, replayText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
-			}
-			else
-			{
-				Localization::String unknownFoundedText = Localization::Lookup("TXT_KEY_NOTIFICATION_PANTHEON_FOUNDED_UNKNOWN");
-				unknownFoundedText << pBelief->getShortDescription() << pBelief->GetDescriptionKey();
+					pNotifications->Add(NOTIFICATION_PANTHEON_FOUNDED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+				}
+				else
+				{
+					//If the notify player has not met this civ yet, display a more ambiguous notification.
+					CvTeam& kTeam = GET_TEAM(kCurNotifyPlayer.getTeam());
+					if(kTeam.isHasMet(kPlayer.getTeam()))
+					{
+						pNotifications->Add(NOTIFICATION_PANTHEON_FOUNDED, replayText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+					}
+					else
+					{
+						Localization::String unknownFoundedText = Localization::Lookup("TXT_KEY_NOTIFICATION_PANTHEON_FOUNDED_UNKNOWN");
+						unknownFoundedText << pBelief->getShortDescription() << pBelief->GetDescriptionKey();
 
-				pNotifications->Add(NOTIFICATION_PANTHEON_FOUNDED, unknownFoundedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+						pNotifications->Add(NOTIFICATION_PANTHEON_FOUNDED, unknownFoundedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+					}
+				}
 			}
 		}
 
@@ -984,40 +988,46 @@ void CvGameReligions::FoundReligion(PlayerTypes ePlayer, ReligionTypes eReligion
 
 	// Send out messaging
 	CvReligionEntry* pEntry = GC.getReligionInfo(kReligion.m_eReligion);
-	CvNotifications* pNotifications = GET_PLAYER(GC.getGame().getActivePlayer()).GetNotifications();
-	if(pNotifications && pEntry)
+	if(pEntry)
 	{
+		//Add replay message
 		CvString szReligionName = kReligion.GetName();
-
 		Localization::String strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_FOUNDED_S");
 		Localization::String replayText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_FOUNDED");
 		replayText << kPlayer.getCivilizationShortDescriptionKey() << szReligionName << pkHolyCity->getNameKey();
 
 		GC.getGame().addReplayMessage(REPLAY_MESSAGE_RELIGION_FOUNDED, kReligion.m_eFounder, replayText.toUTF8(), kReligion.m_iHolyCityX, kReligion.m_iHolyCityY);
 
-		// Message slightly different for active player
-		if(kReligion.m_eFounder == GC.getGame().getActivePlayer())
-		{
-			Localization::String localizedText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_FOUNDED_ACTIVE_PLAYER");
-			localizedText << szReligionName << pkHolyCity->getNameKey();
+		//Notify the masses
+		for(int iNotifyLoop = 0; iNotifyLoop < MAX_MAJOR_CIVS; ++iNotifyLoop){
+			PlayerTypes eNotifyPlayer = (PlayerTypes) iNotifyLoop;
+			CvPlayerAI& kNotifyPlayer = GET_PLAYER(eNotifyPlayer);
+			CvNotifications* pNotifications = kNotifyPlayer.GetNotifications();
+			if(pNotifications){
+				// Message slightly different for founder player
+				if(kReligion.m_eFounder == eNotifyPlayer)
+				{
+					Localization::String localizedText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_FOUNDED_ACTIVE_PLAYER");
+					localizedText << szReligionName << pkHolyCity->getNameKey();
 
-			pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
-		}
-		else
-		{
-			CvPlayerAI& kActivePlayer = GET_PLAYER(GC.getGame().getActivePlayer());
-			CvTeam& kActiveTeam = GET_TEAM(kActivePlayer.getTeam());
+					pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+				}
+				else
+				{
+					CvTeam& kNotifyTeam = GET_TEAM(kNotifyPlayer.getTeam());
 
-			if(kActiveTeam.isHasMet(kPlayer.getTeam()))
-			{
-				pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, replayText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
-			}
-			else
-			{
-				Localization::String unknownCivText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_FOUNDED_UNKNOWN");
-				unknownCivText << szReligionName;
+					if(kNotifyTeam.isHasMet(kPlayer.getTeam()))
+					{
+						pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, replayText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+					}
+					else
+					{
+						Localization::String unknownCivText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_FOUNDED_UNKNOWN");
+						unknownCivText << szReligionName;
 
-				pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, unknownCivText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+						pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, unknownCivText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+					}
+				}
 			}
 		}
 
@@ -1173,10 +1183,12 @@ void CvGameReligions::EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligi
 	}
 #endif
 
-	// Send out messaging
-	CvNotifications* pNotifications = GET_PLAYER(GC.getGame().getActivePlayer()).GetNotifications();
-	if(pNotifications)
-	{
+	//Notify the masses
+	for(int iNotifyLoop = 0; iNotifyLoop < MAX_MAJOR_CIVS; ++iNotifyLoop){
+		PlayerTypes eNotifyPlayer = (PlayerTypes) iNotifyLoop;
+		CvPlayerAI& kNotifyPlayer = GET_PLAYER(eNotifyPlayer);
+		CvNotifications* pNotifications = kNotifyPlayer.GetNotifications();
+		if(pNotifications){
 #if defined(MOD_API_RELIGION)
 		Localization::String strSummary;
 		Localization::String notificationText;
@@ -1196,7 +1208,7 @@ void CvGameReligions::EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligi
 #endif
 
 		// Message slightly different for active player
-		if(ePlayer == GC.getGame().getActivePlayer())
+			if(ePlayer == eNotifyPlayer)
 		{
 #if defined(MOD_API_RELIGION)
 			Localization::String localizedText;
@@ -1215,9 +1227,8 @@ void CvGameReligions::EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligi
 		}
 		else
 		{
-			CvPlayerAI& kActivePlayer = GET_PLAYER(GC.getGame().getActivePlayer());
-			CvTeam& kActiveTeam = GET_TEAM(kActivePlayer.getTeam());
-			if(kActiveTeam.isHasMet(kPlayer.getTeam()))
+				CvTeam& kNotifyTeam = GET_TEAM(kNotifyPlayer.getTeam());
+				if(kNotifyTeam.isHasMet(kPlayer.getTeam()))
 			{
 				pNotifications->Add(NOTIFICATION_RELIGION_ENHANCED, notificationText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
 			}
@@ -1238,7 +1249,7 @@ void CvGameReligions::EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligi
 
 				pNotifications->Add(NOTIFICATION_RELIGION_ENHANCED, unknownText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
 			}
-
+			}
 		}
 
 		// Logging
@@ -1307,35 +1318,37 @@ void CvGameReligions::AddReformationBelief(PlayerTypes ePlayer, ReligionTypes eR
 	kPlayer.UpdateReligion();
 
 	// Send out messaging
-	CvNotifications* pNotifications = GET_PLAYER(GC.getGame().getActivePlayer()).GetNotifications();
-	if(pNotifications)
-	{
-		Localization::String strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_REFORMATION_BELIEF_ADDED_S");
-		Localization::String notificationText = Localization::Lookup("TXT_KEY_NOTIFICATION_REFORMATION_BELIEF_ADDED");
-		notificationText << kPlayer.getCivilizationShortDescriptionKey() << it->GetName();
+	for(int iNotifyLoop = 0; iNotifyLoop < MAX_MAJOR_CIVS; ++iNotifyLoop){
+		PlayerTypes eNotifyPlayer = (PlayerTypes) iNotifyLoop;
+		CvPlayerAI& kNotifyPlayer = GET_PLAYER(eNotifyPlayer);
+		CvNotifications* pNotifications = kNotifyPlayer.GetNotifications();
+		if(pNotifications){
+			Localization::String strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_REFORMATION_BELIEF_ADDED_S");
+			Localization::String notificationText = Localization::Lookup("TXT_KEY_NOTIFICATION_REFORMATION_BELIEF_ADDED");
+			notificationText << kPlayer.getCivilizationShortDescriptionKey() << it->GetName();
 
-		// Message slightly different for active player
-		if(ePlayer == GC.getGame().getActivePlayer())
-		{
-			Localization::String localizedText = Localization::Lookup("TXT_KEY_NOTIFICATION_REFORMATION_BELIEF_ADDED_ACTIVE_PLAYER");
-			localizedText << it->GetName();
-
-			pNotifications->Add(NOTIFICATION_REFORMATION_BELIEF_ADDED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
-		}
-		else
-		{
-			CvPlayerAI& kActivePlayer = GET_PLAYER(GC.getGame().getActivePlayer());
-			CvTeam& kActiveTeam = GET_TEAM(kActivePlayer.getTeam());
-			if(kActiveTeam.isHasMet(kPlayer.getTeam()))
+			// Message slightly different for reformation player
+			if(ePlayer == eNotifyPlayer)
 			{
-				pNotifications->Add(NOTIFICATION_REFORMATION_BELIEF_ADDED, notificationText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+				Localization::String localizedText = Localization::Lookup("TXT_KEY_NOTIFICATION_REFORMATION_BELIEF_ADDED_ACTIVE_PLAYER");
+				localizedText << it->GetName();
+
+				pNotifications->Add(NOTIFICATION_REFORMATION_BELIEF_ADDED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
 			}
 			else
 			{
-				Localization::String unknownText = Localization::Lookup("TXT_KEY_NOTIFICATION_REFORMATION_BELIEF_ADDED_UNKNOWN");
-				unknownText << it->GetName();
+				CvTeam& kNotifyTeam = GET_TEAM(kNotifyPlayer.getTeam());
+				if(kNotifyTeam.isHasMet(kPlayer.getTeam()))
+				{
+					pNotifications->Add(NOTIFICATION_REFORMATION_BELIEF_ADDED, notificationText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+				}
+				else
+				{
+					Localization::String unknownText = Localization::Lookup("TXT_KEY_NOTIFICATION_REFORMATION_BELIEF_ADDED_UNKNOWN");
+					unknownText << it->GetName();
 
-				pNotifications->Add(NOTIFICATION_REFORMATION_BELIEF_ADDED, unknownText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+					pNotifications->Add(NOTIFICATION_REFORMATION_BELIEF_ADDED, unknownText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+				}
 			}
 		}
 
@@ -1477,12 +1490,16 @@ int CvGameReligions::GetNumPantheonsCreated() const
 {
 	int iRtnValue = 0;
 
-	ReligionList::const_iterator it;
-	for(it = m_CurrentReligions.begin(); it != m_CurrentReligions.end(); it++)
+	for(int iI = 0; iI < MAX_MAJOR_CIVS; iI++)
 	{
-		if(it->m_bPantheon)
+		ReligionList::const_iterator it;
+		for(it = m_CurrentReligions.begin(); it != m_CurrentReligions.end(); it++)
 		{
-			iRtnValue++;
+			if (it->m_eFounder == iI)
+			{
+				iRtnValue++;
+				break;
+			}
 		}
 	}
 
@@ -1866,8 +1883,6 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableFollowerBeliefs()
 						args->Push(eReligion);
 						args->Push(eBelief);
 
-						// Attempt to execute the game events.
-						// Will return false if there are no registered listeners.
 						bool bResult = false;
 						if (LuaSupport::CallTestAll(pkScriptSystem, "ReligionCanHaveBelief", args.get(), bResult)) {
 							// Check the result.
@@ -1923,8 +1938,6 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableEnhancerBeliefs()
 						args->Push(eReligion);
 						args->Push(eBelief);
 
-						// Attempt to execute the game events.
-						// Will return false if there are no registered listeners.
 						bool bResult = false;
 						if (LuaSupport::CallTestAll(pkScriptSystem, "ReligionCanHaveBelief", args.get(), bResult)) {
 							// Check the result.
@@ -1980,8 +1993,6 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableBonusBeliefs()
 						args->Push(eReligion);
 						args->Push(eBelief);
 
-						// Attempt to execute the game events.
-						// Will return false if there are no registered listeners.
 						bool bResult = false;
 						if (LuaSupport::CallTestAll(pkScriptSystem, "ReligionCanHaveBelief", args.get(), bResult)) {
 							// Check the result.
@@ -2037,8 +2048,6 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableReformationBeliefs()
 						args->Push(eReligion);
 						args->Push(eBelief);
 
-						// Attempt to execute the game events.
-						// Will return false if there are no registered listeners.
 						bool bResult = false;
 						if (LuaSupport::CallTestAll(pkScriptSystem, "ReligionCanHaveBelief", args.get(), bResult)) {
 							// Check the result.
@@ -2511,6 +2520,7 @@ FDataStream& operator>>(FDataStream& loadFrom, CvGameReligions& writeTo)
 	int iMinFaith;
 
 	loadFrom >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 
 	if(uiVersion >= 3)
 	{
@@ -2550,6 +2560,7 @@ FDataStream& operator<<(FDataStream& saveTo, const CvGameReligions& readFrom)
 {
 	uint uiVersion = 4;
 	saveTo << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 
 	saveTo << readFrom.GetMinimumFaithNextPantheon();
 
@@ -2607,6 +2618,7 @@ void CvPlayerReligions::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 	kStream >> m_iNumProphetsSpawned;
 	kStream >> m_bFoundingReligion;
 }
@@ -2617,6 +2629,7 @@ void CvPlayerReligions::Write(FDataStream& kStream)
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 	kStream << m_iNumProphetsSpawned;
 	kStream << m_bFoundingReligion;
 }
@@ -4121,51 +4134,53 @@ void CvCityReligions::CityConvertsReligion(ReligionTypes eMajority, ReligionType
 			}
 		}
 
-		// Notification if active player's city was converted to a religion you didn't found
-		PlayerTypes eActivePlayer = GC.getGame().getActivePlayer();
-		CvPlayerAI& kActivePlayer = GET_PLAYER(eActivePlayer);
-		const ReligionTypes eActivePlayerReligion = kActivePlayer.GetReligions()->GetReligionCreatedByPlayer();
+		// Notification if the player's city was converted to a religion they didn't found
+		PlayerTypes eOwnerPlayer = m_pCity->getOwner();
+		CvPlayerAI& kOwnerPlayer = GET_PLAYER(eOwnerPlayer);
+		const ReligionTypes eOwnerPlayerReligion = kOwnerPlayer.GetReligions()->GetReligionCreatedByPlayer();
 
-		if(eActivePlayer == m_pCity->getOwner() && eActivePlayer != eResponsibleParty && eMajority != eOldMajority && pNewReligion->m_eFounder != eActivePlayer
-			&& eActivePlayerReligion > RELIGION_PANTHEON)
+		if(eOwnerPlayer != eResponsibleParty && eMajority != eOldMajority && pNewReligion->m_eFounder != eOwnerPlayer
+			&& eOwnerPlayerReligion > RELIGION_PANTHEON)
 		{
-			if(kActivePlayer.GetNotifications())
+			if(kOwnerPlayer.GetNotifications())
 			{
 				Localization::String strMessage;
 				Localization::String strSummary;
 				strMessage = GetLocalizedText("TXT_KEY_NOTIFICATION_RELIGION_SPREAD_ACTIVE_PLAYER", m_pCity->getName());
 				strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_SPREAD_ACTIVE_PLAYER_S");
-				kActivePlayer.GetNotifications()->Add(NOTIFICATION_RELIGION_SPREAD, strMessage.toUTF8(), strSummary.toUTF8(), m_pCity->getX(), m_pCity->getY(), -1);
+				kOwnerPlayer.GetNotifications()->Add(NOTIFICATION_RELIGION_SPREAD, strMessage.toUTF8(), strSummary.toUTF8(), m_pCity->getX(), m_pCity->getY(), -1);
 			}
 
 #if !defined(NO_ACHIEVEMENTS)
 			//Achievements!
-			const CvReligion* pkReligion = GC.getGame().GetGameReligions()->GetReligion(eActivePlayerReligion, eActivePlayer);
-			if(pkReligion != NULL)
-			{
-				if(m_pCity->getX() == pkReligion->m_iHolyCityX && m_pCity->getY() == pkReligion->m_iHolyCityY)
+			if(eOwnerPlayer == GC.getGame().getActivePlayer()){
+				const CvReligion* pkReligion = GC.getGame().GetGameReligions()->GetReligion(eOwnerPlayerReligion, eOwnerPlayer);
+				if(pkReligion != NULL)
 				{
-					gDLL->UnlockAchievement(ACHIEVEMENT_XP1_20);
+					if(m_pCity->getX() == pkReligion->m_iHolyCityX && m_pCity->getY() == pkReligion->m_iHolyCityY)
+					{
+						gDLL->UnlockAchievement(ACHIEVEMENT_XP1_20);
+					}
 				}
 			}
 #endif
 		}
 
-		else if(eActivePlayer == m_pCity->getOwner() && eActivePlayer != eResponsibleParty && eMajority != eOldMajority && eOldMajority == NO_RELIGION)
+		else if(eOwnerPlayer != eResponsibleParty && eMajority != eOldMajority && eOldMajority == NO_RELIGION)
 		{
-			if(kActivePlayer.GetNotifications())
+			if(kOwnerPlayer.GetNotifications())
 			{
 				Localization::String strMessage;
 				Localization::String strSummary;
 				strMessage = GetLocalizedText("TXT_KEY_NOTIFICATION_RELIGION_SPREAD_INITIAL_CONVERSION", m_pCity->getName());
 				strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_SPREAD_INITIAL_CONVERSION_S");
-				kActivePlayer.GetNotifications()->Add(NOTIFICATION_RELIGION_SPREAD_NATURAL, strMessage.toUTF8(), strSummary.toUTF8(), m_pCity->getX(), m_pCity->getY(), -1);
+				kOwnerPlayer.GetNotifications()->Add(NOTIFICATION_RELIGION_SPREAD_NATURAL, strMessage.toUTF8(), strSummary.toUTF8(), m_pCity->getX(), m_pCity->getY(), -1);
 			}
 		}
 
 #if !defined(NO_ACHIEVEMENTS)
 		//More Achievements
-		if(m_pCity->getOwner() != eActivePlayer && pNewReligion->m_eFounder == eActivePlayer)
+		if(m_pCity->getOwner() != GC.getGame().getActivePlayer() && pNewReligion->m_eFounder == GC.getGame().getActivePlayer())
 		{
 			if(m_pCity->GetCityReligions()->IsHolyCityAnyReligion() && !m_pCity->GetCityReligions()->IsHolyCityForReligion(pNewReligion->m_eReligion))
 			{
@@ -4173,7 +4188,7 @@ void CvCityReligions::CityConvertsReligion(ReligionTypes eMajority, ReligionType
 			}
 		}
 
-		if(m_pCity->isCapital() && pNewReligion->m_eFounder == eActivePlayer)
+		if(m_pCity->isCapital() && pNewReligion->m_eFounder == GC.getGame().getActivePlayer())
 		{
 			//Determine if this is a standard size or larger map.
 			bool bIsStandardOrLarger = false;
@@ -4386,6 +4401,7 @@ FDataStream& operator>>(FDataStream& loadFrom, CvCityReligions& writeTo)
 	uint uiVersion;
 
 	loadFrom >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 
 	if(uiVersion >= 2)
 	{
@@ -4429,6 +4445,7 @@ FDataStream& operator<<(FDataStream& saveTo, const CvCityReligions& readFrom)
 	uint uiVersion = 3;
 
 	saveTo << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 
 	saveTo << readFrom.HasPaidAdoptionBonus();
 
@@ -4469,6 +4486,7 @@ FDataStream& operator>>(FDataStream& loadFrom, CvUnitReligion& writeTo)
 	uint uiVersion;
 
 	loadFrom >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(loadFrom);
 
 	int temp;
 	loadFrom >> temp;
@@ -4495,6 +4513,7 @@ FDataStream& operator<<(FDataStream& saveTo, const CvUnitReligion& readFrom)
 	uint uiVersion = 2;
 
 	saveTo << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 
 	saveTo << readFrom.GetReligion();
 	saveTo << readFrom.GetReligiousStrength();
@@ -4545,6 +4564,7 @@ void CvReligionAI::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 }
 
 /// Serialization write
@@ -4553,6 +4573,7 @@ void CvReligionAI::Write(FDataStream& kStream)
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 }
 
 /// Called every turn to see what to spend Faith on

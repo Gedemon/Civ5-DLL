@@ -21,6 +21,7 @@
 
 /// Constructor
 CvBuildingEntry::CvBuildingEntry(void):
+
 	m_iBuildingClassType(NO_BUILDINGCLASS),
 	m_pkBuildingClassInfo(NULL),
 	m_iNearbyTerrainRequired(NO_VICTORY),
@@ -112,6 +113,7 @@ CvBuildingEntry::CvBuildingEntry(void):
 	m_iTradeRouteSeaGoldBonus(0),
 	m_iTradeRouteLandDistanceModifier(0),
 	m_iTradeRouteLandGoldBonus(0),
+	m_iCityStateTradeRouteProductionModifier(0),
 #if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 	m_iConversionModifier(0),
 	m_iGlobalConversionModifier(0),
@@ -361,6 +363,7 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	m_iTradeRouteSeaGoldBonus = kResults.GetInt("TradeRouteSeaGoldBonus");
 	m_iTradeRouteLandDistanceModifier = kResults.GetInt("TradeRouteLandDistanceModifier");
 	m_iTradeRouteLandGoldBonus = kResults.GetInt("TradeRouteLandGoldBonus");
+	m_iCityStateTradeRouteProductionModifier = kResults.GetInt("CityStateTradeRouteProductionModifier");
 #if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 	m_iConversionModifier = kResults.GetInt("ConversionModifier");
 	m_iGlobalConversionModifier = kResults.GetInt("GlobalConversionModifier");
@@ -1292,6 +1295,11 @@ int CvBuildingEntry::GetTradeRouteLandGoldBonus() const
 	return m_iTradeRouteLandGoldBonus;
 }
 
+int CvBuildingEntry::GetCityStateTradeRouteProductionModifier() const
+{
+	return m_iCityStateTradeRouteProductionModifier;
+}
+
 int CvBuildingEntry::GetGreatScientistBeakerModifier() const
 {
 	return m_iGreatScientistBeakerModifier;
@@ -2192,6 +2200,7 @@ void CvCityBuildings::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	kStream >> m_iNumBuildings;
 	kStream >> m_iBuildingProductionModifier;
@@ -2222,6 +2231,7 @@ void CvCityBuildings::Write(FDataStream& kStream)
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	kStream << m_iNumBuildings;
 	kStream << m_iBuildingProductionModifier;
@@ -2808,13 +2818,18 @@ void CvCityBuildings::SetNumFreeBuilding(BuildingTypes eIndex, int iNewValue)
 		if (iOldNumBuilding > 0 && iNewValue > 0)
 		{
 			DoSellBuilding(eIndex);
+			m_paiNumFreeBuilding[eIndex] = iNewValue;
+			m_pCity->processBuilding(eIndex, iNewValue, true);			
 		}
-
-		m_paiNumFreeBuilding[eIndex] = iNewValue;
-
-		if(iOldNumBuilding != GetNumBuilding(eIndex))
+		
+		else
 		{
-			m_pCity->processBuilding(eIndex, iNewValue - iOldNumBuilding, true);
+			m_paiNumFreeBuilding[eIndex] = iNewValue;
+
+			if (iOldNumBuilding != GetNumBuilding(eIndex))
+			{
+				m_pCity->processBuilding(eIndex, iNewValue - iOldNumBuilding, true);
+			}
 		}
 	}
 }
@@ -3260,6 +3275,41 @@ int CvCityBuildings::GetNumBuildingsFromFaith() const
 	return iRtnValue;
 }
 
+/// Accessor: What is the production modifier for each city state trade route?
+int CvCityBuildings::GetCityStateTradeRouteProductionModifier() const
+{
+	int iRtnValue = 0;
+
+	for(int iI = 0; iI < GC.getNumBuildingClassInfos(); iI++)
+	{
+		BuildingClassTypes eLoopBuildingClass = (BuildingClassTypes) iI;
+		CvCivilizationInfo *pkCivInfo = GC.getCivilizationInfo(m_pCity->getCivilizationType());
+		if (pkCivInfo)
+		{
+			BuildingTypes eBuilding = (BuildingTypes)pkCivInfo->getCivilizationBuildings(eLoopBuildingClass);
+			if (NO_BUILDING != eBuilding)
+			{
+				if (GetNumBuilding(eBuilding) > 0)
+				{
+					CvBuildingEntry *pkEntry = GC.getBuildingInfo(eBuilding);
+					if (pkEntry)
+					{
+						int iProductionModifier = pkEntry->GetCityStateTradeRouteProductionModifier();
+						int iCityStates = GET_PLAYER(m_pCity->getOwner()).GetTrade()->GetNumberOfCityStateTradeRoutes();
+						if (iProductionModifier > 0  && iCityStates > 0)
+						{
+							iRtnValue = iProductionModifier * iCityStates;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return iRtnValue;
+}
+
+
 /// Accessor: Get current production modifier from buildings
 int CvCityBuildings::GetBuildingProductionModifier() const
 {
@@ -3507,6 +3557,7 @@ void CvCityBuildings::IncrementWonderStats(BuildingClassTypes eIndex)
 		gDLL->UnlockAchievement(ACHIEVEMENT_SPECIAL_ANCIENT_WONDERS);
 	}
 #endif
+
 }
 bool CvCityBuildings::CheckForAllWondersBuilt()
 {

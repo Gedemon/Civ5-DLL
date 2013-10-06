@@ -182,6 +182,8 @@ FDataStream& operator>>(FDataStream& loadFrom, CvNotifications::Notification& wr
 	writeTo.m_bNeedsBroadcast = true; // all loads should re-broadcast their events
 	// loadFrom >> writeTo.m_bBroadcast;
 
+	MOD_SERIALIZE_INIT_READ(loadFrom);
+
 	return loadFrom;
 }
 
@@ -201,6 +203,8 @@ FDataStream& operator<<(FDataStream& saveTo, const CvNotifications::Notification
 	saveTo << readFrom.m_ePlayerID;
 	// this is not saved because we want to re-broadcast on load
 	// saveTo << writeTo.m_bBroadcast;
+
+	MOD_SERIALIZE_INIT_WRITE(saveTo);
 
 	return saveTo;
 }
@@ -263,6 +267,7 @@ void CvNotifications::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	kStream >> m_ePlayer;
 	kStream >> m_iCurrentLookupIndex;
@@ -288,6 +293,7 @@ void CvNotifications::Write(FDataStream& kStream) const
 	// Current version number
 	uint uiVersion = 2;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	// need to serialize notification list
 	kStream << m_ePlayer;
@@ -1666,12 +1672,6 @@ bool CvNotifications::IsNotificationExpired(int iIndex)
 
 		// if the city is a puppet
 		if(pCity->IsPuppet())
-		{
-			return true;
-		}
-
-		// if the city doesn't belong to the active player
-		if(pCity->getOwner() != GC.getGame().getActivePlayer())
 		{
 			return true;
 		}

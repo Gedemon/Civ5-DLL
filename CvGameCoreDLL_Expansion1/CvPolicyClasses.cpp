@@ -73,9 +73,6 @@ CvPolicyEntry::CvPolicyEntry(void):
 	m_iUnhappinessFromUnitsMod(0),
 	m_iNumExtraBuilders(0),
 	m_iPlotGoldCostMod(0),
-#if defined(MOD_POLICIES_CITY_WORKING)
-	m_iCityWorkingChange(0),
-#endif
 	m_iPlotCultureCostModifier(0),
 	m_iPlotCultureExponentModifier(0),
 	m_iNumCitiesPolicyCostDiscount(0),
@@ -87,9 +84,6 @@ CvPolicyEntry::CvPolicyEntry(void):
 	m_iCulturalPlunderMultiplier(0),
 	m_iStealTechSlowerModifier(0),
 	m_iCatchSpiesModifier(0),
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	m_iConversionModifier(0),
-#endif
 	m_iGoldPerUnit(0),
 	m_iGoldPerMilitaryUnit(0),
 	m_iCityStrengthMod(0),
@@ -252,9 +246,6 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	m_iUnhappinessFromUnitsMod = kResults.GetInt("UnhappinessFromUnitsMod");
 	m_iNumExtraBuilders = kResults.GetInt("NumExtraBuilders");
 	m_iPlotGoldCostMod = kResults.GetInt("PlotGoldCostMod");
-#if defined(MOD_POLICIES_CITY_WORKING)
-	m_iCityWorkingChange = kResults.GetInt("CityWorkingChange");
-#endif
 	m_iPlotCultureCostModifier = kResults.GetInt("PlotCultureCostModifier");
 	m_iPlotCultureExponentModifier = kResults.GetInt("PlotCultureExponentModifier");
 	m_iNumCitiesPolicyCostDiscount = kResults.GetInt("NumCitiesPolicyCostDiscount");
@@ -266,9 +257,6 @@ bool CvPolicyEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	m_iCulturalPlunderMultiplier = kResults.GetInt("CulturalPlunderMultiplier");
 	m_iStealTechSlowerModifier = kResults.GetInt("StealTechSlowerModifier");
 	m_iCatchSpiesModifier = kResults.GetInt("CatchSpiesModifier");
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	m_iConversionModifier = kResults.GetInt("ConversionModifier");
-#endif
 	m_iGoldPerUnit = kResults.GetInt("GoldPerUnit");
 	m_iGoldPerMilitaryUnit = kResults.GetInt("GoldPerMilitaryUnit");
 	m_iCityStrengthMod = kResults.GetInt("CityStrengthMod");
@@ -840,14 +828,6 @@ int CvPolicyEntry::GetPlotGoldCostMod() const
 	return m_iPlotGoldCostMod;
 }
 
-#if defined(MOD_POLICIES_CITY_WORKING)
-/// How many more rings can we work
-int CvPolicyEntry::GetCityWorkingChange() const
-{
-	return m_iCityWorkingChange;
-}
-#endif
-
 /// How much Culture is needed for a City to acquire a new Plot?
 int CvPolicyEntry::GetPlotCultureCostModifier() const
 {
@@ -913,14 +893,6 @@ int CvPolicyEntry::GetCatchSpiesModifier() const
 {
 	return m_iCatchSpiesModifier;
 }
-
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-/// How much unfriendly religion spread is slowed?
-int CvPolicyEntry::GetConversionModifier() const
-{
-	return m_iConversionModifier;
-}
-#endif
 
 /// Upkeep cost
 int CvPolicyEntry::GetGoldPerUnit() const
@@ -2203,11 +2175,6 @@ int CvPlayerPolicies::GetNumericModifier(PolicyModifierType eType)
 			case POLICYMOD_CATCH_SPIES_MODIFIER:
 				rtnValue += m_pPolicies->GetPolicyEntry(i)->GetCatchSpiesModifier();
 				break;
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-			case POLICYMOD_CONVERSION_MODIFIER:
-				rtnValue += m_pPolicies->GetPolicyEntry(i)->GetConversionModifier();
-				break;
-#endif
 			}
 		}
 	}
@@ -3006,7 +2973,6 @@ void CvPlayerPolicies::SetPolicyBranchFinished(PolicyBranchTypes eBranchType, bo
 		m_pabPolicyBranchFinished[eBranchType] = bValue;
 
 
-#if !defined(NO_ACHIEVEMENTS)
 		bool bUsingXP1Scenario3 = gDLL->IsModActivated(CIV5_XP1_SCENARIO3_MODID);
 
 		//Achievements for fulfilling branches
@@ -3054,7 +3020,7 @@ void CvPlayerPolicies::SetPolicyBranchFinished(PolicyBranchTypes eBranchType, bo
 				gDLL->UnlockAchievement(ACHIEVEMENT_ALL_SOCIAL_POLICIES);
 			}
 		}
-#endif
+
 	}
 }
 

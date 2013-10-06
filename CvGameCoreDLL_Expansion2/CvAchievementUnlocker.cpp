@@ -399,7 +399,7 @@ void CvPlayerAchievements::FinishedBuilding(CvCity* pkCity, BuildingTypes eBuild
 		m_eHarborType = (BuildingTypes)GC.getInfoTypeForString("BUILDING_HARBOR", true);
 	}
 
-	if(m_eCollossusType != NO_BUILDING && m_ePetraType != NO_BUILDING && m_eCaravansaryType != NO_BUILDING && m_eHarborType != NO_BUILDING)
+	if(m_kPlayer.isLocalPlayer() && m_kPlayer.isHuman() && m_eCollossusType != NO_BUILDING && m_ePetraType != NO_BUILDING && m_eCaravansaryType != NO_BUILDING && m_eHarborType != NO_BUILDING)
 	{
 		CvCityBuildings* pkBuildings = pkCity->GetCityBuildings();
 		if(pkBuildings != NULL)
@@ -420,6 +420,7 @@ void CvPlayerAchievements::Read(FDataStream& kStream)
 {
 	int iVersion = 0;
 	kStream >> iVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 	kStream >> m_iAchievement_XP1_32_Progress;
 	kStream >> m_iAchievement_XP1_33_Progress;
 }
@@ -428,6 +429,7 @@ void CvPlayerAchievements::Write(FDataStream& kStream) const
 {
 	int iVersion = 1;
 	kStream << iVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 	kStream << m_iAchievement_XP1_32_Progress;
 	kStream << m_iAchievement_XP1_33_Progress;
 }

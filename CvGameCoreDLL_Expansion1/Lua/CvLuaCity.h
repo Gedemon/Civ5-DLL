@@ -12,8 +12,6 @@
 
 #include "CvLuaScopedInstance.h"
 
-#include "../CustomMods.h"
-
 class CvLuaCity : public CvLuaScopedInstance<CvLuaCity, CvCity>
 {
 public:
@@ -163,9 +161,6 @@ protected:
 	static int lIsCapital(lua_State* L);
 	static int lIsOriginalCapital(lua_State* L);
 	static int lIsCoastal(lua_State* L);
-#if defined(MOD_API_EXTENSIONS)
-	static int lIsAddsFreshWater(lua_State* L);
-#endif
 
 	static int lFoodConsumption(lua_State* L);
 	static int lFoodDifference(lua_State* L);
@@ -274,11 +269,6 @@ protected:
 	static int lChangeWonderProductionModifier(lua_State* L);
 
 	static int lGetLocalResourceWonderProductionMod(lua_State* L);
-
-#if defined(MOD_BUILDINGS_CITY_WORKING)
-	static int lGetCityWorkingChange(lua_State* L);
-	static int lChangeCityWorkingChange(lua_State* L);
-#endif
 
 	static int lChangeHealRate(lua_State* L);
 
@@ -440,6 +430,7 @@ protected:
 	static int lHasPerformedRangedStrikeThisTurn(lua_State* L);
 	static int lRangeCombatUnitDefense(lua_State* L);
 	static int lRangeCombatDamage(lua_State* L);
+	static int lGetAirStrikeDefenseDamage(lua_State* L);
 
 	static int lIsWorkingPlot(lua_State* L);
 	static int lAlterWorkingPlot(lua_State* L);
@@ -448,9 +439,6 @@ protected:
 	static int lGetNumRealBuilding(lua_State* L);
 	static int lSetNumRealBuilding(lua_State* L);
 	static int lGetNumFreeBuilding(lua_State* L);
-#if defined(MOD_API_LUA_EXTENSIONS)
-	static int lSetNumFreeBuilding(lua_State* L);
-#endif
 	static int lIsBuildingSellable(lua_State* L);
 	static int lGetSellBuildingRefund(lua_State* L);
 	static int lGetTotalBaseBuildingMaintenance(lua_State* L);
@@ -466,11 +454,6 @@ protected:
 
 	static int lGetBuildingEspionageModifier(lua_State* L);
 	static int lGetBuildingGlobalEspionageModifier(lua_State* L);
-
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	static int lGetBuildingConversionModifier(lua_State* L);
-	static int lGetBuildingGlobalConversionModifier(lua_State* L);
-#endif
 
 	static int lAI_avoidGrowth(lua_State* L);
 

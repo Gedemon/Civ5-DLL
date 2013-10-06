@@ -43,10 +43,6 @@
 #include "CvDllRandom.h"
 #include "CvDllUnit.h"
 
-#if defined(MOD_DEBUG_MINIDUMP)
-#include <dbghelp.h>
-#endif
-
 // must be included after all other headers
 #include "LintFree.h"
 
@@ -324,11 +320,6 @@ CvGlobals::CvGlobals() :
 	m_iAI_DIPLO_LAND_DISPUTE_WEIGHT_WEAK(1),
 	m_iAI_DIPLO_LAND_DISPUTE_WEIGHT_STRONG(3),
 	m_iAI_DIPLO_LAND_DISPUTE_WEIGHT_FIERCE(5),
-#if defined(MOD_CONFIG_AI_IN_XML)
-	m_iAI_CONFIG_MILITARY_MELEE_PER_AA(4),
-	m_iAI_CONFIG_MILITARY_AIRCRAFT_PER_CARRIER_SPACE(1),
-	m_iAI_CONFIG_MILITARY_TILES_PER_SHIP(5),
-#endif
 	m_iMINOR_BULLY_GOLD(100),
 	m_iMINOR_FRIENDSHIP_RATE_MOD_MAXIMUM(150),
 	m_iMINOR_FRIENDSHIP_RATE_MOD_SHARED_RELIGION(50),
@@ -1435,28 +1426,6 @@ CvGlobals::CvGlobals() :
 	m_iALREADY_OWNED_STRATEGIC_VALUE(-1000),
 	m_iMINOR_CIV_CONTACT_GOLD_FIRST(30),
 	m_iMINOR_CIV_CONTACT_GOLD_OTHER(15),
-#if defined(MOD_GLOBAL_CS_GIFTS)
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_FRIENDSHIP(12),
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_CULTURE(8),
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_FAITH(8),
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_GOLD(30),
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_FOOD(8),
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_UNIT(30),
-	m_iMINOR_CIV_FIRST_CONTACT_XP_PER_ERA(5),
-	m_iMINOR_CIV_FIRST_CONTACT_XP_RANDOM(10),
-	m_iMINOR_CIV_FIRST_CONTACT_PLAYER_MULTIPLIER(2),
-	m_iMINOR_CIV_FIRST_CONTACT_PLAYER_DIVISOR(1),
-	m_iMINOR_CIV_FIRST_CONTACT_SUBSEQUENT_TEAM_MULTIPLIER(1),
-	m_iMINOR_CIV_FIRST_CONTACT_SUBSEQUENT_TEAM_DIVISOR(2),
-	m_iMINOR_CIV_FIRST_CONTACT_FRIENDLY_BONUS_MULTIPLIER(3),
-	m_iMINOR_CIV_FIRST_CONTACT_FRIENDLY_BONUS_DIVISOR(2),
-	m_iMINOR_CIV_FIRST_CONTACT_FRIENDLY_UNIT_MULTIPLIER(2),
-	m_iMINOR_CIV_FIRST_CONTACT_FRIENDLY_UNIT_DIVISOR(1),
-	m_iMINOR_CIV_FIRST_CONTACT_HOSTILE_BONUS_MULTIPLIER(1),
-	m_iMINOR_CIV_FIRST_CONTACT_HOSTILE_BONUS_DIVISOR(2),
-	m_iMINOR_CIV_FIRST_CONTACT_HOSTILE_UNIT_MULTIPLIER(0),
-	m_iMINOR_CIV_FIRST_CONTACT_HOSTILE_UNIT_DIVISOR(1),
-#endif
 	m_iMINOR_CIV_GROWTH_PERCENT(150),
 	m_iMINOR_CIV_PRODUCTION_PERCENT(150),
 	m_iMINOR_CIV_GOLD_PERCENT(200),
@@ -1471,9 +1440,6 @@ CvGlobals::CvGlobals() :
 	m_iMINOR_CIV_BUYOUT_TURNS(5),
 	m_iMINOR_FRIENDSHIP_FROM_TRADE_MISSION(30),
 	m_iPLOT_UNIT_LIMIT(1),
-#if defined(MOD_GLOBAL_STACKING_RULES)
-	m_iCITY_UNIT_LIMIT(1),
-#endif
 	m_iZONE_OF_CONTROL_ENABLED(1),
 	m_iFIRE_SUPPORT_DISABLED(1),
 	m_iMAX_HIT_POINTS(10),
@@ -1561,9 +1527,6 @@ CvGlobals::CvGlobals() :
 	m_iPLOT_INFLUENCE_ROUTE_COST(0),
 	m_iPLOT_INFLUENCE_RESOURCE_COST(-105),
 	m_iPLOT_INFLUENCE_NW_COST(-105),
-#if defined(MOD_UI_CITY_EXPANSION)
-	m_iPLOT_INFLUENCE_COST_VISIBLE_DIVISOR(5),
-#endif
 	m_iPLOT_BUY_RESOURCE_COST(-100),
 	m_iPLOT_BUY_YIELD_COST(10),
 	m_iPLOT_INFLUENCE_YIELD_POINT_COST(-1),
@@ -1684,10 +1647,6 @@ CvGlobals::CvGlobals() :
 	m_iPROMOTION_EMBARKATION(76),
 	m_iPROMOTION_DEFENSIVE_EMBARKATION(77),
 	m_iPROMOTION_ALLWATER_EMBARKATION(146),
-#if defined(MOD_PROMOTIONS_DEEP_WATER_EMBARKATION)
-	m_iPROMOTION_DEEPWATER_EMBARKATION(-1),
-	m_iPROMOTION_DEFENSIVE_DEEPWATER_EMBARKATION(-1),
-#endif
 	m_iPROMOTION_OCEAN_IMPASSABLE_UNTIL_ASTRONOMY(115),
 	m_iPROMOTION_OCEAN_IMPASSABLE(116),
 	m_iCOMBAT_CAPTURE_HEALTH(50),
@@ -1744,56 +1703,11 @@ CvGlobals::~CvGlobals()
 {
 }
 
-#if defined(MOD_DEBUG_MINIDUMP)
-/************************************************************************************************/
-/* MINIDUMP_MOD                           04/10/11                                terkhen       */
-/* See http://www.debuginfo.com/articles/effminidumps.html                                      */
-/*                                                                                              */
-/* Originally for Civ 4, ported by ls612 to Civ 5                                               */
-/* See http://forums.civfanatics.com/showthread.php?t=498919                                    */
-/************************************************************************************************/
-
-#pragma comment (lib, "dbghelp.lib")
-void CreateMiniDump(EXCEPTION_POINTERS *pep)
-{
-	/* Open a file to store the minidump. */
-	HANDLE hFile = CreateFile(_T("CvMiniDump.dmp"), GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if((hFile == NULL) || (hFile == INVALID_HANDLE_VALUE)) {
-		_tprintf(_T("CreateFile failed. Error: %u \n"), GetLastError());
-		return;
-	}
-
-	/* Create the minidump. */
-	MINIDUMP_EXCEPTION_INFORMATION mdei;
-	mdei.ThreadId           = GetCurrentThreadId();
-	mdei.ExceptionPointers  = pep;
-	mdei.ClientPointers     = FALSE;
-
-	MINIDUMP_TYPE mdt       = MiniDumpNormal;
-
-	MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, mdt, (pep != NULL) ? &mdei : NULL, NULL, NULL);
-
-	CloseHandle(hFile);
-}
-
-LONG WINAPI CustomFilter(EXCEPTION_POINTERS *ExceptionInfo)
-{
-	CreateMiniDump(ExceptionInfo);
-	return EXCEPTION_EXECUTE_HANDLER;
-}
-#endif
-
 //
 // allocate
 //
 void CvGlobals::init()
 {
-#if defined(MOD_DEBUG_MINIDUMP)
-	/* Enable our custom exception that will write the minidump for us. */
-	SetUnhandledExceptionFilter(CustomFilter);
-	CUSTOMLOG("MiniDump exception handler installed");
-#endif
-
 	//
 	// These vars are used to initialize the globals.
 	//
@@ -1818,11 +1732,7 @@ void CvGlobals::init()
 	};
 
 	// these are now in hex-space coords
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	int aiCityPlotX[MAX_CITY_PLOTS] =
-#else
 	int aiCityPlotX[NUM_CITY_PLOTS] =
-#endif
 	{
 		//	0
 		0,
@@ -1832,23 +1742,11 @@ void CvGlobals::init()
 		0,  1,  2,  2,  2,  1,  0,  -1, -2, -2, -2, -1,
 		//	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36
 		0,  1,  2,  3,  3,  3,  3,  2,  1,  0,  -1, -2, -3, -3, -3, -3, -2, -1,
-#if defined(MOD_GLOBAL_CITY_WORKING)
-		//	37	38	39	40	41	42	43	44	45	46	47	48	49	50	51	52	53	54	55	56	57	58	59	60
-			0,  1,  2,  3,  4,  4,  4,  4,  4,  3,  2,  1,  0,  -1,  -2, -3, -4, -4, -4, -4, -4, -3, -2, -1,
-		//	61	62	63	64	65	66	67	68	69	70	71	72	73	74	75	76	77	78	79	80	81	82	83	84  85  86  87  88  89  90
-			0,  1,  2,  3,  4,  5,  5,  5,  5,  5,  5,  4,  3,  2,  1,  0,  -1, -2, -3, -4, -5, -5, -5, -5, -5, -5, -4, -3, -2, -1,
-		// The pattern for the Nth ring is 0 .. N, (N-1) * N, N .. -N, (N-1) * -N, -N .. -1
-#else
 		//	37	38	39	40	41	42	43	44	45	46	47	48	49	50	51	52	53	54	55	56	57	58	59	60
 		//	0,  1,  2,  3,  4,  4,  4,  4,  4,  3,  2,  1,  0,  -1,  -2, -3, -4, -4, -4, -4, -4, -3, -2, -1,
-#endif
 	};
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	int aiCityPlotY[MAX_CITY_PLOTS] =
-#else
 	int aiCityPlotY[NUM_CITY_PLOTS] =
-#endif
 	{
 		//	0
 		0,
@@ -1858,59 +1756,21 @@ void CvGlobals::init()
 		2,  1,  0, -1,	-2, -2, -2, -1,  0,  1,  2,  2,
 		//	19	20	21	22	23	24	25	26	27	28	29	30	31	32	33	34	35	36
 		3,  2,  1,  0,  -1, -2, -3, -3, -3, -3, -2, -1,  0,  1,  2,  3,  3,  3,
-#if defined(MOD_GLOBAL_CITY_WORKING)
-		//	37	38	39	40	41	42	43	44	45	46	47	48	49	50	51	52	53	54	55	56	57	58	59	60
-			4,  3,  2,  1,  0, -1, -2, -3, -4, -4, -4, -4, -4, -3, -2, -1,  0,  1,  2,  3,  4,  4,  4,  4,
-		//	61	62	63	64	65	66	67	68	69	70	71	72	73	74	75	76	77	78	79	80	81	82	83	84  85  86  87  88  89  90
-			5,  4,  3,  2,  1,  0,  -1, -2, -3, -4, -5, -5, -5, -5, -5, -5, -4, -3, -2, -1,  0,  1,  2,  3, 4,  5,  5,  5,  5,  5,
-		// The pattern for the Nth ring is N .. -N, (N-1) * -N, -N .. N, (N-1) * N
-#else
 		//	37	38	39	40	41	42	43	44	45	46	47	48	49	50	51	52	53	54	55	56	57	58	59	60
 		//	4,  3,  2,  1,  0, -1, -2, -3, -4, -4, -4, -4, -4, -3, -2, -1,  0,  1,  2,  3,  4,  4,  4,  4,
-#endif
 	};
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	int aiCityPlotPriority[MAX_CITY_PLOTS] =
-#else
 	int aiCityPlotPriority[NUM_CITY_PLOTS] =
-#endif
 	{
 		0,
 		1,  1,  1,  1,  1,  1,
 		2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,
 		3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,
-#if defined(MOD_GLOBAL_CITY_WORKING)
-		4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,
-		5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,
-		// The pattern for the Nth ring is (6*N) N
-#else
 		//4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,
-#endif
 	};
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	int aaiXYCityPlot[2*MAX_CITY_RADIUS+1][2*MAX_CITY_RADIUS+1] =
-#else
 	int aaiXYCityPlot[CITY_PLOTS_DIAMETER][CITY_PLOTS_DIAMETER] =
-#endif
 	{
-#if defined(MOD_GLOBAL_CITY_WORKING)
-		// this is the 5 ring layout
-		//	 -5  -4  -3  -2  -1   0   1   2   3  4  5  -- in the Y direction
-		{-1, -1, -1, -1, -1, 81, 82, 83, 84, 85, 86,}, // -5 hex-space x
-		{-1, -1, -1, -1, 80, 53, 54, 55, 56, 57, 87,}, // -4 hex-space x
-		{-1, -1, -1, 79, 52, 31, 32, 33, 34, 58, 88,}, // -3 hex-space x
-		{-1, -1, 78, 51, 30, 15, 16, 17, 35, 59, 89,}, // -2 hex-space x
-		{-1, 77, 50, 29, 14,  5,  6, 18, 36, 60, 90,}, // -1 hex-space x
-		{76, 49, 28, 13,  4,  0,  1,  7, 19, 37, 61,}, //  0 hex-space x
-		{75, 48, 27, 12,  3,  2,  8, 20, 38, 62, -1,}, //  1 hex-space x
-		{74, 47, 26, 11, 10,  9, 21, 39, 63, -1, -1,}, //  2 hex-space x
-		{73, 46, 25, 24, 23, 22, 40, 64, -1, -1, -1,}, //  3 hex-space x
-		{72, 45, 44, 43, 42, 41, 65, -1, -1, -1, -1,}, //  4 hex-space x
-		{71, 70, 69, 68, 67, 66, -1, -1, -1, -1, -1,}, //  5 hex-space x
-		// There is no pattern to this, adding a ring requires adding a new row at the top and bottom AND a -1 entry at the start and end of each existing row
-#endif
 		// this is the 4 ring layout
 		/*
 		//	 -4  -3  -2  -1   0   1   2   3  4  -- in the Y direction
@@ -1924,7 +1784,6 @@ void CvGlobals::init()
 		{46, 25, 24, 23, 22, 40, -1, -1, -1,}, //  3 hex-space x
 		{45, 44, 43, 42, 41, -1, -1, -1, -1,}, //  4 hex-space x
 		*/
-#if !defined(MOD_GLOBAL_CITY_WORKING)
 		// this is the 3 ring layout
 		//	 -3  -2  -1   0   1   2   3    -- in the Y direction
 		{-1, -1, -1, 31, 32, 33, 34,}, // -3 hex-space x
@@ -1934,7 +1793,6 @@ void CvGlobals::init()
 		{27, 12,  3,  2,  8, 20, -1,}, //  1 hex-space x
 		{26, 11, 10,  9, 21, -1, -1,}, //  2 hex-space x
 		{25, 24, 23, 22, -1, -1, -1,}, //  3 hex-space x
-#endif
 		/*
 		// this is the 2 ring layout
 		//	-2   -1   0   1   2      -- in the Y direction
@@ -2331,15 +2189,6 @@ int* CvGlobals::getCityPlotPriority()
 
 int CvGlobals::getXYCityPlot(int i, int j)
 {
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	CvAssertMsg(i < (2*MAX_CITY_RADIUS+1), "Index out of bounds");
-	CvAssertMsg(i > -1, "Index out of bounds");
-	if(i < 0 || i >= (2*MAX_CITY_RADIUS+1)) return -1;
-
-	CvAssertMsg(j < (2*MAX_CITY_RADIUS+1), "Index out of bounds");
-	CvAssertMsg(j > -1, "Index out of bounds");
-	if(j < 0 || j >= (2*MAX_CITY_RADIUS+1)) return -1;
-#else
 	CvAssertMsg(i < CITY_PLOTS_DIAMETER, "Index out of bounds");
 	CvAssertMsg(i > -1, "Index out of bounds");
 	if(i < 0 || i >= CITY_PLOTS_DIAMETER) return -1;
@@ -2347,7 +2196,6 @@ int CvGlobals::getXYCityPlot(int i, int j)
 	CvAssertMsg(j < CITY_PLOTS_DIAMETER, "Index out of bounds");
 	CvAssertMsg(j > -1, "Index out of bounds");
 	if(j < 0 || j >= CITY_PLOTS_DIAMETER) return -1;
-#endif
 
 	return m_aaiXYCityPlot[i][j];
 }
@@ -3990,11 +3838,6 @@ void CvGlobals::cacheGlobals()
 	m_iAI_DIPLO_LAND_DISPUTE_WEIGHT_WEAK = getDefineINT("AI_DIPLO_LAND_DISPUTE_WEIGHT_WEAK");
 	m_iAI_DIPLO_LAND_DISPUTE_WEIGHT_STRONG = getDefineINT("AI_DIPLO_LAND_DISPUTE_WEIGHT_STRONG");
 	m_iAI_DIPLO_LAND_DISPUTE_WEIGHT_FIERCE = getDefineINT("AI_DIPLO_LAND_DISPUTE_WEIGHT_FIERCE");
-#if defined(MOD_CONFIG_AI_IN_XML)
-	m_iAI_CONFIG_MILITARY_MELEE_PER_AA = getDefineINT("AI_CONFIG_MILITARY_MELEE_PER_AA");
-	m_iAI_CONFIG_MILITARY_AIRCRAFT_PER_CARRIER_SPACE = getDefineINT("AI_CONFIG_MILITARY_AIRCRAFT_PER_CARRIER_SPACE");
-	m_iAI_CONFIG_MILITARY_TILES_PER_SHIP = getDefineINT("AI_CONFIG_MILITARY_TILES_PER_SHIP");
-#endif
 	m_iMINOR_BULLY_GOLD = getDefineINT("MINOR_BULLY_GOLD");
 	m_iMINOR_FRIENDSHIP_RATE_MOD_MAXIMUM = getDefineINT("MINOR_FRIENDSHIP_RATE_MOD_MAXIMUM");
 	m_iMINOR_FRIENDSHIP_RATE_MOD_SHARED_RELIGION = getDefineINT("MINOR_FRIENDSHIP_RATE_MOD_SHARED_RELIGION");
@@ -5114,28 +4957,6 @@ void CvGlobals::cacheGlobals()
 	m_iALREADY_OWNED_STRATEGIC_VALUE = getDefineINT("ALREADY_OWNED_STRATEGIC_VALUE");
 	m_iMINOR_CIV_CONTACT_GOLD_FIRST = getDefineINT("MINOR_CIV_CONTACT_GOLD_FIRST");
 	m_iMINOR_CIV_CONTACT_GOLD_OTHER = getDefineINT("MINOR_CIV_CONTACT_GOLD_OTHER");
-#if defined(MOD_GLOBAL_CS_GIFTS)
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_FRIENDSHIP           = getDefineINT("MINOR_CIV_FIRST_CONTACT_BONUS_FRIENDSHIP");
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_CULTURE              = getDefineINT("MINOR_CIV_FIRST_CONTACT_BONUS_CULTURE");
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_FAITH                = getDefineINT("MINOR_CIV_FIRST_CONTACT_BONUS_FAITH");
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_GOLD                 = getDefineINT("MINOR_CIV_FIRST_CONTACT_BONUS_GOLD");
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_FOOD                 = getDefineINT("MINOR_CIV_FIRST_CONTACT_BONUS_FOOD");
-	m_iMINOR_CIV_FIRST_CONTACT_BONUS_UNIT                 = getDefineINT("MINOR_CIV_FIRST_CONTACT_BONUS_UNIT");
-	m_iMINOR_CIV_FIRST_CONTACT_XP_PER_ERA                 = getDefineINT("MINOR_CIV_FIRST_CONTACT_XP_PER_ERA");
-	m_iMINOR_CIV_FIRST_CONTACT_XP_RANDOM                  = getDefineINT("MINOR_CIV_FIRST_CONTACT_XP_RANDOM");
-	m_iMINOR_CIV_FIRST_CONTACT_PLAYER_MULTIPLIER          = getDefineINT("MINOR_CIV_FIRST_CONTACT_PLAYER_MULTIPLIER");
-	m_iMINOR_CIV_FIRST_CONTACT_PLAYER_DIVISOR             = getDefineINT("MINOR_CIV_FIRST_CONTACT_PLAYER_DIVISOR");
-	m_iMINOR_CIV_FIRST_CONTACT_SUBSEQUENT_TEAM_MULTIPLIER = getDefineINT("MINOR_CIV_FIRST_CONTACT_SUBSEQUENT_TEAM_MULTIPLIER");
-	m_iMINOR_CIV_FIRST_CONTACT_SUBSEQUENT_TEAM_DIVISOR    = getDefineINT("MINOR_CIV_FIRST_CONTACT_SUBSEQUENT_TEAM_DIVISOR");
-	m_iMINOR_CIV_FIRST_CONTACT_FRIENDLY_BONUS_MULTIPLIER  = getDefineINT("MINOR_CIV_FIRST_CONTACT_FRIENDLY_BONUS_MULTIPLIER");
-	m_iMINOR_CIV_FIRST_CONTACT_FRIENDLY_BONUS_DIVISOR     = getDefineINT("MINOR_CIV_FIRST_CONTACT_FRIENDLY_BONUS_DIVISOR");
-	m_iMINOR_CIV_FIRST_CONTACT_FRIENDLY_UNIT_MULTIPLIER   = getDefineINT("MINOR_CIV_FIRST_CONTACT_FRIENDLY_UNIT_MULTIPLIER");
-	m_iMINOR_CIV_FIRST_CONTACT_FRIENDLY_UNIT_DIVISOR      = getDefineINT("MINOR_CIV_FIRST_CONTACT_FRIENDLY_UNIT_DIVISOR");
-	m_iMINOR_CIV_FIRST_CONTACT_HOSTILE_BONUS_MULTIPLIER   = getDefineINT("MINOR_CIV_FIRST_CONTACT_HOSTILE_BONUS_MULTIPLIER");
-	m_iMINOR_CIV_FIRST_CONTACT_HOSTILE_BONUS_DIVISOR      = getDefineINT("MINOR_CIV_FIRST_CONTACT_HOSTILE_BONUS_DIVISOR");
-	m_iMINOR_CIV_FIRST_CONTACT_HOSTILE_UNIT_MULTIPLIER    = getDefineINT("MINOR_CIV_FIRST_CONTACT_HOSTILE_UNIT_MULTIPLIER");
-	m_iMINOR_CIV_FIRST_CONTACT_HOSTILE_UNIT_DIVISOR       = getDefineINT("MINOR_CIV_FIRST_CONTACT_HOSTILE_UNIT_DIVISOR");
-#endif
 	m_iMINOR_CIV_GROWTH_PERCENT = getDefineINT("MINOR_CIV_GROWTH_PERCENT");
 	m_iMINOR_CIV_PRODUCTION_PERCENT = getDefineINT("MINOR_CIV_PRODUCTION_PERCENT");
 	m_iMINOR_CIV_GOLD_PERCENT = getDefineINT("MINOR_CIV_GOLD_PERCENT");
@@ -5150,9 +4971,6 @@ void CvGlobals::cacheGlobals()
 	m_iMINOR_CIV_BUYOUT_TURNS = getDefineINT("MINOR_CIV_BUYOUT_TURNS");
 	m_iMINOR_FRIENDSHIP_FROM_TRADE_MISSION = getDefineINT("MINOR_FRIENDSHIP_FROM_TRADE_MISSION");
 	m_iPLOT_UNIT_LIMIT = getDefineINT("PLOT_UNIT_LIMIT");
-#if defined(MOD_GLOBAL_STACKING_RULES)
-	m_iCITY_UNIT_LIMIT = getDefineINT("CITY_UNIT_LIMIT");
-#endif
 	m_iZONE_OF_CONTROL_ENABLED = getDefineINT("ZONE_OF_CONTROL_ENABLED");
 	m_iFIRE_SUPPORT_DISABLED = getDefineINT("FIRE_SUPPORT_DISABLED");
 	m_iMAX_HIT_POINTS = getDefineINT("MAX_HIT_POINTS");
@@ -5229,11 +5047,7 @@ void CvGlobals::cacheGlobals()
 	m_iCULTURE_COST_VISIBLE_DIVISOR = getDefineINT("CULTURE_COST_VISIBLE_DIVISOR");
 	m_iCULTURE_PLOT_COST_MOD_MINIMUM = getDefineINT("CULTURE_PLOT_COST_MOD_MINIMUM");
 	m_iMINOR_CIV_PLOT_CULTURE_COST_MULTIPLIER = getDefineINT("MINOR_CIV_PLOT_CULTURE_COST_MULTIPLIER");
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	m_iMAXIMUM_BUY_PLOT_DISTANCE = std::min(MAX_CITY_RADIUS, std::max(MIN_CITY_RADIUS, getDefineINT("MAXIMUM_BUY_PLOT_DISTANCE")));
-#else
 	m_iMAXIMUM_BUY_PLOT_DISTANCE = getDefineINT("MAXIMUM_BUY_PLOT_DISTANCE");
-#endif
 	m_iMAXIMUM_ACQUIRE_PLOT_DISTANCE = getDefineINT("MAXIMUM_ACQUIRE_PLOT_DISTANCE");
 	m_iPLOT_INFLUENCE_BASE_MULTIPLIER = getDefineINT("PLOT_INFLUENCE_BASE_MULTIPLIER");
 	m_iPLOT_INFLUENCE_DISTANCE_MULTIPLIER = getDefineINT("PLOT_INFLUENCE_DISTANCE_MULTIPLIER");
@@ -5244,9 +5058,6 @@ void CvGlobals::cacheGlobals()
 	m_iPLOT_INFLUENCE_ROUTE_COST = getDefineINT("PLOT_INFLUENCE_ROUTE_COST");
 	m_iPLOT_INFLUENCE_RESOURCE_COST = getDefineINT("PLOT_INFLUENCE_RESOURCE_COST");
 	m_iPLOT_INFLUENCE_NW_COST = getDefineINT("PLOT_INFLUENCE_NW_COST");
-#if defined(MOD_UI_CITY_EXPANSION)
-	m_iPLOT_INFLUENCE_COST_VISIBLE_DIVISOR = getDefineINT("PLOT_INFLUENCE_COST_VISIBLE_DIVISOR");
-#endif
 	m_iPLOT_BUY_RESOURCE_COST = getDefineINT("PLOT_BUY_RESOURCE_COST");
 	m_iPLOT_BUY_YIELD_COST = getDefineINT("PLOT_BUY_YIELD_COST");
 	m_iPLOT_INFLUENCE_YIELD_POINT_COST = getDefineINT("PLOT_INFLUENCE_YIELD_POINT_COST");
@@ -5367,10 +5178,6 @@ void CvGlobals::cacheGlobals()
 	m_iPROMOTION_EMBARKATION = getDefineINT("PROMOTION_EMBARKATION");
 	m_iPROMOTION_DEFENSIVE_EMBARKATION = getDefineINT("PROMOTION_DEFENSIVE_EMBARKATION");
 	m_iPROMOTION_ALLWATER_EMBARKATION = getDefineINT("PROMOTION_ALLWATER_EMBARKATION");
-#if defined(MOD_PROMOTIONS_DEEP_WATER_EMBARKATION)
-	m_iPROMOTION_DEEPWATER_EMBARKATION = MOD_PROMOTIONS_DEEP_WATER_EMBARKATION ? getDefineINT("PROMOTION_DEEPWATER_EMBARKATION") : m_iPROMOTION_DEEPWATER_EMBARKATION;
-	m_iPROMOTION_DEFENSIVE_DEEPWATER_EMBARKATION = MOD_PROMOTIONS_DEEP_WATER_EMBARKATION ? getDefineINT("PROMOTION_DEFENSIVE_DEEPWATER_EMBARKATION") : m_iPROMOTION_DEFENSIVE_DEEPWATER_EMBARKATION;
-#endif
 	m_iPROMOTION_OCEAN_IMPASSABLE_UNTIL_ASTRONOMY = getDefineINT("PROMOTION_OCEAN_IMPASSABLE_UNTIL_ASTRONOMY");
 	m_iPROMOTION_OCEAN_IMPASSABLE = getDefineINT("PROMOTION_OCEAN_IMPASSABLE");
 	m_iAI_HANDICAP = getDefineINT("AI_HANDICAP");

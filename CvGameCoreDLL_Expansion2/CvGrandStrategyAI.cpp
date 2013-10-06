@@ -189,6 +189,7 @@ void CvGrandStrategyAI::Read(FDataStream& kStream)
 	// Version number to maintain backwards compatibility
 	uint uiVersion;
 	kStream >> uiVersion;
+	MOD_SERIALIZE_INIT_READ(kStream);
 
 	kStream >> m_iNumTurnsSinceActiveSet;
 	kStream >> (int&)m_eActiveGrandStrategy;
@@ -222,6 +223,7 @@ void CvGrandStrategyAI::Write(FDataStream& kStream)
 	// Current version number
 	uint uiVersion = 1;
 	kStream << uiVersion;
+	MOD_SERIALIZE_INIT_WRITE(kStream);
 
 	kStream << m_iNumTurnsSinceActiveSet;
 	kStream << m_eActiveGrandStrategy;

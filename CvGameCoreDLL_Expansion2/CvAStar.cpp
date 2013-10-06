@@ -3418,8 +3418,7 @@ int TacticalAnalysisMapPathValid(CvAStarNode* parent, CvAStarNode* node, int dat
 	int iFinderInfo              = finder->GetInfo();
 	CvPlot* pUnitPlot            = pUnit->plot();
 	int iFinderIgnoreStacking    = iFinderInfo & MOVE_IGNORE_STACKING;
-#if defined(MOD_GLOBAL_STACKING_RULES)
-#else
+#if !defined(MOD_GLOBAL_STACKING_RULES)
 	int iUnitPlotLimit           = GC.getPLOT_UNIT_LIMIT();
 #endif
 	bool bFromPlotOwned          = !pFromPlotCell->IsUnclaimedTerritory();

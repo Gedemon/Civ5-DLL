@@ -194,6 +194,7 @@ public:
 	bool CreateTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, DomainTypes eDomain, TradeConnectionType eConnectionType);
 
 	TradeConnection* GetTradeConnection(CvCity* pOriginCity, CvCity* pDestCity);
+	int GetNumberOfCityStateTradeRoutes();
 
 	bool IsPreviousTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, DomainTypes eDomain, TradeConnectionType eConnectionType);
 

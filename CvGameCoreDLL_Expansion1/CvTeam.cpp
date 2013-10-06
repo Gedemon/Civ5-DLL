@@ -158,9 +158,6 @@ void CvTeam::uninit()
 	m_iResearchAgreementTradingAllowedCount = 0;
 	m_iTradeAgreementTradingAllowedCount = 0;
 	m_iPermanentAllianceTradingCount = 0;
-#if defined(MOD_TECHS_CITY_WORKING)
-	m_iCityWorkingChange = 0;
-#endif
 	m_iBridgeBuildingCount = 0;
 	m_iWaterWorkCount = 0;
 	m_iRiverTradeCount = 0;
@@ -403,19 +400,11 @@ void CvTeam::addTeam(TeamTypes eTeam)
 			{
 				if(GET_TEAM(eTeam).isAtWar((TeamTypes)iI))
 				{
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-					declareWar(((TeamTypes)iI), false, getLeaderID());
-#else
 					declareWar(((TeamTypes)iI));
-#endif
 				}
 				else if(isAtWar((TeamTypes)iI))
 				{
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-					GET_TEAM(eTeam).declareWar(((TeamTypes)iI), false, GET_TEAM(eTeam).getLeaderID());
-#else
 					GET_TEAM(eTeam).declareWar(((TeamTypes)iI));
-#endif
 				}
 			}
 		}
@@ -977,11 +966,7 @@ bool CvTeam::canChangeWarPeace(TeamTypes eTeam) const
 }
 
 //	--------------------------------------------------------------------------------
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-bool CvTeam::canDeclareWar(TeamTypes eTeam, PlayerTypes eOriginatingPlayer) const
-#else
 bool CvTeam::canDeclareWar(TeamTypes eTeam) const
-#endif
 {
 	if(eTeam == GetID())
 	{
@@ -1018,28 +1003,6 @@ bool CvTeam::canDeclareWar(TeamTypes eTeam) const
 		return false;
 	}
 
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-	if (MOD_EVENTS_WAR_AND_PEACE) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			// Construct and push in some event arguments.
-			CvLuaArgsHandle args(2);
-			args->Push(eOriginatingPlayer);
-			args->Push(eTeam);
-
-			// Attempt to execute the game events.
-			// Will return false if there are no registered listeners.
-			bool bResult = false;
-			if (LuaSupport::CallTestAll(pkScriptSystem, "IsAbleToDeclareWar", args.get(), bResult)) {
-				// Check the result.
-				if (bResult == false) {
-					return false;
-				}
-			}
-		}
-	}
-#endif
-
 	// First, obtain the Lua script system.
 	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
 	if(pkScriptSystem)
@@ -1066,27 +1029,15 @@ bool CvTeam::canDeclareWar(TeamTypes eTeam) const
 }
 
 //	-----------------------------------------------------------------------------------------------
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-void CvTeam::declareWar(TeamTypes eTeam, bool bDefensivePact, PlayerTypes eOriginatingPlayer)
-#else
 void CvTeam::declareWar(TeamTypes eTeam, bool bDefensivePact)
-#endif
 {
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-	DoDeclareWar(eOriginatingPlayer, eTeam, bDefensivePact);
-#else
 	DoDeclareWar(eTeam, bDefensivePact);
-#endif
 
 	CvPlayerManager::RefreshDangerPlots();
 }
 
 //	-----------------------------------------------------------------------------------------------
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-void CvTeam::DoDeclareWar(PlayerTypes eOriginatingPlayer, TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyPact)
-#else
 void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyPact)
-#endif
 {
 	Localization::String locString;
 	int iI;
@@ -1135,11 +1086,7 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyP
 			{
 				if(GET_TEAM((TeamTypes)iI).IsHasDefensivePact(eTeam))
 				{
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-					GET_TEAM((TeamTypes)iI).DoDeclareWar(eOriginatingPlayer, GetID(), /*bDefensivePact*/ true);
-#else
 					GET_TEAM((TeamTypes)iI).DoDeclareWar(GetID(), /*bDefensivePact*/ true);
-#endif
 				}
 			}
 		}
@@ -1158,19 +1105,7 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyP
 
 	setAtWar(eTeam, true);
 	GET_TEAM(eTeam).setAtWar(GetID(), true);
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-	if (MOD_EVENTS_WAR_AND_PEACE) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			CvLuaArgsHandle args;
-			args->Push(eOriginatingPlayer);
-			args->Push(eTeam);
 
-			bool bResult;
-			LuaSupport::CallHook(pkScriptSystem, "DeclareWar", args.get(), bResult);
-		}
-	}
-#endif
 
 	// One shot things
 	DoNowAtWarOrPeace(eTeam, true);
@@ -1401,11 +1336,7 @@ void CvTeam::DoNowAtWarOrPeace(TeamTypes eTeam, bool bWar)
 					if(GET_PLAYER(eMinor).getTeam() != eTeam)
 					{
 						// Match war state
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-						GET_TEAM(GET_PLAYER(eMinor).getTeam()).DoDeclareWar(eMinor, eTeam, /*bDefensivePact*/ false, /*bMinorAllyPact*/ true);
-#else
 						GET_TEAM(GET_PLAYER(eMinor).getTeam()).DoDeclareWar(eTeam, /*bDefensivePact*/ false, /*bMinorAllyPact*/ true);
-#endif
 
 						// Add to vector for notification sent out
 						veMinorAllies.push_back(eMinor);
@@ -1462,26 +1393,14 @@ void CvTeam::DoNowAtWarOrPeace(TeamTypes eTeam, bool bWar)
 }
 
 //	------------------------------------------------------------------------------------------------
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-void CvTeam::makePeace(TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotification, PlayerTypes eOriginatingPlayer)
-#else
 void CvTeam::makePeace(TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotification)
-#endif
 {
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-	DoMakePeace(eOriginatingPlayer, eTeam, bBumpUnits, bSuppressNotification);
-#else
 	DoMakePeace(eTeam, bBumpUnits, bSuppressNotification);
-#endif
 }
 
 //	------------------------------------------------------------------------------------------------
 //	The make peace handler, can be called recursively
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-void CvTeam::DoMakePeace(PlayerTypes eOriginatingPlayer, TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotification)
-#else
 void CvTeam::DoMakePeace(TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotification)
-#endif
 {
 	CvString strBuffer;
 	int iI;
@@ -1493,19 +1412,6 @@ void CvTeam::DoMakePeace(TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotific
 	{
 		setAtWar(eTeam, false);
 		GET_TEAM(eTeam).setAtWar(GetID(), false);
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-		if (MOD_EVENTS_WAR_AND_PEACE) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(eOriginatingPlayer);
-				args->Push(eTeam);
-
-				bool bResult;
-				LuaSupport::CallHook(pkScriptSystem, "MakePeace", args.get(), bResult);
-			}
-		}
-#endif
 
 		// One shot things
 		DoNowAtWarOrPeace(eTeam, false);
@@ -1601,11 +1507,7 @@ void CvTeam::DoMakePeace(TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotific
 							{
 								if(!GET_PLAYER(eOurMinor).GetMinorCivAI()->IsPermanentWar(eTeamWeMadePeaceWith))
 								{
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-									GET_TEAM(GET_PLAYER(eOurMinor).getTeam()).DoMakePeace(eOurMinor, eTeamWeMadePeaceWith, /*bBumpUnits*/ true, /*bSuppressNotification*/ true);
-#else
 									GET_TEAM(GET_PLAYER(eOurMinor).getTeam()).DoMakePeace(eTeamWeMadePeaceWith, /*bBumpUnits*/ true, /*bSuppressNotification*/ true);
-#endif
 									veMinorAllies.push_back(eOurMinor);
 								}
 							}
@@ -3018,31 +2920,6 @@ void CvTeam::changePermanentAllianceTradingCount(int iChange)
 	CvAssert(getPermanentAllianceTradingCount() >= 0);
 }
 
-#if defined(MOD_TECHS_CITY_WORKING)
-//	--------------------------------------------------------------------------------
-int CvTeam::GetCityWorkingChange() const
-{
-	return m_iCityWorkingChange;
-}
-
-
-//	--------------------------------------------------------------------------------
-bool CvTeam::isCityWorkingChange()	const
-{
-	return (GetCityWorkingChange() != 0);
-}
-
-
-//	--------------------------------------------------------------------------------
-void CvTeam::changeCityWorkingChange(int iChange)
-{
-	if(iChange != 0)
-	{
-		m_iCityWorkingChange = (m_iCityWorkingChange + iChange);
-	}
-}
-#endif
-
 //	--------------------------------------------------------------------------------
 int CvTeam::getBridgeBuildingCount() const
 {
@@ -3315,18 +3192,6 @@ void CvTeam::changeDefensiveEmbarkCount(int iChange)
 								pLoopUnit->setHasPromotion((PromotionTypes)GC.getPROMOTION_ALLWATER_EMBARKATION(), false);
 								pLoopUnit->setHasPromotion(ePromotionDefensiveEmbarkation, true);
 							}
-							
-#if defined(MOD_PROMOTIONS_DEEP_WATER_EMBARKATION)
-							if (MOD_PROMOTIONS_DEEP_WATER_EMBARKATION && GC.getPROMOTION_DEEPWATER_EMBARKATION() != -1) {
-								// If the unit has Deep Water Embarkation, change it to Defensive Deep Water Embarkation
-								// This is very unlikely to happen in reality as it implies the player got the helicopter BEFORE the embarkation tech!!!
-								if(pLoopUnit->isHasPromotion((PromotionTypes)GC.getPROMOTION_DEEPWATER_EMBARKATION()))
-								{
-									pLoopUnit->setHasPromotion((PromotionTypes)GC.getPROMOTION_DEEPWATER_EMBARKATION(), false);
-									pLoopUnit->setHasPromotion((PromotionTypes)GC.getPROMOTION_DEFENSIVE_DEEPWATER_EMBARKATION(), true);
-								}
-							}
-#endif
 						}
 					}
 				}
@@ -3445,11 +3310,7 @@ void CvTeam::makeHasMet(TeamTypes eIndex, bool bSuppressMessages)
 			{
 				if(GetID() != eIndex)
 				{
-#if defined(MOD_EVENTS_WAR_AND_PEACE)
-					declareWar(eIndex, false, getLeaderID());
-#else
 					declareWar(eIndex);
-#endif
 				}
 			}
 		}
@@ -3571,7 +3432,7 @@ void CvTeam::makeHasMet(TeamTypes eIndex, bool bSuppressMessages)
 			if(!isAtWar(eIndex))
 			{
 				// Notify the Team that they met someone
-				if(!bSuppressMessages && GetID() == GC.getGame().getActiveTeam())
+				if(!bSuppressMessages)
 				{
 					CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_MET_MINOR_CIV", GET_PLAYER(GET_TEAM(eIndex).getLeaderID()).getNameKey());
 					CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_MET_MINOR_CIV", GET_PLAYER(GET_TEAM(eIndex).getLeaderID()).getNameKey());
@@ -4328,11 +4189,6 @@ void CvTeam::changeProjectCount(ProjectTypes eIndex, int iChange)
 
 	if(iChange != 0)
 	{
-#if defined(MOD_GLOBAL_NO_CONQUERED_SPACESHIPS)
-		if (MOD_GLOBAL_NO_CONQUERED_SPACESHIPS && iChange < 0) {
-			CUSTOMLOG("Disassembling project %d by %d", (int) eIndex, iChange);
-		}
-#endif
 		GC.getGame().incrementProjectCreatedCount(eIndex, iChange);
 
 		iOldProjectCount = getProjectCount(eIndex);
@@ -5101,9 +4957,13 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 	CvAssertMsg(ePlayer >= 0, "eIndex is expected to be non-negative (invalid Index)");
 	CvAssertMsg(ePlayer < MAX_PLAYERS, "ePlayer is expected to be within maximum bounds (invalid Index)");
 
+	if(ePlayer == NO_PLAYER)
+	{
+		return;
+	}
+
 	if(GetTeamTechs()->HasTech(eIndex) != bNewValue)
 	{
-#if !defined(NO_ACHIEVEMENTS)
 		CvPlayerAI& kResearchingPlayer = GET_PLAYER(ePlayer);
 
 		if(	GC.getGame().getActivePlayer() == ePlayer &&
@@ -5113,7 +4973,6 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 		{
 			gDLL->UnlockAchievement(ACHIEVEMENT_XP1_30);
 		}
-#endif
 
 		if(pkTechInfo->IsRepeat())
 		{
@@ -5609,28 +5468,25 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 				DLLUI->setDirty(MiscButtons_DIRTY_BIT, true);
 				DLLUI->setDirty(SelectionButtons_DIRTY_BIT, true);
 				DLLUI->setDirty(ResearchButtons_DIRTY_BIT, true);
-				if(eIndex != NO_TECH && bNewValue)
-				{
-					bool bDontShowRewardPopup = DLLUI->IsOptionNoRewardPopups();
+			}
 
-					// Notification in MP games
-					if(bDontShowRewardPopup || GC.getGame().isNetworkMultiPlayer())	// KWG: Candidate for !GC.getGame().isMPOption(MPOPTION_SIMULTANEOUS_TURNS)
-					{
-						CvNotifications* pNotifications = GET_PLAYER(GC.getGame().getActivePlayer()).GetNotifications();
-						if(pNotifications)
-						{
-							Localization::String localizedText = Localization::Lookup("TXT_KEY_MISC_YOU_DISCOVERED_TECH");
-							localizedText << pkTechInfo->GetTextKey();
-							pNotifications->Add(NOTIFICATION_TECH_AWARD, localizedText.toUTF8(), localizedText.toUTF8(), -1, -1, 0, (int) eIndex);
-						}
-					}
-					// Popup in SP games
-					else
-					{
-						CvPopupInfo kPopup(BUTTONPOPUP_TECH_AWARD, GC.getGame().getActivePlayer(), 0, eIndex);
-						//kPopup.setText(localizedText.toUTF8());
-						DLLUI->AddPopup(kPopup);
-					}
+			if(eIndex != NO_TECH && bNewValue)
+			{
+				bool bDontShowRewardPopup = DLLUI->IsOptionNoRewardPopups();
+
+				// Notification in MP games
+				if(bDontShowRewardPopup || GC.getGame().isNetworkMultiPlayer())
+				{
+					Localization::String localizedText = Localization::Lookup("TXT_KEY_MISC_YOU_DISCOVERED_TECH");
+					localizedText << pkTechInfo->GetTextKey();
+					AddNotification(NOTIFICATION_TECH_AWARD, localizedText.toUTF8(), localizedText.toUTF8(), -1, -1, 0, (int) eIndex);
+				}
+				// Popup in SP games
+				else if(GetID() == GC.getGame().getActiveTeam())
+				{
+					CvPopupInfo kPopup(BUTTONPOPUP_TECH_AWARD, GC.getGame().getActivePlayer(), 0, eIndex);
+					//kPopup.setText(localizedText.toUTF8());
+					DLLUI->AddPopup(kPopup);
 				}
 			}
 		}
@@ -5878,7 +5734,6 @@ void CvTeam::testCircumnavigated()
 			CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iI);
 			if(kPlayer.isAlive())
 			{
-#if !defined(NO_ACHIEVEMENTS)
 				if(eTeamID == kPlayer.getTeam())
 				{
 					if(!kGame.isGameMultiPlayer() && kPlayer.isHuman())
@@ -5886,7 +5741,6 @@ void CvTeam::testCircumnavigated()
 						gDLL->UnlockAchievement(ACHIEVEMENT_ROUND_WORLD);
 					}
 				}
-#endif
 
 				if(iActivePlayerID == iI)
 				{
@@ -5907,23 +5761,6 @@ void CvTeam::testCircumnavigated()
 						strBuffer = GetLocalizedText("TXT_KEY_MISC_UNKNOWN_CIRC_GLOBE");
 					}
 					DLLUI->AddMessage(0, ((PlayerTypes)iI), false, GC.getEVENT_MESSAGE_TIME(), strBuffer);
-
-#if defined(MOD_EVENTS_CIRCUMNAVIGATION)
-					if (MOD_EVENTS_CIRCUMNAVIGATION) {
-						ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-						if (pkScriptSystem) {
-							CvLuaArgsHandle args;
-							args->Push(eTeamID);
-
-							bool bResult = false;
-							LuaSupport::CallHook(pkScriptSystem, "CircumnavigatedGlobe", args.get(), bResult);
-						}
-						
-						// Notifications should now be sent via the event
-						// CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_CIRC_GLOBE");
-						// AddNotification(NOTIFICATION_GENERIC, strBuffer, strSummary, -1, -1, -1);
-					}
-#endif
 				}
 			}
 		}
@@ -6000,13 +5837,6 @@ void CvTeam::processTech(TechTypes eTech, int iChange)
 	{
 		changePermanentAllianceTradingCount(iChange);
 	}
-
-#if defined(MOD_TECHS_CITY_WORKING)
-	if(pTech->GetCityWorkingChange() != 0)
-	{
-		changeCityWorkingChange(pTech->GetCityWorkingChange() * iChange);
-	}
-#endif
 
 	if(pTech->IsBridgeBuilding())
 	{
@@ -6367,23 +6197,6 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 
 	if(GetCurrentEra() != eNewValue)
 	{
-#if defined(MOD_EVENTS_NEW_ERA)
-		// check to see if anyone else has reached or surpassed this era yet
-		bool bAlreadyProvided = false;
-		for(int iPlayerLoop = 0; iPlayerLoop < MAX_CIV_PLAYERS; iPlayerLoop++)
-		{
-			CvPlayerAI& kPlayer = GET_PLAYER((PlayerTypes) iPlayerLoop);
-			if (kPlayer.isEverAlive() && !kPlayer.isBarbarian() && !kPlayer.isMinorCiv())
-			{
-				if(GET_TEAM(kPlayer.getTeam()).GetCurrentEra() >= eNewValue)
-				{
-					bAlreadyProvided = true;
-					break;
-				}
-			}
-		}
-#endif
-
 		if(!isMinorCiv())
 		{
 			if(GC.getGame().isFinalInitialized())
@@ -6393,39 +6206,46 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 				Localization::String strMessage;
 				Localization::String strSummary;
 
-				PlayerTypes eActivePlayer = GC.getGame().getActivePlayer();
+				
+				if(!isBarbarian() && (eNewValue != GC.getGame().getStartEra())){
+					//Era Popup
+					if (!GC.getGame().isNetworkMultiPlayer() && isHuman() && GetID() == GC.getGame().getActiveTeam()){
+						CvPopupInfo kPopupInfo(BUTTONPOPUP_NEW_ERA, eNewValue);
+						DLLUI->AddPopup(kPopupInfo);
+					}
 
-				// Notification for other players entering an era
-				if(GC.getGame().getActiveTeam() != GetID() &&
-				        !isMinorCiv() &&
-				        !isBarbarian() &&
-				        GET_PLAYER(eActivePlayer).isAlive())
-				{
-					if(GET_PLAYER(eActivePlayer).GetNotifications())
-					{
-						strMessage = Localization::Lookup("TXT_KEY_NTFN_PLAYER_ERA");
+					//Notify Everyone
+					for(int iNotifyLoop = 0; iNotifyLoop < MAX_MAJOR_CIVS; ++iNotifyLoop){
+						PlayerTypes eNotifyPlayer = (PlayerTypes) iNotifyLoop;
+						CvPlayerAI& kCurNotifyPlayer = GET_PLAYER(eNotifyPlayer);
+						CvNotifications* pNotifications = kCurNotifyPlayer.GetNotifications();
+						if(pNotifications && 
+							(kCurNotifyPlayer.getTeam() != GetID() || GC.getGame().isNetworkMultiPlayer()) &&
+							kCurNotifyPlayer.isAlive()){
+							strMessage = Localization::Lookup("TXT_KEY_NTFN_PLAYER_ERA");
 
-						CvEraInfo* pkEraInfo = GC.getEraInfo(eNewValue);
-						const char* szEraTextKey = pkEraInfo->GetTextKey();
+							CvEraInfo* pkEraInfo = GC.getEraInfo(eNewValue);
+							const char* szEraTextKey = pkEraInfo->GetTextKey();
 
-						// Active team has met this team
-						if(GET_TEAM(GC.getGame().getActiveTeam()).isHasMet(GetID()))
-						{
-							CvPlayerAI& player = GET_PLAYER(getLeaderID());
-							if(GC.getGame().isGameMultiPlayer() && player.isHuman())
-								strMessage << player.getNickName() << szEraTextKey;
+							// Notify player has met this team
+							if(GET_TEAM(kCurNotifyPlayer.getTeam()).isHasMet(GetID()))
+							{
+								CvPlayerAI& player = GET_PLAYER(getLeaderID());
+								if(GC.getGame().isGameMultiPlayer() && player.isHuman())
+									strMessage << player.getNickName() << szEraTextKey;
+								else
+									strMessage << player.getName() << szEraTextKey;
+							}
+
+							// Has not met this team
 							else
-								strMessage << player.getName() << szEraTextKey;
-						}
+							{
+								Localization::String unmetPlayer = Localization::Lookup("TXT_KEY_UNMET_PLAYER");
+								strMessage << unmetPlayer << szEraTextKey;
+							}
 
-						// Has not met this team
-						else
-						{
-							Localization::String unmetPlayer = Localization::Lookup("TXT_KEY_UNMET_PLAYER");
-							strMessage << unmetPlayer << szEraTextKey;
+							pNotifications->Add(NOTIFICATION_OTHER_PLAYER_NEW_ERA, strMessage.toUTF8(), strMessage.toUTF8(), -1, -1, -1);
 						}
-
-						GET_PLAYER(eActivePlayer).GetNotifications()->Add(NOTIFICATION_OTHER_PLAYER_NEW_ERA, strMessage.toUTF8(), strMessage.toUTF8(), -1, -1, -1);
 					}
 				}
 
@@ -6504,12 +6324,9 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 
 			if(pEraInfo->getSpiesGrantedForEveryone() > 0)
 			{
-#if !defined(MOD_EVENTS_NEW_ERA)
 				// check to see if anyone else has reached or surpassed this era yet
 				bool bAlreadyProvided = false;
-#endif
 				PlayerTypes ePlayer;
-#if !defined(MOD_EVENTS_NEW_ERA)
 				TeamTypes eTeam;
 				for(int iPlayerLoop = 0; iPlayerLoop < MAX_CIV_PLAYERS; iPlayerLoop++)
 				{
@@ -6526,7 +6343,6 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 						}
 					}
 				}
-#endif
 
 				if(!bAlreadyProvided)
 				{
@@ -6600,53 +6416,6 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 		{
 			DLLUI->setDirty(Soundtrack_DIRTY_BIT, true);
 		}
-
-		if(isHuman() && (GetCurrentEra() != GC.getGame().getStartEra()))
-		{
-			if(GC.getGame().isFinalInitialized())
-			{
-				if (GC.getGame().isNetworkMultiPlayer())
-				{
-					PlayerTypes eActivePlayer = GC.getGame().getActivePlayer();
-					if(GC.getGame().getActiveTeam() == GetID() && !isMinorCiv() && !isBarbarian() && GET_PLAYER(eActivePlayer).isAlive())
-					{
-						if(GET_PLAYER(eActivePlayer).GetNotifications())
-						{
-							Localization::String strMessage;
-							strMessage = Localization::Lookup("TXT_KEY_NTFN_PLAYER_ERA");
-
-							CvEraInfo* pkEraInfo = GC.getEraInfo(eNewValue);
-							const char* szEraTextKey = pkEraInfo->GetTextKey();
-
-							strMessage << GET_PLAYER(eActivePlayer).getNickName() << szEraTextKey;
-
-							GET_PLAYER(eActivePlayer).GetNotifications()->Add(NOTIFICATION_OTHER_PLAYER_NEW_ERA, strMessage.toUTF8(), strMessage.toUTF8(), -1, -1, -1);
-						}
-					}
-				}
-				else
-				{
-					CvPopupInfo kPopupInfo(BUTTONPOPUP_NEW_ERA, eNewValue);
-					DLLUI->AddPopup(kPopupInfo);
-				}
-			}
-		}
-
-#if defined(MOD_EVENTS_NEW_ERA)
-		if (MOD_EVENTS_NEW_ERA && GetCurrentEra() != GC.getGame().getStartEra()) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if(pkScriptSystem)
-			{
-				CvLuaArgsHandle args;
-				args->Push(GetID());
-				args->Push(GetCurrentEra());
-				args->Push((GetID() < MAX_MAJOR_CIVS) && !bAlreadyProvided);
-
-				bool bResult = false;
-				LuaSupport::CallHook(pkScriptSystem, "TeamSetEra", args.get(), bResult);
-			}
-		}
-#endif
 	}
 }
 
@@ -6750,9 +6519,6 @@ void CvTeam::Read(FDataStream& kStream)
 	kStream >> m_iResearchAgreementTradingAllowedCount;
 	kStream >> m_iTradeAgreementTradingAllowedCount;
 	kStream >> m_iPermanentAllianceTradingCount;
-#if defined(MOD_TECHS_CITY_WORKING)
-	MOD_SERIALIZE_FROM(kStream, m_iCityWorkingChange);
-#endif
 	kStream >> m_iBridgeBuildingCount;
 	kStream >> m_iWaterWorkCount;
 	kStream >> m_iRiverTradeCount;
@@ -7030,9 +6796,6 @@ void CvTeam::Write(FDataStream& kStream) const
 	kStream << m_iResearchAgreementTradingAllowedCount;
 	kStream << m_iTradeAgreementTradingAllowedCount;
 	kStream << m_iPermanentAllianceTradingCount;
-#if defined(MOD_TECHS_CITY_WORKING)
-	MOD_SERIALIZE_TO(kStream, m_iCityWorkingChange);
-#endif
 	kStream << m_iBridgeBuildingCount;
 	kStream << m_iWaterWorkCount;
 	kStream << m_iRiverTradeCount;
@@ -7119,7 +6882,7 @@ void CvTeam::Write(FDataStream& kStream) const
 
 //	--------------------------------------------------------------------------------
 /// Wrapper for giving Players on this Team a notification message
-void CvTeam::AddNotification(NotificationTypes eNotificationType, CvString& strMessage, CvString& strSummary, int iX, int iY, int iGameDataIndex)
+void CvTeam::AddNotification(NotificationTypes eNotificationType, const char* strMessage, const char* strSummary, int iX, int iY, int iGameDataIndex, int iExtraGameData)
 {
 	PlayerTypes eLoopPlayer;
 
@@ -7137,6 +6900,6 @@ void CvTeam::AddNotification(NotificationTypes eNotificationType, CvString& strM
 		if(!loopPlayer.GetNotifications())
 			continue;
 
-		loopPlayer.GetNotifications()->Add(eNotificationType, strMessage, strSummary, iX, iY, iGameDataIndex);
+		loopPlayer.GetNotifications()->Add(eNotificationType, strMessage, strSummary, iX, iY, iGameDataIndex, iExtraGameData);
 	}
 }

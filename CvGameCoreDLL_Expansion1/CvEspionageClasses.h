@@ -10,8 +10,6 @@
 #ifndef CIV5_ESPIONAGE_CLASSES_H
 #define CIV5_ESPIONAGE_CLASSES_H
 
-#include "CustomMods.h"
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  CLASS: CvEspionageSpy
 //!  \brief All the information about a spy
@@ -35,9 +33,6 @@ enum CvSpyState
     SPY_STATE_RIG_ELECTION,
     SPY_STATE_COUNTER_INTEL,
     SPY_STATE_DEAD,
-#if defined(MOD_API_ESPIONAGE)
-    SPY_STATE_TERMINATED,
-#endif
     NUM_SPY_STATES
 };
 
@@ -47,9 +42,6 @@ enum CvSpyResult // what was the result of the last spy action
     SPY_RESULT_DETECTED,   // a spy was detected in the city, but the defensive player can't tell which player
     SPY_RESULT_IDENTIFIED, // a spy was detected and identified in the city
     SPY_RESULT_KILLED,     // a spy was detected, identified, and killed in the city
-#if defined(MOD_API_ESPIONAGE)
-    SPY_RESULT_ELIMINATED, // a spy was detected, identified, and killed in the city, in such an embarrassing way that another spy won't be recruited!
-#endif
     NUM_SPY_RESULTS
 };
 
@@ -77,9 +69,6 @@ public:
 	CvSpyState m_eSpyState;
 	int m_iReviveCounter; // after killed, counter to reincarnate a spy
 	bool m_bEvaluateReassignment; // used by the AI. Flag to indicate if the spy should be evaluated to be reassigned
-#if defined(MOD_API_ESPIONAGE)
-	bool m_bPassive;
-#endif
 };
 
 FDataStream& operator>>(FDataStream&, CvEspionageSpy&);
@@ -151,11 +140,6 @@ public:
 	bool MoveSpyTo(CvCity* pCity, uint uiSpyIndex);
 	bool ExtractSpyFromCity(uint uiSpyIndex);
 	void LevelUpSpy(uint uiSpyIndex);
-
-#if defined(MOD_API_ESPIONAGE)
-	void SetPassive(uint uiSpyIndex, bool bPassive);
-	void SetOutcome(uint uiSpyIndex, uint uiSpyResult, bool bAffectsDiplomacy = true);
-#endif
 
 	void UpdateCity(CvCity* pCity);
 
