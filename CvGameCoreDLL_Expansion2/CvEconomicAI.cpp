@@ -823,7 +823,23 @@ void CvEconomicAI::DoTurn()
 		DoPlotPurchases();
 		DisbandExtraWorkers();
 		DisbandExtraArchaeologists();
+
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+		YieldTypes eFocusYield = NO_YIELD;
+		if (EconomicAIHelpers::IsTestStrategy_GS_Spaceship(m_pPlayer)) {
+			eFocusYield = YIELD_SCIENCE;
+		} else if (EconomicAIHelpers::IsTestStrategy_DevelopingReligion(m_pPlayer)) {
+			eFocusYield = YIELD_FAITH;
+		} else if (EconomicAIHelpers::IsTestStrategy_LosingMoney((EconomicAIStrategyTypes) GC.getInfoTypeForString("ECONOMICAISTRATEGY_LOSING_MONEY", true), m_pPlayer)) {
+			eFocusYield = YIELD_GOLD;
+		} else {
+			eFocusYield = YIELD_CULTURE;
+		}
+		
+		m_pPlayer->GetCulture()->DoSwapGreatWorks(eFocusYield);
+#else
 		m_pPlayer->GetCulture()->DoSwapGreatWorks();
+#endif
 	}
 }
 

@@ -589,6 +589,10 @@ public:
 	// Base Yield
 	int getBaseYieldRate(YieldTypes eIndex) const;
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	int GetBaseYieldRateFromGreatWorks(YieldTypes eIndex) const;
+#endif
+
 	int GetBaseYieldRateFromTerrain(YieldTypes eIndex) const;
 	void ChangeBaseYieldRateFromTerrain(YieldTypes eIndex, int iChange);
 

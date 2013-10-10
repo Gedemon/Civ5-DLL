@@ -469,8 +469,26 @@ void CvPlayerAI::AI_chooseFreeTech()
 
 	clearResearchQueue();
 
-	// TODO: script override
-	// TODO - WH - Good idea!  Add to MOD_EVENTS_AI_OVERRIDE
+#if defined(MOD_EVENTS_AI_OVERRIDE_TECH)
+		if (MOD_EVENTS_AI_OVERRIDE_TECH && eBestTech == NO_TECH) {
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if(pkScriptSystem) {
+				CvLuaArgsHandle args;
+				args->Push(GetID());
+				args->Push(true); // bFreeTech
+
+				int iValue = 0;
+				if (LuaSupport::CallAccumulator(pkScriptSystem, "AiOverrideChooseNextTech", args.get(), iValue)) {
+					// Defend against modder stupidity!
+					if (iValue >= 0 && iValue < GC.getNumTechInfos() && !HasTech(iValue)) {
+						eBestTech = (TechTypes)iValue;
+					}
+				}
+			}
+		}
+#else
+		//todo: script override
+#endif
 
 	if(eBestTech == NO_TECH)
 	{
@@ -515,8 +533,27 @@ void CvPlayerAI::AI_chooseResearch()
 
 	if(GetPlayerTechs()->GetCurrentResearch() == NO_TECH)
 	{
+#if defined(MOD_EVENTS_AI_OVERRIDE_TECH)
+		// TODO - WH - Enable these events
+		if (MOD_EVENTS_AI_OVERRIDE_TECH && eBestTech == NO_TECH) {
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if(pkScriptSystem) {
+				CvLuaArgsHandle args;
+				args->Push(GetID());
+				args->Push(false); // bFreeTech
+
+				int iValue = 0;
+				if (LuaSupport::CallAccumulator(pkScriptSystem, "AiOverrideChooseNextTech", args.get(), iValue)) {
+					// Defend against modder stupidity!
+					if (iValue >= 0 && iValue < GC.getNumTechInfos() && !HasTech(iValue)) {
+						eBestTech = (TechTypes)iValue;
+					}
+				}
+			}
+		}
+#else
 		//todo: script override
-		// TODO - WH - Good idea!  Add to MOD_EVENTS_AI_OVERRIDE
+#endif
 
 		if(eBestTech == NO_TECH)
 		{

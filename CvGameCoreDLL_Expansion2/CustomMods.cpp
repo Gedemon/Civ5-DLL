@@ -32,6 +32,7 @@ CustomMods::CustomMods() :
 	m_bGLOBAL_PARATROOPS_MOVEMENT(false),
 	m_bGLOBAL_PARATROOPS_AA_DAMAGE(false),
 	m_bGLOBAL_NUKES_MELT_ICE(false),
+	m_bGLOBAL_GREATWORK_YIELDTYPES(false),
 
 	m_bTRAITS_CROSSES_ICE(false),
 	m_bTRAITS_CITY_WORKING(false),
@@ -115,7 +116,6 @@ CustomMods::CustomMods() :
 	m_bBUGFIX_UNIT_PREREQ_PROJECT(false),
 	m_bBUGFIX_HOVERING_PATHFINDER(false),
 	m_bBUGFIX_EMBARKING_PATHFINDER(false),
-	m_bBUGFIX_RANGE_3_TARGETTING(false),
 
 	m_bInit(false)
 {
@@ -172,6 +172,7 @@ int CustomMods::getOption(const char* szOption) {
 		m_bGLOBAL_PARATROOPS_MOVEMENT             = (m_options[string("GLOBAL_PARATROOPS_MOVEMENT")] == 1);
 		m_bGLOBAL_PARATROOPS_AA_DAMAGE            = (m_options[string("GLOBAL_PARATROOPS_AA_DAMAGE")] == 1);
 		m_bGLOBAL_NUKES_MELT_ICE                  = (m_options[string("GLOBAL_NUKES_MELT_ICE")] == 1); 
+		m_bGLOBAL_GREATWORK_YIELDTYPES            = (m_options[string("GLOBAL_GREATWORK_YIELDTYPES")] == 1); 
 
 		m_bTRAITS_CROSSES_ICE                     = (m_options[string("TRAITS_CROSSES_ICE")] == 1);
 		m_bTRAITS_CITY_WORKING                    = (m_options[string("TRAITS_CITY_WORKING")] == 1);
@@ -256,7 +257,6 @@ int CustomMods::getOption(const char* szOption) {
 		m_bBUGFIX_UNIT_PREREQ_PROJECT             = (m_options[string("BUGFIX_UNIT_PREREQ_PROJECT")] == 1);
 		m_bBUGFIX_HOVERING_PATHFINDER             = (m_options[string("BUGFIX_HOVERING_PATHFINDER")] == 1);
 		m_bBUGFIX_EMBARKING_PATHFINDER            = (m_options[string("BUGFIX_EMBARKING_PATHFINDER")] == 1);
-		m_bBUGFIX_RANGE_3_TARGETTING              = (m_options[string("BUGFIX_RANGE_3_TARGETTING")] == 1);
 
 		m_bInit = true;
 	}

@@ -105,6 +105,9 @@ public:
 	int GetSpecialistExtraCulture() const;
 	int GetGreatPeopleRateChange() const;
 	GreatWorkSlotType GetGreatWorkSlotType() const;
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	YieldTypes GetGreatWorkYieldType() const;
+#endif
 	int GetGreatWorkCount() const;
 	GreatWorkType GetFreeGreatWork() const;
 	int GetFreeBuildingClass() const;
@@ -328,6 +331,9 @@ private:
 	int m_iSpecialistExtraCulture;
 	int m_iGreatPeopleRateChange;
 	GreatWorkSlotType m_eGreatWorkSlotType;
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	YieldTypes m_eGreatWorkYieldType;
+#endif
 	int m_iGreatWorkCount;
 	GreatWorkType m_eFreeGreatWork;
 	int m_iFreeBuildingClass;
@@ -620,8 +626,15 @@ public:
 	bool GetNextAvailableGreatWorkSlot(BuildingClassTypes *eBuildingClass, int *iSlot) const;
 	bool GetNextAvailableGreatWorkSlot(GreatWorkSlotType eGreatWorkSlot, BuildingClassTypes *eBuildingClass, int *iSlot) const;
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	int GetYieldFromGreatWorks(YieldTypes eYield) const;
+#endif
 	int GetCultureFromGreatWorks() const;
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	int GetNumGreatWorks(bool bIgnoreYield = true) const;
+#else
 	int GetNumGreatWorks() const;
+#endif
 	int GetNumGreatWorks(GreatWorkSlotType eGreatWorkSlot) const;
 
 	int GetLandmarksTourismPercent() const;
@@ -629,7 +642,11 @@ public:
 	int GetGreatWorksTourismModifier() const;
 	void ChangeGreatWorksTourismModifier(int iChange);
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	int GetThemingBonuses(YieldTypes eYield) const;
+#else
 	int GetThemingBonuses() const;
+#endif
 	int GetNumBuildingsFromFaith() const;
 
 	int GetCityStateTradeRouteProductionModifier() const;

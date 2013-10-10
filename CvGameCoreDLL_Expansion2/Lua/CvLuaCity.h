@@ -368,6 +368,10 @@ protected:
 
 	static int lGetBaseYieldRate(lua_State* L);
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	static int lGetBaseYieldRateFromGreatWorks(lua_State* L);
+#endif
+
 	static int lGetBaseYieldRateFromTerrain(lua_State* L);
 	static int lChangeBaseYieldRateFromTerrain(lua_State* L);
 

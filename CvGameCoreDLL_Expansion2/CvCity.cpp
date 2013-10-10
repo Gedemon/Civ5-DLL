@@ -7798,7 +7798,11 @@ int CvCity::GetBaseJONSCulturePerTurn() const
 	iCulturePerTurn += GetJONSCulturePerTurnFromBuildings();
 	iCulturePerTurn += GetJONSCulturePerTurnFromPolicies();
 	iCulturePerTurn += GetJONSCulturePerTurnFromSpecialists();
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	iCulturePerTurn += GetBaseYieldRateFromGreatWorks(YIELD_CULTURE);
+#else
 	iCulturePerTurn += GetJONSCulturePerTurnFromGreatWorks();
+#endif
 	iCulturePerTurn += GetBaseYieldRateFromTerrain(YIELD_CULTURE);
 	iCulturePerTurn += GetJONSCulturePerTurnFromTraits();
 	iCulturePerTurn += GetJONSCulturePerTurnFromReligion();
@@ -7861,7 +7865,11 @@ void CvCity::ChangeJONSCulturePerTurnFromSpecialists(int iChange)
 //	--------------------------------------------------------------------------------
 int CvCity::GetJONSCulturePerTurnFromGreatWorks() const
 {
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	return GetCityBuildings()->GetYieldFromGreatWorks(YIELD_CULTURE);
+#else
 	return GetCityBuildings()->GetCultureFromGreatWorks();
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -7911,6 +7919,9 @@ int CvCity::GetFaithPerTurn() const
 	}
 
 	int iFaith = GetFaithPerTurnFromBuildings();
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	iFaith += GetBaseYieldRateFromGreatWorks(YIELD_FAITH);
+#endif
 	iFaith += GetBaseYieldRateFromTerrain(YIELD_FAITH);
 	iFaith += GetFaithPerTurnFromPolicies();
 	iFaith += GetFaithPerTurnFromTraits();
@@ -9679,6 +9690,7 @@ int CvCity::getYieldRateTimes100(YieldTypes eIndex, bool bIgnoreTrade) const
 
 	if(getProductionToYieldModifier(eIndex) != 0)
 	{
+		// TODO - WH - we want to process production to production and call it stockpiling!
 		CvAssertMsg(eIndex != YIELD_PRODUCTION, "GAMEPLAY: should not be trying to convert Production into Production via process.");
 
 		iProcessYield = getYieldRateTimes100(YIELD_PRODUCTION, false) * getProductionToYieldModifier(eIndex) / 100;
@@ -9712,6 +9724,9 @@ int CvCity::getBaseYieldRate(YieldTypes eIndex) const
 	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex expected to be < NUM_YIELD_TYPES");
 
 	int iValue = 0;
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	iValue += GetBaseYieldRateFromGreatWorks(eIndex);
+#endif
 	iValue += GetBaseYieldRateFromTerrain(eIndex);
 	iValue += GetBaseYieldRateFromBuildings(eIndex);
 	iValue += GetBaseYieldRateFromSpecialists(eIndex);
@@ -9720,6 +9735,19 @@ int CvCity::getBaseYieldRate(YieldTypes eIndex) const
 
 	return iValue;
 }
+
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+//	--------------------------------------------------------------------------------
+/// Base yield rate from Great Works
+int CvCity::GetBaseYieldRateFromGreatWorks(YieldTypes eIndex) const
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eIndex >= 0, "eIndex expected to be >= 0");
+	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex expected to be < NUM_YIELD_TYPES");
+
+	return GetCityBuildings()->GetYieldFromGreatWorks(eIndex);
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 /// Base yield rate from Terrain
@@ -13691,6 +13719,8 @@ void CvCity::doProcess()
 			}
 		}
 	}
+	
+	// TODO - WH - stockpiling - contribute production to overflow, if within the era limit
 }
 
 

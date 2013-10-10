@@ -1403,7 +1403,6 @@ void CvActiveResolution::DoEffects(PlayerTypes ePlayer)
 			}
 		}
 		//antonjs: todo: OnHolyCityCaptured()
-		// TODO - WH - good idea!  Add the event to MOD_EVENTS_OTHER_RELIGION
 		*/
 	}
 	if (GetEffects()->iReligionSpreadStrengthMod != 0)
@@ -1428,7 +1427,6 @@ void CvActiveResolution::DoEffects(PlayerTypes ePlayer)
 			}
 		}
 		//antonjs: todo: OnIdeologyChanged()
-		// TODO - WH - good idea!  Add the event to MOD_EVENTS_OTHER_IDEOLOGY
 		*/
 	}
 	if (GetEffects()->iArtsyGreatPersonRateMod != 0)
@@ -1582,7 +1580,6 @@ void CvActiveResolution::RemoveEffects(PlayerTypes ePlayer)
 			}
 		}
 		//antonjs: todo: OnHolyCityCaptured()
-		// TODO - WH - good idea!  Add the event to MOD_EVENTS_OTHER_RELIGION
 		*/
 	}
 	if (GetEffects()->iReligionSpreadStrengthMod != 0)
@@ -1606,7 +1603,6 @@ void CvActiveResolution::RemoveEffects(PlayerTypes ePlayer)
 			}
 		}
 		//antonjs: todo: OnIdeologyChanged()
-		// TODO - WH - good idea!  Add the event to MOD_EVENTS_OTHER_IDEOLOGY
 		*/
 	}
 	if (GetEffects()->iArtsyGreatPersonRateMod != 0)

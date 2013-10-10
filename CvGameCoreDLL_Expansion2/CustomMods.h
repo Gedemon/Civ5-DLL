@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 24)
+#define MOD_DLL_VERSION_NUMBER ((uint) 25)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta), r (released) or blank
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -97,6 +97,8 @@
 #define MOD_GLOBAL_PARATROOPS_AA_DAMAGE             gCustomMods.isGLOBAL_PARATROOPS_AA_DAMAGE()
 // Nukes will melt ice
 #define MOD_GLOBAL_NUKES_MELT_ICE                   gCustomMods.isGLOBAL_NUKES_MELT_ICE() 
+// Great Works can generate different yields than just culture
+#define MOD_GLOBAL_GREATWORK_YIELDTYPES             gCustomMods.isGLOBAL_GREATWORK_YIELDTYPES() 
 
 // Permits land units to cross ice - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_TRAITS_CROSSES_ICE                      gCustomMods.isTRAITS_CROSSES_ICE()
@@ -324,9 +326,6 @@
 #define MOD_BUGFIX_HOVERING_PATHFINDER              gCustomMods.isBUGFIX_HOVERING_PATHFINDER()
 // Fixes a bug in the pathfinder code for embarking
 #define MOD_BUGFIX_EMBARKING_PATHFINDER             gCustomMods.isBUGFIX_EMBARKING_PATHFINDER()
-// TODO - WH - this got moved to CvTargeting, the question is did Firaxis also fix the bug?
-// Fixes the Range-3 targetting bug - code by DaveMcW (http://forums.civfanatics.com/showthread.php?t=479509)
-// #define MOD_BUGFIX_RANGE_3_TARGETTING               gCustomMods.isBUGFIX_RANGE_3_TARGETTING()
 
 
 //
@@ -428,6 +427,7 @@ public:
 	inline bool isGLOBAL_PARATROOPS_MOVEMENT()              { return m_bGLOBAL_PARATROOPS_MOVEMENT; }
 	inline bool isGLOBAL_PARATROOPS_AA_DAMAGE()             { return m_bGLOBAL_PARATROOPS_AA_DAMAGE; }
 	inline bool isGLOBAL_NUKES_MELT_ICE()                   { return m_bGLOBAL_NUKES_MELT_ICE; } 
+	inline bool isGLOBAL_GREATWORK_YIELDTYPES()             { return m_bGLOBAL_GREATWORK_YIELDTYPES; } 
 
 	inline bool isTRAITS_CROSSES_ICE()                      { return m_bTRAITS_CROSSES_ICE; }
 	inline bool isTRAITS_CITY_WORKING()                     { return m_bTRAITS_CITY_WORKING; }
@@ -512,7 +512,6 @@ public:
 	inline bool isBUGFIX_UNIT_PREREQ_PROJECT()              { return m_bBUGFIX_UNIT_PREREQ_PROJECT; }
 	inline bool isBUGFIX_HOVERING_PATHFINDER()              { return m_bBUGFIX_HOVERING_PATHFINDER; }
 	inline bool isBUGFIX_EMBARKING_PATHFINDER()             { return m_bBUGFIX_EMBARKING_PATHFINDER; }
-	inline bool isBUGFIX_RANGE_3_TARGETTING()               { return m_bBUGFIX_RANGE_3_TARGETTING; }
 
 protected:
 	bool m_bInit;
@@ -542,6 +541,7 @@ protected:
 	bool m_bGLOBAL_PARATROOPS_MOVEMENT;
 	bool m_bGLOBAL_PARATROOPS_AA_DAMAGE;
 	bool m_bGLOBAL_NUKES_MELT_ICE;
+	bool m_bGLOBAL_GREATWORK_YIELDTYPES;
 
 	bool m_bTRAITS_CROSSES_ICE;
 	bool m_bTRAITS_CITY_WORKING;
@@ -626,7 +626,6 @@ protected:
 	bool m_bBUGFIX_UNIT_PREREQ_PROJECT;
 	bool m_bBUGFIX_HOVERING_PATHFINDER;
 	bool m_bBUGFIX_EMBARKING_PATHFINDER;
-	bool m_bBUGFIX_RANGE_3_TARGETTING;
 };
 
 extern CustomMods gCustomMods;

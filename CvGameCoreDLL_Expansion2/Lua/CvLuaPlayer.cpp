@@ -255,6 +255,9 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetPublicOpinionUnhappiness);
 	Method(GetPublicOpinionUnhappinessTooltip);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(DoSwapGreatWorks);
+#endif
 	Method(HasAvailableGreatWorkSlot);
 	Method(GetCityOfClosestGreatWorkSlot);
 	Method(GetBuildingOfClosestGreatWorkSlot);
@@ -2526,6 +2529,17 @@ int CvLuaPlayer::lGetPublicOpinionUnhappinessTooltip(lua_State* L)
 	lua_pushstring(L, pkPlayer->GetCulture()->GetPublicOpinionUnhappinessTooltip());
 	return 1;
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//void DoSwapGreatWorks(eFocusYield);
+int CvLuaPlayer::lDoSwapGreatWorks(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	YieldTypes eFocusYield = static_cast<YieldTypes>(lua_tointeger(L, 2));
+	pkPlayer->GetCulture()->DoSwapGreatWorks(eFocusYield);
+	return 0;
+}
+#endif
 //------------------------------------------------------------------------------
 //bool HasAvailableGreatWorkSlot(eGreatWorkSlot);
 int CvLuaPlayer::lHasAvailableGreatWorkSlot(lua_State* L)

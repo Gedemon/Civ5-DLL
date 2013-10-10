@@ -711,6 +711,10 @@ CvGreatWorkBuildingInMyEmpire::CvGreatWorkBuildingInMyEmpire()
 {
 	m_bThemed = false;
 	m_bEndangered = false;
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	m_bPuppet = false;
+    m_eYieldType = NO_YIELD;
+#endif
 }
 
 /// Constructor
@@ -720,6 +724,10 @@ CvGreatWorkBuildingInMyEmpire::	CvGreatWorkBuildingInMyEmpire(int iCityID, Build
 {
 	m_bThemed = false;
 	m_bEndangered = false;
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	m_bPuppet = false;
+    m_eYieldType = GC.GetGameBuildings()->GetEntry(eBuilding)->GetGreatWorkYieldType();
+#endif
 }
 
 //=====================================
@@ -816,7 +824,7 @@ CvCity *CvPlayerCulture::GetClosestAvailableGreatWorkSlot(int iX, int iY, GreatW
 			}
 		}
 	}
-
+	
 	return pBestCity;
 }
 
@@ -942,8 +950,14 @@ bool CvPlayerCulture::GetGreatWorkLocation(int iSearchIndex, int &iReturnCityID,
 }
 
 /// AI routine to decide what Great Work swapping should take place (including placing Great Works up for swap from another player)
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+void CvPlayerCulture::DoSwapGreatWorks(YieldTypes eFocusYield)
+{
+	CUSTOMLOG("DoSwapGreatWorks focus is %i", ((int) eFocusYield));
+#else
 void CvPlayerCulture::DoSwapGreatWorks()
 {
+#endif
 	GreatWorkClass eWritingClass = (GreatWorkClass)GC.getInfoTypeForString("GREAT_WORK_LITERATURE");
 	GreatWorkClass eArtClass = (GreatWorkClass)GC.getInfoTypeForString("GREAT_WORK_ART");
 	GreatWorkClass eArtifactsClass = (GreatWorkClass)GC.getInfoTypeForString("GREAT_WORK_ARTIFACT");
@@ -962,6 +976,7 @@ void CvPlayerCulture::DoSwapGreatWorks()
 	CvCity* pLoopCity = NULL;
 	int iLoop = 0;
 
+	CUSTOMLOG("Processing Great Works by city -> building -> slot into art(ifact)/writing/music silos");
 	for(pLoopCity = m_pPlayer->firstCity(&iLoop); pLoopCity != NULL; pLoopCity = m_pPlayer->nextCity(&iLoop))
 	{
 		for(int iBuildingClassLoop = 0; iBuildingClassLoop < GC.getNumBuildingClassInfos(); iBuildingClassLoop++)
@@ -978,7 +993,13 @@ void CvPlayerCulture::DoSwapGreatWorks()
 						CvGreatWorkBuildingInMyEmpire building;
 						building.m_eBuilding = eBuilding;
 						building.m_iCityID = pLoopCity->GetID();
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+						building.m_bEndangered = (pLoopCity->getDamage() > (pLoopCity->GetMaxHitPoints() / 2)) || (pLoopCity->IsRazing() && pLoopCity->getPopulation() < 3);
+						building.m_bPuppet = pLoopCity->IsPuppet();
+						building.m_eYieldType = GC.GetGameBuildings()->GetEntry(eBuilding)->GetGreatWorkYieldType();
+#else
 						building.m_bEndangered = (pLoopCity->getDamage() > 0);
+#endif
 
 						GreatWorkSlotType eSlotType = pkBuilding->GetGreatWorkSlotType();
 						if (eSlotType == CvTypes::getGREAT_WORK_SLOT_LITERATURE())
@@ -1034,9 +1055,15 @@ void CvPlayerCulture::DoSwapGreatWorks()
 		}
 	}
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	MoveWorks (CvTypes::getGREAT_WORK_SLOT_LITERATURE(), aGreatWorkBuildingsWriting, aGreatWorksWriting, aNull, eFocusYield);
+	MoveWorks (CvTypes::getGREAT_WORK_SLOT_ART_ARTIFACT(), aGreatWorkBuildingsArt, aGreatWorksArt, aGreatWorksArtifacts, eFocusYield);
+	MoveWorks (CvTypes::getGREAT_WORK_SLOT_MUSIC(), aGreatWorkBuildingsMusic, aGreatWorksMusic, aNull, eFocusYield);
+#else
 	MoveWorks (CvTypes::getGREAT_WORK_SLOT_LITERATURE(), aGreatWorkBuildingsWriting, aGreatWorksWriting, aNull);
 	MoveWorks (CvTypes::getGREAT_WORK_SLOT_ART_ARTIFACT(), aGreatWorkBuildingsArt, aGreatWorksArt, aGreatWorksArtifacts);
 	MoveWorks (CvTypes::getGREAT_WORK_SLOT_MUSIC(), aGreatWorkBuildingsMusic, aGreatWorksMusic, aNull);
+#endif
 }
 
 /// Sorts building by AI priority which determines the order they should be evaluated when applying theming bonuses
@@ -1064,11 +1091,35 @@ static bool SortThemingBonus(const CvGreatWorkBuildingInMyEmpire& kEntry1, const
 }
 
 /// Overall routine that orchestrates all the maneuvering of Great Works between buildings and players for one AI turn
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+void CvPlayerCulture::MoveWorks (GreatWorkSlotType eType, vector<CvGreatWorkBuildingInMyEmpire> &buildings, vector<CvGreatWorkInMyEmpire> &works1, vector<CvGreatWorkInMyEmpire> &works2, YieldTypes eFocusYield)
+#else
 void CvPlayerCulture::MoveWorks (GreatWorkSlotType eType, vector<CvGreatWorkBuildingInMyEmpire> &buildings, vector<CvGreatWorkInMyEmpire> &works1, vector<CvGreatWorkInMyEmpire> &works2)
+#endif
 {
+	CUSTOMLOG("Move Works for slot type %i", ((int) eType));
 	std::sort (buildings.begin(), buildings.end(), SortThemingBonus);
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	/*
+	 * The order is
+	 *  - theme homeland and puppet buildings
+	 *  - theme endangered buildings
+	 *  - work out the swaps
+	 *  - fill single homeland buildings with a focused yield
+	 *  - fill single puppet buildings with a focused yield
+	 *  - fill single homeland buildings with any yield
+	 *  - fill single puppet buildings with any yield
+	 *  - fill single homeland buildings with no yield
+	 *  - fill single puppet buildings with no yield
+	 *  - fill single endangered buildings with a focused yield
+	 *  - fill single endangered buildings with any yield
+	 *  - fill single endangered buildings with no yield
+	*/
+#endif
+
 	// First building that are not endangered
+	CUSTOMLOG("  ... theming safe buildings");
 	vector<CvGreatWorkBuildingInMyEmpire>::iterator itBuilding;
 	for (itBuilding = buildings.begin(); itBuilding != buildings.end(); itBuilding++)
 	{
@@ -1083,6 +1134,7 @@ void CvPlayerCulture::MoveWorks (GreatWorkSlotType eType, vector<CvGreatWorkBuil
 	}
 
 	// Then endangered ones
+	CUSTOMLOG("  ... theming endangered buildings");
 	for (itBuilding = buildings.begin(); itBuilding != buildings.end(); itBuilding++)
 	{
 		if (itBuilding->m_bEndangered)
@@ -1098,6 +1150,7 @@ void CvPlayerCulture::MoveWorks (GreatWorkSlotType eType, vector<CvGreatWorkBuil
 	// One more pass through those that are not endangered to see if swapping with another player would help (as long as this isn't Music)
 	if (eType != CvTypes::getGREAT_WORK_SLOT_MUSIC())
 	{
+		CUSTOMLOG("  ... checking safe buildings for swaps");
 		for (itBuilding = buildings.begin(); itBuilding != buildings.end(); itBuilding++)
 		{
 			if (!itBuilding->m_bEndangered && !itBuilding->m_bThemed)
@@ -1111,11 +1164,13 @@ void CvPlayerCulture::MoveWorks (GreatWorkSlotType eType, vector<CvGreatWorkBuil
 	}
 
 	// Set the first work left that we haven't themed as something we'd be willing to trade
+	CUSTOMLOG("Setting available swaps");
 	//    for Writing
 	if (eType == CvTypes::getGREAT_WORK_SLOT_LITERATURE())
 	{
 		if (works1.size() > 0)
 		{
+			CUSTOMLOG("  ... for writing to %i", works1[0].m_iGreatWorkIndex);
 			SetSwappableWritingIndex(works1[0].m_iGreatWorkIndex);
 		}
 		else
@@ -1131,6 +1186,7 @@ void CvPlayerCulture::MoveWorks (GreatWorkSlotType eType, vector<CvGreatWorkBuil
 		{
 			if (works1.size() > 0)
 			{
+			CUSTOMLOG("  ... for art(ifact) to %i", works1[0].m_iGreatWorkIndex);
 				SetSwappableArtIndex(works1[0].m_iGreatWorkIndex);
 			}
 			else
@@ -1142,6 +1198,7 @@ void CvPlayerCulture::MoveWorks (GreatWorkSlotType eType, vector<CvGreatWorkBuil
 		{
 			if (works2.size() > 0)
 			{
+				CUSTOMLOG("  ... for art(ifact) to %i", works2[0].m_iGreatWorkIndex);
 				SetSwappableArtifactIndex(works2[0].m_iGreatWorkIndex);
 			}
 			else
@@ -1151,6 +1208,9 @@ void CvPlayerCulture::MoveWorks (GreatWorkSlotType eType, vector<CvGreatWorkBuil
 		}
 	}
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	MoveSingleWorks(buildings, works1, works2, eFocusYield);
+#else
 	// Fill unthemed buildings, first those that aren't endangered
 	for (itBuilding = buildings.begin(); itBuilding != buildings.end(); itBuilding++)
 	{
@@ -1166,6 +1226,7 @@ void CvPlayerCulture::MoveWorks (GreatWorkSlotType eType, vector<CvGreatWorkBuil
 			FillBuilding(itBuilding, works1, works2);
 		}
 	}
+#endif
 }
 
 /// Uses the available Great Works to fill a building with those works that provide the best Theming Bonus
@@ -1621,9 +1682,111 @@ bool CvPlayerCulture::ThemeEqualArtArtifact(CvGreatWorkBuildingInMyEmpire kBldg,
 	return false;
 }
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+void CvPlayerCulture::MoveSingleWorks(vector<CvGreatWorkBuildingInMyEmpire> &buildings, vector<CvGreatWorkInMyEmpire> &works1, vector<CvGreatWorkInMyEmpire> &works2, YieldTypes eFocusYield)
+{
+	CUSTOMLOG("Move Single Works");
+	vector<CvGreatWorkBuildingInMyEmpire>::iterator itBuilding;
+
+	/*
+	 * The order is
+	 *  - fill single homeland buildings with a focused yield
+	 *  - fill single puppet buildings with a focused yield
+	 *  - fill single homeland buildings with any yield
+	 *  - fill single puppet buildings with any yield
+	 *  - fill single homeland buildings with no yield
+	 *  - fill single puppet buildings with no yield
+	 *  - fill single endangered buildings with a focused yield
+	 *  - fill single endangered buildings with any yield
+	 *  - fill single endangered buildings with no yield
+	*/
+
+	vector<CvGreatWorkBuildingInMyEmpire> homelandBuildingsFocus;
+	vector<CvGreatWorkBuildingInMyEmpire> homelandBuildingsAny;
+	vector<CvGreatWorkBuildingInMyEmpire> homelandBuildingsNone;
+	vector<CvGreatWorkBuildingInMyEmpire> puppetBuildingsFocus;
+	vector<CvGreatWorkBuildingInMyEmpire> puppetBuildingsAny;
+	vector<CvGreatWorkBuildingInMyEmpire> puppetBuildingsNone;
+	vector<CvGreatWorkBuildingInMyEmpire> endangeredBuildingsFocus;
+	vector<CvGreatWorkBuildingInMyEmpire> endangeredBuildingsAny;
+	vector<CvGreatWorkBuildingInMyEmpire> endangeredBuildingsNone;
+
+	for (itBuilding = buildings.begin(); itBuilding != buildings.end(); itBuilding++)
+	{
+		if (!itBuilding->m_bThemed) {
+			if (!itBuilding->m_bEndangered) {
+				if (!itBuilding->m_bPuppet) {
+					if (itBuilding->m_eYieldType == eFocusYield) {
+						homelandBuildingsFocus.push_back(*itBuilding);
+					} else if (itBuilding->m_eYieldType != NO_YIELD) {
+						homelandBuildingsAny.push_back(*itBuilding);
+					} else {
+						homelandBuildingsNone.push_back(*itBuilding);
+					}
+				} else {
+					if (itBuilding->m_eYieldType == eFocusYield) {
+						puppetBuildingsFocus.push_back(*itBuilding);
+					} else if (itBuilding->m_eYieldType != NO_YIELD) {
+						puppetBuildingsAny.push_back(*itBuilding);
+					} else {
+						puppetBuildingsNone.push_back(*itBuilding);
+					}
+				}
+			} else {
+				if (itBuilding->m_eYieldType == eFocusYield) {
+					endangeredBuildingsFocus.push_back(*itBuilding);
+				} else if (itBuilding->m_eYieldType != NO_YIELD) {
+					endangeredBuildingsAny.push_back(*itBuilding);
+				} else {
+					endangeredBuildingsNone.push_back(*itBuilding);
+				}
+			}
+		}
+	}
+
+	CUSTOMLOG("  ... filling focused buildings in homeland cities");
+	for (itBuilding = homelandBuildingsFocus.begin(); itBuilding != homelandBuildingsFocus.end(); itBuilding++) {
+		FillBuilding(itBuilding, works1, works2);
+	}
+	CUSTOMLOG("  ... filling focused buildings in puppet cities");
+	for (itBuilding = puppetBuildingsFocus.begin(); itBuilding != puppetBuildingsFocus.end(); itBuilding++) {
+		FillBuilding(itBuilding, works1, works2);
+	}
+	CUSTOMLOG("  ... filling any yield buildings in homeland cities");
+	for (itBuilding = homelandBuildingsAny.begin(); itBuilding != homelandBuildingsAny.end(); itBuilding++) {
+		FillBuilding(itBuilding, works1, works2);
+	}
+	CUSTOMLOG("  ... filling any yield buildings in puppet cities");
+	for (itBuilding = puppetBuildingsAny.begin(); itBuilding != puppetBuildingsAny.end(); itBuilding++) {
+		FillBuilding(itBuilding, works1, works2);
+	}
+	CUSTOMLOG("  ... filling no yield buildings in homeland cities");
+	for (itBuilding = homelandBuildingsNone.begin(); itBuilding != homelandBuildingsNone.end(); itBuilding++) {
+		FillBuilding(itBuilding, works1, works2);
+	}
+	CUSTOMLOG("  ... filling no yield buildings in puppet cities");
+	for (itBuilding = puppetBuildingsNone.begin(); itBuilding != puppetBuildingsNone.end(); itBuilding++) {
+		FillBuilding(itBuilding, works1, works2);
+	}
+	CUSTOMLOG("  ... filling focused buildings in endangered cities");
+	for (itBuilding = endangeredBuildingsFocus.begin(); itBuilding != endangeredBuildingsFocus.end(); itBuilding++) {
+		FillBuilding(itBuilding, works1, works2);
+	}
+	CUSTOMLOG("  ... filling any yield buildings in endangered cities");
+	for (itBuilding = endangeredBuildingsAny.begin(); itBuilding != endangeredBuildingsAny.end(); itBuilding++) {
+		FillBuilding(itBuilding, works1, works2);
+	}
+	CUSTOMLOG("  ... filling no yield buildings in endangered cities");
+	for (itBuilding = endangeredBuildingsNone.begin(); itBuilding != endangeredBuildingsNone.end(); itBuilding++) {
+		FillBuilding(itBuilding, works1, works2);
+	}
+}
+#endif
+
 /// Simple version of ThemeBuilding() which just fills in a building with ANY Great Works, not ones that provide a theming bonus
 bool CvPlayerCulture::FillBuilding(vector<CvGreatWorkBuildingInMyEmpire>::const_iterator buildingIt, vector<CvGreatWorkInMyEmpire> &works1, vector<CvGreatWorkInMyEmpire> &works2)
 {
+	CUSTOMLOG("Fill building %i in city %i", ((int) (buildingIt->m_eBuilding)), buildingIt->m_iCityID);
 	CvBuildingEntry *pkEntry = GC.getBuildingInfo(buildingIt->m_eBuilding);
 	if (!pkEntry)
 	{
@@ -1651,6 +1814,7 @@ bool CvPlayerCulture::FillBuilding(vector<CvGreatWorkBuildingInMyEmpire>::const_
 	for (int iI = 0; iI < iCountSlots && it != worksToConsider.end(); iI++, it++)
 	{
 		aWorksChosen.push_back(worksToConsider[iI].m_iGreatWorkIndex);
+		CUSTOMLOG("  filling slot %i with Great Work %i", iI, worksToConsider[iI].m_iGreatWorkIndex);
 		MoveWorkIntoSlot(worksToConsider[iI], buildingIt->m_iCityID, buildingIt->m_eBuilding, iI);
 	}
 
@@ -3598,7 +3762,11 @@ int CvPlayerCulture::GetTotalThemingBonuses() const
 	int iLoop;
 	for(pCity = m_pPlayer->firstCity(&iLoop); pCity != NULL; pCity = m_pPlayer->nextCity(&iLoop))
 	{
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+		iRtnValue += pCity->GetCityBuildings()->GetThemingBonuses(YIELD_CULTURE);
+#else
 		iRtnValue += pCity->GetCityBuildings()->GetThemingBonuses();;
+#endif
 	}
 
 	return iRtnValue;
@@ -3984,9 +4152,17 @@ void CvCityCulture::Init(CvCity* pCity)
 }
 
 /// How many Great Works are in the city?
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+int CvCityCulture::GetNumGreatWorks(bool bIgnoreYield) const
+#else
 int CvCityCulture::GetNumGreatWorks() const
+#endif
 {
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	return m_pCity->GetCityBuildings()->GetNumGreatWorks(bIgnoreYield);
+#else
 	return m_pCity->GetCityBuildings()->GetNumGreatWorks();
+#endif
 }
 
 /// How many Great Works slots are available in the city? (counting both open and filled and counting all types)
@@ -4072,11 +4248,20 @@ int CvCityCulture::GetBaseTourismBeforeModifiers()
 		return 0;
 	}
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	// Ignore those Great Works in storage (ie not generating a yield)
+	int iBase = GetNumGreatWorks(false) * GC.getBASE_TOURISM_PER_GREAT_WORK();
+#else
 	int iBase = GetNumGreatWorks() * GC.getBASE_TOURISM_PER_GREAT_WORK();
+#endif
 	int iBonus = (m_pCity->GetCityBuildings()->GetGreatWorksTourismModifier() * iBase / 100);
 	iBase += iBonus;
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	iBase += m_pCity->GetCityBuildings()->GetThemingBonuses(YIELD_CULTURE);
+#else
 	iBase += m_pCity->GetCityBuildings()->GetThemingBonuses();
+#endif
 
 	int iPercent = m_pCity->GetCityBuildings()->GetLandmarksTourismPercent();
 	if (iPercent > 0)
@@ -4322,11 +4507,20 @@ CvString CvCityCulture::GetTourismTooltip()
 	ReligionTypes ePlayerReligion = kCityPlayer.GetReligions()->GetReligionInMostCities();
 
 	// Great Works
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	// Ignore those Great Works in storage, ie not generating a yield
+	int iGWTourism = GetNumGreatWorks(false) * GC.getBASE_TOURISM_PER_GREAT_WORK();
+#else
 	int iGWTourism = GetNumGreatWorks() * GC.getBASE_TOURISM_PER_GREAT_WORK();
+#endif
 	iGWTourism += (m_pCity->GetCityBuildings()->GetGreatWorksTourismModifier() * iGWTourism / 100);
 	szRtnValue = GetLocalizedText("TXT_KEY_CO_CITY_TOURISM_GREAT_WORKS", iGWTourism, m_pCity->GetCityCulture()->GetNumGreatWorks());
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	int iThemingBonuses = m_pCity->GetCityBuildings()->GetThemingBonuses(YIELD_CULTURE);
+#else
 	int iThemingBonuses = m_pCity->GetCityBuildings()->GetThemingBonuses();
+#endif
 	if (iThemingBonuses > 0)
 	{
 		szRtnValue += "[NEWLINE][NEWLINE]";

@@ -246,6 +246,9 @@ protected:
 	static int lGetPublicOpinionUnhappiness(lua_State* L);
 	static int lGetPublicOpinionUnhappinessTooltip(lua_State* L);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	static int lDoSwapGreatWorks(lua_State* L);
+#endif
 	static int lHasAvailableGreatWorkSlot(lua_State* L);
 	static int lGetCityOfClosestGreatWorkSlot(lua_State* L);
 	static int lGetBuildingOfClosestGreatWorkSlot(lua_State* L);

@@ -6569,7 +6569,11 @@ public:
 	}
 	inline int getMAXIMUM_ACQUIRE_PLOT_DISTANCE()
 	{
+#if defined(MOD_GLOBAL_CITY_WORKING)
+		return std::min(m_iMAXIMUM_ACQUIRE_PLOT_DISTANCE, MAX_CITY_RADIUS);
+#else
 		return m_iMAXIMUM_ACQUIRE_PLOT_DISTANCE;
+#endif
 	}
 	inline int getPLOT_INFLUENCE_BASE_MULTIPLIER()
 	{

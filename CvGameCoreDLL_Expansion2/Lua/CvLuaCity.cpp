@@ -366,6 +366,10 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 
 	Method(GetBaseYieldRate);
 
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	Method(GetBaseYieldRateFromGreatWorks);
+#endif
+
 	Method(GetBaseYieldRateFromTerrain);
 	Method(ChangeBaseYieldRateFromTerrain);
 
@@ -2161,7 +2165,12 @@ int CvLuaCity::lChangeTourismRateModifier(lua_State* L)
 int CvLuaCity::lGetNumGreatWorks(lua_State* L)
 {
 	CvCity* pkCity = GetInstance(L);
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+	const bool bIgnoreYield = luaL_optbool(L, 2, true);
+	lua_pushinteger(L, pkCity->GetCityCulture()->GetNumGreatWorks(bIgnoreYield));
+#else
 	lua_pushinteger(L, pkCity->GetCityCulture()->GetNumGreatWorks());
+#endif
 	return 1;
 }
 //------------------------------------------------------------------------------
@@ -2951,6 +2960,13 @@ int CvLuaCity::lGetBaseYieldRate(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+//------------------------------------------------------------------------------
+int CvLuaCity::lGetBaseYieldRateFromGreatWorks(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvCity::GetBaseYieldRateFromGreatWorks);
+}
+#endif
 //------------------------------------------------------------------------------
 int CvLuaCity::lGetBaseYieldRateFromTerrain(lua_State* L)
 {
