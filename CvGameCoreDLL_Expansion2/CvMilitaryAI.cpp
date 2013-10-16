@@ -881,7 +881,14 @@ CvUnit* CvMilitaryAI::BuyEmergencyUnit(UnitAITypes eUnitType, CvCity* pCity)
 						m_pPlayer->GetTreasury()->LogExpenditure((CvString)pUnit->getUnitInfo().GetText(), iGoldCost, 7);
 						m_pPlayer->GetTreasury()->ChangeGold(-iGoldCost);
 
-						pUnit->setMoves(0);
+#if defined(MOD_BUGFIX_MOVE_AFTER_PURCHASE)
+						if (!pUnit->getUnitInfo().CanMoveAfterPurchase())
+						{
+#endif
+							pUnit->setMoves(0);
+#if defined(MOD_BUGFIX_MOVE_AFTER_PURCHASE)
+						}
+#endif
 
 						CvString szMsg;
 						szMsg.Format("Emergency Unit Purchased: %s, ", pUnit->getUnitInfo().GetDescription());
@@ -912,7 +919,14 @@ CvUnit* CvMilitaryAI::BuyEmergencyUnit(UnitAITypes eUnitType, CvCity* pCity)
 
 				CvAssertMsg(iResult != FFreeList::INVALID_INDEX, "Unable to create unit");
 				CvUnit* pUnit = m_pPlayer->getUnit(iResult);
-				pUnit->setMoves(0);
+#if defined(MOD_BUGFIX_MOVE_AFTER_PURCHASE)
+				if (!pUnit->getUnitInfo().CanMoveAfterPurchase())
+				{
+#endif
+					pUnit->setMoves(0);
+#if defined(MOD_BUGFIX_MOVE_AFTER_PURCHASE)
+				}
+#endif
 
 				CvString szMsg;
 				szMsg.Format("Emergency Faith Unit Purchase: %s, ", pUnit->getUnitInfo().GetDescription());

@@ -944,7 +944,7 @@ void CvNotifications::Activate(Notification& notification)
 		// DLLUI->lookAtSelectionPlot();
 		
 		// As the City View screen isn't a pop-up, we'll have to call a pop-up to open that screen and then immediately dismiss itself
-		int iModderOffset = gCustomMods.getOption("UI_CITY_EXPANSION_BUTTONPOPUP_MODDER_OFFSET");
+		int iModderOffset = gCustomMods.getOption("UI_CITY_EXPANSION_BUTTONPOPUP_MODDER_OFFSET", 0);
 		CvPopupInfo kPopupInfoOpen((ButtonPopupTypes) (BUTTONPOPUP_MODDER_0 + iModderOffset));
 		kPopupInfoOpen.iData1 = pCity->GetID();
 		kPopupInfoOpen.iData2 = notification.m_iLookupIndex;

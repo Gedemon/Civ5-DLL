@@ -54,6 +54,8 @@ CustomMods::CustomMods() :
 	m_bBUILDINGS_PRO_RATA_PURCHASE(false),
 	m_bBUILDINGS_CITY_WORKING(false),
 
+	m_bTRADE_WONDER_RESOURCE_ROUTES(false),
+
 	m_bUNITS_LOCAL_WORKERS(false),
 	m_bUNITS_HOVERING_LAND_ONLY_HEAL(false),
 	m_bUNITS_HOVERING_COASTAL_ATTACKS(false),
@@ -62,6 +64,9 @@ CustomMods::CustomMods() :
 	m_bRELIGION_RANDOMISE(false),
 	m_bRELIGION_CONVERSION_MODIFIERS(false),
 	m_bRELIGION_KEEP_PROPHET_OVERFLOW(false),
+
+	m_bAI_SECONDARY_WORKERS(false),
+	m_bAI_SECONDARY_SETTLERS(false),
 
 	m_bEVENTS_NEW_ERA(false),
 	m_bEVENTS_NW_DISCOVERY(false),
@@ -100,6 +105,9 @@ CustomMods::CustomMods() :
 	m_bCONFIG_AI_IN_XML(false),
 
 	m_bBUGFIX_LUA_CHANGE_VISIBILITY_COUNT(false),
+	m_bBUGFIX_MOVE_AFTER_PURCHASE(false),
+	m_bBUGFIX_UNITCLASS_NOT_UNIT(false),
+	m_bBUGFIX_BUILDINGCLASS_NOT_BUILDING(false),
 	m_bBUGFIX_FREE_FOOD_BUILDING(false),
 	m_bBUGFIX_NAVAL_FREE_UNITS(false),
 	m_bBUGFIX_NAVAL_NEAREST_WATER(false),
@@ -131,7 +139,11 @@ void CustomMods::reloadCache() {
 	preloadCache();
 }
 
-int CustomMods::getOption(const char* szOption) {
+int CustomMods::getOption(const char* szOption, int defValue) {
+	return getOption(string(szOption), defValue);
+}
+
+int CustomMods::getOption(string sOption, int defValue) {
 	if (!m_bInit) {
 		const char* szBadPrefix = "MOD_";
 
@@ -144,7 +156,7 @@ int CustomMods::getOption(const char* szOption) {
 
 			bool bPrefixError = (strncmp(szName, szBadPrefix, strlen(szBadPrefix)) == 0);
 
-			CUSTOMLOG("%s: %s = %d", (bPrefixError ? "PREFIX ERROR" : "Load"), szName, iValue);
+			CUSTOMLOG("%s: %s = %d", (bPrefixError ? "PREFIX ERROR" : "Cache"), szName, iValue);
 			m_options[string(szName)] = iValue;
 		}
 
@@ -194,6 +206,8 @@ int CustomMods::getOption(const char* szOption) {
 		m_bBUILDINGS_PRO_RATA_PURCHASE            = (m_options[string("BUILDINGS_PRO_RATA_PURCHASE")] == 1);
 		m_bBUILDINGS_CITY_WORKING                 = (m_options[string("BUILDINGS_CITY_WORKING")] == 1);
 
+		m_bTRADE_WONDER_RESOURCE_ROUTES           = (m_options[string("TRADE_WONDER_RESOURCE_ROUTES")] == 1);
+
 		m_bUNITS_LOCAL_WORKERS                    = (m_options[string("UNITS_LOCAL_WORKERS")] == 1);
 		m_bUNITS_HOVERING_LAND_ONLY_HEAL          = (m_options[string("UNITS_HOVERING_LAND_ONLY_HEAL")] == 1);
 		m_bUNITS_HOVERING_COASTAL_ATTACKS         = (m_options[string("UNITS_HOVERING_COASTAL_ATTACKS")] == 1);
@@ -202,6 +216,9 @@ int CustomMods::getOption(const char* szOption) {
 		m_bRELIGION_RANDOMISE                     = (m_options[string("RELIGION_RANDOMISE")] == 1);
 		m_bRELIGION_CONVERSION_MODIFIERS          = (m_options[string("RELIGION_CONVERSION_MODIFIERS")] == 1);
 		m_bRELIGION_KEEP_PROPHET_OVERFLOW         = (m_options[string("RELIGION_KEEP_PROPHET_OVERFLOW")] == 1);
+
+		m_bAI_SECONDARY_WORKERS                   = (m_options[string("AI_SECONDARY_WORKERS")] == 1);
+		m_bAI_SECONDARY_SETTLERS                  = (m_options[string("AI_SECONDARY_SETTLERS")] == 1);
 
 		m_bEVENTS_CIRCUMNAVIGATION                = (m_options[string("EVENTS_CIRCUMNAVIGATION")] == 1);
 		m_bEVENTS_NEW_ERA                         = (m_options[string("EVENTS_NEW_ERA")] == 1);
@@ -241,6 +258,9 @@ int CustomMods::getOption(const char* szOption) {
 		m_bCONFIG_AI_IN_XML                       = (m_options[string("CONFIG_AI_IN_XML")] == 1);
 
 		m_bBUGFIX_LUA_CHANGE_VISIBILITY_COUNT     = (m_options[string("BUGFIX_LUA_CHANGE_VISIBILITY_COUNT")] == 1);
+		m_bBUGFIX_MOVE_AFTER_PURCHASE             = (m_options[string("BUGFIX_MOVE_AFTER_PURCHASE")] == 1);
+		m_bBUGFIX_UNITCLASS_NOT_UNIT              = (m_options[string("BUGFIX_UNITCLASS_NOT_UNIT")] == 1);
+		m_bBUGFIX_BUILDINGCLASS_NOT_BUILDING      = (m_options[string("BUGFIX_BUILDINGCLASS_NOT_BUILDING")] == 1);
 		m_bBUGFIX_FREE_FOOD_BUILDING              = (m_options[string("BUGFIX_FREE_FOOD_BUILDING")] == 1);
 		m_bBUGFIX_NAVAL_FREE_UNITS                = (m_options[string("BUGFIX_NAVAL_FREE_UNITS")] == 1);
 		m_bBUGFIX_NAVAL_NEAREST_WATER             = (m_options[string("BUGFIX_NAVAL_NEAREST_WATER")] == 1);
@@ -261,5 +281,13 @@ int CustomMods::getOption(const char* szOption) {
 		m_bInit = true;
 	}
 
-	return m_options[string(szOption)];
+	if (m_options.find(sOption) == m_options.end()) {
+		return defValue;
+	}
+
+	return m_options[sOption];
+}
+
+int CustomMods::getCivOption(const char* szCiv, const char* szName, int defValue) {
+	return getOption(string(szCiv) + "_" + szName, getOption(szName, defValue));
 }

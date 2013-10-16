@@ -7102,6 +7102,12 @@ bool CvUnit::found()
 	VALIDATE_OBJECT
 
 	CvPlot* pPlot = plot();
+	
+#if defined(MOD_AI_SECONDARY_SETTLERS)
+	if (IsCombatUnit()) {
+		CUSTOMLOG("Trying to found a city with combat unit %s at (%i, %i)", getName().c_str(), getX(), getY());
+	}
+#endif	
 
 	if(!canFound(pPlot))
 	{
@@ -7122,6 +7128,11 @@ bool CvUnit::found()
 #endif
 
 	kPlayer.found(getX(), getY());
+#if defined(MOD_AI_SECONDARY_SETTLERS)
+	if (IsCombatUnit()) {
+		CUSTOMLOG("  ... success!  They founded %s", plot()->getPlotCity()->getName().c_str());
+	}
+#endif	
 
 	if(pPlot->isActiveVisible(false))
 	{
@@ -9245,6 +9256,7 @@ bool CvUnit::canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestVisible,
 
  	if (pPlot->isWater())
  	{
+		// TODO - WH - UNIT_ (samurai)
 		if ((isEmbarked() && !pkBuildInfo->IsCanBeEmbarked())  && (strcmp("UNIT_JAPANESE_SAMURAI", getUnitInfo().GetType()) != 0))
 		{
  			return false;
@@ -10442,7 +10454,7 @@ int CvUnit::GetRange() const
 #if defined(MOD_UNITS_HOVERING_COASTAL_ATTACKS)
 	// Hovering units over coast/ice become ranged units
 	if (MOD_UNITS_HOVERING_COASTAL_ATTACKS && m_pUnitInfo->GetRangedCombat() == 0 && IsHoveringUnit() && (plot()->isShallowWater() || plot()->getFeatureType() == FEATURE_ICE)) {
-		int iRange = std::max(1, gCustomMods.getOption("UNITS_HOVERING_COASTAL_ATTACKS_RANGE"));
+		int iRange = std::max(1, gCustomMods.getOption("UNITS_HOVERING_COASTAL_ATTACKS_RANGE", 1));
 		return (iRange + m_iExtraRange);
 	}
 #endif
@@ -11476,8 +11488,8 @@ int CvUnit::GetBaseRangedCombatStrength() const
 #if defined(MOD_UNITS_HOVERING_COASTAL_ATTACKS)
 	// Hovering units over coast/ice become ranged units
 	if (MOD_UNITS_HOVERING_COASTAL_ATTACKS && m_pUnitInfo->GetRangedCombat() == 0 && IsHoveringUnit() && (plot()->isShallowWater() || plot()->getFeatureType() == FEATURE_ICE)) {
-		int iMultiplier = gCustomMods.getOption("UNITS_HOVERING_COASTAL_ATTACKS_MULTIPLIER");
-		int iDivisor = gCustomMods.getOption("UNITS_HOVERING_COASTAL_ATTACKS_DIVISOR");
+		int iMultiplier = gCustomMods.getOption("UNITS_HOVERING_COASTAL_ATTACKS_MULTIPLIER", 1);
+		int iDivisor = gCustomMods.getOption("UNITS_HOVERING_COASTAL_ATTACKS_DIVISOR", 1);
 		// Must use m_iBaseCombat and not GetBaseCombatStrength(), as the latter will return 0
 		return (iDivisor == 0) ? 0 : ((m_iBaseCombat * iMultiplier) / iDivisor);
 	}

@@ -3546,6 +3546,42 @@ void CvPlayer::killUnits()
 	}
 }
 
+#if defined(MOD_API_EXTENSIONS) || defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+//	--------------------------------------------------------------------------------
+// Given a unit class, get the players specific unit of that class
+UnitTypes CvPlayer::GetSpecificUnitType(const char* szUnitClass, bool hideAssert)
+{
+	UnitTypes eUnitType = NO_UNIT;
+	UnitClassTypes eUnitClassType = (UnitClassTypes) GC.getInfoTypeForString(szUnitClass, hideAssert);
+
+	const CvUnitClassInfo* pkUnitClassInfo = GC.getUnitClassInfo(eUnitClassType);
+	
+	if (pkUnitClassInfo)
+	{
+		CvCivilizationInfo* pCivilizationInfo = GC.getCivilizationInfo(getCivilizationType());
+		
+		if (pCivilizationInfo != NULL)
+		{
+			eUnitType = (UnitTypes) pCivilizationInfo->getCivilizationUnits(eUnitClassType);
+		}
+		else
+		{
+			eUnitType = (UnitTypes) pkUnitClassInfo->getDefaultUnitIndex();
+		}
+	}
+	
+	if (!isMinorCiv() && !isBarbarian()) {
+		if (eUnitType == NO_UNIT) {
+			CUSTOMLOG("GetSpecificUnitType for player %s: %s is UNKNOWN!!!", getName(), szUnitClass);
+		} else {
+			// CUSTOMLOG("GetSpecificUnitType for player %s: %s is %s", getName(), szUnitClass, GC.getUnitInfo(eUnitType)->GetType());
+		}
+	}
+
+	return eUnitType;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 CvPlot *CvPlayer::GetGreatAdmiralSpawnPlot (CvUnit *pUnit)
 {
@@ -17627,7 +17663,7 @@ void CvPlayer::DoCivilianReturnLogic(bool bReturn, PlayerTypes eToPlayer, int iU
 #if defined(MOD_GLOBAL_GRATEFUL_SETTLERS)
 			// In OCC games, all captured settlers are converted
 			if ((pUnit->isFound() || pUnit->IsFoundAbroad()) && MOD_GLOBAL_GRATEFUL_SETTLERS && !(GC.getGame().isOption(GAMEOPTION_ONE_CITY_CHALLENGE) && isHuman())) {
-				int iDefectProb = gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_PERCENT");
+				int iDefectProb = gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_PERCENT", 20);
 				int iPercent = 0;
 
 				// Approach is very important
@@ -17838,7 +17874,16 @@ void CvPlayer::AddIncomingUnit(PlayerTypes eFromPlayer, CvUnit* pUnit)
 			CvUnit* pNewUnit = initUnit(eType, iX, iY);
 			CvAssert(pNewUnit);
 			if (pNewUnit)
-				pNewUnit->finishMoves();
+#if defined(MOD_BUGFIX_MOVE_AFTER_PURCHASE)
+			{
+				if (!pUnit->getUnitInfo().CanMoveAfterPurchase())
+				{
+#endif
+					pNewUnit->finishMoves();
+#if defined(MOD_BUGFIX_MOVE_AFTER_PURCHASE)
+				}
+			}
+#endif
 		}
 	}
 	else

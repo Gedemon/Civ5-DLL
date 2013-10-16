@@ -423,7 +423,11 @@ void CvPlayerAI::AI_chooseFreeGreatPerson()
 		// Highly wonder competitive and still early in game?
 		if(GetDiplomacyAI()->GetWonderCompetitiveness() >= 8 && GC.getGame().getGameTurn() <= (GC.getGame().getEstimateEndTurn() / 2))
 		{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+			eDesiredGreatPerson = GetSpecificUnitType("UNITCLASS_ENGINEER");
+#else
 			eDesiredGreatPerson = (UnitTypes)GC.getInfoTypeForString("UNIT_ENGINEER");
+#endif
 		}
 		else
 		{
@@ -431,19 +435,35 @@ void CvPlayerAI::AI_chooseFreeGreatPerson()
 			AIGrandStrategyTypes eVictoryStrategy = GetGrandStrategyAI()->GetActiveGrandStrategy();
 			if(eVictoryStrategy == (AIGrandStrategyTypes) GC.getInfoTypeForString("AIGRANDSTRATEGY_CONQUEST"))
 			{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+				eDesiredGreatPerson = GetSpecificUnitType("UNITCLASS_GREAT_GENERAL");
+#else
 				eDesiredGreatPerson = (UnitTypes)GC.getInfoTypeForString("UNIT_GREAT_GENERAL");
+#endif
 			}
 			else if(eVictoryStrategy == (AIGrandStrategyTypes) GC.getInfoTypeForString("AIGRANDSTRATEGY_CULTURE"))
 			{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+				eDesiredGreatPerson = GetSpecificUnitType("UNITCLASS_ARTIST");
+#else
 				eDesiredGreatPerson = (UnitTypes)GC.getInfoTypeForString("UNIT_ARTIST");
+#endif
 			}
 			else if(eVictoryStrategy == (AIGrandStrategyTypes) GC.getInfoTypeForString("AIGRANDSTRATEGY_UNITED_NATIONS"))
 			{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+				eDesiredGreatPerson = GetSpecificUnitType("UNITCLASS_MERCHANT");
+#else
 				eDesiredGreatPerson = (UnitTypes)GC.getInfoTypeForString("UNIT_MERCHANT");
+#endif
 			}
 			else if(eVictoryStrategy == (AIGrandStrategyTypes) GC.getInfoTypeForString("AIGRANDSTRATEGY_SPACESHIP"))
 			{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+				eDesiredGreatPerson = GetSpecificUnitType("UNITCLASS_SCIENTIST");
+#else
 				eDesiredGreatPerson = (UnitTypes)GC.getInfoTypeForString("UNIT_SCIENTIST");
+#endif
 			}
 		}
 

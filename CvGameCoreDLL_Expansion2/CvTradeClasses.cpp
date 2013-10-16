@@ -17,6 +17,9 @@
 #include "CvNotifications.h"
 #include "cvStopWatch.h"
 #include "CvCityManager.h"
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+#include "CvWonderProductionAI.h"
+#endif
 
 #include "LintFree.h"
 
@@ -96,8 +99,6 @@ bool CvGameTrade::CanCreateTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, Do
 	TeamTypes eOriginTeam = pOriginCity->getTeam();
 	TeamTypes eDestTeam = pDestCity->getTeam();
 
-	// TODO - WH - add a TRADE_CONNECTION_WONDER_RESOURCE
-	
 	if (eConnectionType == TRADE_CONNECTION_INTERNATIONAL)
 	{
 		// can't have an international trade route within the same team
@@ -106,7 +107,11 @@ bool CvGameTrade::CanCreateTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, Do
 			return false;
 		}
 	}
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+	else if (eConnectionType == TRADE_CONNECTION_PRODUCTION || eConnectionType == TRADE_CONNECTION_FOOD || (MOD_TRADE_WONDER_RESOURCE_ROUTES && eConnectionType == TRADE_CONNECTION_WONDER_RESOURCE))
+#else
 	else if (eConnectionType == TRADE_CONNECTION_PRODUCTION || eConnectionType == TRADE_CONNECTION_FOOD)
+#endif
 	{
 		// can't have production or food connections internationally
 		if (eOriginTeam != eDestTeam)
@@ -171,6 +176,47 @@ bool CvGameTrade::CanCreateTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, Do
 			{
 				return false;
 			}
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+		}
+		else if (eConnectionType == TRADE_CONNECTION_WONDER_RESOURCE)
+		{
+			bool bAllowsWonderResourceConnection = false;
+
+			// Find the wonder resource, we don't assume it's Marble, but we do assume there's only one
+			ResourceTypes eWonderResource = NO_RESOURCE;
+			for (int iResourceLoop = 0; iResourceLoop < GC.getNumResourceInfos(); iResourceLoop++) {
+				const ResourceTypes eResource = static_cast<ResourceTypes>(iResourceLoop);
+				CvResourceInfo* pkResource = GC.getResourceInfo(eResource);
+				if (pkResource) {
+					if (pkResource->getWonderProductionMod() != 0) {
+						eWonderResource = eResource;
+						break;
+					}
+				}
+			}
+
+			// We need the wonder resource at pOriginCity AND not at pDestCity
+			if (eWonderResource != NO_RESOURCE) {
+				bAllowsWonderResourceConnection	= (pOriginCity->IsHasResourceLocal(eWonderResource, true) && !pDestCity->IsHasResourceLocal(eWonderResource, true));
+			}
+
+			if (bAllowsWonderResourceConnection) {
+				// No existing resource trade route from pOriginCity (ie we can't ship it out twice)
+				int iOriginX = pOriginCity->getX();
+				int iOriginY = pOriginCity->getY();
+
+				for (uint i = 0; i < m_aTradeConnections.size(); i++) {
+					if (m_aTradeConnections[i].m_eConnectionType == eConnectionType && m_aTradeConnections[i].m_iOriginX == iOriginX && m_aTradeConnections[i].m_iOriginY == iOriginY) {
+						return false;
+					}
+				}
+			}
+
+			if (!bAllowsWonderResourceConnection)
+			{
+				return false;
+			}
+#endif
 		}
 	}
 
@@ -399,6 +445,11 @@ bool CvGameTrade::CreateTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, Domai
 		case TRADE_CONNECTION_PRODUCTION:
 			strTRType = "production";
 			break;
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+		case TRADE_CONNECTION_WONDER_RESOURCE:
+			strTRType = "wonder resource";
+			break;
+#endif
 		case TRADE_CONNECTION_INTERNATIONAL:
 			strTRType = "international";
 			break;
@@ -893,7 +944,12 @@ void CvGameTrade::ClearAllCityTradeRoutes (CvPlot* pPlot)
 				// if the destination was wiped, the origin gets a trade unit back
 				if (bMatchesDest && GET_PLAYER(m_aTradeConnections[ui].m_eOriginOwner).isAlive())
 				{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+					CvPlayer& kPlayer = GET_PLAYER(m_aTradeConnections[ui].m_eOriginOwner);
+					UnitTypes eUnitType = kPlayer.GetTrade()->GetTradeUnit(m_aTradeConnections[ui].m_eDomain, &kPlayer);
+#else
 					UnitTypes eUnitType = GET_PLAYER(m_aTradeConnections[ui].m_eOriginOwner).GetTrade()->GetTradeUnit(m_aTradeConnections[ui].m_eDomain);
+#endif
 					CvAssertMsg(eUnitType != NO_UNIT, "No trade unit found");
 					if (eUnitType != NO_UNIT)
 					{
@@ -934,7 +990,12 @@ void CvGameTrade::ClearAllCivTradeRoutes (PlayerTypes ePlayer)
 				// if the destination was wiped, the origin gets a trade unit back
 				if (GET_PLAYER(m_aTradeConnections[ui].m_eOriginOwner).isAlive())
 				{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+					CvPlayer& kPlayer = GET_PLAYER(m_aTradeConnections[ui].m_eOriginOwner);
+					UnitTypes eUnitType = kPlayer.GetTrade()->GetTradeUnit(m_aTradeConnections[ui].m_eDomain, &kPlayer);
+#else
 					UnitTypes eUnitType = GET_PLAYER(m_aTradeConnections[ui].m_eOriginOwner).GetTrade()->GetTradeUnit(m_aTradeConnections[ui].m_eDomain);
+#endif
 					CvAssertMsg(eUnitType != NO_UNIT, "No trade unit found");
 					if (eUnitType != NO_UNIT)
 					{
@@ -965,7 +1026,12 @@ void CvGameTrade::ClearAllCityStateTradeRoutes (void)
 			// if the destination was wiped, the origin gets a trade unit back
 			if (GET_PLAYER(m_aTradeConnections[ui].m_eOriginOwner).isAlive())
 			{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+				CvPlayer& kPlayer = GET_PLAYER(m_aTradeConnections[ui].m_eOriginOwner);
+				UnitTypes eUnitType = kPlayer.GetTrade()->GetTradeUnit(m_aTradeConnections[ui].m_eDomain, &kPlayer);
+#else
 				UnitTypes eUnitType = GET_PLAYER(m_aTradeConnections[ui].m_eOriginOwner).GetTrade()->GetTradeUnit(m_aTradeConnections[ui].m_eDomain);
+#endif
 				CvAssertMsg(eUnitType != NO_UNIT, "No trade unit found");
 				if (eUnitType != NO_UNIT)
 				{
@@ -1425,10 +1491,17 @@ void CvGameTrade::CreateVis(int iIndex)
 
 	if (kTradeConnection.m_unitID == -1)
 	{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+		CvPlayer& kPlayer = GET_PLAYER(kTradeConnection.m_eOriginOwner);
+		UnitTypes eUnitType = CvPlayerTrade::GetTradeUnit(kTradeConnection.m_eDomain, &kPlayer);
+#else
 		UnitTypes eUnitType = CvPlayerTrade::GetTradeUnit(kTradeConnection.m_eDomain);
+#endif
 		if (eUnitType != NO_UNIT)
 		{
+#if !defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
 			CvPlayer& kPlayer = GET_PLAYER(kTradeConnection.m_eOriginOwner);
+#endif
 			CvUnit* pkUnit = kPlayer.initUnit(eUnitType, kTradeConnection.m_aPlotList[kTradeConnection.m_iTradeUnitLocationIndex].m_iX, kTradeConnection.m_aPlotList[kTradeConnection.m_iTradeUnitLocationIndex].m_iY, NO_UNITAI, NO_DIRECTION, false, true, TRADE_UNIT_MAP_LAYER);
 			if (pkUnit)
 			{
@@ -1807,7 +1880,11 @@ void CvPlayerTrade::MoveUnits (void)
 				pTrade->EmptyTradeRoute(ui);
 				
 				// create new unit
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+				UnitTypes eUnitType = GetTradeUnit(eDomain, m_pPlayer);
+#else
 				UnitTypes eUnitType = GetTradeUnit(eDomain);
+#endif
 				CvUnit* pRebornUnit = m_pPlayer->initUnit(eUnitType, iOriginX, iOriginY, UNITAI_TRADE_UNIT);
 				CvAssertMsg(pRebornUnit, "pRebornUnit is null. This is bad!!");
 			}
@@ -3551,16 +3628,28 @@ bool CvPlayerTrade::CheckTradeConnectionWasPlundered(const TradeConnection& kTra
 }
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+UnitTypes CvPlayerTrade::GetTradeUnit (DomainTypes eDomain, CvPlayer* pPlayer)
+#else
 UnitTypes CvPlayerTrade::GetTradeUnit (DomainTypes eDomain)
+#endif
 {
 	UnitTypes eUnitType = NO_UNIT;
 	if (eDomain == DOMAIN_LAND)
 	{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+		eUnitType = pPlayer->GetSpecificUnitType("UNITCLASS_CARAVAN");
+#else
 		eUnitType = (UnitTypes)GC.getInfoTypeForString("UNIT_CARAVAN");
+#endif
 	}
 	else if (eDomain == DOMAIN_SEA)
 	{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+		eUnitType = pPlayer->GetSpecificUnitType("UNITCLASS_CARGO_SHIP");
+#else
 		eUnitType = (UnitTypes)GC.getInfoTypeForString("UNIT_CARGO_SHIP");
+#endif
 	}
 
 	return eUnitType;
@@ -3731,13 +3820,21 @@ std::vector<CvString> CvPlayerTrade::GetPlotMouseoverToolTips (CvPlot* pPlot)
 							strLine = Localization::Lookup("TXT_KEY_MULTIPLAYER_UNIT_TT");
 							strLine << GET_PLAYER(pConnection->m_eOriginOwner).getNickName();
 							strLine << GET_PLAYER(pConnection->m_eOriginOwner).getCivilizationAdjectiveKey();
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+							strLine << GC.getUnitInfo(GetTradeUnit(pConnection->m_eDomain, &GET_PLAYER(pConnection->m_eOriginOwner)))->GetDescription();
+#else
 							strLine << GC.getUnitInfo(GetTradeUnit(pConnection->m_eDomain))->GetDescription();
+#endif
 						}
 						else
 						{
 							strLine = Localization::Lookup("TXT_KEY_PLOTROLL_UNIT_DESCRIPTION_CIV");
 							strLine << GET_PLAYER(pConnection->m_eOriginOwner).getCivilizationAdjectiveKey();
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+							strLine << GC.getUnitInfo(GetTradeUnit(pConnection->m_eDomain, &GET_PLAYER(pConnection->m_eOriginOwner)))->GetDescription();
+#else
 							strLine << GC.getUnitInfo(GetTradeUnit(pConnection->m_eDomain))->GetDescription();
+#endif
 						}
 
 						
@@ -4296,6 +4393,77 @@ int CvTradeAI::ScoreProductionTR (const TradeConnection& kTradeConnection, std::
 	return iDistanceScore - iDangerSum;
 }
 
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+/// Score Wonder TR
+int CvTradeAI::ScoreWonderTR (const TradeConnection& kTradeConnection, std::vector<CvCity*> aTargetCityList)
+{
+	// If it wasn't for this test, this method would be the same as ScoreProductionTR()
+	// only consider wonder trades
+	if (kTradeConnection.m_eConnectionType != TRADE_CONNECTION_WONDER_RESOURCE)
+	{
+		return 0;
+	}
+
+	// if this was recently plundered, 0 the score
+	if (m_pPlayer->GetTrade()->CheckTradeConnectionWasPlundered(kTradeConnection))
+	{
+		return 0;
+	}
+
+	// if we're not going to a target wonder city, ignore
+	bool bValidTarget = false;
+	for (uint ui = 0; ui < aTargetCityList.size(); ui++)
+	{
+		if (kTradeConnection.m_iDestX == aTargetCityList[ui]->getX() && kTradeConnection.m_iDestY == aTargetCityList[ui]->getY())
+		{
+			bValidTarget = true;
+			break;
+		}
+	}
+
+	if (!bValidTarget)
+	{
+		return 0;
+	}
+
+	int iMaxDistance = 60;
+	int iDistance = kTradeConnection.m_aPlotList.size();
+	int iDistanceScore = iMaxDistance - iDistance;
+	if (kTradeConnection.m_eDomain == DOMAIN_SEA)
+	{
+		iDistanceScore = iDistanceScore * 2;
+	}
+
+	//CvPlayerTrade* pPlayerTrade = m_pPlayer->GetTrade();
+	int iDangerSum = 1; // can't be zero because we divide by zero!
+	for (uint uiPlotList = 0; uiPlotList < kTradeConnection.m_aPlotList.size(); uiPlotList++)
+	{
+		CvPlot* pPlot = GC.getMap().plot(kTradeConnection.m_aPlotList[uiPlotList].m_iX, kTradeConnection.m_aPlotList[uiPlotList].m_iY);
+		CvAssertMsg(pPlot, "pPlot is null when trying to evaluate the list");
+		if (pPlot == NULL)
+		{
+			break;
+		}
+		int iDangerValue = m_pPlayer->GetPlotDanger(*pPlot);
+		if (iDangerValue == 0)
+		{
+			if (!pPlot->isVisible(m_pPlayer->getTeam()))
+			{
+				iDangerValue += 1;
+			}
+
+			if (pPlot->getTeam() != NO_TEAM && GET_TEAM(m_pPlayer->getTeam()).isAtWar(pPlot->getTeam()))
+			{
+				iDangerValue += 1000;
+			}
+		}
+		iDangerSum += iDangerValue;
+	}
+
+	return iDistanceScore - iDangerSum;
+}
+#endif
+
 // sort player numbers
 struct TRSortElement
 {
@@ -4322,11 +4490,14 @@ void CvTradeAI::PrioritizeTradeRoutes(TradeConnectionList& aTradeConnectionList)
 	{
 		return;
 	}
-
+	
 	// score TR
 	std::vector<TRSortElement> aProductionSortedTR;
 	std::vector<TRSortElement> aFoodSortedTR;
 	std::vector<TRSortElement> aGoldSortedTR;
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+	std::vector<TRSortElement> aWonderSortedTR;
+#endif
 
 	// FOOD FOOD FOOD FOOD
 	if (m_pPlayer->GetHappiness() >= 0)
@@ -4407,6 +4578,89 @@ void CvTradeAI::PrioritizeTradeRoutes(TradeConnectionList& aTradeConnectionList)
 		}
 		std::stable_sort(aProductionSortedTR.begin(), aProductionSortedTR.end(), SortTR());
 	}
+
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+	if (MOD_TRADE_WONDER_RESOURCE_ROUTES) {
+		// WONDER WONDER WONDER WONDER
+		// Find the wonder resource, we don't assume it's Marble, but we do assume there's only one
+		ResourceTypes eWonderResource = NO_RESOURCE;
+		for (int iResourceLoop = 0; iResourceLoop < GC.getNumResourceInfos(); iResourceLoop++)
+		{
+			const ResourceTypes eResource = static_cast<ResourceTypes>(iResourceLoop);
+			CvResourceInfo* pkResource = GC.getResourceInfo(eResource);
+			if (pkResource)
+			{
+				if (pkResource->getWonderProductionMod() != 0)
+				{
+					eWonderResource = eResource;
+					break;
+				}
+			}
+		}
+
+		if (eWonderResource != NO_RESOURCE) {
+			std::vector<CvCity*> apWonderTargetCities;
+			CvCity* pCity = NULL;
+			int iCityLoop;
+			for (pCity = m_pPlayer->firstCity(&iCityLoop); pCity != NULL; pCity = m_pPlayer->nextCity(&iCityLoop)) {
+				if (!pCity->IsHasResourceLocal(eWonderResource, true))
+				{
+					BuildingTypes eBuilding = pCity->getProductionBuilding();
+					if (eBuilding != -1)
+					{
+						CvBuildingEntry *pkBuilding = GC.GetGameBuildings()->GetEntry(eBuilding);
+						if (pkBuilding)
+						{
+							if (GET_PLAYER(pCity->getOwner()).GetWonderProductionAI()->IsWonder(*pkBuilding))
+							{
+								bool bAddCity = true;
+								int iDestX = pCity->getX();
+								int iDestY = pCity->getY();
+
+								// Only add if no existing wonder resource trade route to here
+								CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+								for (uint ui = 0; ui < pTrade->m_aTradeConnections.size(); ui++)
+								{
+									if (pTrade->IsTradeRouteIndexEmpty(ui))
+									{
+										continue;
+									}
+
+									TradeConnection* pTradeConnection = &(pTrade->m_aTradeConnections[ui]);
+									if (pTradeConnection->m_eConnectionType == TRADE_CONNECTION_WONDER_RESOURCE && pTradeConnection->m_iDestX == iDestX && pTradeConnection->m_iDestY == iDestY)
+									{
+										bAddCity = false;
+										break;
+									}
+								}
+							
+								if (bAddCity) {
+									apWonderTargetCities.push_back(pCity);
+									CUSTOMLOG("%s is a potential destination for a Wonder Resource trade route", pCity->getName().c_str());
+								}
+							}
+						}
+					}
+				}
+			}
+			if (apWonderTargetCities.size() > 0)
+			{
+				aWonderSortedTR.clear();
+				for (uint ui = 0; ui < aTradeConnectionList.size(); ui++)
+				{
+					TRSortElement kElement;
+					kElement.m_kTradeConnection = aTradeConnectionList[ui];
+					kElement.m_iScore = ScoreWonderTR(aTradeConnectionList[ui], apWonderTargetCities);
+					if (kElement.m_iScore > 0)
+					{
+						aWonderSortedTR.push_back(kElement);
+					}
+				}
+				std::stable_sort(aWonderSortedTR.begin(), aWonderSortedTR.end(), SortTR());
+			}
+		}
+	}
+#endif
 
 	// GOLD GOLD GOLD GOLD
 	aGoldSortedTR.clear();

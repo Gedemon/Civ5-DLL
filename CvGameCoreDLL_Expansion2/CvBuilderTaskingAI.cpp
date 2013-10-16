@@ -634,7 +634,7 @@ int CorrectWeight(int iWeight)
 }
 
 /// Use the flavor settings to determine what the worker should do
-#if defined(MOD_UNITS_LOCAL_WORKERS)
+#if defined(MOD_UNITS_LOCAL_WORKERS) || defined(MOD_AI_SECONDARY_WORKERS)
 bool CvBuilderTaskingAI::EvaluateBuilder(CvUnit* pUnit, BuilderDirective* paDirectives, UINT uaDirectives, bool bOnlyKeepBest, bool bOnlyEvaluateWorkersPlot, bool bLimit)
 #else
 bool CvBuilderTaskingAI::EvaluateBuilder(CvUnit* pUnit, BuilderDirective* paDirectives, UINT uaDirectives, bool bOnlyKeepBest, bool bOnlyEvaluateWorkersPlot)
@@ -706,7 +706,7 @@ bool CvBuilderTaskingAI::EvaluateBuilder(CvUnit* pUnit, BuilderDirective* paDire
 
 		// distance weight
 		// find how many turns the plot is away
-#if defined(MOD_UNITS_LOCAL_WORKERS)
+#if defined(MOD_UNITS_LOCAL_WORKERS) || defined(MOD_AI_SECONDARY_WORKERS)
 		int iMoveTurnsAway = FindTurnsAway(pUnit, pPlot, bLimit);
 #else
 		int iMoveTurnsAway = FindTurnsAway(pUnit, pPlot);
@@ -762,7 +762,7 @@ bool CvBuilderTaskingAI::EvaluateBuilder(CvUnit* pUnit, BuilderDirective* paDire
 
 		// distance weight
 		// find how many turns the plot is away
-#if defined(MOD_UNITS_LOCAL_WORKERS)
+#if defined(MOD_UNITS_LOCAL_WORKERS) || defined(MOD_AI_SECONDARY_WORKERS)
 		int iMoveTurnsAway = FindTurnsAway(pUnit, pPlot, bLimit);
 #else
 		int iMoveTurnsAway = FindTurnsAway(pUnit, pPlot);
@@ -1818,7 +1818,7 @@ bool CvBuilderTaskingAI::ShouldBuilderConsiderPlot(CvUnit* pUnit, CvPlot* pPlot)
 }
 
 /// Determines if the builder can get to the plot. Returns -1 if no path can be found, otherwise it returns the # of turns to get there
-#if defined(MOD_UNITS_LOCAL_WORKERS)
+#if defined(MOD_UNITS_LOCAL_WORKERS) || defined(MOD_AI_SECONDARY_WORKERS)
 int CvBuilderTaskingAI::FindTurnsAway(CvUnit* pUnit, CvPlot* pPlot, bool bLimit)
 #else
 int CvBuilderTaskingAI::FindTurnsAway(CvUnit* pUnit, CvPlot* pPlot)
@@ -1833,11 +1833,21 @@ int CvBuilderTaskingAI::FindTurnsAway(CvUnit* pUnit, CvPlot* pPlot)
 
 	int iPlotDistance = plotDistance(pUnit->getX(), pUnit->getY(), pPlot->getX(), pPlot->getY());
 
+#if defined(MOD_UNITS_LOCAL_WORKERS) || defined(MOD_AI_SECONDARY_WORKERS)
+	if (bLimit) {
+		int iLimit = iPlotDistance;
+		
 #if defined(MOD_UNITS_LOCAL_WORKERS)
-	if (bLimit && MOD_UNITS_LOCAL_WORKERS) {
-		int iLimit = (pUnit->getDomainType() == DOMAIN_LAND) ?
-						gCustomMods.getOption("UNITS_LOCAL_WORKERS_LANDLIMIT") :
-						gCustomMods.getOption("UNITS_LOCAL_WORKERS_WATERLIMIT");
+		if (MOD_UNITS_LOCAL_WORKERS && GET_PLAYER(pUnit->getOwner()).isHuman()) {
+			iLimit = (pUnit->getDomainType() == DOMAIN_SEA) ? gCustomMods.getOption("UNITS_LOCAL_WORKERS_WATERLIMIT", 10) : gCustomMods.getOption("UNITS_LOCAL_WORKERS_LANDLIMIT", 6);
+		}
+#endif
+
+#if defined(MOD_AI_SECONDARY_WORKERS)
+		if (MOD_AI_SECONDARY_WORKERS && pUnit->IsCombatUnit()) {
+			iLimit = gCustomMods.getOption("UNITS_LOCAL_WORKERS_COMBATLIMIT", 3);
+		}
+#endif
 
 		if (iPlotDistance > iLimit) {
 			return -1;

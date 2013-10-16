@@ -226,7 +226,11 @@ public:
 	void AddTradeConnectionWasPlundered(const TradeConnection kTradeConnection);
 	bool CheckTradeConnectionWasPlundered(const TradeConnection& kTradeConnection);
 
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+	static UnitTypes GetTradeUnit (DomainTypes eDomain, CvPlayer* pPlayer);
+#else
 	static UnitTypes GetTradeUnit (DomainTypes eDomain);
+#endif
 
 	std::vector<CvString> GetPlotToolTips (CvPlot* pPlot);
 	std::vector<CvString> GetPlotMouseoverToolTips (CvPlot* pPlot);
@@ -256,6 +260,9 @@ public:
 	int	ScoreInternationalTR (const TradeConnection& kTradeConnection);
 	int ScoreFoodTR(const TradeConnection& kTradeConnection, CvCity* pSmallestCity);
 	int ScoreProductionTR (const TradeConnection& kTradeConnection, std::vector<CvCity*> aTargetCityList);
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+	int ScoreWonderTR (const TradeConnection& kTradeConnection, std::vector<CvCity*> aTargetCityList);
+#endif
 
 	bool ChooseTradeUnitTargetPlot(CvUnit* pUnit, int& iOriginPlotIndex, int& iDestPlotIndex, TradeConnectionType& eTradeConnectionType, bool& bDisband, const TradeConnectionList& aTradeConnections);
 

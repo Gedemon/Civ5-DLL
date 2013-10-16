@@ -113,6 +113,10 @@ public:
 	void disbandUnit(bool bAnnounce);
 	void killUnits();
 
+#if defined(MOD_API_EXTENSIONS)
+	UnitTypes GetSpecificUnitType(const char* szUnitClass, bool hideAssert = false);
+#endif
+
 	CvPlot *GetGreatAdmiralSpawnPlot (CvUnit *pUnit);
 
 	int GetNumBuilders() const;

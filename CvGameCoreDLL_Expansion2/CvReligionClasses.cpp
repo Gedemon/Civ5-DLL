@@ -2349,7 +2349,11 @@ bool CvGameReligions::IsPreferredByCivInGame(ReligionTypes eReligion)
 /// Time to spawn a Great Prophet?
 bool CvGameReligions::CheckSpawnGreatProphet(CvPlayer& kPlayer)
 {
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+	UnitTypes eUnit = kPlayer.GetSpecificUnitType("UNITCLASS_PROPHET", true);
+#else
 	UnitTypes eUnit = (UnitTypes)GC.getInfoTypeForString("UNIT_PROPHET", true);
+#endif
 	if (eUnit == NO_UNIT)
 	{
 		return false;
@@ -5350,7 +5354,11 @@ void CvReligionAI::DoFaithPurchases()
 	else
 	{
 		// Do we need a prophet pronto to reestablish our religion?
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+		UnitTypes eProphetType = m_pPlayer->GetSpecificUnitType("UNITCLASS_PROPHET", true);
+#else
 		UnitTypes eProphetType = (UnitTypes)GC.getInfoTypeForString("UNIT_PROPHET", true);
+#endif
 		if (eProphetType != NO_UNIT && ChooseProphetConversionCity(true/*bOnlyBetterThanEnhancingReligion*/) && m_pPlayer->GetReligions()->GetNumProphetsSpawned() <= 5)
 		{
 			BuyGreatPerson(eProphetType);
@@ -5473,7 +5481,11 @@ void CvReligionAI::DoFaithPurchases()
 void CvReligionAI::BuyMissionary(ReligionTypes eReligion)
 {
 	CvPlayer &kPlayer = GET_PLAYER(m_pPlayer->GetID());
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+	UnitTypes eMissionary = kPlayer.GetSpecificUnitType("UNITCLASS_MISSIONARY");
+#else
 	UnitTypes eMissionary = (UnitTypes)GC.getInfoTypeForString("UNIT_MISSIONARY");
+#endif
 	CvCity *pCapital = kPlayer.getCapitalCity();
 	if (pCapital)
 	{
@@ -5493,7 +5505,11 @@ void CvReligionAI::BuyMissionary(ReligionTypes eReligion)
 void CvReligionAI::BuyInquisitor(ReligionTypes eReligion)
 {
 	CvPlayer &kPlayer = GET_PLAYER(m_pPlayer->GetID());
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+	UnitTypes eInquisitor = kPlayer.GetSpecificUnitType("UNITCLASS_INQUISITOR");
+#else
 	UnitTypes eInquisitor = (UnitTypes)GC.getInfoTypeForString("UNIT_INQUISITOR");
+#endif
 	CvCity *pCapital = kPlayer.getCapitalCity();
 	if (pCapital)
 	{
@@ -6294,7 +6310,11 @@ bool CvReligionAI::HaveNearbyConversionTarget(ReligionTypes eReligion, bool bCan
 	int iLoop;
 	bool bStartedOwnReligion;
 	TeamTypes eTeam = m_pPlayer->getTeam();
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+	UnitTypes eMissionary = m_pPlayer->GetSpecificUnitType("UNITCLASS_MISSIONARY");
+#else
 	UnitTypes eMissionary = (UnitTypes)GC.getInfoTypeForString("UNIT_MISSIONARY");
+#endif
 	int iMissionaryMoves = GC.getUnitInfo(eMissionary)->GetMoves();
 
 	CvCity* pCapital = m_pPlayer->getCapitalCity();

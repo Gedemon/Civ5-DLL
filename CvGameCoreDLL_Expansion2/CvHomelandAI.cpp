@@ -1098,6 +1098,20 @@ void CvHomelandAI::PlotMobileReserveMoves()
 /// Send units to sentry points around borders
 void CvHomelandAI::PlotSentryMoves()
 {
+#if defined(MOD_AI_SECONDARY_SETTLERS)
+	if (MOD_AI_SECONDARY_SETTLERS && !m_pPlayer->isMinorCiv()) {
+		// Find any units with a secondary role of settler and check for opportunistic city founding
+		PlotOpportunisticSettlementMoves();
+	}
+#endif
+	
+#if defined(MOD_AI_SECONDARY_WORKERS)
+	if (MOD_AI_SECONDARY_WORKERS && !m_pPlayer->isMinorCiv()) {
+		// Find any units with a secondary role of worker and see if there is anything close to build
+		PlotWorkerMoves(true);
+	}
+#endif
+	
 	// Do we have any targets of this type?
 	if(!m_TargetedSentryPoints.empty())
 	{
@@ -1130,8 +1144,129 @@ void CvHomelandAI::PlotSentryMoves()
 	}
 }
 
+#if defined(MOD_AI_SECONDARY_SETTLERS)
+typedef CvWeightedVector<CvPlot*, 1, true> WeightedFoundPlotVector;
+
+void CvHomelandAI::PlotOpportunisticSettlementMoves()
+{
+	const char* szCiv = m_pPlayer->getCivilizationTypeKey();
+
+	int iMinHappiness = gCustomMods.getCivOption(szCiv, "SECONDARY_SETTLERS_MIN_HAPPINESS", 5);
+	int iMinTurnsSinceLastCity = gCustomMods.getCivOption(szCiv, "SECONDARY_SETTLERS_MIN_TURNS_SINCE_LAST_CITY", 10);
+	int iMinRevealedTilesThisLandmass = gCustomMods.getCivOption(szCiv, "SECONDARY_SETTLERS_MIN_REVEALED_TILES", 10);
+	int iMaxDistance = gCustomMods.getCivOption(szCiv, "SECONDARY_SETTLERS_MAX_DISTANCE", 10);
+	int iMaxPlotsToConsider = gCustomMods.getCivOption(szCiv, "SECONDARY_SETTLERS_MAX_PLOTS_CONSIDER", 3);
+	int iMaxSettleDistance = gCustomMods.getCivOption(szCiv, "SECONDARY_SETTLERS_MAX_SETTLE_DISTANCE", 1);
+	int iMaxTravelDistance = gCustomMods.getCivOption(szCiv, "SECONDARY_SETTLERS_MAX_TRAVEL_DISTANCE", 3);
+
+	int iCapitalX = m_pPlayer->getCapitalCity()->getX();
+	int iCapitalY = m_pPlayer->getCapitalCity()->getY();
+
+	CvUnit* pLoopUnit;
+
+	if (m_pPlayer->GetHappiness() <= iMinHappiness) {
+		return;
+	}
+	
+	if (m_pPlayer->GetTurnsSinceSettledLastCity() <= iMinTurnsSinceLastCity) {
+		return;
+	}
+	
+	int iLoop;
+	for (pLoopUnit = m_pPlayer->firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = m_pPlayer->nextUnit(&iLoop)) {
+		if (!pLoopUnit->IsCombatUnit() && pLoopUnit->isFound()) {
+			return;
+		}
+	}
+	
+	// Make a list of all combat units that are on a landmass of a suitable size and could found a city at their current plot
+	MoveUnitsArray PossibleSettlerUnits;
+	for (list<int>::iterator it = m_CurrentTurnUnits.begin(); it != m_CurrentTurnUnits.end(); ++it) {
+		UnitHandle pUnit = m_pPlayer->getUnit(*it);
+		if (pUnit) {
+			if (pUnit->IsCombatUnit() && GC.getMap().getArea(pUnit->getArea())->getNumRevealedTiles(m_pPlayer->getTeam()) > iMinRevealedTilesThisLandmass && pUnit->canFound(pUnit->plot())) {
+				CvHomelandUnit unit;
+				unit.SetID(pUnit->GetID());
+				unit.SetAuxIntData(plotDistance(pUnit->getX(), pUnit->getY(), iCapitalX, iCapitalY));
+				PossibleSettlerUnits.push_back(unit);
+			}
+		}
+	}
+	
+	// Sort them by proximity to the capital
+	std::stable_sort(PossibleSettlerUnits.begin(), PossibleSettlerUnits.end(), HomelandAIHelpers::CvHomelandUnitAuxIntSort);
+	
+	if (PossibleSettlerUnits.size() > 0) {
+		CUSTOMLOG("%i possible units for opportunistic settlement", PossibleSettlerUnits.size());
+		CvMap& kMap = GC.getMap();
+		TeamTypes eUnitTeam = m_pPlayer->getTeam();
+
+		FStaticVector< CvHomelandUnit, 64, true, c_eCiv5GameplayDLL >::iterator settlerUnitIt;
+		for (settlerUnitIt = PossibleSettlerUnits.begin(); settlerUnitIt != PossibleSettlerUnits.end(); ++settlerUnitIt) {
+			UnitHandle pUnit = m_pPlayer->getUnit(settlerUnitIt->GetID());
+			int iArea = pUnit->getArea();
+			int iUnitX = pUnit->getX();
+			int iUnitY = pUnit->getY();
+			CUSTOMLOG("  ... for unit at (%i, %i)", iUnitX, iUnitY);
+
+			// Find the best locations on the landmass (within X tiles of the unit)
+			WeightedFoundPlotVector aBestPlots;
+			aBestPlots.reserve((iMaxDistance+1) * 2);
+
+			for (int iPlotX = iUnitX-iMaxDistance; iPlotX != iUnitX+iMaxDistance; iPlotX++) {
+				for (int iPlotY = iUnitY-iMaxDistance; iPlotY != iUnitY+iMaxDistance; iPlotY++) {
+					CvPlot* pPlot = kMap.plot(iPlotX, iPlotY);
+					if (!pPlot) continue;
+					if (pPlot->getArea() != iArea) continue;
+					if (!pPlot->isRevealed(eUnitTeam)) continue;
+					if (!m_pPlayer->canFound(iPlotX, iPlotY)) continue;
+
+					aBestPlots.push_back(pPlot, m_pPlayer->AI_foundValue(iPlotX, iPlotY, -1, false));
+				}
+			}
+
+			if (aBestPlots.size() > 0) {
+				int iMaxPlots = std::min(iMaxPlotsToConsider, aBestPlots.size());
+				CUSTOMLOG("  ... found %i possible plots, considering the first %i", aBestPlots.size(), iMaxPlots);
+
+				aBestPlots.SortItems();
+
+				// For the first N locations, can the unit reach it in less than one turn (ie move to the plot and found the city as one turn)
+				for (int i = 0; i < iMaxPlots; ++i ) {
+					int iPathTurns;
+					CvPlot* pFoundPlot = aBestPlots.GetElement(i);
+					CUSTOMLOG("  ... possible city plot at (%i, %i)", pFoundPlot->getX(), pFoundPlot->getY());
+					bool bCanFindPath = pUnit->GeneratePath(pFoundPlot, MOVE_TERRITORY_NO_UNEXPLORED, true, &iPathTurns);
+
+					if (bCanFindPath) {
+						CUSTOMLOG("    ... is %i moves away", iPathTurns)
+						
+						if (iPathTurns <= iMaxSettleDistance) {
+							CUSTOMLOG("    ... here comes the city!")
+							// If so, move to the plot, found the city and bail out of this method
+							pUnit->setXY(pFoundPlot->getX(), pFoundPlot->getY());
+							pUnit->PushMission(CvTypes::getMISSION_FOUND());
+							UnitProcessed(pUnit->GetID());
+							return;
+						} else if (iPathTurns <= iMaxTravelDistance) {
+							CUSTOMLOG("    ... moving towards the city site!")
+							pUnit->PushMission(CvTypes::getMISSION_MOVE_TO(), pFoundPlot->getX(), pFoundPlot->getY());
+							UnitProcessed(pUnit->GetID());
+						}
+					}
+				}
+			}
+		}
+	}
+}
+#endif
+
 /// Find something for all workers to do
+#if defined(MOD_AI_SECONDARY_WORKERS)
+void CvHomelandAI::PlotWorkerMoves(bool bSecondary)
+#else
 void CvHomelandAI::PlotWorkerMoves()
+#endif
 {
 	ClearCurrentMoveUnits();
 
@@ -1141,8 +1276,15 @@ void CvHomelandAI::PlotWorkerMoves()
 		UnitHandle pUnit = m_pPlayer->getUnit(*it);
 		if(pUnit)
 		{
+#if defined(MOD_AI_SECONDARY_WORKERS)
+			bool bUsePrimaryUnit = (pUnit->AI_getUnitAIType() == UNITAI_WORKER || pUnit->IsAutomated() && pUnit->getDomainType() == DOMAIN_LAND && pUnit->GetAutomateType() == AUTOMATE_BUILD);
+			bool bUseSecondaryUnit = (pUnit->AI_getUnitAIType() != UNITAI_WORKER && pUnit->getUnitInfo().GetUnitAIType(UNITAI_WORKER) && pUnit->getDomainType() == DOMAIN_LAND);
+
+			if((!bSecondary && bUsePrimaryUnit) || (bSecondary && bUseSecondaryUnit))
+#else
 			if(pUnit->AI_getUnitAIType() == UNITAI_WORKER  ||
 			        pUnit->IsAutomated() && pUnit->getDomainType() == DOMAIN_LAND && pUnit->GetAutomateType() == AUTOMATE_BUILD)
+#endif
 			{
 				CvHomelandUnit unit;
 				unit.SetID(pUnit->GetID());
@@ -1153,7 +1295,11 @@ void CvHomelandAI::PlotWorkerMoves()
 
 	if(m_CurrentMoveUnits.size() > 0)
 	{
+#if defined(MOD_AI_SECONDARY_WORKERS)
+		ExecuteWorkerMoves(bSecondary);
+#else
 		ExecuteWorkerMoves();
+#endif
 	}
 }
 
@@ -1261,6 +1407,20 @@ void CvHomelandAI::PlotWorkerSeaMoves()
 /// When nothing better to do, have units patrol to an adjacent tiles
 void CvHomelandAI::PlotPatrolMoves()
 {
+#if defined(MOD_AI_SECONDARY_SETTLERS)
+	if (MOD_AI_SECONDARY_SETTLERS && !m_pPlayer->isMinorCiv()) {
+		// Find any units with a secondary role of settler and check for opportunistic city founding
+		PlotOpportunisticSettlementMoves();
+	}
+#endif
+	
+#if defined(MOD_AI_SECONDARY_WORKERS)
+	if (MOD_AI_SECONDARY_WORKERS && !m_pPlayer->isMinorCiv()) {
+		// Find any units with a secondary role of worker and see if there is anything close to build
+		PlotWorkerMoves(true);
+	}
+#endif
+	
 	ClearCurrentMoveUnits();
 
 	// Loop through all remaining units
@@ -2588,7 +2748,11 @@ void CvHomelandAI::ExecuteExplorerMoves()
 }
 
 /// Moves units to explore the map
+#if defined(MOD_AI_SECONDARY_WORKERS)
+void CvHomelandAI::ExecuteWorkerMoves(bool bSecondary)
+#else
 void CvHomelandAI::ExecuteWorkerMoves()
+#endif
 {
 	CvString strLogString;
 
@@ -2639,7 +2803,11 @@ void CvHomelandAI::ExecuteWorkerMoves()
 				}
 			}
 
+#if defined(MOD_AI_SECONDARY_WORKERS)
+			bool bActionPerformed = ExecuteWorkerMove(pUnit.pointer(), bSecondary);
+#else
 			bool bActionPerformed = ExecuteWorkerMove(pUnit.pointer());
+#endif
 			if(bActionPerformed)
 			{
 				continue;
@@ -4785,6 +4953,11 @@ void CvHomelandAI::ExecuteTradeUnitMoves()
 						case TRADE_CONNECTION_PRODUCTION:
 							strLogString.Format("Establishing trade route, X: %d, Y: %d, production", pPlot->getX(), pPlot->getY());
 							break;
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+						case TRADE_CONNECTION_WONDER_RESOURCE:
+							strLogString.Format("Establishing trade route, X: %d, Y: %d, wonder resource", pPlot->getX(), pPlot->getY());
+							break;
+#endif
 						}
 
 						LogHomelandMessage(strLogString);
@@ -5525,13 +5698,26 @@ void CvHomelandAI::UnitProcessed(int iID)
 	pUnit->SetTurnProcessed(true);
 }
 
+#if defined(MOD_AI_SECONDARY_WORKERS)
+bool CvHomelandAI::ExecuteWorkerMove(CvUnit* pUnit, bool bSecondary)
+#else
 bool CvHomelandAI::ExecuteWorkerMove(CvUnit* pUnit)
+#endif
 {
+#if defined(MOD_AI_SECONDARY_WORKERS)
+	if (bSecondary) {
+		CUSTOMLOG("ExecuteWorkerMove for %s at (%i, %i)", pUnit->getName().c_str(), pUnit->plot()->getX(), pUnit->plot()->getY());
+	}
+#endif
 	const UINT ciDirectiveSize = 1;
 	BuilderDirective aDirective[ ciDirectiveSize ];
 
 	// evaluator
+#if defined(MOD_AI_SECONDARY_WORKERS)
+	bool bHasDirective = m_pPlayer->GetBuilderTaskingAI()->EvaluateBuilder(pUnit, aDirective, ciDirectiveSize, false, false, bSecondary);
+#else
 	bool bHasDirective = m_pPlayer->GetBuilderTaskingAI()->EvaluateBuilder(pUnit, aDirective, ciDirectiveSize);
+#endif
 	if(bHasDirective)
 	{
 		switch(aDirective[0].m_eDirective)
@@ -5547,10 +5733,20 @@ bool CvHomelandAI::ExecuteWorkerMove(CvUnit* pUnit)
 			MissionTypes eMission = NO_MISSION;
 			if(pUnit->getX() == aDirective[0].m_sX && pUnit->getY() == aDirective[0].m_sY)
 			{
+#if defined(MOD_AI_SECONDARY_WORKERS)
+				if (bSecondary) {
+					CUSTOMLOG("  ... build %i", ((int) aDirective[0].m_eDirective));
+				}
+#endif
 				eMission = CvTypes::getMISSION_BUILD();
 			}
 			else
 			{
+#if defined(MOD_AI_SECONDARY_WORKERS)
+				if (bSecondary) {
+					CUSTOMLOG("  ... move to (%i, %i)", ((int) aDirective[0].m_sX), ((int) aDirective[0].m_sY));
+				}
+#endif
 				eMission = CvTypes::getMISSION_MOVE_TO();
 			}
 

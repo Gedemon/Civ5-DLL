@@ -3777,7 +3777,11 @@ int CvLuaPlayer::lGetTradeUnitType(lua_State* L)
 {
 	CvPlayerAI* pkPlayer = GetInstance(L);
 	DomainTypes eDomain = (DomainTypes)lua_tointeger(L, 2);
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+	lua_pushinteger(L, pkPlayer->GetTrade()->GetTradeUnit(eDomain, pkPlayer));
+#else
 	lua_pushinteger(L, pkPlayer->GetTrade()->GetTradeUnit(eDomain));
+#endif
 	return 1;
 }
 

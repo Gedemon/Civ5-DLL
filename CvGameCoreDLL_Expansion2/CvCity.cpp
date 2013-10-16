@@ -4842,7 +4842,7 @@ int CvCity::GetPurchaseCost(BuildingTypes eBuilding)
 		// Deduct any current production towards this building
 		int iProductionToDate = m_pCityBuildings->GetBuildingProduction(eBuilding);
 		// CUSTOMLOG("Production to date for %s is %i", pkBuildingInfo->GetType(), iProductionToDate);
-		iProductionNeeded -= (iProductionToDate * gCustomMods.getOption("BUILDINGS_PRO_RATA_PURCHASE_DEPRECIATION")) / 100;
+		iProductionNeeded -= (iProductionToDate * gCustomMods.getOption("BUILDINGS_PRO_RATA_PURCHASE_DEPRECIATION", 80)) / 100;
 		// CUSTOMLOG("Pro-rata production needed for %s is %i", pkBuildingInfo->GetType(), iProductionNeeded);
 	}
 	
@@ -8157,7 +8157,42 @@ int CvCity::GetLocalResourceWonderProductionMod(BuildingTypes eBuilding, CvStrin
 			return 0;
 		}
 		
-		// TODO - WH - are we using a trade route to ship a "wonder resource" to this city?
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+		// Are we using a trade route to ship the wonder resource from/to this city?
+		bool bWonderResourceIn = false;
+		bool bWonderResourceOut = false;
+		if (MOD_TRADE_WONDER_RESOURCE_ROUTES) {
+			CvGameTrade* pGameTrade = GC.getGame().GetGameTrade();
+			for (uint ui = 0; ui < pGameTrade->m_aTradeConnections.size(); ui++)
+			{
+				if (pGameTrade->IsTradeRouteIndexEmpty(ui))
+				{
+					continue;
+				}
+
+				if (pGameTrade->m_aTradeConnections[ui].m_eConnectionType == TRADE_CONNECTION_WONDER_RESOURCE)
+				{
+					CvCity* pDestCity = CvGameTrade::GetDestCity(pGameTrade->m_aTradeConnections[ui]);
+					if (pDestCity->getX() == getX() && pDestCity->getY() == getY())
+					{
+						bWonderResourceIn = true;
+					}
+					else
+					{
+						CvCity* pOriginCity = CvGameTrade::GetOriginCity(pGameTrade->m_aTradeConnections[ui]);
+						if (pOriginCity->getX() == getX() && pOriginCity->getY() == getY())
+						{
+							bWonderResourceOut = true;
+						}
+					}
+
+					break;
+				}
+			}
+			if (bWonderResourceIn) CUSTOMLOG("Shipping a wonder resource into %s", getName().c_str());
+			if (bWonderResourceOut) CUSTOMLOG("Shipping a wonder resource out of %s", getName().c_str());
+		}
+#endif
 
 		// Resource wonder bonus
 		for(int iResourceLoop = 0; iResourceLoop < GC.getNumResourceInfos(); iResourceLoop++)
@@ -8169,7 +8204,16 @@ int CvCity::GetLocalResourceWonderProductionMod(BuildingTypes eBuilding, CvStrin
 				int iBonus = pkResource->getWonderProductionMod();
 				if(iBonus != 0)
 				{
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+					bool bHasLocalResource = IsHasResourceLocal(eResource, /*bTestVisible*/ false);
+					if (MOD_TRADE_WONDER_RESOURCE_ROUTES) {
+						// We're shipping one in, or we're not shipping our only one out, or we have more than one
+						bHasLocalResource = bWonderResourceIn || (m_paiNumResourcesLocal[eResource] == 1 && !bWonderResourceOut) || (m_paiNumResourcesLocal[eResource] > 1);
+					}
+					if(bHasLocalResource)
+#else
 					if(IsHasResourceLocal(eResource, /*bTestVisible*/ false))
+#endif
 					{
 						// Depends on era of wonder?
 						EraTypes eResourceObsoleteEra = pkResource->getWonderProductionModObsoleteEra();
@@ -13130,7 +13174,14 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 				return;	// Can't create the unit, most likely we have no place for it.  We have not deducted the cost yet so just exit.
 
 			CvUnit* pUnit = kPlayer.getUnit(iResult);
-			pUnit->setMoves(0);
+#if defined(MOD_BUGFIX_MOVE_AFTER_PURCHASE)
+			if (!pUnit->getUnitInfo().CanMoveAfterPurchase())
+			{
+#endif
+				pUnit->setMoves(0);
+#if defined(MOD_BUGFIX_MOVE_AFTER_PURCHASE)
+			}
+#endif
 
 #if defined(MOD_EVENTS_CITY)
 			if (MOD_EVENTS_CITY) {
@@ -15219,6 +15270,7 @@ void CvCity::CheckForAchievementBuilding(BuildingTypes eBuilding)
 //	--------------------------------------------------------------------------------
 void CvCity::IncrementUnitStatCount(CvUnit* pUnit)
 {
+#if !defined(NO_ACHIEVEMENTS)
 	CvString szUnitType = pUnit->getUnitInfo().GetType();
 
 	if(szUnitType == "UNIT_WARRIOR")
@@ -15550,7 +15602,6 @@ void CvCity::IncrementUnitStatCount(CvUnit* pUnit)
 		OutputDebugString("\nNo stat for selected unit type.\n");
 	}
 
-#if !defined(NO_ACHIEVEMENTS)
 	bool bAllUnitsUnlocked;
 
 	bAllUnitsUnlocked = AreAllUnitsBuilt();

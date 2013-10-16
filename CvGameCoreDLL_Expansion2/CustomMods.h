@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 25)
+#define MOD_DLL_VERSION_NUMBER ((uint) 26)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta), r (released) or blank
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -134,6 +134,9 @@
 // Permits cities to work more rings - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_BUILDINGS_CITY_WORKING                  gCustomMods.isBUILDINGS_CITY_WORKING()
 
+// Permits wonder resource (ie Marble) trade routes to be established
+// #define MOD_TRADE_WONDER_RESOURCE_ROUTES            gCustomMods.isTRADE_WONDER_RESOURCE_ROUTES()
+
 // Restricts worker suggestions to local tiles
 #define MOD_UNITS_LOCAL_WORKERS                     gCustomMods.isUNITS_LOCAL_WORKERS()
 // Hovering unit can only heal over land
@@ -149,6 +152,11 @@
 #define MOD_RELIGION_CONVERSION_MODIFIERS           gCustomMods.isRELIGION_CONVERSION_MODIFIERS()
 // Keeps overflow faith from spawning a Great Prophet if the base spawn chance is 100%
 #define MOD_RELIGION_KEEP_PROPHET_OVERFLOW          gCustomMods.isRELIGION_KEEP_PROPHET_OVERFLOW()
+
+// Fixes the AI's inability to use combat units as secondary workers
+#define MOD_AI_SECONDARY_WORKERS                    gCustomMods.isAI_SECONDARY_WORKERS()
+// Fixes the AI's inability to use combat units for founding cities
+#define MOD_AI_SECONDARY_SETTLERS                   gCustomMods.isAI_SECONDARY_SETTLERS()
 
 // Event sent when a team circumnavigates the globe -->
 //   GameEvents.CircumnavigatedGlobe.Add(function(eTeam) end)
@@ -294,6 +302,12 @@
 
 // Fixes the bug in the Lua Plot:ChangeVisibilityCount() method where iChange is treated as a boolean and not a signed int
 #define MOD_BUGFIX_LUA_CHANGE_VISIBILITY_COUNT      gCustomMods.isBUGFIX_LUA_CHANGE_VISIBILITY_COUNT()
+// Fixes the CanMoveAfterPurchase() bug where it is only tested for at one specific point in the code
+#define MOD_BUGFIX_MOVE_AFTER_PURCHASE              gCustomMods.isBUGFIX_MOVE_AFTER_PURCHASE()
+// Fixes the issues caused by using UNIT_XYZ instead of UNITCLASS_XYZ
+#define MOD_BUGFIX_UNITCLASS_NOT_UNIT               gCustomMods.isBUGFIX_UNITCLASS_NOT_UNIT()
+// Fixes the issues caused by using BUILDING_XYZ instead of BUILDINGCLASS_XYZ
+#define MOD_BUGFIX_BUILDINGCLASS_NOT_BUILDING       gCustomMods.isBUGFIX_BUILDINGCLASS_NOT_BUILDING()
 // Fixes the NumCitiesFreeFoodBuilding (policy finisher) bug where the civilization has a UB for the Aquaduct
 #define MOD_BUGFIX_FREE_FOOD_BUILDING               gCustomMods.isBUGFIX_FREE_FOOD_BUILDING()
 // Fixes the bug where the naval Civilization_FreeUnits start on land
@@ -401,7 +415,9 @@ public:
 
 	void preloadCache();
 	void reloadCache();
-	int getOption(const char* szName);
+	int getOption(const char* szName, int defValue = 0);
+	int getOption(string sName, int defValue = 0);
+	int getCivOption(const char* szCiv, const char* szName, int defValue = 0);
 
 	inline bool isGLOBAL_STACKING_RULES()                   { return m_bGLOBAL_STACKING_RULES; }
 	inline bool isGLOBAL_LOCAL_GENERALS()                   { return m_bGLOBAL_LOCAL_GENERALS; }
@@ -449,6 +465,8 @@ public:
 	inline bool isBUILDINGS_PRO_RATA_PURCHASE()             { return m_bBUILDINGS_PRO_RATA_PURCHASE; }
 	inline bool isBUILDINGS_CITY_WORKING()                  { return m_bBUILDINGS_CITY_WORKING; }
 
+	inline bool isTRADE_WONDER_RESOURCE_ROUTES()            { return m_bTRADE_WONDER_RESOURCE_ROUTES; }
+
 	inline bool isUNITS_LOCAL_WORKERS()                     { return m_bUNITS_LOCAL_WORKERS; }
 	inline bool isUNITS_HOVERING_LAND_ONLY_HEAL()           { return m_bUNITS_HOVERING_LAND_ONLY_HEAL; }
 	inline bool isUNITS_HOVERING_COASTAL_ATTACKS()          { return m_bUNITS_HOVERING_COASTAL_ATTACKS; }
@@ -457,6 +475,9 @@ public:
 	inline bool isRELIGION_RANDOMISE()                      { return m_bRELIGION_RANDOMISE; }
 	inline bool isRELIGION_CONVERSION_MODIFIERS()           { return m_bRELIGION_CONVERSION_MODIFIERS; }
 	inline bool isRELIGION_KEEP_PROPHET_OVERFLOW()          { return m_bRELIGION_KEEP_PROPHET_OVERFLOW; }
+
+	inline bool isAI_SECONDARY_WORKERS()                    { return m_bAI_SECONDARY_WORKERS; }
+	inline bool isAI_SECONDARY_SETTLERS()                   { return m_bAI_SECONDARY_SETTLERS; }
 
 	inline bool isEVENTS_CIRCUMNAVIGATION()                 { return m_bEVENTS_CIRCUMNAVIGATION; }
 	inline bool isEVENTS_NEW_ERA()                          { return m_bEVENTS_NEW_ERA; }
@@ -496,6 +517,9 @@ public:
 	inline bool isCONFIG_AI_IN_XML()                        { return m_bCONFIG_AI_IN_XML; }
 
 	inline bool isBUGFIX_LUA_CHANGE_VISIBILITY_COUNT()      { return m_bBUGFIX_LUA_CHANGE_VISIBILITY_COUNT; }
+	inline bool isBUGFIX_MOVE_AFTER_PURCHASE()              { return m_bBUGFIX_MOVE_AFTER_PURCHASE; }
+	inline bool isBUGFIX_UNITCLASS_NOT_UNIT()               { return m_bBUGFIX_UNITCLASS_NOT_UNIT; }
+	inline bool isBUGFIX_BUILDINGCLASS_NOT_BUILDING()       { return m_bBUGFIX_BUILDINGCLASS_NOT_BUILDING; }
 	inline bool isBUGFIX_FREE_FOOD_BUILDING()               { return m_bBUGFIX_FREE_FOOD_BUILDING; }
 	inline bool isBUGFIX_NAVAL_FREE_UNITS()                 { return m_bBUGFIX_NAVAL_FREE_UNITS; }
 	inline bool isBUGFIX_NAVAL_NEAREST_WATER()              { return m_bBUGFIX_NAVAL_NEAREST_WATER; }
@@ -563,6 +587,8 @@ protected:
 	bool m_bBUILDINGS_PRO_RATA_PURCHASE;
 	bool m_bBUILDINGS_CITY_WORKING;
 
+	bool m_bTRADE_WONDER_RESOURCE_ROUTES;
+
 	bool m_bUNITS_LOCAL_WORKERS;
 	bool m_bUNITS_HOVERING_LAND_ONLY_HEAL;
 	bool m_bUNITS_HOVERING_COASTAL_ATTACKS;
@@ -571,6 +597,9 @@ protected:
 	bool m_bRELIGION_RANDOMISE;
 	bool m_bRELIGION_CONVERSION_MODIFIERS;
 	bool m_bRELIGION_KEEP_PROPHET_OVERFLOW;
+
+	bool m_bAI_SECONDARY_WORKERS;
+	bool m_bAI_SECONDARY_SETTLERS;
 
 	bool m_bEVENTS_CIRCUMNAVIGATION;
 	bool m_bEVENTS_NEW_ERA;
@@ -610,6 +639,9 @@ protected:
 	bool m_bCONFIG_AI_IN_XML;
 
 	bool m_bBUGFIX_LUA_CHANGE_VISIBILITY_COUNT;
+	bool m_bBUGFIX_MOVE_AFTER_PURCHASE;
+	bool m_bBUGFIX_UNITCLASS_NOT_UNIT;
+	bool m_bBUGFIX_BUILDINGCLASS_NOT_BUILDING;
 	bool m_bBUGFIX_FREE_FOOD_BUILDING;
 	bool m_bBUGFIX_NAVAL_FREE_UNITS;
 	bool m_bBUGFIX_NAVAL_NEAREST_WATER;

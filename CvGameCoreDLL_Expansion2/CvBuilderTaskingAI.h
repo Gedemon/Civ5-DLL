@@ -74,7 +74,7 @@ public:
 	void Update(void);
 	void UpdateRoutePlots(void);
 
-#if defined(MOD_UNITS_LOCAL_WORKERS)
+#if defined(MOD_UNITS_LOCAL_WORKERS) || defined(MOD_AI_SECONDARY_WORKERS)
 	bool EvaluateBuilder(CvUnit* pUnit, BuilderDirective* paDirectives, UINT uaDirectives, bool bKeepOnlyBest = false, bool bOnlyEvaluateWorkersPlot = false, bool bLimit = false);
 #else
 	bool EvaluateBuilder(CvUnit* pUnit, BuilderDirective* paDirectives, UINT uaDirectives, bool bKeepOnlyBest = false, bool bOnlyEvaluateWorkersPlot = false);
@@ -89,7 +89,7 @@ public:
 	void AddScrubFalloutDirectives(CvUnit* pUnit, CvPlot* pPlot, int iMoveTurnsAway);
 
 	bool ShouldBuilderConsiderPlot(CvUnit* pUnit, CvPlot* pPlot);  // determines all the logistics if the builder should get to the plot
-#if defined(MOD_UNITS_LOCAL_WORKERS)
+#if defined(MOD_UNITS_LOCAL_WORKERS) || defined(MOD_AI_SECONDARY_WORKERS)
 	int FindTurnsAway(CvUnit* pUnit, CvPlot* pPlot, bool bLimit = false);  // returns -1 if no path can be found, otherwise it returns the # of turns to get there
 #else
 	int FindTurnsAway(CvUnit* pUnit, CvPlot* pPlot);  // returns -1 if no path can be found, otherwise it returns the # of turns to get there

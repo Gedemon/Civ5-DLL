@@ -2258,7 +2258,11 @@ void CvEconomicAI::DisbandExtraArchaeologists(){
 	}
 	
 	CvUnit* pUnit;
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+	UnitTypes eArch = m_pPlayer->GetSpecificUnitType("UNITCLASS_ARCHAEOLOGIST");
+#else
 	UnitTypes eArch = (UnitTypes) GC.getInfoTypeForString("UNIT_ARCHAEOLOGIST");
+#endif
 	if(eArch == NO_UNIT){
 		return;
 	}
@@ -2599,7 +2603,11 @@ CvUnit* CvEconomicAI::FindWorkerToScrap()
 		{
 			continue;
 		}
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+		UnitTypes eWorker = m_pPlayer->GetSpecificUnitType("UNITCLASS_WORKER");
+#else
 		UnitTypes eWorker = (UnitTypes) GC.getInfoTypeForString("UNIT_WORKER");
+#endif
 		if(pLoopUnit->getDomainType() == DOMAIN_LAND && pLoopUnit->getUnitType() == eWorker && !pLoopUnit->IsCombatUnit() && pLoopUnit->getSpecialUnitType() == NO_SPECIALUNIT)
 		{
 			return pLoopUnit;
@@ -2621,7 +2629,11 @@ CvUnit* CvEconomicAI::FindArchaeologistToScrap()
 		{
 			continue;
 		}
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+		UnitTypes eArch = m_pPlayer->GetSpecificUnitType("UNITCLASS_ARCHAEOLOGIST");
+#else
 		UnitTypes eArch = (UnitTypes) GC.getInfoTypeForString("UNIT_ARCHAEOLOGIST", true);
+#endif
 		if(pLoopUnit->getUnitType() == eArch)
 		{
 			return pLoopUnit;
@@ -4087,9 +4099,16 @@ bool EconomicAIHelpers::IsTestStrategy_NeedGuilds(CvPlayer* pPlayer)
 {
 	CvTeam &kTeam = GET_TEAM(pPlayer->getTeam());
 
+#if defined(MOD_BUGFIX_BUILDINGCLASS_NOT_BUILDING)
+	CvCivilizationInfo& playerCivilizationInfo = pPlayer->getCivilizationInfo();
+	BuildingTypes eWritersGuild = (BuildingTypes)playerCivilizationInfo.getCivilizationBuildings((BuildingClassTypes)GC.getInfoTypeForString("BUILDINGCLASS_WRITERS_GUILD"));
+	BuildingTypes eArtistsGuild = (BuildingTypes)playerCivilizationInfo.getCivilizationBuildings((BuildingClassTypes)GC.getInfoTypeForString("BUILDINGCLASS_ARTISTS_GUILD"));
+	BuildingTypes eMusiciansGuild = (BuildingTypes)playerCivilizationInfo.getCivilizationBuildings((BuildingClassTypes)GC.getInfoTypeForString("BUILDINGCLASS_MUSICIANS_GUILD"));
+#else
 	BuildingTypes eWritersGuild = (BuildingTypes)GC.getInfoTypeForString("BUILDING_WRITERS_GUILD", true);
 	BuildingTypes eArtistsGuild = (BuildingTypes)GC.getInfoTypeForString("BUILDING_ARTISTS_GUILD", true);
 	BuildingTypes eMusiciansGuild = (BuildingTypes)GC.getInfoTypeForString("BUILDING_MUSICIANS_GUILD", true);
+#endif
 
 	CvBuildingEntry *pkBuilding;
 	pkBuilding = GC.getBuildingInfo(eWritersGuild);
