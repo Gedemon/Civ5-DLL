@@ -1297,7 +1297,11 @@ public:
 
 	// Ported in from old CvUnitAI class
 	int SearchRange(int iRange) const;
+#if defined(MOD_AI_SECONDARY_WORKERS)
+	bool PlotValid(CvPlot* pPlot, byte bMoveFlags = 0) const;
+#else
 	bool PlotValid(CvPlot* pPlot) const;
+#endif
 
 	CvUnitReligion* GetReligionData() const
 	{

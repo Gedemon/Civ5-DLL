@@ -3242,9 +3242,9 @@ bool CvUnit::jumpToNearestValidPlot()
 						{
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
 #if defined(MOD_BUGFIX_NAVAL_NEAREST_WATER)
-							bool bCanEnter = getDomainType() != DOMAIN_SEA || (pLoopPlot->isFriendlyCityOrPassableFort(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || pLoopPlot->isCoastalLand())) || pLoopPlot->isWater();
-#else
 							bool bCanEnter = getDomainType() != DOMAIN_SEA || (pLoopPlot->isFriendlyCityOrPassableFort(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || pLoopPlot->isCoastalLand())) || (pLoopPlot->isWater() && !pLoopPlot->isLake());
+#else
+							bool bCanEnter = getDomainType() != DOMAIN_SEA || (pLoopPlot->isFriendlyCityOrPassableFort(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || pLoopPlot->isCoastalLand())) || pLoopPlot->isWater());
 #endif
 							if(bCanEnter)
 #else
@@ -9223,7 +9223,6 @@ bool CvUnit::canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestVisible,
 	VALIDATE_OBJECT
 	CvAssertMsg(eBuild < GC.getNumBuildInfos() && eBuild >= 0, "Index out of bounds");
 
-
 	if(!(m_pUnitInfo->GetBuilds(eBuild)))
 	{
 		return false;
@@ -9249,15 +9248,25 @@ bool CvUnit::canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestVisible,
 		return false;
 	}
 
+#if defined(MOD_AI_SECONDARY_WORKERS)
+	bool bValidBuildPlot = pPlot->isValidDomainForAction(*this) ||
+		                  (pkBuildInfo->IsWater() && getDomainType() == DOMAIN_LAND && pPlot->isWater() && IsHasEmbarkAbility());
+	if(!bValidBuildPlot)
+#else
 	if(!pPlot->isValidDomainForAction(*this))
+#endif
 	{
 		return false;
 	}
 
  	if (pPlot->isWater())
  	{
-		// TODO - WH - UNIT_ (samurai)
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+		// Needs the associated SQL executing - UPDATE Builds SET CanBeEmbarked=1 WHERE Type='BUILD_FISHING_BOATS_NO_KILL';
+		if ((isEmbarked() && !pkBuildInfo->IsCanBeEmbarked()))
+#else
 		if ((isEmbarked() && !pkBuildInfo->IsCanBeEmbarked())  && (strcmp("UNIT_JAPANESE_SAMURAI", getUnitInfo().GetType()) != 0))
+#endif
 		{
  			return false;
 		}
@@ -21542,7 +21551,11 @@ int CvUnit::SearchRange(int iRange) const
 }
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_AI_SECONDARY_WORKERS)
+bool CvUnit::PlotValid(CvPlot* pPlot, byte bMoveFlags) const
+#else
 bool CvUnit::PlotValid(CvPlot* pPlot) const
+#endif
 {
 	VALIDATE_OBJECT
 	if(isNoRevealMap() && willRevealByMove(*pPlot))
@@ -21550,7 +21563,11 @@ bool CvUnit::PlotValid(CvPlot* pPlot) const
 		return false;
 	}
 
+#if defined(MOD_AI_SECONDARY_WORKERS)
+	if(!canEnterTerrain(*pPlot, bMoveFlags))
+#else
 	if(!canEnterTerrain(*pPlot))
+#endif
 	{
 		return false;
 	}
@@ -21585,9 +21602,17 @@ bool CvUnit::PlotValid(CvPlot* pPlot) const
 
 	case DOMAIN_LAND:
 #if defined(MOD_BUGFIX_HOVERING_PATHFINDER)
+#if defined(MOD_AI_SECONDARY_WORKERS)
+		if((pPlot->getArea() == getArea() || (bMoveFlags&MOVEFLAG_PRETEND_CORRECT_EMBARK_STATE)) || canMoveAllTerrain() || IsHoveringUnit() || pPlot->IsAllowsWalkWater())
+#else
 		if(pPlot->getArea() == getArea() || canMoveAllTerrain() || IsHoveringUnit() || pPlot->IsAllowsWalkWater())
+#endif
+#else
+#if defined(MOD_AI_SECONDARY_WORKERS)
+		if((pPlot->getArea() == getArea() || (bMoveFlags&MOVEFLAG_PRETEND_CORRECT_EMBARK_STATE)) || canMoveAllTerrain() || pPlot->IsAllowsWalkWater())
 #else
 		if(pPlot->getArea() == getArea() || canMoveAllTerrain() || pPlot->IsAllowsWalkWater())
+#endif
 #endif
 		{
 			return true;

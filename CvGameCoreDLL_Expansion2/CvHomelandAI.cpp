@@ -1098,13 +1098,6 @@ void CvHomelandAI::PlotMobileReserveMoves()
 /// Send units to sentry points around borders
 void CvHomelandAI::PlotSentryMoves()
 {
-#if defined(MOD_AI_SECONDARY_SETTLERS)
-	if (MOD_AI_SECONDARY_SETTLERS && !m_pPlayer->isMinorCiv()) {
-		// Find any units with a secondary role of settler and check for opportunistic city founding
-		PlotOpportunisticSettlementMoves();
-	}
-#endif
-	
 #if defined(MOD_AI_SECONDARY_WORKERS)
 	if (MOD_AI_SECONDARY_WORKERS && !m_pPlayer->isMinorCiv()) {
 		// Find any units with a secondary role of worker and see if there is anything close to build
@@ -1197,7 +1190,7 @@ void CvHomelandAI::PlotOpportunisticSettlementMoves()
 	std::stable_sort(PossibleSettlerUnits.begin(), PossibleSettlerUnits.end(), HomelandAIHelpers::CvHomelandUnitAuxIntSort);
 	
 	if (PossibleSettlerUnits.size() > 0) {
-		CUSTOMLOG("%i possible units for opportunistic settlement", PossibleSettlerUnits.size());
+		// CUSTOMLOG("%i possible units for opportunistic settlement", PossibleSettlerUnits.size());
 		CvMap& kMap = GC.getMap();
 		TeamTypes eUnitTeam = m_pPlayer->getTeam();
 
@@ -1207,7 +1200,7 @@ void CvHomelandAI::PlotOpportunisticSettlementMoves()
 			int iArea = pUnit->getArea();
 			int iUnitX = pUnit->getX();
 			int iUnitY = pUnit->getY();
-			CUSTOMLOG("  ... for unit at (%i, %i)", iUnitX, iUnitY);
+			// CUSTOMLOG("  ... for unit at (%i, %i)", iUnitX, iUnitY);
 
 			// Find the best locations on the landmass (within X tiles of the unit)
 			WeightedFoundPlotVector aBestPlots;
@@ -1227,7 +1220,7 @@ void CvHomelandAI::PlotOpportunisticSettlementMoves()
 
 			if (aBestPlots.size() > 0) {
 				int iMaxPlots = std::min(iMaxPlotsToConsider, aBestPlots.size());
-				CUSTOMLOG("  ... found %i possible plots, considering the first %i", aBestPlots.size(), iMaxPlots);
+				// CUSTOMLOG("  ... found %i possible plots, considering the first %i", aBestPlots.size(), iMaxPlots);
 
 				aBestPlots.SortItems();
 
@@ -1235,21 +1228,21 @@ void CvHomelandAI::PlotOpportunisticSettlementMoves()
 				for (int i = 0; i < iMaxPlots; ++i ) {
 					int iPathTurns;
 					CvPlot* pFoundPlot = aBestPlots.GetElement(i);
-					CUSTOMLOG("  ... possible city plot at (%i, %i)", pFoundPlot->getX(), pFoundPlot->getY());
+					// CUSTOMLOG("  ... possible city plot at (%i, %i)", pFoundPlot->getX(), pFoundPlot->getY());
 					bool bCanFindPath = pUnit->GeneratePath(pFoundPlot, MOVE_TERRITORY_NO_UNEXPLORED, true, &iPathTurns);
 
 					if (bCanFindPath) {
-						CUSTOMLOG("    ... is %i moves away", iPathTurns)
+						// CUSTOMLOG("    ... is %i moves away", iPathTurns)
 						
 						if (iPathTurns <= iMaxSettleDistance) {
-							CUSTOMLOG("    ... here comes the city!")
+							// CUSTOMLOG("    ... here comes the city!")
 							// If so, move to the plot, found the city and bail out of this method
 							pUnit->setXY(pFoundPlot->getX(), pFoundPlot->getY());
 							pUnit->PushMission(CvTypes::getMISSION_FOUND());
 							UnitProcessed(pUnit->GetID());
 							return;
 						} else if (iPathTurns <= iMaxTravelDistance) {
-							CUSTOMLOG("    ... moving towards the city site!")
+							// CUSTOMLOG("    ... moving towards the city site!")
 							pUnit->PushMission(CvTypes::getMISSION_MOVE_TO(), pFoundPlot->getX(), pFoundPlot->getY());
 							UnitProcessed(pUnit->GetID());
 						}
@@ -1278,7 +1271,7 @@ void CvHomelandAI::PlotWorkerMoves()
 		{
 #if defined(MOD_AI_SECONDARY_WORKERS)
 			bool bUsePrimaryUnit = (pUnit->AI_getUnitAIType() == UNITAI_WORKER || pUnit->IsAutomated() && pUnit->getDomainType() == DOMAIN_LAND && pUnit->GetAutomateType() == AUTOMATE_BUILD);
-			bool bUseSecondaryUnit = (pUnit->AI_getUnitAIType() != UNITAI_WORKER && pUnit->getUnitInfo().GetUnitAIType(UNITAI_WORKER) && pUnit->getDomainType() == DOMAIN_LAND);
+			bool bUseSecondaryUnit = (pUnit->AI_getUnitAIType() != UNITAI_WORKER && (pUnit->getUnitInfo().GetUnitAIType(UNITAI_WORKER) || pUnit->getUnitInfo().GetUnitAIType(UNITAI_WORKER_SEA)) && pUnit->getDomainType() == DOMAIN_LAND);
 
 			if((!bSecondary && bUsePrimaryUnit) || (bSecondary && bUseSecondaryUnit))
 #else
@@ -1411,13 +1404,6 @@ void CvHomelandAI::PlotPatrolMoves()
 	if (MOD_AI_SECONDARY_SETTLERS && !m_pPlayer->isMinorCiv()) {
 		// Find any units with a secondary role of settler and check for opportunistic city founding
 		PlotOpportunisticSettlementMoves();
-	}
-#endif
-	
-#if defined(MOD_AI_SECONDARY_WORKERS)
-	if (MOD_AI_SECONDARY_WORKERS && !m_pPlayer->isMinorCiv()) {
-		// Find any units with a secondary role of worker and see if there is anything close to build
-		PlotWorkerMoves(true);
 	}
 #endif
 	
@@ -2768,7 +2754,11 @@ void CvHomelandAI::ExecuteWorkerMoves()
 
 			if(pPlot && m_pPlayer->IsPlotUnderImmediateThreat(*pPlot) && !pPlot->getBestDefender(m_pPlayer->GetID()))
 			{
-				if(MoveCivilianToSafety(pUnit.pointer()))
+#if defined(MOD_AI_SECONDARY_WORKERS)
+				if(MoveCivilianToSafety(pUnit.pointer(), false, bSecondary))
+#else
+				if(MoveCivilianToSafety(pUnit.pointer(), false))
+#endif
 				{
 					if(GC.getLogging() && GC.GetBuilderAILogging())
 					{
@@ -2814,7 +2804,17 @@ void CvHomelandAI::ExecuteWorkerMoves()
 			}
 
 			// if there's nothing else to do, move to the safest spot nearby
+#if defined(MOD_AI_SECONDARY_WORKERS)
+			// Only move primary workers (actual civilian workers/workboats) or embarked secondary workers (combat units) to safety
+			if (bSecondary && !pUnit.pointer()->isEmbarked())
+			{
+				continue;
+			}
+
+			if(MoveCivilianToSafety(pUnit.pointer(), true /*bIgnoreUnits*/), bSecondary)
+#else
 			if(MoveCivilianToSafety(pUnit.pointer(), true /*bIgnoreUnits*/))
+#endif
 			{
 				if(GC.getLogging() && GC.GetBuilderAILogging())
 				{
@@ -4727,7 +4727,11 @@ void CvHomelandAI::ExecuteAircraftMoves()
 
 
 /// Fleeing to safety for civilian units
+#if defined(MOD_AI_SECONDARY_WORKERS)
+bool CvHomelandAI::MoveCivilianToSafety(CvUnit* pUnit, bool bIgnoreUnits, bool bSecondary)
+#else
 bool CvHomelandAI::MoveCivilianToSafety(CvUnit* pUnit, bool bIgnoreUnits)
+#endif
 {
 	int iSearchRange = pUnit->SearchRange(1);
 
@@ -4745,7 +4749,11 @@ bool CvHomelandAI::MoveCivilianToSafety(CvUnit* pUnit, bool bIgnoreUnits)
 				continue;
 			}
 
+#if defined(MOD_AI_SECONDARY_WORKERS)
+			if(!pUnit->PlotValid(pLoopPlot, CvUnit::MOVEFLAG_PRETEND_CORRECT_EMBARK_STATE))
+#else
 			if(!pUnit->PlotValid(pLoopPlot))
+#endif
 			{
 				continue;
 			}
@@ -4761,6 +4769,13 @@ bool CvHomelandAI::MoveCivilianToSafety(CvUnit* pUnit, bool bIgnoreUnits)
 				// if this is within our territory, provide a minor benefit
 				iValue += 1;
 			}
+
+#if defined(MOD_AI_SECONDARY_WORKERS)
+			if (bSecondary && pUnit->getDomainType() == DOMAIN_LAND && pLoopPlot->isWater()) {
+				// being embarked is NOT safe!
+				iValue -= 100;
+			}
+#endif
 
 			CvCity* pCity = pLoopPlot->getPlotCity();
 			if(pCity && pCity->getTeam() == pUnit->getTeam())
@@ -5705,9 +5720,7 @@ bool CvHomelandAI::ExecuteWorkerMove(CvUnit* pUnit)
 #endif
 {
 #if defined(MOD_AI_SECONDARY_WORKERS)
-	if (bSecondary) {
-		CUSTOMLOG("ExecuteWorkerMove for %s at (%i, %i)", pUnit->getName().c_str(), pUnit->plot()->getX(), pUnit->plot()->getY());
-	}
+	// if (bSecondary) CUSTOMLOG("ExecuteWorkerMove(secondary) for %s at (%i, %i)", pUnit->getName().c_str(), pUnit->plot()->getX(), pUnit->plot()->getY());
 #endif
 	const UINT ciDirectiveSize = 1;
 	BuilderDirective aDirective[ ciDirectiveSize ];
@@ -5734,18 +5747,14 @@ bool CvHomelandAI::ExecuteWorkerMove(CvUnit* pUnit)
 			if(pUnit->getX() == aDirective[0].m_sX && pUnit->getY() == aDirective[0].m_sY)
 			{
 #if defined(MOD_AI_SECONDARY_WORKERS)
-				if (bSecondary) {
-					CUSTOMLOG("  ... build %i", ((int) aDirective[0].m_eDirective));
-				}
+				// if (bSecondary) CUSTOMLOG("  ... build %i", ((int) aDirective[0].m_eDirective));
 #endif
 				eMission = CvTypes::getMISSION_BUILD();
 			}
 			else
 			{
 #if defined(MOD_AI_SECONDARY_WORKERS)
-				if (bSecondary) {
-					CUSTOMLOG("  ... move to (%i, %i)", ((int) aDirective[0].m_sX), ((int) aDirective[0].m_sY));
-				}
+				// if (bSecondary) CUSTOMLOG("  ... move to (%i, %i)", ((int) aDirective[0].m_sX), ((int) aDirective[0].m_sY));
 #endif
 				eMission = CvTypes::getMISSION_MOVE_TO();
 			}
