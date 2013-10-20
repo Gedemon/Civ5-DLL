@@ -185,8 +185,10 @@ public:
 	void resetTurnTimer(bool resetGameTurnStart = true);
 	int getMaxTurnLen();
 
+#if !defined(NO_TUTORIALS)
 	bool IsStaticTutorialActive() const;
 	void SetStaticTutorialActive(bool bStaticTutorialActive);
+#endif
 
 	bool HasAdvisorMessageBeenSeen(_In_z_ const char* szAdvisorMessageName);
 	void SetAdvisorMessageHasBeenSeen(_In_z_ const char* szAdvisorMessageName, bool bSeen);
@@ -535,6 +537,7 @@ public:
 	// Returns true if the tuner has ever been connected at any point during this game.
 	bool TunerEverConnected() const;
 
+#if !defined(NO_TUTORIALS)
 	// slewis - Tutorial stuff
 	bool IsEverAttackedTutorial() const;
 	void SetEverAttackedTutorial(bool bValue);
@@ -543,6 +546,7 @@ public:
 	bool IsCombatWarned() const;
 	void SetCombatWarned(bool bValue);
 	// end Tutorial stuff
+#endif
 
 	CvAdvisorCounsel* GetAdvisorCounsel();
 	CvAdvisorRecommender* GetAdvisorRecommender();
@@ -641,6 +645,7 @@ protected:
 
 	bool m_bFOW;
 
+#if !defined(NO_TUTORIALS)
 	// slewis - tutorial values
 	bool m_bStaticTutorialActive;
 	bool m_bTutorialEverAttacked;
@@ -648,6 +653,7 @@ protected:
 	bool m_bCombatWarned;
 	std::tr1::unordered_set<std::string> m_AdvisorMessagesViewed;
 	// slewis - tutorial values
+#endif
 
 	HandicapTypes m_eHandicap;
 	PlayerTypes m_ePausePlayer;

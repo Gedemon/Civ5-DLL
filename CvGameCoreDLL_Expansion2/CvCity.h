@@ -190,6 +190,10 @@ public:
 	int getProductionTurnsLeft(BuildingTypes eBuilding, int iNum) const;
 	int getProductionTurnsLeft(ProjectTypes eProject, int iNum) const;
 	int getProductionTurnsLeft(SpecialistTypes eSpecialist, int iNum) const;
+#if defined(MOD_PROCESS_STOCKPILE)
+	int getProductionNeeded(ProcessTypes eSpecialist) const;
+	int getProductionTurnsLeft(ProcessTypes eSpecialist, int iNum) const;
+#endif
 	int GetPurchaseCost(UnitTypes eUnit);
 	int GetFaithPurchaseCost(UnitTypes eUnit, bool bIncludeBeliefDiscounts);
 	int GetPurchaseCost(BuildingTypes eBuilding);
@@ -585,6 +589,9 @@ public:
 	int getBaseYieldRateModifier(YieldTypes eIndex, int iExtra = 0, CvString* toolTipSink = NULL) const;
 	int getYieldRate(YieldTypes eIndex, bool bIgnoreTrade) const;
 	int getYieldRateTimes100(YieldTypes eIndex, bool bIgnoreTrade) const;
+#if defined(MOD_PROCESS_STOCKPILE)
+	int getBasicYieldRateTimes100(YieldTypes eIndex, bool bIgnoreTrade) const;
+#endif
 
 	// Base Yield
 	int getBaseYieldRate(YieldTypes eIndex) const;
@@ -676,6 +683,11 @@ public:
 	int getSpecialistProductionTimes100(SpecialistTypes eIndex) const;
 	void setSpecialistProductionTimes100(SpecialistTypes eIndex, int iNewValue);
 	void changeSpecialistProductionTimes100(SpecialistTypes eIndex, int iChange);
+
+#if defined(MOD_PROCESS_STOCKPILE)
+	int getProcessProduction(ProcessTypes eIndex) const;
+	int getProcessProductionTimes100(ProcessTypes eIndex) const;
+#endif
 
 	int getUnitProduction(UnitTypes eIndex) const;
 	void setUnitProduction(UnitTypes eIndex, int iNewValue);

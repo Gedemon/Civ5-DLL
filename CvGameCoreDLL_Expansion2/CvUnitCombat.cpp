@@ -2753,12 +2753,14 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::Attack(CvUnit& kAttacker, CvPlot& targ
 	}
 #endif
 
+#if !defined(NO_TUTORIALS)
 	// slewis - tutorial'd
 	if(kAttacker.getOwner() == GC.getGame().getActivePlayer())
 	{
 		GC.getGame().SetEverAttackedTutorial(true);
 	}
 	// end tutorial'd
+#endif
 
 	// handle the Zulu special thrown spear first attack
 	ATTACK_RESULT eFireSupportResult = ATTACK_ABORTED;

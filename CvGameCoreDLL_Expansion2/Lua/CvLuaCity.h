@@ -114,6 +114,9 @@ protected:
 	static int lGetBuildingProductionTurnsLeft(lua_State* L);
 	static int lGetProjectProductionTurnsLeft(lua_State* L);
 	static int lGetSpecialistProductionTurnsLeft(lua_State* L);
+#if defined(MOD_PROCESS_STOCKPILE)
+	static int lGetProcessProductionTurnsLeft(lua_State* L);
+#endif
 
 	static int lCreateApolloProgram(lua_State* L);
 

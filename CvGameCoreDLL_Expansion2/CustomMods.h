@@ -24,7 +24,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 27)
+#define MOD_DLL_VERSION_NUMBER ((uint) 28)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta), r (released) or blank
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -153,6 +153,9 @@
 #define MOD_RELIGION_CONVERSION_MODIFIERS           gCustomMods.isRELIGION_CONVERSION_MODIFIERS()
 // Keeps overflow faith from spawning a Great Prophet if the base spawn chance is 100%
 #define MOD_RELIGION_KEEP_PROPHET_OVERFLOW          gCustomMods.isRELIGION_KEEP_PROPHET_OVERFLOW()
+
+// Enables production to be stockpiled
+#define MOD_PROCESS_STOCKPILE                       gCustomMods.isPROCESS_STOCKPILE()
 
 // Fixes the AI's inability to use combat units as secondary workers
 #define MOD_AI_SECONDARY_WORKERS                    gCustomMods.isAI_SECONDARY_WORKERS()
@@ -477,6 +480,8 @@ public:
 	inline bool isRELIGION_CONVERSION_MODIFIERS()           { return m_bRELIGION_CONVERSION_MODIFIERS; }
 	inline bool isRELIGION_KEEP_PROPHET_OVERFLOW()          { return m_bRELIGION_KEEP_PROPHET_OVERFLOW; }
 
+	inline bool isPROCESS_STOCKPILE()                       { return m_bPROCESS_STOCKPILE; }
+
 	inline bool isAI_SECONDARY_WORKERS()                    { return m_bAI_SECONDARY_WORKERS; }
 	inline bool isAI_SECONDARY_SETTLERS()                   { return m_bAI_SECONDARY_SETTLERS; }
 
@@ -598,6 +603,8 @@ protected:
 	bool m_bRELIGION_RANDOMISE;
 	bool m_bRELIGION_CONVERSION_MODIFIERS;
 	bool m_bRELIGION_KEEP_PROPHET_OVERFLOW;
+
+	bool m_bPROCESS_STOCKPILE;
 
 	bool m_bAI_SECONDARY_WORKERS;
 	bool m_bAI_SECONDARY_SETTLERS;

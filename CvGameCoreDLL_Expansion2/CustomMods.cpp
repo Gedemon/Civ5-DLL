@@ -65,6 +65,8 @@ CustomMods::CustomMods() :
 	m_bRELIGION_CONVERSION_MODIFIERS(false),
 	m_bRELIGION_KEEP_PROPHET_OVERFLOW(false),
 
+	m_bPROCESS_STOCKPILE(false),
+
 	m_bAI_SECONDARY_WORKERS(false),
 	m_bAI_SECONDARY_SETTLERS(false),
 
@@ -216,6 +218,8 @@ int CustomMods::getOption(string sOption, int defValue) {
 		m_bRELIGION_RANDOMISE                     = (m_options[string("RELIGION_RANDOMISE")] == 1);
 		m_bRELIGION_CONVERSION_MODIFIERS          = (m_options[string("RELIGION_CONVERSION_MODIFIERS")] == 1);
 		m_bRELIGION_KEEP_PROPHET_OVERFLOW         = (m_options[string("RELIGION_KEEP_PROPHET_OVERFLOW")] == 1);
+
+		m_bPROCESS_STOCKPILE                      = (m_options[string("PROCESS_STOCKPILE")] == 1);
 
 		m_bAI_SECONDARY_WORKERS                   = (m_options[string("AI_SECONDARY_WORKERS")] == 1);
 		m_bAI_SECONDARY_SETTLERS                  = (m_options[string("AI_SECONDARY_SETTLERS")] == 1);

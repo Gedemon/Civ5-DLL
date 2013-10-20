@@ -254,6 +254,10 @@ public:
 	int getProductionNeeded(ProjectTypes eProject) const;
 	int getProductionNeeded(SpecialistTypes eSpecialist) const;
 
+#if defined(MOD_PROCESS_STOCKPILE)
+	int getMaxStockpile() const;
+#endif
+
 	int getProductionModifier(CvString* toolTipSink = NULL) const;
 	int getProductionModifier(UnitTypes eUnit, CvString* toolTipSink = NULL) const;
 	int getProductionModifier(BuildingTypes eBuilding, CvString* toolTipSink = NULL) const;
@@ -1456,6 +1460,7 @@ public:
 	void SetEverConqueredBy(PlayerTypes ePlayer, bool bValue);
 	bool IsEverConqueredBy(PlayerTypes ePlayer);
 
+#if !defined(NO_TUTORIALS)
 	// slewis Tutorial functions
 	bool GetEverPoppedGoody(void);  // has this player ever popped a goody hut
 	CvPlot* GetClosestGoodyPlot(bool bStopAfterFindingFirst = false);  // find the goody plot that has the closest unit that can reach it, null means none could be found
@@ -1463,6 +1468,7 @@ public:
 	bool GetAnyUnitHasOrderToGoody(void);
 	bool GetEverTrainedBuilder(void);
 	// end Tutorial functions
+#endif
 
 	// International Trade
 	bool IsAllowedToTradeWith(PlayerTypes eOtherPlayer);
@@ -1903,10 +1909,12 @@ protected:
 
 	CvUnitCycler	m_UnitCycle;	
 
+#if !defined(NO_TUTORIALS)
 	// slewis's tutorial variables!
 	FAutoVariable<bool, CvPlayer> m_bEverPoppedGoody;
 	FAutoVariable<bool, CvPlayer> m_bEverTrainedBuilder;
 	// end slewis's tutorial variables
+#endif
 
 	EndTurnBlockingTypes  m_eEndTurnBlockingType;
 	int  m_iEndTurnBlockingNotificationIndex;

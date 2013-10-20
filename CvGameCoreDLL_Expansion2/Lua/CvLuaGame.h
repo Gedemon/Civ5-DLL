@@ -112,14 +112,18 @@ protected:
 	static int lGetTargetScore(lua_State* L);
 	static int lSetTargetScore(lua_State* L);
 
+#if !defined(NO_TUTORIALS)
 	static int lIsStaticTutorialActive(lua_State* L);
 	static int lSetStaticTutorialActive(lua_State* L);
+#endif
 	static int lIsEverRightClickMoved(lua_State* L);
 	static int lSetEverRightClickMoved(lua_State* L);
 
+#if !defined(NO_TUTORIALS)
 	static int lIsTutorialLogging(lua_State* L);
 	static int lIsTutorialDebugging(lua_State* L);
 	static int lGetTutorialLevel(lua_State* L);
+#endif
 
 	static int lHasAdvisorMessageBeenSeen(lua_State* L);
 	static int lSetAdvisorMessageHasBeenSeen(lua_State* L);
@@ -268,7 +272,9 @@ protected:
 	static int lGetBestPoliciesPlayer(lua_State* L);
 	static int lGetBestGreatPeoplePlayer(lua_State* L);
 
+#if !defined(NO_TUTORIALS)
 	static int lIsEverAttackedTutorial(lua_State* L);
+#endif
 
 	static int lGameplayDiplomacyAILeaderMessage(lua_State* L);
 

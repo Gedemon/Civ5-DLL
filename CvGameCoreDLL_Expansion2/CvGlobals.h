@@ -231,11 +231,13 @@ public:
 	bool getPlayerAndCityAILogSplit();
 	void setPlayerAndCityAILogSplit(bool bEnable);
 
+#if !defined(NO_TUTORIALS)
 	bool GetTutorialLogging();
 	void SetTutorialLogging(bool bEnable);
 
 	bool GetTutorialDebugging();
 	void SetTutorialDebugging(bool bEnable);
+#endif
 
 	bool GetAllowRClickMovementWhileScrolling();
 	void SetAllowRClickMovementWhileScrolling(bool bAllow);

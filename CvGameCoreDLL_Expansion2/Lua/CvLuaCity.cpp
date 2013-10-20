@@ -114,6 +114,9 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(GetBuildingProductionTurnsLeft);
 	Method(GetProjectProductionTurnsLeft);
 	Method(GetSpecialistProductionTurnsLeft);
+#if defined(MOD_PROCESS_STOCKPILE)
+	Method(GetProcessProductionTurnsLeft);
+#endif
 
 	Method(CreateApolloProgram);
 
@@ -1279,6 +1282,14 @@ int CvLuaCity::lGetSpecialistProductionTurnsLeft(lua_State* L)
 {
 	return BasicLuaMethod<int, SpecialistTypes>(L, &CvCity::getProductionTurnsLeft);
 }
+#if defined(MOD_PROCESS_STOCKPILE)
+//------------------------------------------------------------------------------
+//int getProcessProductionTurnsLeft(ProcessTypes eSpecialist, int iNum);
+int CvLuaCity::lGetProcessProductionTurnsLeft(lua_State* L)
+{
+	return BasicLuaMethod<int, ProcessTypes>(L, &CvCity::getProductionTurnsLeft);
+}
+#endif
 //------------------------------------------------------------------------------
 // int IsCanPurchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectTypes eProjectType, YieldTypes ePurchaseYield);
 int CvLuaCity::lIsCanPurchase(lua_State* L)

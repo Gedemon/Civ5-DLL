@@ -4034,7 +4034,11 @@ int CvCity::getGeneralProductionTurnsLeft() const
 			break;
 
 		case ORDER_MAINTAIN:
+#if defined(MOD_PROCESS_STOCKPILE)
+			return getProductionTurnsLeft((ProcessTypes)pOrderNode->iData1, 0);
+#else
 			return 0;
+#endif
 			break;
 
 		default:
@@ -4330,6 +4334,9 @@ int CvCity::getProduction() const
 			break;
 
 		case ORDER_MAINTAIN:
+#if defined(MOD_PROCESS_STOCKPILE)
+			return getProcessProduction((ProcessTypes)(pOrderNode->iData1));
+#endif
 			break;
 
 		default:
@@ -4369,6 +4376,9 @@ int CvCity::getProductionTimes100() const
 			break;
 
 		case ORDER_MAINTAIN:
+#if defined(MOD_PROCESS_STOCKPILE)
+			return getProcessProductionTimes100((ProcessTypes)(pOrderNode->iData1));
+#endif
 			break;
 
 		default:
@@ -4408,6 +4418,9 @@ int CvCity::getProductionNeeded() const
 			break;
 
 		case ORDER_MAINTAIN:
+#if defined(MOD_PROCESS_STOCKPILE)
+			return getProductionNeeded((ProcessTypes)(pOrderNode->iData1));
+#endif
 			break;
 
 		default:
@@ -4482,6 +4495,9 @@ int CvCity::getProductionTurnsLeft() const
 			break;
 
 		case ORDER_MAINTAIN:
+#if defined(MOD_PROCESS_STOCKPILE)
+			return getProductionTurnsLeft(((ProcessTypes)(pOrderNode->iData1)), 0);
+#endif
 			break;
 
 		default:
@@ -4593,6 +4609,37 @@ int CvCity::getProductionTurnsLeft(SpecialistTypes eSpecialist, int iNum) const
 
 	return getProductionTurnsLeft(iProductionNeeded, iProduction, getProductionDifferenceTimes100(iProductionNeeded, iProduction, iProductionModifier, false, (iNum == 0)), getProductionDifferenceTimes100(iProductionNeeded, iProduction, iProductionModifier, false, false));
 }
+
+#if defined(MOD_PROCESS_STOCKPILE)
+//	--------------------------------------------------------------------------------
+int CvCity::getProductionNeeded(ProcessTypes eProcess) const
+{
+	VALIDATE_OBJECT
+
+	if (eProcess == GC.getInfoTypeForString("PROCESS_STOCKPILE")) {
+		return GET_PLAYER(getOwner()).getMaxStockpile();
+	}
+
+	return INT_MAX;
+}
+
+//	--------------------------------------------------------------------------------
+int CvCity::getProductionTurnsLeft(ProcessTypes eProcess, int) const
+{
+	VALIDATE_OBJECT
+
+	if (eProcess == GC.getInfoTypeForString("PROCESS_STOCKPILE")) {
+		int iProduction = getOverflowProduction();
+		int iProductionNeeded = GET_PLAYER(getOwner()).getMaxStockpile();
+		int iProductionModifier = getProductionModifier(eProcess);
+		int iProductionDifference = getProductionDifference(iProductionNeeded, iProduction, iProductionModifier, false, false);
+
+		return getProductionTurnsLeft(iProductionNeeded, iProduction, iProductionDifference, iProductionDifference);
+	}
+
+	return INT_MAX;
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 int CvCity::getProductionTurnsLeft(int iProductionNeeded, int iProduction, int iFirstProductionDifference, int iProductionDifference) const
@@ -9734,12 +9781,24 @@ int CvCity::getYieldRateTimes100(YieldTypes eIndex, bool bIgnoreTrade) const
 
 	if(getProductionToYieldModifier(eIndex) != 0)
 	{
-		// TODO - WH - we want to process production to production and call it stockpiling!
+#if defined(MOD_PROCESS_STOCKPILE)
+		// We want to process production to production and call it stockpiling!
+		iProcessYield = getBasicYieldRateTimes100(YIELD_PRODUCTION, false) * getProductionToYieldModifier(eIndex) / 100;
+#else
 		CvAssertMsg(eIndex != YIELD_PRODUCTION, "GAMEPLAY: should not be trying to convert Production into Production via process.");
 
 		iProcessYield = getYieldRateTimes100(YIELD_PRODUCTION, false) * getProductionToYieldModifier(eIndex) / 100;
+#endif
 	}
 
+#if defined(MOD_PROCESS_STOCKPILE)
+	int iYield = getBasicYieldRateTimes100(eIndex, bIgnoreTrade) + iProcessYield;
+	return iYield;
+}
+
+int CvCity::getBasicYieldRateTimes100(YieldTypes eIndex, bool bIgnoreTrade) const
+{
+#endif
 	// Sum up yield rate
 	int iBaseYield = getBaseYieldRate(eIndex) * 100;
 	iBaseYield += (GetYieldPerPopTimes100(eIndex) * getPopulation());
@@ -9748,7 +9807,9 @@ int CvCity::getYieldRateTimes100(YieldTypes eIndex, bool bIgnoreTrade) const
 	int iModifiedYield = iBaseYield * getBaseYieldRateModifier(eIndex);
 	iModifiedYield /= 100;
 
+#if !defined(MOD_PROCESS_STOCKPILE)
 	iModifiedYield += iProcessYield;
+#endif
 
 	if (!bIgnoreTrade)
 	{
@@ -10541,6 +10602,28 @@ void CvCity::changeSpecialistProductionTimes100(SpecialistTypes eIndex, int iCha
 	CvAssertMsg(eIndex < GC.getNumSpecialistInfos(), "eIndex expected to be < GC.getNumSpecialistInfos()");
 	setSpecialistProductionTimes100(eIndex, (getSpecialistProductionTimes100(eIndex) + iChange));
 }
+
+#if defined(MOD_PROCESS_STOCKPILE)
+//	--------------------------------------------------------------------------------
+int CvCity::getProcessProduction(ProcessTypes eIndex) const
+{
+	return getProcessProductionTimes100(eIndex) / 100;
+}
+
+//	--------------------------------------------------------------------------------
+int CvCity::getProcessProductionTimes100(ProcessTypes eIndex) const
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eIndex >= 0, "eIndex expected to be >= 0");
+	CvAssertMsg(eIndex < GC.getNumProcessInfos(), "eIndex expected to be < GC.getNumProcessInfos()");
+	
+	if (eIndex == GC.getInfoTypeForString("PROCESS_STOCKPILE")) {
+		return getBasicYieldRateTimes100(YIELD_PRODUCTION, false);
+	}
+
+	return 0;
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 CvCityBuildings* CvCity::GetCityBuildings() const
@@ -12202,6 +12285,23 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 		{
 			eSpecialist = ((SpecialistTypes)(pOrderNode->iData1));
 
+#if defined(MOD_EVENTS_CITY)
+			if (MOD_EVENTS_CITY) {
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if (pkScriptSystem) {
+					CvLuaArgsHandle args;
+					args->Push(getOwner());
+					args->Push(GetID());
+					args->Push(eSpecialist);
+					args->Push(false); // bGold
+					args->Push(false); // bFaith/bCulture
+
+					bool bResult;
+					LuaSupport::CallHook(pkScriptSystem, "CityPrepared", args.get(), bResult);
+				}
+			}
+#endif
+
 			iProductionNeeded = getProductionNeeded(eSpecialist) * 100;
 
 			// max overflow is the value of the item produced (to eliminate prebuild exploits)
@@ -13735,12 +13835,23 @@ void CvCity::doProduction(bool bAllowNoProduction)
 
 		changeProductionTimes100(getCurrentProductionDifferenceTimes100(false, true));
 
+#if defined(MOD_PROCESS_STOCKPILE)
+		if (MOD_PROCESS_STOCKPILE && !isProductionProcess())
+#endif
 		setOverflowProduction(0);
 		setFeatureProduction(0);
 
+#if defined(MOD_PROCESS_STOCKPILE)
+		if(getProduction() >= getProductionNeeded())
+#else
 		if(getProduction() >= getProductionNeeded() && !isProductionProcess())
+#endif
 		{
+#if defined(MOD_PROCESS_STOCKPILE)
+			popOrder(0, !isProductionProcess(), true);
+#else
 			popOrder(0, true, true);
+#endif
 		}
 	}
 	else
@@ -13771,7 +13882,15 @@ void CvCity::doProcess()
 		}
 	}
 	
-	// TODO - WH - stockpiling - contribute production to overflow, if within the era limit
+#if defined(MOD_PROCESS_STOCKPILE)
+	if (MOD_PROCESS_STOCKPILE && eProcess == GC.getInfoTypeForString("PROCESS_STOCKPILE"))
+	{
+		int iPile = getCurrentProductionDifferenceTimes100(false, false);
+		// Can't use changeOverflowProductionTimes100() here as it asserts above 250 production
+		setOverflowProductionTimes100(getOverflowProductionTimes100() + iPile);
+		CUSTOMLOG("Adding %i production to the stockpile of %s (for a total of %i)", iPile/100, getName().c_str(), getOverflowProduction());
+	}
+#endif
 }
 
 
@@ -15270,9 +15389,9 @@ void CvCity::CheckForAchievementBuilding(BuildingTypes eBuilding)
 //	--------------------------------------------------------------------------------
 void CvCity::IncrementUnitStatCount(CvUnit* pUnit)
 {
-#if !defined(NO_ACHIEVEMENTS)
 	CvString szUnitType = pUnit->getUnitInfo().GetType();
 
+#if !defined(NO_ACHIEVEMENTS)
 	if(szUnitType == "UNIT_WARRIOR")
 	{
 		gDLL->IncrementSteamStat(ESTEAMSTAT_WARRIOR);

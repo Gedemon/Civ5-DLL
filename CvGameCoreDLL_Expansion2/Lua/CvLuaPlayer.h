@@ -116,6 +116,10 @@ protected:
 	static int lGetBuildingProductionNeeded(lua_State* L);
 	static int lGetProjectProductionNeeded(lua_State* L);
 
+#if defined(MOD_PROCESS_STOCKPILE)
+	static int lGetMaxStockpile(lua_State* L);
+#endif
+
 	static int lHasReadyUnit(lua_State* L);
 	static int lGetFirstReadyUnit(lua_State* L);
 	static int lGetFirstReadyUnitPlot(lua_State* L);
@@ -855,6 +859,7 @@ protected:
 	static int lIsAnyPlotImproved(lua_State* L);
 	static int lGetPlayerVisiblePlot(lua_State* L);
 
+#if !defined(NO_TUTORIALS)
 	// slewis - tutorial functions
 	static int lGetEverPoppedGoody(lua_State* L);
 	static int lGetClosestGoodyPlot(lua_State* L);
@@ -863,6 +868,7 @@ protected:
 	static int lGetAnyUnitHasOrderToGoody(lua_State* L);
 	static int lGetEverTrainedBuilder(lua_State* L);
 	// end tutorial functions
+#endif
 
 	static int lGetNumFreeTechs(lua_State* L);
 	static int lSetNumFreeTechs(lua_State* L);

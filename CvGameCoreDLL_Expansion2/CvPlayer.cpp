@@ -8056,6 +8056,19 @@ int CvPlayer::getProductionNeeded(SpecialistTypes eSpecialist) const
 	return std::max(1, iProductionNeeded);
 }
 
+#if defined(MOD_PROCESS_STOCKPILE)
+//	--------------------------------------------------------------------------------
+int CvPlayer::getMaxStockpile() const
+{
+	// The default of 30 hammers means a city can stockpile between 15% and 30% of the production of a World Wonder
+	int iProdPerEra = gCustomMods.getOption("PROCESS_STOCKPILE_PER_ERA", 30);
+	// Adjust for game speed
+	iProdPerEra *= GC.getGame().getGameSpeedInfo().getConstructPercent();
+
+	return ((GetCurrentEra() + 1) * iProdPerEra) / 100;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 int CvPlayer::getProductionModifier(CvString* toolTipSink) const
 {

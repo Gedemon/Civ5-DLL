@@ -123,6 +123,10 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetBuildingProductionNeeded);
 	Method(GetProjectProductionNeeded);
 
+#if defined(MOD_PROCESS_STOCKPILE)
+	Method(GetMaxStockpile);
+#endif
+
 	Method(HasReadyUnit);
 	Method(GetFirstReadyUnit);
 	Method(GetFirstReadyUnitPlot);
@@ -1644,6 +1648,18 @@ int CvLuaPlayer::lGetProjectProductionNeeded(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
+#if defined(MOD_PROCESS_STOCKPILE)
+//------------------------------------------------------------------------------
+//int getMaxStockpile();
+int CvLuaPlayer::lGetMaxStockpile(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+
+	const int iResult = pkPlayer->getMaxStockpile();
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //bool hasReadyUnit() const;
 int CvLuaPlayer::lHasReadyUnit(lua_State* L)
