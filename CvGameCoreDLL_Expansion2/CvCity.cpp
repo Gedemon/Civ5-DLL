@@ -13836,7 +13836,7 @@ void CvCity::doProduction(bool bAllowNoProduction)
 		changeProductionTimes100(getCurrentProductionDifferenceTimes100(false, true));
 
 #if defined(MOD_PROCESS_STOCKPILE)
-		if (MOD_PROCESS_STOCKPILE && !isProductionProcess())
+		if (!(MOD_PROCESS_STOCKPILE && isProductionProcess()))
 #endif
 		setOverflowProduction(0);
 		setFeatureProduction(0);
