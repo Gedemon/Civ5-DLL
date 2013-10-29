@@ -218,6 +218,13 @@ bool CvGameTrade::CanCreateTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, Do
 			}
 #endif
 		}
+#if defined(MOD_BUGFIX_MINOR)
+	}
+	else
+	{
+		// Unknown trade connection type
+		return false;
+#endif
 	}
 
 	// teams at war can't fight
@@ -1450,7 +1457,6 @@ bool CvGameTrade::StepUnit (int iIndex)
 		kTradeConnection.m_iTradeUnitLocationIndex -= 1;
 		if (kTradeConnection.m_iTradeUnitLocationIndex == 0)
 		{
-			// TODO - WH - make the AI recall all trade units before going to war with a team, and when war is declared
 			kTradeConnection.m_iCircuitsCompleted += 1;
 		}
 	}
@@ -1885,8 +1891,12 @@ void CvPlayerTrade::MoveUnits (void)
 #else
 				UnitTypes eUnitType = GetTradeUnit(eDomain);
 #endif
+#if defined(MOD_BUGFIX_MINOR)
+				m_pPlayer->initUnit(eUnitType, iOriginX, iOriginY, UNITAI_TRADE_UNIT);
+#else
 				CvUnit* pRebornUnit = m_pPlayer->initUnit(eUnitType, iOriginX, iOriginY, UNITAI_TRADE_UNIT);
 				CvAssertMsg(pRebornUnit, "pRebornUnit is null. This is bad!!");
+#endif
 			}
 		}
 	}

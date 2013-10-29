@@ -24,13 +24,16 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 29)
+#define MOD_DLL_VERSION_NUMBER ((uint) 30)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
 
 // Comment out this line to include all the achievements code (which don't work in modded games, so we don't need the code!)
 #define NO_ACHIEVEMENTS
+
+// Comment out this line to include all the tutorials code (which is being removed as I come across it)
+// #define NO_TUTORIALS
 
 // Comment out this line to switch off all custom mod logging
 #define CUSTOMLOGDEBUG "CustomMods.log"
@@ -50,7 +53,7 @@
 // Comment these lines out to remove the associated code from the DLL,
 // Alternatively, set the associated entries in the CustomModOptions table to disable(0) or enable(1) at load-time
 
-// Changes the stacking limits based on what the tile is (city, fort, plain, etc)
+// Changes the stacking limits based on what the tile is (city, fort, plain, etc) - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_GLOBAL_STACKING_RULES                   gCustomMods.isGLOBAL_STACKING_RULES()
 // Great Generals and Admirals gained from combat experience spawn in the war-zone and not in a distant city
 #define MOD_GLOBAL_LOCAL_GENERALS                   gCustomMods.isGLOBAL_LOCAL_GENERALS()
@@ -88,7 +91,7 @@
 #define MOD_GLOBAL_SHORT_EMBARKED_BLOCKADES         gCustomMods.isGLOBAL_SHORT_EMBARKED_BLOCKADES()
 // Other player's settlers captured from Barbarians will sometimes remain as settlers
 #define MOD_GLOBAL_GRATEFUL_SETTLERS                gCustomMods.isGLOBAL_GRATEFUL_SETTLERS()
-// Route To will only build roads, or upgrade road to rail, for human players
+// TODO - WH - Fix this! Route To will only build roads, or upgrade road to rail, for human players
 #define MOD_GLOBAL_QUICK_ROUTES                     gCustomMods.isGLOBAL_QUICK_ROUTES()
 // Subs under ice are immune to all attacks except from other subs
 #define MOD_GLOBAL_SUBS_UNDER_ICE_IMMUNITY          gCustomMods.isGLOBAL_SUBS_UNDER_ICE_IMMUNITY()
@@ -136,7 +139,7 @@
 #define MOD_BUILDINGS_CITY_WORKING                  gCustomMods.isBUILDINGS_CITY_WORKING()
 
 // Permits wonder resource (ie Marble) trade routes to be established
-// #define MOD_TRADE_WONDER_RESOURCE_ROUTES            gCustomMods.isTRADE_WONDER_RESOURCE_ROUTES()
+// #define MOD_TRADE_WONDER_RESOURCE_ROUTES            gCustomMods.isTRADE_WONDER_RESOURCE_ROUTES() // TODO - WH - Marble trade routes
 
 // Restricts worker suggestions to local tiles
 #define MOD_UNITS_LOCAL_WORKERS                     gCustomMods.isUNITS_LOCAL_WORKERS()
@@ -144,6 +147,9 @@
 #define MOD_UNITS_HOVERING_LAND_ONLY_HEAL           gCustomMods.isUNITS_HOVERING_LAND_ONLY_HEAL()
 // Permits hovering units to attack coastal shipping
 #define MOD_UNITS_HOVERING_COASTAL_ATTACKS          gCustomMods.isUNITS_HOVERING_COASTAL_ATTACKS()
+
+// Tech bonuses from other teams require an embassy or spy in their capital and not from just having met them
+#define MOD_DIPLOMACY_TECH_BONUSES                  gCustomMods.isDIPLOMACY_TECH_BONUSES()
 
 // Removes religion preference
 #define MOD_RELIGION_NO_PREFERRENCES                gCustomMods.isRELIGION_NO_PREFERRENCES()
@@ -187,6 +193,10 @@
 //   GameEvents.GoodyHutCanResearch.Add(function(iPlayer, eTech) return true end)
 //   GameEvents.GoodyHutTechResearched.Add(function(iPlayer, eTech) end)
 #define MOD_EVENTS_GOODY_TECH                       gCustomMods.isEVENTS_GOODY_TECH()
+
+// Event sent to allow Lua to override the AI's choice of tech
+//   GameEvents.AiOverrideChooseNextTech.Add(function(iPlayer, bFreeTech) return iChoosenTech end)
+#define MOD_EVENTS_AI_OVERRIDE_TECH                 gCustomMods.isEVENTS_AI_OVERRIDE_TECH()
 
 // Events sent by Great People actions
 //   GameEvents.GreatPersonExpended.Add(function(iPlayer, iUnit, iUnitType, iX, iY) end)
@@ -234,6 +244,11 @@
 //   GameEvents.IsAbleToMakePeace.Add(function(iPlayer, iAgainstTeam) return true end)
 //   GameEvents.MakePeace.Add(function(iPlayer, iAgainstTeam) end)
 #define MOD_EVENTS_WAR_AND_PEACE                    gCustomMods.isEVENTS_WAR_AND_PEACE()
+
+// Events sent by plots
+//   GameEvents.PlayerCanBuild.Add(function(iPlayer, iUnit, iX, iY, iBuild) return true end)
+//   GameEvents.PlotCanImprove.Add(function(iX, iY, iImprovement) return true end)
+#define MOD_EVENTS_PLOT                             gCustomMods.isEVENTS_PLOT()
 
 // Events sent after a city produces/buys something
 //   GameEvents.CityTrained.Add(function(iPlayer, iCity, iUnit, bGold, bFaith) end)
@@ -304,6 +319,8 @@
 // Push various hard-coded values controlling the AI out into XML
 #define MOD_CONFIG_AI_IN_XML                        gCustomMods.isCONFIG_AI_IN_XML()
 
+// Minor bug fixes (missing catch-all else clauses, etc)
+#define MOD_BUGFIX_MINOR 							(true)
 // Fixes the bug in the Lua Plot:ChangeVisibilityCount() method where iChange is treated as a boolean and not a signed int
 #define MOD_BUGFIX_LUA_CHANGE_VISIBILITY_COUNT      gCustomMods.isBUGFIX_LUA_CHANGE_VISIBILITY_COUNT()
 // Fixes the CanMoveAfterPurchase() bug where it is only tested for at one specific point in the code
@@ -312,7 +329,7 @@
 #define MOD_BUGFIX_UNITCLASS_NOT_UNIT               gCustomMods.isBUGFIX_UNITCLASS_NOT_UNIT()
 // Fixes the issues caused by using BUILDING_XYZ instead of BUILDINGCLASS_XYZ
 #define MOD_BUGFIX_BUILDINGCLASS_NOT_BUILDING       gCustomMods.isBUGFIX_BUILDINGCLASS_NOT_BUILDING()
-// Fixes the NumCitiesFreeFoodBuilding (policy finisher) bug where the civilization has a UB for the Aquaduct
+// Fixes the NumCitiesFreeFoodBuilding (policy finisher) bug where the civilization has a UB for the Aqueduct - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_BUGFIX_FREE_FOOD_BUILDING               gCustomMods.isBUGFIX_FREE_FOOD_BUILDING()
 // Fixes the bug where the naval Civilization_FreeUnits start on land
 #define MOD_BUGFIX_NAVAL_FREE_UNITS                 gCustomMods.isBUGFIX_NAVAL_FREE_UNITS()
@@ -383,7 +400,7 @@
 
 #if defined(MOD_SERIALIZE)
 #define MOD_SERIALIZE_INIT_READ(stream) uint uDllSaveVersion; stream >> uDllSaveVersion
-#define MOD_SERIALIZE_READ(version, stream, member, def) if (MOD_DLL_VERSION_NUMBER >= uDllSaveVersion) { stream >> member; } else { member = def; }
+#define MOD_SERIALIZE_READ(version, stream, member, def) if (uDllSaveVersion >= version) { stream >> member; } else { member = def; }
 #define MOD_SERIALIZE_INIT_WRITE(stream) uint uDllSaveVersion = MOD_DLL_VERSION_NUMBER ; stream << uDllSaveVersion
 #define MOD_SERIALIZE_WRITE(stream, member) CvAssert(uDllSaveVersion == MOD_DLL_VERSION_NUMBER); stream << member
 #else
@@ -475,6 +492,8 @@ public:
 	inline bool isUNITS_HOVERING_LAND_ONLY_HEAL()           { return m_bUNITS_HOVERING_LAND_ONLY_HEAL; }
 	inline bool isUNITS_HOVERING_COASTAL_ATTACKS()          { return m_bUNITS_HOVERING_COASTAL_ATTACKS; }
 
+	inline bool isDIPLOMACY_TECH_BONUSES()                  { return m_bDIPLOMACY_TECH_BONUSES; }
+
 	inline bool isRELIGION_NO_PREFERRENCES()                { return m_bRELIGION_NO_PREFERRENCES; }
 	inline bool isRELIGION_RANDOMISE()                      { return m_bRELIGION_RANDOMISE; }
 	inline bool isRELIGION_CONVERSION_MODIFIERS()           { return m_bRELIGION_CONVERSION_MODIFIERS; }
@@ -491,9 +510,11 @@ public:
 	inline bool isEVENTS_DIPLO_EVENTS()                     { return m_bEVENTS_DIPLO_EVENTS; }
 	inline bool isEVENTS_MINORS()                           { return m_bEVENTS_MINORS; }
 	inline bool isEVENTS_GOODY_TECH()                       { return m_bEVENTS_GOODY_TECH; }
+	inline bool isEVENTS_AI_OVERRIDE_TECH()                 { return m_bEVENTS_AI_OVERRIDE_TECH; }
 	inline bool isEVENTS_GREAT_PEOPLE()                     { return m_bEVENTS_GREAT_PEOPLE; }
 	inline bool isEVENTS_FOUND_RELIGION()                   { return m_bEVENTS_FOUND_RELIGION; }
 	inline bool isEVENTS_ACQUIRE_BELIEFS()                  { return m_bEVENTS_ACQUIRE_BELIEFS; }
+	inline bool isEVENTS_PLOT()                             { return m_bEVENTS_PLOT; }
 	inline bool isEVENTS_CITY()                             { return m_bEVENTS_CITY; }
 	inline bool isEVENTS_CITY_BORDERS()                     { return m_bEVENTS_CITY_BORDERS; }
 	inline bool isEVENTS_CITY_RAZING()                      { return m_bEVENTS_CITY_RAZING; }
@@ -599,6 +620,8 @@ protected:
 	bool m_bUNITS_HOVERING_LAND_ONLY_HEAL;
 	bool m_bUNITS_HOVERING_COASTAL_ATTACKS;
 
+	bool m_bDIPLOMACY_TECH_BONUSES;
+
 	bool m_bRELIGION_NO_PREFERRENCES;
 	bool m_bRELIGION_RANDOMISE;
 	bool m_bRELIGION_CONVERSION_MODIFIERS;
@@ -615,9 +638,11 @@ protected:
 	bool m_bEVENTS_DIPLO_EVENTS;
 	bool m_bEVENTS_MINORS;
 	bool m_bEVENTS_GOODY_TECH;
+	bool m_bEVENTS_AI_OVERRIDE_TECH;
 	bool m_bEVENTS_GREAT_PEOPLE;
 	bool m_bEVENTS_FOUND_RELIGION;
 	bool m_bEVENTS_ACQUIRE_BELIEFS;
+	bool m_bEVENTS_PLOT;
 	bool m_bEVENTS_CITY;
 	bool m_bEVENTS_CITY_BORDERS;
 	bool m_bEVENTS_CITY_RAZING;

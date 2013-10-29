@@ -1548,6 +1548,9 @@ bool CvPlayerCulture::ThemeEqualArtArtifact(CvGreatWorkBuildingInMyEmpire kBldg,
 				{
 					continue;
 				}
+#if defined(MOD_API_EXTENSIONS)
+				// ConsecutiveEras implies UniqueEras, so we don't need any tests in addition to those for UniqueEras
+#endif
 
 				aWorksChosen = aArtifactsChosen;
 				aPlayersSeen = aArtifactsPlayersSeen;
@@ -5373,6 +5376,11 @@ int CultureHelpers::GetThemingBonusIndex(PlayerTypes eOwner, CvBuildingEntry *pk
 			return -1;  // No theming bonus if some slots still empty or too many entries
 		}
 
+#if defined(MOD_API_EXTENSIONS)
+		EraTypes eFirstEra = (EraTypes) GC.getNumEraInfos();
+		EraTypes eLastEra = NO_ERA;
+#endif
+
 		// Store info on the attributes of all our Great Works
 		for (int iI = 0; iI < iNumSlots; iI++)
 		{
@@ -5392,6 +5400,15 @@ int CultureHelpers::GetThemingBonusIndex(PlayerTypes eOwner, CvBuildingEntry *pk
 			// Store era and player
 			aErasSeen.push_back(work.m_eEra);
 			aPlayersSeen.push_back(work.m_ePlayer);
+
+#if defined(MOD_API_EXTENSIONS)
+			if (work.m_eEra < eFirstEra) {
+				eFirstEra = work.m_eEra;
+			}
+			if (work.m_eEra > eLastEra) {
+				eLastEra = work.m_eEra;
+			}
+#endif
 		}
 
 		// Now see if we match a theme bonus
@@ -5444,6 +5461,15 @@ int CultureHelpers::GetThemingBonusIndex(PlayerTypes eOwner, CvBuildingEntry *pk
 					}
 				}
 			}
+#if defined(MOD_API_EXTENSIONS)
+			if (bValid && bonusInfo->IsConsecutiveEras())
+			{
+				if ((eLastEra - eFirstEra + 1) != iNumSlots)
+				{
+					bValid = false;
+				}
+			}
+#endif
 
 			// Can we rule this out based on player?
 			if (bValid && bonusInfo->IsRequiresOwner())
@@ -5524,6 +5550,9 @@ bool CultureHelpers::IsValidForThemingBonus(CvThemingBonusInfo *pBonusInfo, EraT
 			bValid = false;
 		}
 	}
+#if defined(MOD_API_EXTENSIONS)
+	// ConsecutiveEras implies UniqueEras, so we don't need any tests in addition to those for UniqueEras
+#endif
 
 	// Can we rule this out based on player?
 	if (bValid && pBonusInfo->IsRequiresOwner())

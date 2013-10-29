@@ -258,6 +258,9 @@ CvCity::CvCity() :
 	, m_aiYieldRank("CvCity::m_aiYieldRank", m_syncArchive)
 	, m_abYieldRankValid("CvCity::m_abYieldRankValid", m_syncArchive)
 	, m_bOwedCultureBuilding(false)
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
+	, m_bOwedFoodBuilding(false)
+#endif
 {
 	OBJECT_ALLOCATED
 	FSerialization::citiesToCheck.insert(this);
@@ -776,6 +779,9 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 	m_bIndustrialRouteToCapital = false;
 	m_bFeatureSurrounded = false;
 	m_bOwedCultureBuilding = false;
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
+	m_bOwedFoodBuilding = false;
+#endif
 
 	m_eOwner = eOwner;
 	m_ePreviousOwner = NO_PLAYER;
@@ -9306,6 +9312,20 @@ void CvCity::SetOwedCultureBuilding(bool bNewValue)
 	m_bOwedCultureBuilding = bNewValue;
 }
 
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
+//	--------------------------------------------------------------------------------
+bool CvCity::IsOwedFoodBuilding() const
+{
+	return m_bOwedFoodBuilding;
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::SetOwedFoodBuilding(bool bNewValue)
+{
+	m_bOwedFoodBuilding = bNewValue;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 bool CvCity::IsBlockaded() const
 {
@@ -14360,6 +14380,9 @@ void CvCity::read(FDataStream& kStream)
 	kStream >> m_strName;
 
 	kStream >> m_bOwedCultureBuilding;
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
+	MOD_SERIALIZE_READ(30, kStream, m_bOwedFoodBuilding, false);
+#endif
 
 	m_pCityStrategyAI->Read(kStream);
 	if(m_eOwner != NO_PLAYER)
@@ -14616,6 +14639,9 @@ void CvCity::write(FDataStream& kStream) const
 	kStream << m_bRouteToCapitalConnectedThisTurn;
 	kStream << m_strName;
 	kStream << m_bOwedCultureBuilding;
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
+	MOD_SERIALIZE_WRITE(kStream, m_bOwedFoodBuilding);
+#endif
 
 	m_pCityStrategyAI->Write(kStream);
 	m_pCityCitizens->Write(kStream);

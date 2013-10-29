@@ -269,7 +269,7 @@ public:
 
 	bool isFriendlyCity(const CvUnit& kUnit, bool bCheckImprovement) const;
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
-	bool isFriendlyCityOrPassableFort(const CvUnit& kUnit, bool bCheckImprovement) const;
+	bool isFriendlyCityOrPassableImprovement(const CvUnit& kUnit, bool bCheckImprovement) const;
 #endif
 	bool IsFriendlyTerritory(PlayerTypes ePlayer) const;
 
@@ -362,6 +362,7 @@ public:
 
 #if defined(MOD_GLOBAL_STACKING_RULES)
 	int getAdditionalUnitsFromImprovement() const;
+	void calculateAdditionalUnitsFromImprovement();
 #endif
 
 	int getNumMajorCivsRevealed() const;
@@ -927,6 +928,9 @@ protected:
 	char /*PlayerTypes*/ m_ePlayerResponsibleForRoute;
 	char /*PlayerTypes*/ m_ePlayerThatClearedBarbCampHere;
 	char /*RouteTypes*/ m_eRouteType;
+#if defined(MOD_GLOBAL_STACKING_RULES)
+	short m_eUnitIncrement;
+#endif
 	char /*GenericWorldAnchorTypes*/ m_eWorldAnchor;
 	char /*int*/ m_cWorldAnchorData;
 	char /*FlowDirectionTypes*/ m_eRiverEFlowDirection; // flow direction on the E edge (isWofRiver)

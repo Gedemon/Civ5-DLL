@@ -7846,7 +7846,11 @@ void CvLeagueAI::DoVoteCommitments(CvLeague* pLeague)
 }
 
 // How much do we like this vote commitment (either from us to someone else, or from someone else to us)?
+#if defined(MOD_BUGFIX_MINOR)
+CvLeagueAI::DesireLevels CvLeagueAI::EvaluateVoteForTrade(int iResolutionID, int iVoteChoice, int, bool bRepeal)
+#else
 CvLeagueAI::DesireLevels CvLeagueAI::EvaluateVoteForTrade(int iResolutionID, int iVoteChoice, int iNumVotes, bool bRepeal)
+#endif
 {
 	DesireLevels eValue = DESIRE_NEVER;
 	

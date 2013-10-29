@@ -60,6 +60,8 @@ CustomMods::CustomMods() :
 	m_bUNITS_HOVERING_LAND_ONLY_HEAL(false),
 	m_bUNITS_HOVERING_COASTAL_ATTACKS(false),
 
+	m_bDIPLOMACY_TECH_BONUSES(false),
+
 	m_bRELIGION_NO_PREFERRENCES(false),
 	m_bRELIGION_RANDOMISE(false),
 	m_bRELIGION_CONVERSION_MODIFIERS(false),
@@ -75,9 +77,11 @@ CustomMods::CustomMods() :
 	m_bEVENTS_DIPLO_EVENTS(false),
 	m_bEVENTS_MINORS(false),
 	m_bEVENTS_GOODY_TECH(false),
+	m_bEVENTS_AI_OVERRIDE_TECH(false),
 	m_bEVENTS_GREAT_PEOPLE(false),
 	m_bEVENTS_FOUND_RELIGION(false),
 	m_bEVENTS_ACQUIRE_BELIEFS(false),
+	m_bEVENTS_PLOT(false),
 	m_bEVENTS_CITY(false),
 	m_bEVENTS_CITY_BORDERS(false),
 	m_bEVENTS_CITY_RAZING(false),
@@ -214,6 +218,8 @@ int CustomMods::getOption(string sOption, int defValue) {
 		m_bUNITS_HOVERING_LAND_ONLY_HEAL          = (m_options[string("UNITS_HOVERING_LAND_ONLY_HEAL")] == 1);
 		m_bUNITS_HOVERING_COASTAL_ATTACKS         = (m_options[string("UNITS_HOVERING_COASTAL_ATTACKS")] == 1);
 
+		m_bDIPLOMACY_TECH_BONUSES                 = (m_options[string("DIPLOMACY_TECH_BONUSES")] == 1);
+
 		m_bRELIGION_NO_PREFERRENCES               = (m_options[string("RELIGION_NO_PREFERRENCES")] == 1);
 		m_bRELIGION_RANDOMISE                     = (m_options[string("RELIGION_RANDOMISE")] == 1);
 		m_bRELIGION_CONVERSION_MODIFIERS          = (m_options[string("RELIGION_CONVERSION_MODIFIERS")] == 1);
@@ -230,9 +236,11 @@ int CustomMods::getOption(string sOption, int defValue) {
 		m_bEVENTS_DIPLO_EVENTS                    = (m_options[string("EVENTS_DIPLO_EVENTS")] == 1);
 		m_bEVENTS_MINORS                          = (m_options[string("EVENTS_MINORS")] == 1);
 		m_bEVENTS_GOODY_TECH                      = (m_options[string("EVENTS_GOODY_TECH")] == 1);
+		m_bEVENTS_AI_OVERRIDE_TECH                = (m_options[string("EVENTS_AI_OVERRIDE_TECH")] == 1);
 		m_bEVENTS_GREAT_PEOPLE                    = (m_options[string("EVENTS_GREAT_PEOPLE")] == 1);
 		m_bEVENTS_FOUND_RELIGION                  = (m_options[string("EVENTS_FOUND_RELIGION")] == 1);
 		m_bEVENTS_ACQUIRE_BELIEFS                 = (m_options[string("EVENTS_ACQUIRE_BELIEFS")] == 1);
+		m_bEVENTS_PLOT                            = (m_options[string("EVENTS_PLOT")] == 1);
 		m_bEVENTS_CITY                            = (m_options[string("EVENTS_CITY")] == 1);
 		m_bEVENTS_CITY_BORDERS                    = (m_options[string("EVENTS_CITY_BORDERS")] == 1);
 		m_bEVENTS_CITY_RAZING                     = (m_options[string("EVENTS_CITY_RAZING")] == 1);

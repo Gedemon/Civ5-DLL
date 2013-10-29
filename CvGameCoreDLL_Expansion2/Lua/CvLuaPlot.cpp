@@ -114,7 +114,7 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(IsCity);
 	Method(IsFriendlyCity);
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
-	Method(IsFriendlyCityOrPassableFort);
+	Method(IsFriendlyCityOrPassableImprovement);
 #endif
 	Method(IsEnemyCity);
 	Method(IsBeingWorked);
@@ -823,14 +823,14 @@ int CvLuaPlot::lIsFriendlyCity(lua_State* L)
 	return 1;
 }
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
-//bool isFriendlyCityOrPassableFort(CyUnit* pUnit, bool bCheckImprovement);
-int CvLuaPlot::lIsFriendlyCityOrPassableFort(lua_State* L)
+//bool isFriendlyCityOrPassableImprovement(CyUnit* pUnit, bool bCheckImprovement);
+int CvLuaPlot::lIsFriendlyCityOrPassableImprovement(lua_State* L)
 {
 	CvPlot* pkPlot = GetInstance(L);
 	CvUnit* pkUnit = CvLuaUnit::GetInstance(L, 2);
 	const bool bCheckImprovement = lua_toboolean(L, 3);
 
-	const bool bResult = pkPlot->isFriendlyCityOrPassableFort(*pkUnit, bCheckImprovement);
+	const bool bResult = pkPlot->isFriendlyCityOrPassableImprovement(*pkUnit, bCheckImprovement);
 	lua_pushboolean(L, bResult);
 	return 1;
 }

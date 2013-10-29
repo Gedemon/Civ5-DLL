@@ -255,6 +255,9 @@ void CvPlot::reset(int iX, int iY, bool bConstructorCall)
 	m_ePlayerResponsibleForRoute = NO_PLAYER;
 	m_ePlayerThatClearedBarbCampHere = NO_PLAYER;
 	m_eRouteType = NO_ROUTE;
+#if defined(MOD_GLOBAL_STACKING_RULES)
+	m_eUnitIncrement = 0;
+#endif
 	m_eWorldAnchor = NO_WORLD_ANCHOR;
 	m_cWorldAnchorData = NO_WORLD_ANCHOR;
 	m_eRiverEFlowDirection = NO_FLOWDIRECTION;
@@ -2222,6 +2225,32 @@ bool CvPlot::canHaveImprovement(ImprovementTypes eImprovement, TeamTypes eTeam, 
 		}
 	}
 
+#if defined(MOD_API_EXTENSIONS)
+	int iRequiredAdjacentWater = pkImprovementInfo->GetRequiresXAdjacentWater();
+	if (iRequiredAdjacentWater > -1)
+	{
+		int iAdjacentWater = 0;
+
+		for(iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
+		{
+			pLoopPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
+
+			if(pLoopPlot != NULL)
+			{
+				if (pLoopPlot->isWater())
+				{
+					iAdjacentWater++;
+				}
+			}
+		}
+
+		if (iAdjacentWater < iRequiredAdjacentWater)
+		{
+			return false;
+		}
+	}
+#endif
+
 	for(iI = 0; iI < NUM_YIELD_TYPES; ++iI)
 	{
 		if(calculateNatureYield(((YieldTypes)iI), eTeam) < pkImprovementInfo->GetPrereqNatureYield(iI))
@@ -2229,6 +2258,28 @@ bool CvPlot::canHaveImprovement(ImprovementTypes eImprovement, TeamTypes eTeam, 
 			return false;
 		}
 	}
+
+#if defined(MOD_EVENTS_PLOT)
+	if (MOD_EVENTS_PLOT) {
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if(pkScriptSystem)
+		{
+			CvLuaArgsHandle args;
+			args->Push(getX());
+			args->Push(getY());
+			args->Push(eImprovement);
+
+			bool bResult = false;
+			if(LuaSupport::CallTestAll(pkScriptSystem, "PlotCanImprove", args.get(), bResult))
+			{
+				if(bResult == false)
+				{
+					return false;
+				}
+			}
+		}
+	}
+#endif
 
 	return true;
 }
@@ -3519,16 +3570,14 @@ bool CvPlot::isFriendlyCity(const CvUnit& kUnit, bool) const
 }
 
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
-bool CvPlot::isFriendlyCityOrPassableFort(const CvUnit& kUnit, bool) const
+bool CvPlot::isFriendlyCityOrPassableImprovement(const CvUnit& kUnit, bool) const
 {
-	static ImprovementTypes eImprovementFort = (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_FORT");
-	static ImprovementTypes eImprovementCitadel = (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_CITADEL");
-
 	ImprovementTypes eImprovement = getImprovementType();
-	bool bIsFort = MOD_GLOBAL_PASSABLE_FORTS && (eImprovement == eImprovementFort || eImprovement == eImprovementCitadel);
-	bool bIsCityOrFort = getPlotCity() || bIsFort;
+	CvImprovementEntry* pkImprovementInfo = GC.getImprovementInfo(eImprovement);
+	bool bIsPassable = MOD_GLOBAL_PASSABLE_FORTS && pkImprovementInfo != NULL && pkImprovementInfo->IsMakesPassable();
+	bool bIsCityOrPassable = getPlotCity() || bIsPassable;
 
-	if (!bIsCityOrFort) {
+	if (!bIsCityOrPassable) {
 		// Not a city or a fort
 		return false;
 	}
@@ -4258,7 +4307,7 @@ bool CvPlot::isValidDomainForLocation(const CvUnit& unit) const
 #endif
 
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
-	return (unit.getDomainType() == DOMAIN_SEA) ? isFriendlyCityOrPassableFort(unit, true) : isCity();
+	return (unit.getDomainType() == DOMAIN_SEA) ? isFriendlyCityOrPassableImprovement(unit, true) : isCity();
 #else
 	return isCity();
 #endif
@@ -4620,15 +4669,35 @@ int CvPlot::ComputeCultureFromAdjacentImprovement(CvImprovementEntry& kImproveme
 //	--------------------------------------------------------------------------------
 int CvPlot::getAdditionalUnitsFromImprovement() const
 {
-	int iRtnValue = 0;
-
-	if(MOD_GLOBAL_STACKING_RULES && getImprovementType() != NO_IMPROVEMENT)
+	if(MOD_GLOBAL_STACKING_RULES)
 	{
-		// TODO - WH - this should be persisted data, updated as improvements are added/removed
-		iRtnValue += (ImprovementTypes)GC.getImprovementInfo(getImprovementType())->GetAdditionalUnits();
+		return m_eUnitIncrement;
 	}
 
-	return iRtnValue;
+	return 0;
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlot::calculateAdditionalUnitsFromImprovement()
+{
+	if(MOD_GLOBAL_STACKING_RULES)
+	{
+		if (getImprovementType() != NO_IMPROVEMENT)
+		{
+			if (IsImprovementPillaged())
+			{
+				m_eUnitIncrement = 0;
+			}
+			else
+			{
+				m_eUnitIncrement = GC.getImprovementInfo(getImprovementType())->GetAdditionalUnits();
+			}
+		}
+		else
+		{
+			m_eUnitIncrement = 0;
+		}
+	}
 }
 #endif
 
@@ -6235,6 +6304,9 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 		}
 
 		m_eImprovementType = eNewValue;
+#if defined(MOD_GLOBAL_STACKING_RULES)
+		calculateAdditionalUnitsFromImprovement();
+#endif
 
 		if(getImprovementType() == NO_IMPROVEMENT)
 		{
@@ -6481,6 +6553,9 @@ void CvPlot::SetImprovementPillaged(bool bPillaged)
 	if(bPillaged != bWasPillaged)
 	{
 		m_bImprovementPillaged = bPillaged;
+#if defined(MOD_GLOBAL_STACKING_RULES)
+		calculateAdditionalUnitsFromImprovement();
+#endif
 		updateYield();
 
 		// Quantified Resource changes
@@ -9869,6 +9944,9 @@ void CvPlot::read(FDataStream& kStream)
 	kStream >> m_ePlayerResponsibleForRoute;
 	kStream >> m_ePlayerThatClearedBarbCampHere;
 	kStream >> m_eRouteType;
+#if defined(MOD_GLOBAL_STACKING_RULES)
+	MOD_SERIALIZE_READ(30, kStream, m_eUnitIncrement, 0);
+#endif
 	kStream >> m_eWorldAnchor;
 	kStream >> m_cWorldAnchorData;
 
@@ -10036,6 +10114,9 @@ void CvPlot::write(FDataStream& kStream) const
 	kStream << m_ePlayerResponsibleForRoute;
 	kStream << m_ePlayerThatClearedBarbCampHere;
 	kStream << m_eRouteType;
+#if defined(MOD_GLOBAL_STACKING_RULES)
+	MOD_SERIALIZE_WRITE(kStream, m_eUnitIncrement);
+#endif
 	kStream << m_eWorldAnchor;
 	kStream << m_cWorldAnchorData;
 	kStream << m_eRiverEFlowDirection;

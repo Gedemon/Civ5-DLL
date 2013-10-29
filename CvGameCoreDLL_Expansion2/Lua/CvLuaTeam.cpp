@@ -166,6 +166,9 @@ void CvLuaTeam::PushMethods(lua_State* L, int t)
 	Method(GetKilledByTeam);
 
 	Method(HasEmbassyAtTeam);
+#if defined(MOD_API_EXTENSIONS)
+	Method(HasSpyAtTeam);
+#endif
 	Method(IsAllowsOpenBordersToTeam);
 	Method(IsForcePeace);
 	Method(IsDefensivePact);
@@ -1012,6 +1015,13 @@ int CvLuaTeam::lHasEmbassyAtTeam(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvTeam::HasEmbassyAtTeam);
 }
+#if defined(MOD_API_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaTeam::lHasSpyAtTeam(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvTeam::HasSpyAtTeam);
+}
+#endif
 //------------------------------------------------------------------------------
 //bool isAllowsOpenBordersToTeam(TeamTypes eIndex);
 int CvLuaTeam::lIsAllowsOpenBordersToTeam(lua_State* L)

@@ -285,6 +285,10 @@ public:
 	bool HasEmbassyAtTeam(TeamTypes eIndex) const;
 	void SetHasEmbassyAtTeam(TeamTypes eIndex, bool bNewValue);
 
+#if defined(MOD_API_EXTENSIONS)
+	bool HasSpyAtTeam(TeamTypes eIndex) const;
+#endif
+
 	void EvacuateDiplomatsAtTeam(TeamTypes eIndex);
 
 	bool IsAllowsOpenBordersToTeam(TeamTypes eIndex) const;

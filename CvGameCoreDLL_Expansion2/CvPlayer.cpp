@@ -3365,12 +3365,14 @@ CvUnit* CvPlayer::initUnitWithNameOffset(UnitTypes eUnit, int nameOffset, int iX
 	{
 		pUnit->initWithNameOffset(pUnit->GetID(), eUnit, nameOffset, ((eUnitAI == NO_UNITAI) ? ((UnitAITypes)(pkUnitDef->GetDefaultUnitAIType())) : eUnitAI), GetID(), iX, iY, eFacingDirection, bNoMove, bSetupGraphical, iMapLayer, iNumGoodyHutsPopped);
 
+#if !defined(NO_TUTORIALS)
 		// slewis - added for the tutorial
 		if(pUnit->getUnitInfo().GetWorkRate() > 0 && pUnit->getUnitInfo().GetDomainType() == DOMAIN_LAND)
 		{
 			m_bEverTrainedBuilder = true;
 		}
 		// end added for the tutorial
+#endif
 	}
 
 	m_kPlayerAchievements.AddUnit(pUnit);
@@ -6752,6 +6754,12 @@ void CvPlayer::AwardFreeBuildings(CvCity* pCity)
 		if(eBuilding != NO_BUILDING)
 		{
 			pCity->GetCityBuildings()->SetNumFreeBuilding(eBuilding, 1);
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
+		}
+		else
+		{
+			pCity->SetOwedFoodBuilding(true);
+#endif
 		}
 
 		ChangeNumCitiesFreeFoodBuilding(-1);
@@ -9022,8 +9030,33 @@ int CvPlayer::calculateResearchModifier(TechTypes eTech)
 		CvTeam& kLoopTeam = GET_TEAM((TeamTypes)iI);
 		if(kLoopTeam.isAlive() && !kLoopTeam.isMinorCiv())
 		{
-			// TODO - WH - research modifier, only if embassy or a spy in the capital
+#if defined(MOD_DIPLOMACY_TECH_BONUSES)
+			bool bCouldBorrowTech;
+			
+			if (MOD_DIPLOMACY_TECH_BONUSES)
+			{
+#if defined(MOD_API_EXTENSIONS)
+				if (GetEspionage()->GetNumSpies() > 0)
+				{
+					// We've got spies!  So we need one in a capital of a player in the other team
+					bCouldBorrowTech = GET_TEAM(getTeam()).HasSpyAtTeam((TeamTypes)iI);
+				}
+				else
+#endif
+				{
+					// No spies yet, so use embassy status
+					bCouldBorrowTech = GET_TEAM(getTeam()).HasEmbassyAtTeam((TeamTypes)iI);
+				}
+			}
+			else
+			{
+				bCouldBorrowTech = GET_TEAM(getTeam()).isHasMet((TeamTypes)iI);
+			}
+			
+			if(bCouldBorrowTech)
+#else
 			if(GET_TEAM(getTeam()).isHasMet((TeamTypes)iI))
+#endif
 			{
 				if(kLoopTeam.GetTeamTechs()->HasTech(eTech))
 				{
@@ -21636,6 +21669,12 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 					pLoopCity->clearOrderQueue();
 					pLoopCity->chooseProduction();		// Send a notification to the user that what they were building was given to them, and they need to produce something else.
 				}
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
+			}
+			else
+			{
+				pLoopCity->SetOwedFoodBuilding(true);
+#endif
 			}
 
 			// Decrement cities left to get free food building (at end of loop we'll set the remainder)

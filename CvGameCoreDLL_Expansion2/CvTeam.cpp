@@ -3959,6 +3959,36 @@ void CvTeam::SetHasEmbassyAtTeam(TeamTypes eIndex, bool bNewValue)
 	}
 }
 
+#if defined(MOD_API_EXTENSIONS)
+//	--------------------------------------------------------------------------------
+bool CvTeam::HasSpyAtTeam(TeamTypes eIndex) const
+{
+	CvAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eIndex < MAX_TEAMS, "eIndex is expected to be within maximum bounds (invalid Index)");
+
+	for (uint uiMyPlayer = 0; uiMyPlayer < MAX_MAJOR_CIVS; uiMyPlayer++)
+	{
+		CvPlayer& kMyPlayer = GET_PLAYER((PlayerTypes)uiMyPlayer);
+		if (kMyPlayer.getTeam() == m_eID)
+		{
+			for (uint uiOtherPlayer = 0; uiOtherPlayer < MAX_MAJOR_CIVS; uiOtherPlayer++)
+			{
+				CvPlayer& kOtherPlayer = GET_PLAYER((PlayerTypes)uiOtherPlayer);
+				if (kOtherPlayer.getTeam() == eIndex)
+				{
+					if (kMyPlayer.GetEspionage()->GetSpyIndexInCity(kOtherPlayer.getCapitalCity()) != -1)
+					{
+						return true;
+					}
+				}
+			}
+		}
+	}
+
+	return false;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 void CvTeam::EvacuateDiplomatsAtTeam(TeamTypes eIndex)
 {
@@ -5745,6 +5775,18 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 								pLoopCity->SetOwedCultureBuilding(false);
 							}
 						}
+
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
+						if (pLoopCity->IsOwedFoodBuilding())
+						{
+							BuildingTypes eFreeFoodBuilding = pLoopCity->ChooseFreeFoodBuilding();
+							if (eFreeFoodBuilding != NO_BUILDING)
+							{
+								pLoopCity->GetCityBuildings()->SetNumFreeBuilding(eFreeFoodBuilding, 1);
+								pLoopCity->SetOwedFoodBuilding(false);
+							}
+						}
+#endif
 					}
 				}
 			}

@@ -172,6 +172,9 @@ protected:
 	static int lGetKilledByTeam(lua_State* L);
 
 	static int lHasEmbassyAtTeam(lua_State* L);
+#if defined(MOD_API_EXTENSIONS)
+	static int lHasSpyAtTeam(lua_State* L);
+#endif
 	static int lIsAllowsOpenBordersToTeam(lua_State* L);
 	static int lIsForcePeace(lua_State* L);
 	static int lIsDefensivePact(lua_State* L);

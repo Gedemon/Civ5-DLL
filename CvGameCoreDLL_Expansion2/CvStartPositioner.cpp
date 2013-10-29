@@ -42,6 +42,7 @@ void CvStartPositioner::Init(CvSiteEvaluatorForStart* pSiteEvaluator)
 /// Chop map into a number of regions of equal fertility
 void CvStartPositioner::DivideMapIntoRegions(int iNumRegions)
 {
+	CUSTOMLOG("CvStartPositioner::DivideMapIntoRegions(%i)", iNumRegions);
 	CvArea* pLoopArea(NULL);
 	int iLoop;
 	int iNumRegionsPlaced = 0;
@@ -92,6 +93,7 @@ void CvStartPositioner::DivideMapIntoRegions(int iNumRegions)
 /// Compute the value of having a city at each plot
 void CvStartPositioner::ComputeFoundValues()
 {
+	CUSTOMLOG("CvStartPositioner::ComputeFoundValues()");
 	CvPlot* pLoopPlot(NULL);
 
 	// Progress through entire map
@@ -116,6 +118,7 @@ void CvStartPositioner::ComputeFoundValues()
 /// Take into account handicaps to rank the "draft order" for start positions
 void CvStartPositioner::RankPlayerStartOrder()
 {
+	CUSTOMLOG("CvStartPositioner::RankPlayerStartOrder()");
 	// Clear rankings
 	m_PlayerOrder.clear();
 
@@ -152,6 +155,7 @@ void CvStartPositioner::RankPlayerStartOrder()
 /// Pick start positions for all civs
 void CvStartPositioner::AssignStartingLocations()
 {
+	CUSTOMLOG("CvStartPositioner::AssignStartingLocations()");
 	CvString strString;
 	unsigned int iNextRegion = 0;
 	int iPlayersPlaced = 0;
@@ -807,6 +811,7 @@ int CvStartPositioner::StartingPlotRange() const
 
 	// Used to be a Python hook (minStartingDistanceModifier) here
 
+	CUSTOMLOG("CvStartPositioner::StartingPlotRange() = %i", std::max(iRange, GC.getMIN_CIV_STARTING_DISTANCE()));
 	return std::max(iRange, GC.getMIN_CIV_STARTING_DISTANCE());
 }
 

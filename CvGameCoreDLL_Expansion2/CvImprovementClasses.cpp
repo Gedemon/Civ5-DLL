@@ -67,6 +67,9 @@ CvImprovementEntry::CvImprovementEntry(void):
 	m_iGoldMaintenance(0),
 	m_iCultureBombRadius(0),
 	m_iRequiresXAdjacentLand(-1),
+#if defined(MOD_API_EXTENSIONS)
+	m_iRequiresXAdjacentWater(-1),
+#endif
 #if defined(MOD_GLOBAL_STACKING_RULES)
 	m_iAdditionalUnits(0),
 #endif
@@ -89,6 +92,9 @@ CvImprovementEntry::CvImprovementEntry(void):
 	m_bHillsMakesValid(false),
 #if defined(MOD_GLOBAL_ALPINE_PASSES)
 	m_bMountainsMakesValid(false),
+#endif
+#if defined(MOD_GLOBAL_PASSABLE_FORTS)
+	m_bMakesPassable(false),
 #endif
 	m_bFreshWaterMakesValid(false),
 	m_bRiverSideMakesValid(false),
@@ -198,6 +204,9 @@ bool CvImprovementEntry::CacheResults(Database::Results& kResults, CvDatabaseUti
 	m_iGoldMaintenance = kResults.GetInt("GoldMaintenance");
 	m_iCultureBombRadius = kResults.GetInt("CultureBombRadius");
 	m_iRequiresXAdjacentLand = kResults.GetInt("RequiresXAdjacentLand");
+#if defined(MOD_API_EXTENSIONS)
+	m_iRequiresXAdjacentWater = kResults.GetInt("RequiresXAdjacentWater");
+#endif
 #if defined(MOD_GLOBAL_STACKING_RULES)
 	m_iAdditionalUnits = kResults.GetInt("AdditionalUnits");
 #endif
@@ -205,6 +214,9 @@ bool CvImprovementEntry::CacheResults(Database::Results& kResults, CvDatabaseUti
 	m_bHillsMakesValid = kResults.GetBool("HillsMakesValid");
 #if defined(MOD_GLOBAL_ALPINE_PASSES)
 	m_bMountainsMakesValid = kResults.GetBool("MountainsMakesValid");
+#endif
+#if defined(MOD_GLOBAL_PASSABLE_FORTS)
+	m_bMakesPassable = kResults.GetBool("MakesPassable");
 #endif
 	m_bFreshWaterMakesValid = kResults.GetBool("FreshWaterMakesValid");
 	m_bRiverSideMakesValid = kResults.GetBool("RiverSideMakesValid");
@@ -503,6 +515,14 @@ int CvImprovementEntry::GetRequiresXAdjacentLand() const
 	return m_iRequiresXAdjacentLand;
 }
 
+#if defined(MOD_API_EXTENSIONS)
+/// How many adjacent tiles must be water?
+int CvImprovementEntry::GetRequiresXAdjacentWater() const
+{
+	return m_iRequiresXAdjacentWater;
+}
+#endif
+
 #if defined(MOD_GLOBAL_STACKING_RULES)
 /// Additional units that can stack in this improvement
 int CvImprovementEntry::GetAdditionalUnits() const
@@ -630,6 +650,14 @@ bool CvImprovementEntry::IsHillsMakesValid() const
 bool CvImprovementEntry::IsMountainsMakesValid() const
 {
 	return m_bMountainsMakesValid;
+}
+#endif
+
+#if defined(MOD_GLOBAL_PASSABLE_FORTS)
+/// Permits the tile to be passed by ships
+bool CvImprovementEntry::IsMakesPassable() const
+{
+	return m_bMakesPassable;
 }
 #endif
 

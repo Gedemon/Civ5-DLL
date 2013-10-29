@@ -2395,7 +2395,7 @@ bool CvUnit::canEnterTerrain(const CvPlot& enterPlot, byte bMoveFlags) const
 		if(!enterPlot.isWater() && !canMoveAllTerrain())
 		{
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
-			bool bCanEnter = (enterPlot.isFriendlyCityOrPassableFort(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || enterPlot.isCoastalLand() || plot()->isLake()));
+			bool bCanEnter = (enterPlot.isFriendlyCityOrPassableImprovement(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || enterPlot.isCoastalLand() || plot()->isLake()));
 			if(!bCanEnter && !enterPlot.isEnemyCity(*this))
 			{
 				return false;
@@ -3242,9 +3242,9 @@ bool CvUnit::jumpToNearestValidPlot()
 						{
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
 #if defined(MOD_BUGFIX_NAVAL_NEAREST_WATER)
-							bool bCanEnter = getDomainType() != DOMAIN_SEA || (pLoopPlot->isFriendlyCityOrPassableFort(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || pLoopPlot->isCoastalLand())) || (pLoopPlot->isWater() && !pLoopPlot->isLake());
+							bool bCanEnter = getDomainType() != DOMAIN_SEA || (pLoopPlot->isFriendlyCityOrPassableImprovement(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || pLoopPlot->isCoastalLand())) || (pLoopPlot->isWater() && !pLoopPlot->isLake());
 #else
-							bool bCanEnter = getDomainType() != DOMAIN_SEA || (pLoopPlot->isFriendlyCityOrPassableFort(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || pLoopPlot->isCoastalLand())) || pLoopPlot->isWater());
+							bool bCanEnter = getDomainType() != DOMAIN_SEA || (pLoopPlot->isFriendlyCityOrPassableImprovement(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || pLoopPlot->isCoastalLand())) || pLoopPlot->isWater());
 #endif
 							if(bCanEnter)
 #else
@@ -9293,6 +9293,30 @@ bool CvUnit::canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestVisible,
 			}
 		}
 	}
+
+#if defined(MOD_EVENTS_PLOT)
+	if (MOD_EVENTS_PLOT) {
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if(pkScriptSystem)
+		{
+			CvLuaArgsHandle args;
+			args->Push(((int)getOwner()));
+			args->Push(GetID());
+			args->Push(getX());
+			args->Push(getY());
+			args->Push(eBuild);
+
+			bool bResult = false;
+			if(LuaSupport::CallTestAll(pkScriptSystem, "PlayerCanBuild", args.get(), bResult))
+			{
+				if(bResult == false)
+				{
+					return false;
+				}
+			}
+		}
+	}
+#endif
 
 	return true;
 }
@@ -21582,7 +21606,7 @@ bool CvUnit::PlotValid(CvPlot* pPlot) const
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
 		else
 		{
-			bool bCanEnter = pPlot->isFriendlyCityOrPassableFort(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || pPlot->isCoastalLand() || plot()->isLake());
+			bool bCanEnter = pPlot->isFriendlyCityOrPassableImprovement(*this, true) && (MOD_GLOBAL_PASSABLE_FORTS_ANY || pPlot->isCoastalLand() || plot()->isLake());
 			if(bCanEnter)
 			{
 				return true;

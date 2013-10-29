@@ -657,7 +657,11 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 		Database::Results* pResourceTypes = kUtility.GetResults(strResourceTypesKey);
 		if(pResourceTypes == NULL)
 		{
+#if defined(MOD_API_EXTENSIONS)
+			pResourceTypes = kUtility.PrepareResults(strResourceTypesKey, "select Bonus, Description, SameEra, UniqueEras, ConsecutiveEras, MustBeArt, MustBeArtifact, MustBeEqualArtArtifact, RequiresOwner, RequiresAnyButOwner, RequiresSamePlayer, RequiresUniquePlayers, AIPriority from Building_ThemingBonuses where BuildingType = ?");
+#else
 			pResourceTypes = kUtility.PrepareResults(strResourceTypesKey, "select Bonus, Description, SameEra, UniqueEras, MustBeArt, MustBeArtifact, MustBeEqualArtArtifact, RequiresOwner, RequiresAnyButOwner, RequiresSamePlayer, RequiresUniquePlayers, AIPriority from Building_ThemingBonuses where BuildingType = ?");
+#endif
 		}
 
 		const size_t lenBuildingType = strlen(szBuildingType);
@@ -670,8 +674,10 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 			pThemingInfo.m_iBonus = pResourceTypes->GetInt("Bonus");
 			pThemingInfo.m_strDescription = pResourceTypes->GetText("Description");
 			pThemingInfo.m_bSameEra = pResourceTypes->GetBool("SameEra");
-			// TODO - WH - Theming - ConsecutiveEras
 			pThemingInfo.m_bUniqueEras = pResourceTypes->GetBool("UniqueEras");
+#if defined(MOD_API_EXTENSIONS)
+			pThemingInfo.m_bConsecutiveEras = pResourceTypes->GetBool("ConsecutiveEras");
+#endif
 			pThemingInfo.m_bMustBeArt = pResourceTypes->GetBool("MustBeArt");
 			pThemingInfo.m_bMustBeArtifact = pResourceTypes->GetBool("MustBeArtifact");
 			pThemingInfo.m_bMustBeEqualArtArtifact = pResourceTypes->GetBool("MustBeEqualArtArtifact");

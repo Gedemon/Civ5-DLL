@@ -780,7 +780,9 @@ bool CvDeal::IsPossibleToTradeItem(PlayerTypes ePlayer, PlayerTypes eToPlayer, T
 		int iID = iData1;
 		//antonjs: todo: verify iChoice is valid as well:
 		//int iChoice = iData2;
+#if !defined(MOD_BUGFIX_MINOR)
 		int iNumVotes = iData3;
+#endif
 		bool bRepeal = bFlag1;
 
 		if(GC.getGame().GetGameLeagues()->GetNumActiveLeagues() == 0)

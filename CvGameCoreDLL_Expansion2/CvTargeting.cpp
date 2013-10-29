@@ -31,7 +31,11 @@ static std::vector<int> ms_lastTargetingPath;
 #endif
 
 // Access the last cached targeting path.  Debug only please!
+#if defined(MOD_BUGFIX_MINOR)
+int GetLastTargetingPathIndex(int)
+#else
 int GetLastTargetingPathIndex(int plotIndex)
+#endif
 {
 #if defined(TARGETING_DEBUG)
 	int iIndex = 0;

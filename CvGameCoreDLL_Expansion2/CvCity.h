@@ -539,6 +539,11 @@ public:
 	bool IsOwedCultureBuilding() const;
 	void SetOwedCultureBuilding(bool bNewValue);
 
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
+	bool IsOwedFoodBuilding() const;
+	void SetOwedFoodBuilding(bool bNewValue);
+#endif
+
 	bool IsBlockaded() const;
 
 	int GetWeLoveTheKingDayCounter() const;
@@ -991,6 +996,10 @@ protected:
 	CvString m_strName;
 
 	bool m_bOwedCultureBuilding;
+
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
+	bool m_bOwedFoodBuilding;
+#endif
 
 	mutable FFastSmallFixedList< OrderData, 25, true, c_eCiv5GameplayDLL > m_orderQueue;
 
