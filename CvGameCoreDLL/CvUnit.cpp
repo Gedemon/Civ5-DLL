@@ -1406,6 +1406,9 @@ CvUnit* CvUnit::createCaptureUnit(const CvUnitCaptureDefinition& kCaptureDef)
 					{
 						CvPopupInfo kPopupInfo(BUTTONPOPUP_RETURN_CIVILIAN, kCaptureDef.eCapturingPlayer, kCaptureDef.eOriginalOwner, pkCapturedUnit->GetID());
 						DLLUI->AddPopup(kPopupInfo);
+						// We are adding a popup that the player must make a choice in, make sure they are not in the end-turn phase.
+						if(kCapturingPlayer.isLocalPlayer())
+							CancelActivePlayerEndTurn();
 					}
 
 					// Take it automatically!
@@ -1419,7 +1422,13 @@ CvUnit* CvUnit::createCaptureUnit(const CvUnitCaptureDefinition& kCaptureDef)
 					if (kCaptureDef.eCapturingPlayer == GC.getGame().getActivePlayer())
 					{
 						CvString strBuffer;
-						strBuffer = GetLocalizedText("TXT_KEY_MISC_YOU_CAPTURED_UNIT", GC.getUnitInfo(kCaptureDef.eCaptureUnitType)->GetTextKey());
+						if(kCaptureDef.eOriginalOwner == kCaptureDef.eCapturingPlayer){
+							//player recaptured a friendly unit
+							strBuffer = GetLocalizedText("TXT_KEY_MISC_YOU_RECAPTURED_UNIT", GC.getUnitInfo(kCaptureDef.eCaptureUnitType)->GetTextKey());
+						}
+						else{
+							strBuffer = GetLocalizedText("TXT_KEY_MISC_YOU_CAPTURED_UNIT", GC.getUnitInfo(kCaptureDef.eCaptureUnitType)->GetTextKey());
+						}
 						DLLUI->AddUnitMessage(0, IDInfo(kCaptureDef.eCapturingPlayer, pkCapturedUnit->GetID()), kCaptureDef.eCapturingPlayer, true, GC.getEVENT_MESSAGE_TIME(), strBuffer/*, "AS2D_UNITCAPTURE", MESSAGE_TYPE_INFO, GC.getUnitInfo(eCaptureUnitType)->GetButton(), (ColorTypes)GC.getInfoTypeForString("COLOR_GREEN"), pPlot->getX(), pPlot->getY()*/);
 					}
 				}
@@ -1913,6 +1922,10 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 			{
 				return false;
 			}
+
+			// The remaining checks are only for AI major vs. AI Minor, humans can always enter a minor's territory.
+			if (isHuman())
+				return true;
 
 			CvMinorCivAI* pMinorAI = GET_PLAYER(kTheirTeam.getLeaderID()).GetMinorCivAI();
 
@@ -3185,6 +3198,9 @@ void CvUnit::gift(bool bTestTransport)
 bool CvUnit::CanDistanceGift(PlayerTypes eToPlayer) const
 {
 	VALIDATE_OBJECT
+
+	if (eToPlayer == NO_PLAYER)
+		return false;
 
 	// Minors
 	if (GET_PLAYER(eToPlayer).isMinorCiv())
@@ -5008,8 +5024,11 @@ bool CvUnit::rebase(int iX, int iY)
 
 	finishMoves();
 
-	setXY(pTargetPlot->getX(), pTargetPlot->getY(), false, true, false);
+	// Loses sight bonus for this turn
+	setReconPlot(NULL);
 
+	bool bShow = true;
+	// Do the rebase first to keep the visualization in sequence
 	if (plot()->isVisibleToWatchingHuman() || pTargetPlot->isVisibleToWatchingHuman())
 	{
 		SpecialUnitTypes eSpecialUnitPlane = (SpecialUnitTypes) GC.getInfoTypeForString("SPECIALUNIT_FIGHTER");
@@ -5020,11 +5039,11 @@ bool CvUnit::rebase(int iX, int iY)
 
 			auto_ptr<ICvUnit1> pDllUnit(new CvDllUnit(this));
 			gDLL->GameplayUnitRebased(pDllUnit.get(), pDllOldPlot.get(), pDllTargetPlot.get());
+			bShow = false;		// Tell the setXY to not bother showing the move
 		}
 	}
 
-	// Loses sight bonus for this turn
-	setReconPlot(NULL);
+	setXY(pTargetPlot->getX(), pTargetPlot->getY(), false, bShow, false);
 
 	return true;
 }
@@ -5041,6 +5060,28 @@ bool CvUnit::canPillage(const CvPlot* pPlot) const
 	if (!(getUnitInfo().IsPillage()))
 	{
 		return false;
+	}
+
+	// Prevented by scripting?
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if(pkScriptSystem)
+	{
+		CvLuaArgsHandle args;
+		args->Push(getOwner());
+		args->Push(GetID());
+		args->Push(CvTypes::getMISSION_PILLAGE());
+
+		// Attempt to execute the game events.
+		// Will return false if there are no registered listeners.
+		bool bResult = false;
+		if(LuaSupport::CallTestAll(pkScriptSystem, "CanPillage", args.get(), bResult))
+		{
+			// Check the result.
+			if(bResult == false)
+			{
+				return false;
+			}
+		}
 	}
 
 	// Barbarian boats not allowed to pillage, as they're too annoying :)
@@ -5919,9 +5960,6 @@ bool CvUnit::DoCultureBomb()
 	// Change ownership of nearby plots
 	int iBombRange = GC.getUnitInfo(getUnitType())->GetCultureBombRadius();
 	CvPlot* pLoopPlot;
-	bool bNotifyActivePlayer = false;
-	int iNotifyPlotX = -1;
-	int iNotifyPlotY = -1;
 	for (int i = -iBombRange; i <= iBombRange; ++i)
 	{
 		for (int j = -iBombRange; j <= iBombRange; ++j)
@@ -5939,18 +5977,17 @@ bool CvUnit::DoCultureBomb()
 			if (pLoopPlot->isCity())
 				continue;
 
-			if (pLoopPlot->getOwner() != NO_PLAYER)
-				vePlayersBombed[pLoopPlot->getOwner()] = true;
-
-			// see if we should notify active player
-			if (!bNotifyActivePlayer && pLoopPlot->getOwner() != NO_PLAYER && pLoopPlot->getOwner() != getOwner())
-			{
-				if (pLoopPlot->getOwner() == GC.getGame().getActivePlayer())
-				{
-					bNotifyActivePlayer = true;
-					iNotifyPlotX = pLoopPlot->getX();
-					iNotifyPlotY = pLoopPlot->getY();
+			if(pLoopPlot->getOwner() != NO_PLAYER){
+				// Notify plot owner
+				if(pLoopPlot->getOwner() != getOwner() && !vePlayersBombed[pLoopPlot->getOwner()]){
+					CvNotifications* pNotifications = GET_PLAYER(pLoopPlot->getOwner()).GetNotifications();
+					if(pNotifications){
+						CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_GREAT_ARTIST_STOLE_PLOT", GET_PLAYER(getOwner()).getNameKey());
+						CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_GREAT_ARTIST_STOLE_PLOT", GET_PLAYER(getOwner()).getNameKey());
+						pNotifications->Add(NOTIFICATION_GENERIC, strBuffer, strSummary, pLoopPlot->getX(), pLoopPlot->getY(), -1);
+					}
 				}
+				vePlayersBombed[pLoopPlot->getOwner()] = true;
 			}
 
 			// Have to set owner after we do the above stuff
@@ -5993,18 +6030,6 @@ bool CvUnit::DoCultureBomb()
 					gDLL->GameplayDiplomacyAILeaderMessage(pPlayer->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
 				}
 			}
-		}
-	}
-
-	if (bNotifyActivePlayer)
-	{
-		CvNotifications* pNotifications = GET_PLAYER(GC.getGame().getActivePlayer()).GetNotifications();
-
-		if (pNotifications)
-		{
-			CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_GREAT_ARTIST_STOLE_PLOT", GET_PLAYER(getOwner()).getNameKey());
-			CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_GREAT_ARTIST_STOLE_PLOT", GET_PLAYER(getOwner()).getNameKey());
-			pNotifications->Add(NOTIFICATION_GENERIC, strBuffer, strSummary, iNotifyPlotX, iNotifyPlotY, -1);
 		}
 	}
 
@@ -7074,15 +7099,6 @@ int CvUnit::movesLeft() const
 bool CvUnit::canMove() const
 {
 	VALIDATE_OBJECT
-
-	// Special rules to prevent exploits in turn timer MP games
-	if (GC.getGame().isOption(GAMEOPTION_END_TURN_TIMER_ENABLED))
-	{
-		// If we have to pick a promotion, this unit can't move until he does so (unless it's a city, where we don't want the unit to get stuck stacked with others)
-		if (isPromotionReady() && !plot()->isCity())
-			return false;
-	}
-
 	return (getMoves() > 0);
 }
 
@@ -8434,10 +8450,10 @@ int CvUnit::GetAirStrikeDefenseDamage(const CvUnit* pAttacker, bool bIncludeRand
 }
 
 //	--------------------------------------------------------------------------------
-CvUnit* CvUnit::GetBestInterceptor(const CvPlot & interceptPlot, CvUnit* pkDefender /* = NULL */) const
+CvUnit* CvUnit::GetBestInterceptor(const CvPlot& interceptPlot, CvUnit* pkDefender /* = NULL */, bool bLandInterceptorsOnly /*false*/, bool bVisibleInterceptorsOnly /*false*/) const
 {
 	VALIDATE_OBJECT
-	CvUnit* pLoopUnit;
+		CvUnit* pLoopUnit;
 	CvUnit* pBestUnit;
 	int iValue;
 	int iBestValue;
@@ -8448,37 +8464,44 @@ CvUnit* CvUnit::GetBestInterceptor(const CvPlot & interceptPlot, CvUnit* pkDefen
 	pBestUnit = NULL;
 
 	// Loop through all players' Units (that we're at war with) to see if they can intercept
-	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	for(iI = 0; iI < MAX_PLAYERS; iI++)
 	{
 		CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
-		if (kLoopPlayer.isAlive())
+		if(kLoopPlayer.isAlive())
 		{
 			TeamTypes eLoopTeam = kLoopPlayer.getTeam();
-			if (isEnemy(eLoopTeam) && !isInvisible(eLoopTeam, false, false))
+			if(isEnemy(eLoopTeam) && !isInvisible(eLoopTeam, false, false))
 			{
 				for(pLoopUnit = kLoopPlayer.firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = kLoopPlayer.nextUnit(&iLoop))
 				{
 					// Must be able to intercept
-					if (pLoopUnit != pkDefender && !pLoopUnit->isDelayedDeath() && pLoopUnit->canAirDefend() && !pLoopUnit->isInCombat())
+					if(pLoopUnit != pkDefender && !pLoopUnit->isDelayedDeath() && pLoopUnit->canAirDefend() && !pLoopUnit->isInCombat())
 					{
 						// Must not have already intercepted this turn
-						if (!pLoopUnit->isOutOfInterceptions())
+						if(!pLoopUnit->isOutOfInterceptions())
 						{
 							// Must either be a non-air Unit, or an air Unit that hasn't moved this turn
-							if ((pLoopUnit->getDomainType() != DOMAIN_AIR) || !(pLoopUnit->hasMoved()))
+							if((pLoopUnit->getDomainType() != DOMAIN_AIR) || !(pLoopUnit->hasMoved()))
 							{
 								// Must either be a non-air Unit or an air Unit on intercept
-								if ((pLoopUnit->getDomainType() != DOMAIN_AIR) || (pLoopUnit->GetActivityType() == ACTIVITY_INTERCEPT))
+								if((pLoopUnit->getDomainType() != DOMAIN_AIR) || (pLoopUnit->GetActivityType() == ACTIVITY_INTERCEPT))
 								{
-									// Test range
-									if (plotDistance(pLoopUnit->getX(), pLoopUnit->getY(), interceptPlot.getX(), interceptPlot.getY()) <= pLoopUnit->GetRange())
+									// Check input booleans
+									if (!bLandInterceptorsOnly || pLoopUnit->getDomainType() == DOMAIN_LAND)
 									{
-										iValue = pLoopUnit->currInterceptionProbability();
-
-										if (iValue > iBestValue)
+										if (!bVisibleInterceptorsOnly || pLoopUnit->plot()->isVisible(getTeam()))
 										{
-											iBestValue = iValue;
-											pBestUnit = pLoopUnit;
+											// Test range
+											if(plotDistance(pLoopUnit->getX(), pLoopUnit->getY(), interceptPlot.getX(), interceptPlot.getY()) <= pLoopUnit->GetRange())
+											{
+												iValue = pLoopUnit->currInterceptionProbability();
+
+												if(iValue > iBestValue)
+												{
+													iBestValue = iValue;
+													pBestUnit = pLoopUnit;
+												}
+											}
 										}
 									}
 								}
@@ -8491,6 +8514,68 @@ CvUnit* CvUnit::GetBestInterceptor(const CvPlot & interceptPlot, CvUnit* pkDefen
 	}
 
 	return pBestUnit;
+}
+
+//	--------------------------------------------------------------------------------
+int CvUnit::GetInterceptorCount(const CvPlot& interceptPlot, CvUnit* pkDefender /* = NULL */, bool bLandInterceptorsOnly /*false*/, bool bVisibleInterceptorsOnly /*false*/) const
+{
+	VALIDATE_OBJECT
+	
+	CvUnit* pLoopUnit;
+	int iReturnValue;
+	int iLoop;
+	int iI;
+
+	iReturnValue = 0;
+
+	// Loop through all players' Units (that we're at war with) to see if they can intercept
+	for(iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
+		if(kLoopPlayer.isAlive())
+		{
+			TeamTypes eLoopTeam = kLoopPlayer.getTeam();
+			if(isEnemy(eLoopTeam) && !isInvisible(eLoopTeam, false, false))
+			{
+				for(pLoopUnit = kLoopPlayer.firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = kLoopPlayer.nextUnit(&iLoop))
+				{
+					// Must be able to intercept
+					if(pLoopUnit != pkDefender && !pLoopUnit->isDelayedDeath() && pLoopUnit->canAirDefend() && !pLoopUnit->isInCombat())
+					{
+						// Must not have already intercepted this turn
+						if(!pLoopUnit->isOutOfInterceptions())
+						{
+							// Must either be a non-air Unit, or an air Unit that hasn't moved this turn
+							if((pLoopUnit->getDomainType() != DOMAIN_AIR) || !(pLoopUnit->hasMoved()))
+							{
+								// Must either be a non-air Unit or an air Unit on intercept
+								if((pLoopUnit->getDomainType() != DOMAIN_AIR) || (pLoopUnit->GetActivityType() == ACTIVITY_INTERCEPT))
+								{
+									// Check input booleans
+									if (!bLandInterceptorsOnly || pLoopUnit->getDomainType() == DOMAIN_LAND)
+									{
+										if (!bVisibleInterceptorsOnly || pLoopUnit->plot()->isVisible(getTeam()))
+										{
+											// Test range
+											if(plotDistance(pLoopUnit->getX(), pLoopUnit->getY(), interceptPlot.getX(), interceptPlot.getY()) <= pLoopUnit->GetRange())
+											{
+												if (pLoopUnit->currInterceptionProbability() > 0)
+												{
+													iReturnValue++;
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return iReturnValue;
 }
 
 //	--------------------------------------------------------------------------------
@@ -10386,10 +10471,12 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 						if (getOwner() == GC.getGame().getActivePlayer())
 						{
 							// Don't show in MP
-							if (!GC.getGame().isNetworkMultiPlayer())	// KWG: Candidate for !GC.getGame().isMPOption(MPOPTION_SIMULTANEOUS_TURNS)
+							if (!GC.getGame().isNetworkMultiPlayer())	// KWG: Candidate for !GC.getGame().isOption(GAMEOPTION_SIMULTANEOUS_TURNS)
 							{
 								CvPopupInfo kPopupInfo(BUTTONPOPUP_BARBARIAN_CAMP_REWARD, iNumGold);
 								DLLUI->AddPopup(kPopupInfo);
+								// We are adding a popup that the player must make a choice in, make sure they are not in the end-turn phase.
+								CancelActivePlayerEndTurn();
 
 								//Increment Stat
 								if(kPlayer.isHuman() && !GC.getGame().isGameMultiPlayer())
@@ -10759,7 +10846,8 @@ void CvUnit::setDamage(int iNewValue, PlayerTypes ePlayer, float fAdditionalText
 					}
 				}
 
-				DLLUI->AddPopupText( iX, iY, text.c_str(), fDelay );
+				if (!isSuicide())	// Show the HP lost, expect if it is a suicide unit (missisle, etc.)
+					DLLUI->AddPopupText( iX, iY, text.c_str(), fDelay );
 			}
         }
 	}
@@ -11196,7 +11284,7 @@ void CvUnit::UnGarrison()
 	CvCity* pCity = GET_PLAYER(m_eOwner).getCity(m_iGarrisonCityID);
 	pCity->EjectGarrisonedUnit();
 	m_iGarrisonCityID = -1;
-	CvDLLInterfaceIFaceBase*  UI = DLLUI;
+	ICvUserInterface2*  UI = DLLUI;
 
 	auto_ptr<ICvCity1> pDllCity = GC.WrapCityPointer(pCity);
 	auto_ptr<ICvUnit1> pDllUnit(new CvDllUnit(this));
@@ -12635,19 +12723,15 @@ void CvUnit::setPromotionReady(bool bNewValue)
 
 		if (bNewValue)
 		{
-			if (getOwner() == GC.getGame().getActivePlayer())
+			CvNotifications* pNotifications = GET_PLAYER(getOwner()).GetNotifications();
+			if(pNotifications)
 			{
-				CvNotifications* pNotifications = GET_PLAYER(getOwner()).GetNotifications();
-				if (pNotifications)
+				CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_UNIT_CAN_GET_PROMOTION");
+				CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_UNIT_CAN_GET_PROMOTION");
+				pNotifications->Add(NOTIFICATION_UNIT_PROMOTION, strBuffer, strSummary, -1, -1, getUnitType(), GetID());
+				if(isHuman() && !GC.getGame().isGameMultiPlayer() && GET_PLAYER(GC.getGame().getActivePlayer()).isLocalPlayer())
 				{
-					CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_UNIT_CAN_GET_PROMOTION");
-					CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_UNIT_CAN_GET_PROMOTION");
-					pNotifications->Add(NOTIFICATION_UNIT_PROMOTION, strBuffer, strSummary, -1, -1, getUnitType(), GetID());
-					if( isHuman() && !GC.getGame().isGameMultiPlayer() && GET_PLAYER(GC.getGame().getActivePlayer()).isLocalPlayer())
-					{
-						gDLL->UnlockAchievement( ACHIEVEMENT_UNIT_PROMOTE );
-					}
-
+					gDLL->UnlockAchievement(ACHIEVEMENT_UNIT_PROMOTE);
 				}
 			}
 		}
@@ -12930,7 +13014,7 @@ void CvUnit::setCombatUnit(CvUnit* pCombatUnit, bool bAttacking)
 	if (pCombatUnit != NULL)
 	{
 		CvAssertMsg(getCombatUnit() == NULL && getCombatCity() == NULL, "Combat Unit or City is not expected to be assigned");
-		m_bCombatFocus = (bAttacking && !(DLLUI->isFocusedWidget()) && ((getOwner() == GC.getGame().getActivePlayer()) || ((pCombatUnit->getOwner() == GC.getGame().getActivePlayer()) && !(GC.getGame().isMPOption(MPOPTION_SIMULTANEOUS_TURNS)))));
+		m_bCombatFocus = (bAttacking && !(DLLUI->isFocusedWidget()) && ((getOwner() == GC.getGame().getActivePlayer()) || ((pCombatUnit->getOwner() == GC.getGame().getActivePlayer()) && !(GET_PLAYER(GC.getGame().getActivePlayer()).isSimultaneousTurns()))));
 		m_combatUnit = pCombatUnit->GetIDInfo();
 	}
 	else
@@ -12973,7 +13057,7 @@ void CvUnit::setCombatCity(CvCity* pCombatCity)
 	if (pCombatCity != NULL)
 	{
 		CvAssertMsg(getCombatUnit() == NULL && getCombatCity() == NULL, "Combat Unit or City is not expected to be assigned");
-		m_bCombatFocus = (!(DLLUI->isFocusedWidget()) && ((getOwner() == GC.getGame().getActivePlayer()) || ((pCombatCity->getOwner() == GC.getGame().getActivePlayer()) && !(GC.getGame().isMPOption(MPOPTION_SIMULTANEOUS_TURNS)))));
+		m_bCombatFocus = (!(DLLUI->isFocusedWidget()) && ((getOwner() == GC.getGame().getActivePlayer()) || ((pCombatCity->getOwner() == GC.getGame().getActivePlayer()) && !(GET_PLAYER(GC.getGame().getActivePlayer()).isSimultaneousTurns()))));
 		m_combatCity = pCombatCity->GetIDInfo();
 	}
 	else
@@ -13119,7 +13203,8 @@ const CvString CvUnit::getName() const
 		return getUnitInfo().GetDescription();
 	}
 
-	strBuffer.Format("%s (%s)", m_strName.GetCString(), getUnitInfo().GetDescription());
+	Localization::String name = Localization::Lookup(m_strName);
+	strBuffer.Format("%s (%s)", name.toUTF8(), getUnitInfo().GetDescription());
 
 	return strBuffer;
 }
@@ -14745,6 +14830,11 @@ bool CvUnit::ReadyToMove() const
 		return false;
 	}
 
+	if (GetAutomateType() != NO_AUTOMATE)
+	{
+		return false;
+	}
+
 	if (IsBusy())
 	{
 		return false;
@@ -15043,6 +15133,12 @@ bool CvUnit::UnitAttack(int iX, int iY, int iFlags, int iSteps)
 	VALIDATE_OBJECT
 	CvMap& kMap = GC.getMap();
 	CvPlot* pDestPlot = kMap.plot(iX, iY);
+
+	CvAssertMsg(pDestPlot != NULL, "DestPlot is not assigned a valid value");
+	if(!pDestPlot)
+	{
+		return false;
+	}
 
 	if (isHuman() && getOwner() == GC.getGame().getActivePlayer())
 	{
@@ -15909,10 +16005,26 @@ bool CvUnit::IsCanAttackWithMoveNow() const
 		return false;
 	}
 
-	// Can't attack out of Cities if there is more than 1 combat unit in it
-	if (plot()->GetNumCombatUnits() > 1 && plot()->isCity())
+	// Can't attack out of cities if there is more than 1 combat unit of the same domain in it.
+	// This does not apply to air units, which strangely don't show up as combat unit anyhow.
+	DomainTypes eSourceDomain = getDomainType();
+	CvPlot* pkPlot = plot();
+	if (pkPlot->isCity() && eSourceDomain != DOMAIN_AIR)
 	{
-		return false;
+		IDInfo* pUnitNode = pkPlot->headUnitNode();
+		int iCount = 0;
+		while(pUnitNode != NULL)
+		{
+			CvUnit* pLoopUnit = GetPlayerUnit(*pUnitNode);
+			if(pLoopUnit && pLoopUnit->IsCombatUnit() && pLoopUnit->getDomainType() == eSourceDomain)
+			{
+				iCount++;
+			}
+
+			pUnitNode = pkPlot->nextUnitNode(pUnitNode);
+		}
+
+		return iCount <= 1;	// Just us?  Then it is ok.
 	}
 
 	return true;
@@ -16102,7 +16214,11 @@ bool CvUnit::GeneratePath(const CvPlot* pToPlot, int iFlags, bool bReuse, int* p
 					if (uiIndex < (m_kLastPath.size() - 2))
 						m_kLastPath[uiIndex + 1].SetFlag(CvPathNode::PLOT_ADJACENT_INVISIBLE);
 
-					m_kLastPath[0].SetFlag(CvPathNode::PLOT_INVISIBLE);	// Mark the destination as invisible as well (even though it might not be), the unit will check this in UnitPathTo.
+					// Also determine the destination visibility.  This will be checked in UnitPathTo to see if the destination's visibility has changed and do a re-evaluate again if it has.
+					// This will help a unit to stop early in its pathing if the destination is blocked.
+					CvPlot* pkPathDest = kMap.plot(m_kLastPath[0].m_iX, m_kLastPath[0].m_iY);
+					if (pkPathDest != NULL && !pkPathDest->isVisible(eTeam))
+						m_kLastPath[0].SetFlag(CvPathNode::PLOT_INVISIBLE);
 
 					break;	// Anything after is 'in the dark' and should be re-evaluated if trying to move a unit into it.
 				}

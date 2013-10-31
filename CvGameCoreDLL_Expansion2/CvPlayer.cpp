@@ -2160,8 +2160,6 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 #if defined(MOD_GLOBAL_NO_CONQUERED_SPACESHIPS)
 		GET_PLAYER(eOldOwner).disassembleSpaceship();
 #endif
-		GET_PLAYER(eOldOwner).SetHasLostCapital(true, GetID());
-
 		GET_PLAYER(eOldOwner).findNewCapital();
 
 		GET_TEAM(getTeam()).resetVictoryProgress();
@@ -2222,6 +2220,11 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 	pNewCity->SetJONSCultureLevel(iOldCultureLevel);
 	pNewCity->GetCityReligions()->Copy(&tempReligions);
 	pNewCity->GetCityReligions()->RemoveFormerPantheon();
+
+	if(bCapital)
+	{
+		GET_PLAYER(eOldOwner).SetHasLostCapital(true, m_eID);
+	}
 
 	CvCivilizationInfo& playerCivilizationInfo = getCivilizationInfo();
 
@@ -5484,9 +5487,27 @@ bool CvPlayer::canRaze(CvCity* pCity, bool bIgnoreCapitals) const
 	{
 		return false;
 	}
-	
+
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if(pkScriptSystem)
+	{
+		CvLuaArgsHandle args;
+		args->Push(pCity->getOwner());
+		args->Push(pCity->GetID());
+
+		bool bResult = false;
+		if(LuaSupport::CallTestAll(pkScriptSystem, "CanRazeOverride", args.get(), bResult))
+		{
+			// Check the result.
+			if(bResult == true)
+			{
+				return true;
+			}
+		}
+	}
+
 #if defined(MOD_EVENTS_CITY_RAZING)
-	if (MOD_EVENTS_CITY_RAZING) {
+	if (MOD_EVENTS_CITY_RAZING) { // TODO - WH - do we still need this?
 		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
 		if (pkScriptSystem) {
 			CvLuaArgsHandle args;
@@ -5530,10 +5551,22 @@ bool CvPlayer::canRaze(CvCity* pCity, bool bIgnoreCapitals) const
 		}
 	}
 
-#if !defined(MOD_EVENTS_CITY_RAZING)
-	// See above ;)
-	// todo : maybe do a script callback
-#endif
+	if(pkScriptSystem)
+	{
+		CvLuaArgsHandle args;
+		args->Push(pCity->getOwner());
+		args->Push(pCity->GetID());
+
+		bool bResult = false;
+		if(LuaSupport::CallTestAll(pkScriptSystem, "CanRaze", args.get(), bResult))
+		{
+			// Check the result.
+			if(bResult == false)
+			{
+				return false;
+			}
+		}
+	}
 
 	return true;
 }
@@ -14837,58 +14870,55 @@ void CvPlayer::SetHasLostCapital(bool bValue, PlayerTypes eConqueror)
 		if(!isMinorCiv())
 		{
 			int iMostOriginalCapitals = 0;
-			TeamTypes eLoopTeam;
-			PlayerTypes eLoopPlayer;
-
 			TeamTypes eWinningTeam = NO_TEAM;
-			int iWinningTeamSize = 0;
-
-			for (int iTeamLoop = 0; iTeamLoop < MAX_TEAMS; iTeamLoop++)
-			{
-				int iNumOriginalCapitals = 0;
-				int iTeamSize = 0;
-				eLoopTeam = (TeamTypes)iTeamLoop;
-				for (int iPlayerLoop = 0; iPlayerLoop < MAX_MAJOR_CIVS; iPlayerLoop++)
-				{
-					eLoopPlayer = (PlayerTypes)iPlayerLoop;
-					if (GET_PLAYER(eLoopPlayer).isAlive() && !GET_PLAYER(eLoopPlayer).isMinorCiv())
-					{
-						iTeamSize++;
-						int iCityLoop;
-						CvCity* pLoopCity = NULL;
-						for(pLoopCity = firstCity(&iCityLoop); pLoopCity != NULL; pLoopCity = nextCity(&iCityLoop))
-						{
-							if (pLoopCity->IsOriginalCapital())
-							{
-								iNumOriginalCapitals++;
-							}
-						}
-					}
-				}
-
-				if (iNumOriginalCapitals - iTeamSize > iMostOriginalCapitals - iWinningTeamSize)
-				{
-					eWinningTeam = eLoopTeam;
-					iMostOriginalCapitals = iNumOriginalCapitals;
-					iWinningTeamSize = iTeamSize;
-				}
-			}
-
 			PlayerTypes eWinningPlayer = NO_PLAYER;
-			if (iWinningTeamSize == 1)
+
 			{
-				for (int iPlayerLoop = 0; iPlayerLoop < MAX_MAJOR_CIVS; iPlayerLoop++)
+				// Calculate who owns the most original capitals by iterating through all civs 
+				// and finding out who owns their original capital.
+				typedef std::tr1::array<int, MAX_CIV_TEAMS> CivTeamArray;
+				CivTeamArray aTeamCityCount;
+				aTeamCityCount.assign(0);
+
+				CvMap& kMap = GC.getMap();
+				for (int iLoopPlayer = 0; iLoopPlayer < MAX_MAJOR_CIVS; ++iLoopPlayer)
 				{
-					eLoopPlayer = (PlayerTypes)iPlayerLoop;
-					if (GET_PLAYER(eLoopPlayer).isAlive() && !GET_PLAYER(eLoopPlayer).isMinorCiv())
+					const PlayerTypes ePlayer = static_cast<PlayerTypes>(iLoopPlayer);
+					CvPlayer& kLoopPlayer = GET_PLAYER(ePlayer);
+					if(kLoopPlayer.isEverAlive())
 					{
-						if (GET_PLAYER(eLoopPlayer).getTeam() == eWinningTeam)
+						const int iOriginalCapitalX = kLoopPlayer.GetOriginalCapitalX();
+						const int iOriginalCapitalY = kLoopPlayer.GetOriginalCapitalY();
+						if(iOriginalCapitalX != -1 && iOriginalCapitalY != -1)
 						{
-							eWinningPlayer = eLoopPlayer;
-							break;
+							CvPlot* pkPlot = kMap.plot(iOriginalCapitalX, iOriginalCapitalY);
+							if(pkPlot != NULL)
+							{
+								CvCity* pkCapitalCity = pkPlot->getPlotCity();
+								if(pkCapitalCity != NULL)
+								{
+									const PlayerTypes eCapitalOwner = pkCapitalCity->getOwner();
+									if(eCapitalOwner != NO_PLAYER)
+									{
+										CvPlayer& kCapitalOwnerPlayer = GET_PLAYER(eCapitalOwner);
+										aTeamCityCount[kCapitalOwnerPlayer.getTeam()]++;
+									}
+								}
+							}	
 						}
 					}
 				}
+
+				// What's the max count and are they the only team to have the max?
+				CivTeamArray::iterator itMax = max_element(aTeamCityCount.begin(), aTeamCityCount.end());
+				if(count(aTeamCityCount.begin(), aTeamCityCount.end(), *itMax) == 1)
+				{
+					eWinningTeam = static_cast<TeamTypes>(itMax - aTeamCityCount.begin());
+					iMostOriginalCapitals = *itMax;
+
+					CvTeam& kTeam = GET_TEAM(eWinningTeam);
+					eWinningPlayer = kTeam.getLeaderID();
+				}			
 			}
 
 			// Someone just lost their capital, test to see if someone wins
@@ -14910,7 +14940,7 @@ void CvPlayer::SetHasLostCapital(bool bValue, PlayerTypes eConqueror)
 						continue;
 					}
 
-					// Active Player lost their capital
+					// Notify Player lost their capital
 					if(ePlayer == GetID())
 					{
 						eNotificationType = NOTIFICATION_CAPITAL_LOST_ACTIVE_PLAYER;
@@ -16339,7 +16369,9 @@ void CvPlayer::setTurnActive(bool bNewValue, bool bDoTurn)
 	}
 	else
 	{
-		gDLL->netMessageDebugLog("SetTurnActive() called without changing the end turn status.");
+		CvString logOutput;
+		logOutput.Format("SetTurnActive() called without changing the end turn status. Player(%i) OldTurnActive(%i) NewTurnActive(%i)", GetID(), isTurnActive(), bNewValue);
+		gDLL->netMessageDebugLog(logOutput);
 	}
 }
 

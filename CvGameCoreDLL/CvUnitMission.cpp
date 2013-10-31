@@ -238,7 +238,7 @@ void CvUnitMission::PushMission(UnitHandle hUnit, MissionTypes eMission, int iDa
 				hUnit->PlayActionSound();
 			}
 
-			gDLL->getInterfaceIFace()->setHasMovedUnit(true);
+			GC.GetEngineUserInterface()->setHasMovedUnit(true);
 		}
 
 		////gDLL->getEventReporterIFace()->selectionGroupPushMission(this, eMission);
@@ -343,9 +343,9 @@ void CvUnitMission::WaitFor(UnitHandle hUnit, UnitHandle hWaitForUnit)
 
 	if ((hUnit->getOwner() == GC.getGame().getActivePlayer()) && hUnit->IsSelected())
 	{
-		gDLL->getInterfaceIFace()->setDirty(Waypoints_DIRTY_BIT, true);
-		gDLL->getInterfaceIFace()->setDirty(SelectionButtons_DIRTY_BIT, true);
-		gDLL->getInterfaceIFace()->setDirty(UnitInfo_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(Waypoints_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(SelectionButtons_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(UnitInfo_DIRTY_BIT, true);
 	}
 }
 
@@ -369,9 +369,9 @@ void CvUnitMission::UpdateMission(UnitHandle & hUnit)
 			{
 				if (hUnit->getOwner() == GC.getGame().getActivePlayer())
 				{
-					//if (gDLL->getInterfaceIFace()->GetHeadSelectedUnit() == NULL)
+					//if (GC.GetEngineUserInterface()->GetHeadSelectedUnit() == NULL)
 					{
-						gDLL->getInterfaceIFace()->changeCycleSelectionCounter(1);
+						GC.GetEngineUserInterface()->changeCycleSelectionCounter(1);
 					}
 				}
 			}
@@ -445,7 +445,7 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 							{
 								if (bCityAttackInterrupt)
 								{
-									gDLL->getInterfaceIFace()->SetDontShowPopups(false);
+									GC.GetEngineUserInterface()->SetDontShowPopups(false);
 
 									if(!GC.getGame().isOption(GAMEOPTION_NO_TUTORIAL))
 									{
@@ -456,7 +456,7 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 										kPopup.iData3 = hUnit->plot()->GetPlotIndex();
 										strcpy_s(kPopup.szText, "TXT_KEY_ADVISOR_CITY_ATTACK_BODY");
 										kPopup.bOption1 = true;
-										gDLL->getInterfaceIFace()->AddPopup(kPopup);
+										GC.GetEngineUserInterface()->AddPopup(kPopup);
 										goto ContinueMissionExit;
 									}
 								}
@@ -471,14 +471,14 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 									{
 										if(!GC.getGame().isOption(GAMEOPTION_NO_TUTORIAL))
 										{
-											gDLL->getInterfaceIFace()->SetDontShowPopups(false);
+											GC.GetEngineUserInterface()->SetDontShowPopups(false);
 											CvPopupInfo kPopup(BUTTONPOPUP_ADVISOR_MODAL);
 											kPopup.iData1 = ADVISOR_MILITARY;
 											kPopup.iData2 = pPlot->GetPlotIndex();
 											kPopup.iData3 = hUnit->plot()->GetPlotIndex();
 											strcpy_s(kPopup.szText, "TXT_KEY_ADVISOR_BAD_ATTACK_BODY");
 											kPopup.bOption1 = false;
-											gDLL->getInterfaceIFace()->AddPopup(kPopup);
+											GC.GetEngineUserInterface()->AddPopup(kPopup);
 											goto ContinueMissionExit;
 										}
 
@@ -831,7 +831,7 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 				if (hUnit->ShowMoves() && GC.getGame().getActivePlayer() != NO_PLAYER && hUnit->getOwner() != GC.getGame().getActivePlayer() && hUnit->plot()->isActiveVisible(false))
 				{
 					auto_ptr<ICvPlot1> pDllPlot = GC.WrapPlotPointer(hUnit->plot());
-					gDLL->getInterfaceIFace()->lookAt(pDllPlot.get(), CAMERALOOKAT_NORMAL);
+					GC.GetEngineUserInterface()->lookAt(pDllPlot.get(), CAMERALOOKAT_NORMAL);
 				}
 			}
 
@@ -861,7 +861,7 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 								iCameraTime = 1;
 							}
 							// If our move revealed a Plot, camera jumps slower
-							else if (gDLL->getInterfaceIFace()->IsSelectedUnitRevealingNewPlots())
+							else if (GC.GetEngineUserInterface()->IsSelectedUnitRevealingNewPlots())
 							{
 								iCameraTime = 10;
 							}
@@ -871,7 +871,7 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 								iCameraTime = 5;
 							}
 
-							gDLL->getInterfaceIFace()->changeCycleSelectionCounter(iCameraTime);
+							GC.GetEngineUserInterface()->changeCycleSelectionCounter(iCameraTime);
 						}
 					}
 
@@ -893,7 +893,7 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 				}
 				else if (!hUnit->IsBusy() && hUnit->getOwner() == GC.getGame().getActivePlayer() && hUnit->IsSelected())
 				{
-					gDLL->getInterfaceIFace()->changeCycleSelectionCounter(1);
+					GC.GetEngineUserInterface()->changeCycleSelectionCounter(1);
 				}
 			}
 		}
@@ -938,11 +938,18 @@ bool CvUnitMission::CanStartMission(UnitHandle hUnit, int iMission, int iData1, 
 	else if(iMission == CvTypes::getMISSION_MOVE_TO_UNIT())
 	{
 		CvAssertMsg(iData1 != NO_PLAYER, "iData1 should be a valid Player");
-		pTargetUnit = GET_PLAYER((PlayerTypes)iData1).getUnit(iData2);
-		if ((pTargetUnit) && !(pTargetUnit->atPlot(*pPlot)))
+		CvAssertMsg(iData2 != NO_UNIT, "iData2 should be a valid Unit ID");
+		if (iData1 != NO_PLAYER && iData2 != NO_UNIT)
 		{
-			return true;
+			pTargetUnit = GET_PLAYER((PlayerTypes)iData1).getUnit(iData2);
+			if ((pTargetUnit) && !(pTargetUnit->atPlot(*pPlot)))
+			{
+				return true;
+			}
 		}
+		else
+			return false;
+
 	}
 	else if(iMission == CvTypes::getMISSION_SKIP())
 	{
@@ -1181,7 +1188,7 @@ void CvUnitMission::StartMission(UnitHandle hUnit)
 	CvPlayerAI& kUnitOwner = GET_PLAYER(hUnit->getOwner());
 
 
-	if (!GC.getGame().isMPOption(MPOPTION_SIMULTANEOUS_TURNS))
+	if(!kUnitOwner.isSimultaneousTurns())
 	{
 		if (!kUnitOwner.isTurnActive())
 		{
@@ -1189,7 +1196,7 @@ void CvUnitMission::StartMission(UnitHandle hUnit)
 			{
 				if (hUnit->IsSelected())
 				{
-					gDLL->getInterfaceIFace()->changeCycleSelectionCounter(1);
+					GC.GetEngineUserInterface()->changeCycleSelectionCounter(1);
 				}
 			}
 
@@ -1322,6 +1329,12 @@ void CvUnitMission::StartMission(UnitHandle hUnit)
 				if (hUnit->paradrop(pkQueueData->iData1, pkQueueData->iData2))
 				{
 					bAction = true;
+					// The Paradrop needs to have GameplayUnitMissionEnd, so if no mission timer will be started, do it now.
+					if (hUnit->plot()->isActiveVisible() && (!hUnit->isHuman() || !hUnit->plot()->isVisibleToWatchingHuman() || CalculateMissionTimer(hUnit) == 0))
+					{
+						auto_ptr<ICvUnit1> pDllUnit(new CvDllUnit(hUnit.pointer()));
+						gDLL->GameplayUnitMissionEnd(pDllUnit.get());
+					}
 				}
 			}
 
@@ -1338,6 +1351,12 @@ void CvUnitMission::StartMission(UnitHandle hUnit)
 				if (hUnit->rebase(pkQueueData->iData1, pkQueueData->iData2))
 				{
 					bAction = true;
+					// The Rebase needs to have GameplayUnitMissionEnd, so if no mission timer will be started, do it now.
+					if (hUnit->plot()->isActiveVisible() && (!hUnit->isHuman() || !hUnit->plot()->isVisibleToWatchingHuman() || CalculateMissionTimer(hUnit) == 0))
+					{
+						auto_ptr<ICvUnit1> pDllUnit(new CvDllUnit(hUnit.pointer()));
+						gDLL->GameplayUnitMissionEnd(pDllUnit.get());
+					}
 				}
 			}
 
@@ -1497,7 +1516,7 @@ void CvUnitMission::StartMission(UnitHandle hUnit)
 				{
 					if (hUnit->IsSelected())
 					{
-						gDLL->getInterfaceIFace()->changeCycleSelectionCounter(kUnitOwner.isOption(PLAYEROPTION_QUICK_MOVES)? 1 : 2);
+						GC.GetEngineUserInterface()->changeCycleSelectionCounter(kUnitOwner.isOption(PLAYEROPTION_QUICK_MOVES)? 1 : 2);
 					}
 				}
 
@@ -1558,7 +1577,7 @@ CvPlot* CvUnitMission::LastMissionPlot(UnitHandle hUnit)
 //		 still used to keep the units sequencing their missions with each other.
 //		 i.e. each unit will get a chance to complete a mission segment, rather than a unit
 //		 exhausting its mission queue all in one go.
-void CvUnitMission::UpdateMissionTimer(UnitHandle hUnit, int iSteps)
+int CvUnitMission::CalculateMissionTimer(UnitHandle hUnit, int iSteps)
 {
 	UnitHandle pTargetUnit;
 	CvPlot* pTargetPlot;
@@ -1572,11 +1591,6 @@ void CvUnitMission::UpdateMissionTimer(UnitHandle hUnit, int iSteps)
 	else if ((pkMissionNode = HeadMissionQueueNode(hUnit->m_missionQueue)) != NULL)
 	{
 		MissionData& kMissionData = *pkMissionNode;
-//		CvMissionInfo* pkMissionInfo = GC.getMissionInfo((MissionTypes)kMissionData.eMissionType);
-//		if(pkMissionInfo)
-//		{
-//			iTime = pkMissionInfo->getTime();
-//		}
 
 		iTime = 1;
 
@@ -1621,7 +1635,13 @@ void CvUnitMission::UpdateMissionTimer(UnitHandle hUnit, int iSteps)
 		iTime = 0;
 	}
 
-	hUnit->SetMissionTimer(iTime);
+	return iTime;
+}
+
+//	---------------------------------------------------------------------------
+void CvUnitMission::UpdateMissionTimer(UnitHandle hUnit, int iSteps)
+{
+	hUnit->SetMissionTimer(CalculateMissionTimer(hUnit, iSteps));
 }
 
 //	---------------------------------------------------------------------------
@@ -1666,9 +1686,9 @@ void CvUnitMission::InsertAtEndMissionQueue(UnitHandle hUnit, MissionData missio
 
 	if ((hUnit->getOwner() == GC.getGame().getActivePlayer()) && hUnit->IsSelected())
 	{
-		gDLL->getInterfaceIFace()->setDirty(Waypoints_DIRTY_BIT, true);
-		gDLL->getInterfaceIFace()->setDirty(SelectionButtons_DIRTY_BIT, true);
-		gDLL->getInterfaceIFace()->setDirty(UnitInfo_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(Waypoints_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(SelectionButtons_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(UnitInfo_DIRTY_BIT, true);
 	}
 }
 
@@ -1699,9 +1719,9 @@ MissionData* CvUnitMission::DeleteMissionQueueNode(UnitHandle hUnit, MissionData
 
 	if ((hUnit->getOwner() == GC.getGame().getActivePlayer()) && hUnit->IsSelected())
 	{
-		gDLL->getInterfaceIFace()->setDirty(Waypoints_DIRTY_BIT, true);
-		gDLL->getInterfaceIFace()->setDirty(SelectionButtons_DIRTY_BIT, true);
-		gDLL->getInterfaceIFace()->setDirty(UnitInfo_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(Waypoints_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(SelectionButtons_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(UnitInfo_DIRTY_BIT, true);
 	}
 
 	return pNextMissionNode;
@@ -1726,9 +1746,9 @@ void CvUnitMission::ClearMissionQueue(UnitHandle hUnit, int iUnitCycleTimerOverr
 
 	if ((hUnit->getOwner() == GC.getGame().getActivePlayer()) && hUnit->IsSelected())
 	{
-		gDLL->getInterfaceIFace()->setDirty(Waypoints_DIRTY_BIT, true);
-		gDLL->getInterfaceIFace()->setDirty(SelectionButtons_DIRTY_BIT, true);
-		gDLL->getInterfaceIFace()->setDirty(UnitInfo_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(Waypoints_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(SelectionButtons_DIRTY_BIT, true);
+		GC.GetEngineUserInterface()->setDirty(UnitInfo_DIRTY_BIT, true);
 	}
 }
 
@@ -1770,7 +1790,7 @@ void CvUnitMission::DeactivateHeadMission(UnitHandle hUnit, int iUnitCycleTimer)
 				if (GET_PLAYER(hUnit->getOwner()).isOption(PLAYEROPTION_QUICK_MOVES))
 					iUnitCycleTimer = min(1, iUnitCycleTimer);
 
-				gDLL->getInterfaceIFace()->changeCycleSelectionCounter(iUnitCycleTimer);
+				GC.GetEngineUserInterface()->changeCycleSelectionCounter(iUnitCycleTimer);
 			}
 		}
 	}

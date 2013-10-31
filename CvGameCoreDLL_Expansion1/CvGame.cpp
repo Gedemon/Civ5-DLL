@@ -417,6 +417,11 @@ int WorldBuilderMapLoaderLoadModData(lua_State* L)
 	return CvWorldBuilderMapLoader::LoadModData(L);
 }
 //------------------------------------------------------------------------------
+int WorldBuilderMapLoaderRunPostProcessScript(lua_State* L)
+{
+	return CvWorldBuilderMapLoader::RunPostProcessScript(L);
+}
+//------------------------------------------------------------------------------
 bool CvGame::InitMap(CvGameInitialItemsOverrides& kGameInitialItemsOverrides)
 {
 	CvMap& kMap = GC.getMap();
@@ -448,6 +453,8 @@ bool CvGame::InitMap(CvGameInitialItemsOverrides& kGameInitialItemsOverrides)
 				{
 					lua_cpcall(L, &WorldBuilderMapLoaderAddRandomItems, 0);
 					lua_cpcall(L, &WorldBuilderMapLoaderLoadModData, 0);
+					lua_cpcall(L, &WorldBuilderMapLoaderRunPostProcessScript, 0);
+
 
 					pkScriptSystem->FreeLuaThread(L);
 				}

@@ -105,7 +105,6 @@ public:
 	void changeSeeFromSight(TeamTypes eTeam, DirectionTypes eDirection, int iFromLevel, bool bIncrement, InvisibleTypes eSeeInvisible);
 	void changeAdjacentSight(TeamTypes eTeam, int iRange, bool bIncrement, InvisibleTypes eSeeInvisible, DirectionTypes eFacingDirection, bool bBasedOnUnit=true);
 	bool canSeePlot(const CvPlot *plot, TeamTypes eTeam, int iRange, DirectionTypes eFacingDirection) const;
-	bool canSeeDisplacementPlot(TeamTypes eTeam, int dx, int dy, int originalDX, int originalDY, bool firstPlot, bool outerRing) const;
 	bool shouldProcessDisplacementPlot(int dx, int dy, int range, DirectionTypes eFacingDirection) const;
 	void updateSight(bool bIncrement);
 	void updateSeeFromSight(bool bIncrement);
@@ -128,10 +127,6 @@ public:
 	int defenseModifier(TeamTypes eDefender, bool bIgnoreBuilding, bool bHelp = false) const;
 	int movementCost(const CvUnit* pUnit, const CvPlot* pFromPlot, int iMovesRemaining = 0) const;
 	int MovementCostNoZOC(const CvUnit* pUnit, const CvPlot* pFromPlot, int iMovesRemaining = 0) const;
-	bool ConsumesAllMoves(const CvUnit* pUnit, const CvPlot* pFromPlot) const;
-	bool CostsOnlyOne(const CvUnit* pUnit, const CvPlot* pFromPlot) const;
-	void GetCostsForMove(const CvUnit* pUnit, const CvPlot* pFromPlot, int &iRegularCost, int &iRouteCost, int &iRouteFlatCost) const;
-	bool IsSlowedByZOC(const CvUnit* pUnit, const CvPlot* pFromPlot) const;
 
 	int getExtraMovePathCost() const;
 	void changeExtraMovePathCost(int iChange);
@@ -356,30 +351,7 @@ public:
 	FeatureTypes getFeatureType() const { char f = m_eFeatureType; return (FeatureTypes)f;}
 	bool isImpassable()     const
 	{
-		const PlotTypes ePlot = getPlotType();
-		const TerrainTypes eTerrain = getTerrainType();
-		const FeatureTypes eFeature = getFeatureType();
-
-		if (ePlot == PLOT_MOUNTAIN)
-			return true;
-
-		if(eTerrain == NO_TERRAIN)
-			return false;
-
-		if(eFeature == NO_FEATURE)
-		{
-			CvTerrainInfo* pkTerrainInfo = GC.getTerrainInfo(eTerrain);
-			if(pkTerrainInfo)
-				return pkTerrainInfo->isImpassable();
-		}
-		else
-		{
-			CvFeatureInfo* pkFeatureInfo = GC.getFeatureInfo(eFeature);
-			if(pkFeatureInfo)
-				return pkFeatureInfo->isImpassable();
-		}
-
-		return false;
+		return m_bIsImpassable;
 	}
 
 	bool isRoughGround() const
@@ -777,9 +749,11 @@ protected:
 	bool m_bBarbCampNotConverting:1;
 	bool m_bRoughFeature:1;
 	bool m_bResourceLinkedCityActive:1;
+	bool m_bIsImpassable:1;					// Cached value, do not serialize
 
 	void processArea(CvArea* pArea, int iChange);
 	void doImprovementUpgrade();
+	void updateImpassable();
 
 
 	// added so under cheat mode we can access protected stuff

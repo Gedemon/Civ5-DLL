@@ -272,13 +272,23 @@ void CvCitySpecializationAI::Read(FDataStream& kStream)
 	kStream >> (int&)m_eNextWonderDesired;
 	kStream >> m_iWonderCityID;
 	kStream >> m_iNextWonderWeight;
+
+	if (uiVersion >= 2)
+	{
+		kStream >> m_iLastTurnEvaluated;
+	}
+	else
+	{
+		m_iLastTurnEvaluated = 0;
+		m_bSpecializationsDirty = true;
+	}
 }
 
 /// Serialization write
 void CvCitySpecializationAI::Write(FDataStream& kStream) const
 {
 	// Current version number
-	uint uiVersion = 1;
+	uint uiVersion = 2;
 	kStream << uiVersion;
 	MOD_SERIALIZE_INIT_WRITE(kStream);
 
@@ -288,6 +298,7 @@ void CvCitySpecializationAI::Write(FDataStream& kStream) const
 	kStream << m_eNextWonderDesired;
 	kStream << m_iWonderCityID;
 	kStream << m_iNextWonderWeight;
+	kStream << m_iLastTurnEvaluated;
 }
 
 /// Returns the Player object the Strategies are associated with

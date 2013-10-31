@@ -16,7 +16,7 @@ CvDllNetInitInfo::CvDllNetInitInfo()
 	m_szLoadFileName = CvPreGame::loadFileName();
 	m_eLoadFileStorage = CvPreGame::loadFileStorage();
 	m_szMapScriptName = CvPreGame::mapScriptName();
-	m_bIsEarthMap = CvPreGame::isEarthMap();
+	m_bIsEarthMap = false;
 	m_bIsRandomMapScript = CvPreGame::randomMapScript();
 	m_bIsRandomWorldSize = CvPreGame::randomWorldSize();
 	m_bWBMapNoPlayers = CvPreGame::mapNoPlayers();
@@ -26,8 +26,10 @@ CvDllNetInitInfo::CvDllNetInitInfo()
 	m_eEra = CvPreGame::era();
 	m_eCalendar = CvPreGame::calendar();
 	m_iGameTurn = CvPreGame::gameTurn();
+	m_bGameStarted = CvPreGame::gameStarted();
 	m_eGameSpeed = CvPreGame::gameSpeed();
-	m_eTurnTimer = CvPreGame::turnTimer();
+	m_eTurnTimerEnabled = CvPreGame::turnTimer();
+	m_iTurnTimerTime = CvPreGame::pitBossTurnTime();
 	m_szGameName = CvPreGame::gameName();
 	m_uiSyncRandSeed = CvPreGame::syncRandomSeed();
 	m_uiMapRandSeed = CvPreGame::mapRandomSeed();
@@ -114,6 +116,7 @@ const char* CvDllNetInitInfo::GetDebugString()
 		"m_eEra=%d "\
 		"m_eCalendar=%d "\
 		"m_iGameTurn=%d "\
+		"m_bGameStarted=%i "\
 		"m_eGameSpeed=%d "\
 		"m_eTurnTimer=%d "\
 		"m_szGameName=\"%s\" "\
@@ -128,6 +131,7 @@ const char* CvDllNetInitInfo::GetDebugString()
 		, static_cast<int>(CvPreGame::era())
 		, static_cast<int>(CvPreGame::calendar())
 		, CvPreGame::gameTurn()
+		, CvPreGame::gameStarted()
 		, static_cast<int>(CvPreGame::gameSpeed())
 		, static_cast<int>(CvPreGame::turnTimer())
 		, CvPreGame::gameName().c_str()
@@ -153,8 +157,10 @@ bool CvDllNetInitInfo::Read(FDataStream& kStream)
 	kStream >> m_eEra;
 	kStream >> m_eCalendar;
 	kStream >> m_iGameTurn;
+	kStream >> m_bGameStarted;
 	kStream >> m_eGameSpeed;
-	kStream >> m_eTurnTimer;
+	kStream >> m_eTurnTimerEnabled;
+	kStream >> m_iTurnTimerTime;
 	kStream >> m_szGameName;
 	kStream >> m_uiSyncRandSeed;
 	kStream >> m_uiMapRandSeed;
@@ -191,8 +197,10 @@ bool CvDllNetInitInfo::Write(FDataStream& kStream)
 	kStream << m_eEra;
 	kStream << m_eCalendar;
 	kStream << m_iGameTurn;
+	kStream << m_bGameStarted;
 	kStream << m_eGameSpeed;
-	kStream << m_eTurnTimer;
+	kStream << m_eTurnTimerEnabled;
+	kStream << m_iTurnTimerTime;
 	kStream << m_szGameName;
 	kStream << m_uiSyncRandSeed;
 	kStream << m_uiMapRandSeed;
@@ -215,9 +223,21 @@ bool CvDllNetInitInfo::Write(FDataStream& kStream)
 bool CvDllNetInitInfo::Commit()
 {
 	// Copy the settings into our initialization data structure
-	CvPreGame::setMapScriptName(m_szMapScriptName);
+
+	//The map script path cannot be trusted since this structure is sent over the network.
+	//Have the app search for the best candidate.
+	FILogFile* logFile = LOGFILEMGR.GetLog("net_message_debug.log", 0);
+
+	char szMapScriptPath[1040] = {0};
+	const bool bResult = gDLL->GetEvaluatedMapScriptPath(m_szMapScriptName.c_str(), szMapScriptPath, 1040);
+
+	CvString strMapScriptPath = szMapScriptPath;
+
+	logFile->DebugMsg("Evaluating Map Path: (%s)\nOriginal Path: %s\nNew Path: %s", (bResult)? "Success": "Failed", m_szMapScriptName.c_str(), strMapScriptPath.c_str());
+
+
+	CvPreGame::setMapScriptName(strMapScriptPath);
 	CvPreGame::setRandomMapScript(m_bIsRandomMapScript);
-	CvPreGame::setEarthMap(m_bIsEarthMap);
 	CvPreGame::setTransferredMap(false);		// We'll always set this manually
 	CvPreGame::setLoadFileName(m_szLoadFileName, m_eLoadFileStorage);
 	CvPreGame::setMapNoPlayers(m_bWBMapNoPlayers);
@@ -228,8 +248,10 @@ bool CvDllNetInitInfo::Commit()
 	CvPreGame::setEra(m_eEra);
 	CvPreGame::setCalendar(m_eCalendar);
 	CvPreGame::setGameTurn(m_iGameTurn);
+	CvPreGame::setGameStarted(m_bGameStarted);
 	CvPreGame::setGameSpeed(m_eGameSpeed);
-	CvPreGame::setTurnTimer(m_eTurnTimer);
+	CvPreGame::setTurnTimer(m_eTurnTimerEnabled);
+	CvPreGame::setPitBossTurnTime(m_iTurnTimerTime);
 	CvPreGame::setGameName(m_szGameName);
 	CvPreGame::setSyncRandomSeed(m_uiSyncRandSeed);
 	CvPreGame::setMapRandomSeed(m_uiMapRandSeed);

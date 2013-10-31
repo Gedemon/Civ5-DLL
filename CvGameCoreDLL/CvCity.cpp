@@ -487,8 +487,12 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits)
 	DLLUI->setDirty(NationalBorders_DIRTY_BIT, true);
 
 	AI_init();
-}
 
+	if (GC.getGame().getGameTurn() == 0)
+	{
+		chooseProduction();
+	}
+}
 
 //	--------------------------------------------------------------------------------
 void CvCity::uninit()
@@ -1668,35 +1672,32 @@ CityTaskResult CvCity::doTask(TaskTypes eTask, int iData1, int iData2, bool bOpt
 void CvCity::chooseProduction(UnitTypes eTrainUnit, BuildingTypes eConstructBuilding, ProjectTypes eCreateProject, bool /*bFinish*/, bool /*bFront*/)
 {
 	VALIDATE_OBJECT
-	if (getOwner() == GC.getGame().getActivePlayer())
+	CvString strTooltip = GetLocalizedText("TXT_KEY_NOTIFICATION_NEW_CONSTRUCTION", getNameKey());
+
+	CvNotifications* pNotifications = GET_PLAYER(getOwner()).GetNotifications();
+	if(pNotifications)
 	{
-		CvString strTooltip = GetLocalizedText("TXT_KEY_NOTIFICATION_NEW_CONSTRUCTION", getNameKey());
+		// Figure out what we just finished so we can package it into something the lua will understand
+		OrderTypes eOrder = NO_ORDER;
+		int iItemID = -1;
 
-		CvNotifications* pNotifications = GET_PLAYER(getOwner()).GetNotifications();
-		if (pNotifications)
+		if(eTrainUnit != NO_UNIT)
 		{
-			// Figure out what we just finished so we can package it into something the lua will understand
-			OrderTypes eOrder = NO_ORDER;
-			int iItemID = -1;
-
-			if (eTrainUnit != NO_UNIT)
-			{
-				eOrder = ORDER_TRAIN;
-				iItemID = eTrainUnit;
-			}
-			else if (eConstructBuilding != NO_BUILDING)
-			{
-				eOrder = ORDER_CONSTRUCT;
-				iItemID = eConstructBuilding;
-			}
-			else if (eCreateProject != NO_PROJECT)
-			{
-				eOrder = ORDER_CREATE;
-				iItemID = eCreateProject;
-			}
-
-			pNotifications->Add(NOTIFICATION_PRODUCTION, strTooltip, strTooltip, getX(), getY(), eOrder, iItemID);
+			eOrder = ORDER_TRAIN;
+			iItemID = eTrainUnit;
 		}
+		else if(eConstructBuilding != NO_BUILDING)
+		{
+			eOrder = ORDER_CONSTRUCT;
+			iItemID = eConstructBuilding;
+		}
+		else if(eCreateProject != NO_PROJECT)
+		{
+			eOrder = ORDER_CREATE;
+			iItemID = eCreateProject;
+		}
+
+		pNotifications->Add(NOTIFICATION_PRODUCTION, strTooltip, strTooltip, getX(), getY(), eOrder, iItemID);
 	}
 }
 
@@ -2153,7 +2154,7 @@ bool CvCity::canTrain(UnitTypes eUnit, bool bContinue, bool bTestVisible, bool b
 					CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(ePrereqBuilding);
 					if(pkBuildingInfo)
 					{
-						GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_NO_ACTION_UNIT_REQUIRES_BUILDING", pkBuildingInfo->GetDescription());
+						GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_NO_ACTION_UNIT_REQUIRES_BUILDING", pkBuildingInfo->GetDescriptionKey());
 						if (toolTipSink == NULL)
 							return false;
 					}
@@ -2877,7 +2878,8 @@ void CvCity::DoPickResourceDemanded(bool bCurrentResourceInvalid)
 		eResource = (ResourceTypes) iResourceLoop;
 
 		// Is this a Luxury Resource?
-		if (GC.getResourceInfo(eResource)->getResourceUsage() == RESOURCEUSAGE_LUXURY)
+		const CvResourceInfo* pkResourceInfo = GC.getResourceInfo(eResource);
+		if (pkResourceInfo != NULL && pkResourceInfo->getResourceUsage() == RESOURCEUSAGE_LUXURY)
 		{
 			// Is the Resource actually on the map?
 			if (GC.getMap().getNumResources(eResource) > 0)
@@ -5158,8 +5160,11 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 			{
 				BuildingTypes eFreeBuildingThisCity = (BuildingTypes)(thisCiv.getCivilizationBuildings(eFreeBuildingClassThisCity));
 
-				m_pCityBuildings->SetNumRealBuilding(eFreeBuildingThisCity, 0);
-				m_pCityBuildings->SetNumFreeBuilding(eFreeBuildingThisCity, 1);
+				if (eFreeBuildingThisCity != NO_BUILDING)
+				{
+					m_pCityBuildings->SetNumRealBuilding(eFreeBuildingThisCity, 0);
+					m_pCityBuildings->SetNumFreeBuilding(eFreeBuildingThisCity, 1);
+				}
 			}
 
 			// Tech boost for science buildings in capital
@@ -6483,6 +6488,22 @@ void CvCity::DoJONSCultureLevelIncrease()
 	// maybe the player owns ALL of the plots or there are none avaialable?
 	if (pPlotToAcquire)
 	{
+		if(GC.getLogging() && GC.getAILogging())
+		{
+			CvPlayerAI& kOwner = GET_PLAYER(getOwner());
+			CvString playerName;
+			FILogFile* pLog;
+			CvString strBaseString;
+			CvString strOutBuf;
+			playerName = kOwner.getCivilizationShortDescription();
+			pLog = LOGFILEMGR.GetLog(kOwner.GetCitySpecializationAI()->GetLogFileName(playerName), FILogFile::kDontTimeStamp);
+			strBaseString.Format("%03d, ", GC.getGame().getElapsedGameTurns());
+			strBaseString += playerName + ", ";
+			strOutBuf.Format("%s, City Culture Leveled Up. Level: %d Border Expanded, X: %d, Y: %d", getName().GetCString(), 
+												GetJONSCultureLevel(), pPlotToAcquire->getX(), pPlotToAcquire->getY());
+			strBaseString += strOutBuf;
+			pLog->Msg(strBaseString);
+		}
 		DoAcquirePlot(pPlotToAcquire->getX(), pPlotToAcquire->getY());
 	}
 }
@@ -9470,6 +9491,21 @@ void CvCity::BuyPlot(int iPlotX, int iPlotY)
 		}
 	}
 
+	if(GC.getLogging() && GC.getAILogging())
+	{
+		CvPlayerAI& kOwner = GET_PLAYER(getOwner());
+		CvString playerName;
+		FILogFile* pLog;
+		CvString strBaseString;
+		CvString strOutBuf;
+		playerName = kOwner.getCivilizationShortDescription();
+		pLog = LOGFILEMGR.GetLog(kOwner.GetCitySpecializationAI()->GetLogFileName(playerName), FILogFile::kDontTimeStamp);
+		strBaseString.Format("%03d, ", GC.getGame().getElapsedGameTurns());
+		strBaseString += playerName + ", ";
+		strOutBuf.Format("%s, City Plot Purchased, X: %d, Y: %d", getName().GetCString(), iPlotX, iPlotY);
+		strBaseString += strOutBuf;
+		pLog->Msg(strBaseString);
+	}
 	DoAcquirePlot(iPlotX, iPlotY);
 
 	//Achievement test for purchasing 1000 tiles
@@ -10714,8 +10750,11 @@ void CvCity::Purchase (UnitTypes eUnitType, BuildingTypes eBuildingType, Project
 	{
 		int iResult = CreateUnit(eUnitType);
 		CvAssertMsg(iResult != FFreeList::INVALID_INDEX, "Unable to create unit");
-		CvUnit* pUnit = GET_PLAYER(getOwner()).getUnit(iResult);
-		pUnit->setMoves(0);
+		if (iResult != FFreeList::INVALID_INDEX)
+		{
+			CvUnit* pUnit = GET_PLAYER(getOwner()).getUnit(iResult);
+			pUnit->setMoves(0);
+		}
 	}
 	else if (eBuildingType >= 0)
 	{
@@ -11411,10 +11450,9 @@ void CvCity::read(FDataStream& kStream)
 
 	if (uiVersion >= 14)
 	{
-		std::vector<int> aTemp;
-		CvInfosSerializationHelper::ReadHashedDataArray(kStream, aTemp); m_paiNoResource = aTemp;
-		CvInfosSerializationHelper::ReadHashedDataArray(kStream, aTemp); m_paiFreeResource = aTemp;
-		CvInfosSerializationHelper::ReadHashedDataArray(kStream, aTemp); m_paiNumResourcesLocal = aTemp;
+		CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNoResource.dirtyGet());
+		CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiFreeResource.dirtyGet());
+		CvInfosSerializationHelper::ReadHashedDataArray(kStream, m_paiNumResourcesLocal.dirtyGet());
 	}
 	else
 	{

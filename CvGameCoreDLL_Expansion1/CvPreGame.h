@@ -194,7 +194,6 @@ void                                       setClimate(ClimateTypes c);
 void                                       setClimate(const CvString& c);
 void                                       setCustomWorldSize(int iWidth, int iHeight, int iPlayers = 0, int iMinorCivs = 0);
 void										 setDLCAllowed(const GUID& kDLCID, bool bState);
-void										 setEarthMap(bool bIsEarthMap);
 void                                       setEmailAddress(PlayerTypes p, const CvString& a);
 void                                       setEmailAddress(const CvString& a);                    // setupdata
 void                                       setEndTurnTimerLength(float f);             // setupdata

@@ -33,6 +33,7 @@ public:
 
 	// Post-Load Utilities
 	static int LoadModData(lua_State* L);
+	static int RunPostProcessScript(lua_State* L);
 	static void ValidateTerrain();
 	static void ValidateCoast();
 	static void ClearResources();

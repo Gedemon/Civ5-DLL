@@ -966,7 +966,7 @@ void CvGameTrade::ClearAllCityTradeRoutes (CvPlot* pPlot)
 
 				EmptyTradeRoute(ui);
 			}		
-		}		
+		}
 	}
 }
 
@@ -1475,9 +1475,12 @@ bool CvGameTrade::StepUnit (int iIndex)
 		CvUnit* pEnemyUnit = pPlot->getVisibleEnemyDefender(kTradeConnection.m_eOriginOwner);
 		if (pEnemyUnit)
 		{
-			GET_PLAYER(pEnemyUnit->getOwner()).GetTrade()->PlunderTradeRoute(kTradeConnection.m_iID);
-			// done died!
-			return false;
+			if (pEnemyUnit->canPlunderTradeRoute(pPlot, false))
+			{
+				GET_PLAYER(pEnemyUnit->getOwner()).GetTrade()->PlunderTradeRoute(kTradeConnection.m_iID);
+				// done died!
+				return false;
+			}
 		}
 	}
 

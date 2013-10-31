@@ -16,7 +16,7 @@ CvDllNetInitInfo::CvDllNetInitInfo()
 	m_szLoadFileName = CvPreGame::loadFileName();
 	m_eLoadFileStorage = CvPreGame::loadFileStorage();
 	m_szMapScriptName = CvPreGame::mapScriptName();
-	m_bIsEarthMap = CvPreGame::isEarthMap();
+	m_bIsEarthMap = false;
 	m_bIsRandomMapScript = CvPreGame::randomMapScript();
 	m_bIsRandomWorldSize = CvPreGame::randomWorldSize();
 	m_bWBMapNoPlayers = CvPreGame::mapNoPlayers();
@@ -237,7 +237,6 @@ bool CvDllNetInitInfo::Commit()
 
 	CvPreGame::setMapScriptName(strMapScriptPath);
 	CvPreGame::setRandomMapScript(m_bIsRandomMapScript);
-	CvPreGame::setEarthMap(m_bIsEarthMap);
 	CvPreGame::setTransferredMap(false);		// We'll always set this manually
 	CvPreGame::setLoadFileName(m_szLoadFileName, m_eLoadFileStorage);
 	CvPreGame::setMapNoPlayers(m_bWBMapNoPlayers);

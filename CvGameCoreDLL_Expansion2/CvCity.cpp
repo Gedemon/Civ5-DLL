@@ -7655,10 +7655,11 @@ void CvCity::DoJONSCultureLevelIncrease()
 		if (MOD_UI_CITY_EXPANSION && bIsHumanControlled) {
 			// Yep CITY_PLOTS_RADIUS is a #define and not taken from the database - well done Firaxis!
 #if defined(MOD_GLOBAL_CITY_WORKING)
-			if (plotDistance(getX(), getY(), pPlotToAcquire->getX(), pPlotToAcquire->getY()) <= getBuyPlotDistance()) {
+			bool bCanAcquirePlot = plotDistance(getX(), getY(), pPlotToAcquire->getX(), pPlotToAcquire->getY()) <= getBuyPlotDistance();
 #else
-			if (plotDistance(getX(), getY(), pPlotToAcquire->getX(), pPlotToAcquire->getY()) <= CITY_PLOTS_RADIUS) {
+			bool bCanAcquirePlot = plotDistance(getX(), getY(), pPlotToAcquire->getX(), pPlotToAcquire->getY()) <= CITY_PLOTS_RADIUS);
 #endif
+			if (bCanAcquirePlot && GetBuyPlotCost(pPlotToAcquire->getX(), pPlotToAcquire->getY()) < 1) {
 				// Within working/buying distance
 				bSendEvent = false;
 
@@ -13692,7 +13693,7 @@ bool CvCity::doCheckProduction()
 		}
 	}
 
-	if(!isProduction() && isHuman() && !isProductionAutomated())
+	if(!isProduction() && isHuman() && !isProductionAutomated() && !IsIgnoreCityForHappiness())
 	{
 		chooseProduction();
 		return bOK;

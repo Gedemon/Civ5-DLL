@@ -10029,8 +10029,10 @@ void CvPlot::read(FDataStream& kStream)
 	kStream >> iCount;
 	if(iCount > 0)
 	{
-		m_paiBuildProgress = FNEW(short[GC.getNumBuildInfos()], c_eCiv5GameplayDLL, 0);
-
+		const int iNumBuildInfos = GC.getNumBuildInfos();
+		m_paiBuildProgress = FNEW(short[iNumBuildInfos], c_eCiv5GameplayDLL, 0);
+		ZeroMemory(m_paiBuildProgress, sizeof(short) * iNumBuildInfos);
+		
 		BuildArrayHelpers::Read(kStream, m_paiBuildProgress);
 	}
 

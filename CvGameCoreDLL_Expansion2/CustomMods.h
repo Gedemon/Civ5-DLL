@@ -17,14 +17,13 @@
  *****  See the comment in CvDllVersion.h regarding the DLL GUID value  *****
  *****                                                                  *****
  *****                                                                  *****
- *****      This DLL is based on the 1.0.3.128 (beta) source code       *****
- *****   (which appears to be the same as the 1.0.3.142 source code)    *****
+ *****          This DLL is based on the 1.0.3.144 source code          *****
  *****                                                                  *****
  ****************************************************************************
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 30)
+#define MOD_DLL_VERSION_NUMBER ((uint) 31)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 

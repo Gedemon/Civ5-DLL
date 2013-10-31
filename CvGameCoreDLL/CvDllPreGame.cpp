@@ -23,7 +23,8 @@ CvDllPreGame::~CvDllPreGame()
 void* CvDllPreGame::QueryInterface(GUID guidInterface)
 {
 	if(	guidInterface == ICvUnknown::GetInterfaceId() ||
-		guidInterface == ICvPreGame1::GetInterfaceId())
+		guidInterface == ICvPreGame1::GetInterfaceId() ||
+		guidInterface == ICvPreGame2::GetInterfaceId())
 	{
 		return this;
 	}
@@ -299,7 +300,8 @@ bool CvDllPreGame::isDLCAvailable(PlayerTypes p, const GUID& kDLCID)
 //------------------------------------------------------------------------------
 bool CvDllPreGame::isEarthMap()
 {
-	return CvPreGame::isEarthMap();
+	//This function is no longer used, it only exists for interface compatibility.
+	return false;
 }
 //------------------------------------------------------------------------------
 bool CvDllPreGame::isHotSeat()
@@ -674,7 +676,7 @@ void CvDllPreGame::setDLCAllowed(const GUID& kDLCID, bool bState)
 //------------------------------------------------------------------------------
 void CvDllPreGame::setEarthMap(bool bIsEarthMap)
 {
-	CvPreGame::setEarthMap(bIsEarthMap);
+	//This function is no longer used, it only exists for interface compatibility.
 }
 //------------------------------------------------------------------------------
 void CvDllPreGame::setEmailAddress(PlayerTypes p, const CvString & a)
@@ -1119,3 +1121,54 @@ void CvDllPreGame::SetDLCAvailable(PlayerTypes p, ICvEnumerator* pList)
 	CvPreGame::setDLCAvailable(p, kDLCList);
 }
 //------------------------------------------------------------------------------
+int CvDllPreGame::pitBossTurnTime()
+{
+	return CvPreGame::pitBossTurnTime();
+}
+//------------------------------------------------------------------------------
+void CvDllPreGame::setPitBossTurnTime(int turnTime)
+{
+	CvPreGame::setPitBossTurnTime(turnTime);
+}
+//------------------------------------------------------------------------------
+bool CvDllPreGame::isTurnNotifySteamInvite(PlayerTypes p) const
+{
+	return CvPreGame::isTurnNotifySteamInvite(p);
+}
+//------------------------------------------------------------------------------
+void CvDllPreGame::setTurnNotifySteamInvite(PlayerTypes p, bool wantsSteamInvite)
+{
+	CvPreGame::setTurnNotifySteamInvite(p, wantsSteamInvite);
+}
+//------------------------------------------------------------------------------
+bool CvDllPreGame::isTurnNotifyEmail(PlayerTypes p) const
+{
+	return CvPreGame::isTurnNotifyEmail(p);
+}
+//------------------------------------------------------------------------------
+void CvDllPreGame::setTurnNotifyEmail(PlayerTypes p, bool wantsEmail)
+{
+	CvPreGame::setTurnNotifyEmail(p, wantsEmail);
+}
+//------------------------------------------------------------------------------
+const CvString& CvDllPreGame::getTurnNotifyEmailAddress(PlayerTypes p) const
+{
+	return CvPreGame::getTurnNotifyEmailAddress(p);
+}
+//------------------------------------------------------------------------------
+void CvDllPreGame::setTurnNotifyEmailAddress(PlayerTypes p, const CvString& emailAddress)
+{
+	CvPreGame::setTurnNotifyEmailAddress(p, emailAddress);
+}
+//------------------------------------------------------------------------------
+void CvDllPreGame::VerifyHandicap(PlayerTypes p)
+{
+	CvPreGame::VerifyHandicap(p);
+}
+//------------------------------------------------------------------------------
+void CvDllPreGame::ReseatConnectedPlayers()
+{
+	CvPreGame::ReseatConnectedPlayers();
+}
+
+

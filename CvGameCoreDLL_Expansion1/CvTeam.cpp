@@ -3774,7 +3774,8 @@ void CvTeam::SetHasEmbassyAtTeam(TeamTypes eIndex, bool bNewValue)
 				for (uint uiOtherPlayer = 0; uiOtherPlayer < MAX_MAJOR_CIVS; uiOtherPlayer++)
 				{
 					PlayerTypes eOtherPlayer = (PlayerTypes)uiOtherPlayer;
-					if (GET_PLAYER(eOtherPlayer).getTeam() == eIndex)
+					CvPlayer& kOtherPlayer = GET_PLAYER(eOtherPlayer);
+					if (kOtherPlayer.getTeam() == eIndex && kOtherPlayer.isAlive())
 					{
 						if (bNewValue)
 						{

@@ -2259,9 +2259,9 @@ void CvEconomicAI::DisbandExtraArchaeologists(){
 	
 	CvUnit* pUnit;
 #if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
-	UnitTypes eArch = m_pPlayer->GetSpecificUnitType("UNITCLASS_ARCHAEOLOGIST");
+	UnitTypes eArch = m_pPlayer->GetSpecificUnitType("UNITCLASS_ARCHAEOLOGIST", true);
 #else
-	UnitTypes eArch = (UnitTypes) GC.getInfoTypeForString("UNIT_ARCHAEOLOGIST");
+	UnitTypes eArch = (UnitTypes) GC.getInfoTypeForString("UNIT_ARCHAEOLOGIST", true /*bHideAssert*/);
 #endif
 	if(eArch == NO_UNIT){
 		return;

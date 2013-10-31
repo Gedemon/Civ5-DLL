@@ -203,6 +203,12 @@ inline CvPlot* plotXY(int iX, int iY, int iDX, int iDY)
 	return GC.getMap().plot( iPlotHexX , iPlotY );
 }
 
+inline CvPlot* PlotFromHex(CvMap& kMap, int iHexX, int iHexY)
+{
+	// NOTE: Y is the same in both hex space and grid space.
+	return kMap.plot( hexspaceXToX(iHexX, iHexY), iHexY );	
+}
+
 inline CvPlot* plotXYWithRangeCheck(int iX, int iY, int iDX, int iDY, int iRange)
 {
 	int hexRange;
@@ -532,5 +538,7 @@ inline CvString GetLocalizedText(const char* szString, const T1& arg1, const T2&
 #define NET_MESSAGE_DEBUG(x)		((void)0)
 #define NET_MESSAGE_DEBUG_OSTR(x)	((void)0)
 #endif
+
+#define NET_MESSAGE_DEBUG_OSTR_ALWAYS(x)	{ std::ostringstream str; str << x; gDLL->netMessageDebugLog(str.str()); }
 
 #endif
