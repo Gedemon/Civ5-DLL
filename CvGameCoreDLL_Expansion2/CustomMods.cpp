@@ -23,6 +23,7 @@ CustomMods::CustomMods() :
 	m_bGLOBAL_CS_GIFTS(false),
 	m_bGLOBAL_VENICE_KEEPS_RESOURCES(false),
 	m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES(false),
+	m_bGLOBAL_CAPTURE_AFTER_ATTACKING(false),
 	m_bGLOBAL_NO_CONQUERED_SPACESHIPS(false),
 	m_bGLOBAL_ALLIES_BLOCK_BLOCKADES(false),
 	m_bGLOBAL_SHORT_EMBARKED_BLOCKADES(false),
@@ -85,6 +86,7 @@ CustomMods::CustomMods() :
 	m_bEVENTS_CITY(false),
 	m_bEVENTS_CITY_BORDERS(false),
 	m_bEVENTS_CITY_RAZING(false),
+	m_bEVENTS_CITY_BOMBARD(false),
 	m_bEVENTS_AREA_RESOURCES(false),
 	m_bEVENTS_PARADROPS(false),
 	m_bEVENTS_UNIT_PREKILL(false),
@@ -181,6 +183,7 @@ int CustomMods::getOption(string sOption, int defValue) {
 		m_bGLOBAL_CS_GIFTS                        = (m_options[string("GLOBAL_CS_GIFTS")] == 1);
 		m_bGLOBAL_VENICE_KEEPS_RESOURCES          = (m_options[string("GLOBAL_VENICE_KEEPS_RESOURCES")] == 1);
 		m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES         = (m_options[string("GLOBAL_NO_FOLLOWUP_FROM_CITIES")] == 1);
+		m_bGLOBAL_CAPTURE_AFTER_ATTACKING         = (m_options[string("GLOBAL_CAPTURE_AFTER_ATTACKING")] == 1);
 		m_bGLOBAL_NO_CONQUERED_SPACESHIPS         = (m_options[string("GLOBAL_NO_CONQUERED_SPACESHIPS")] == 1);
 		m_bGLOBAL_ALLIES_BLOCK_BLOCKADES          = (m_options[string("GLOBAL_ALLIES_BLOCK_BLOCKADES")] == 1);
 		m_bGLOBAL_SHORT_EMBARKED_BLOCKADES        = (m_options[string("GLOBAL_SHORT_EMBARKED_BLOCKADES")] == 1);
@@ -244,6 +247,7 @@ int CustomMods::getOption(string sOption, int defValue) {
 		m_bEVENTS_CITY                            = (m_options[string("EVENTS_CITY")] == 1);
 		m_bEVENTS_CITY_BORDERS                    = (m_options[string("EVENTS_CITY_BORDERS")] == 1);
 		m_bEVENTS_CITY_RAZING                     = (m_options[string("EVENTS_CITY_RAZING")] == 1);
+		m_bEVENTS_CITY_BOMBARD                    = (m_options[string("EVENTS_CITY_BOMBARD")] == 1);
 		m_bEVENTS_AREA_RESOURCES                  = (m_options[string("EVENTS_AREA_RESOURCES")] == 1);
 		m_bEVENTS_PARADROPS                       = (m_options[string("EVENTS_PARADROPS")] == 1);
 		m_bEVENTS_UNIT_PREKILL                    = (m_options[string("EVENTS_UNIT_PREKILL")] == 1);

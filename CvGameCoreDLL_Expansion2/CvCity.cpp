@@ -14847,6 +14847,42 @@ void CvCity::setMadeAttack(bool bNewValue)
 	m_bMadeAttack = bNewValue;
 }
 
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+//	--------------------------------------------------------------------------------
+int CvCity::getBombardRange() const
+{
+	bool bIndirectFireAllowed;
+	return getBombardRange(bIndirectFireAllowed);
+}
+
+//	--------------------------------------------------------------------------------
+int CvCity::getBombardRange(bool& bIndirectFireAllowed) const
+{
+	VALIDATE_OBJECT
+	
+	if (MOD_EVENTS_CITY_BOMBARD) {
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if(pkScriptSystem) {
+			CvLuaArgsHandle args;
+			args->Push(getOwner());
+			args->Push(GetID());
+
+			int iValue = 0;
+			if (LuaSupport::CallAccumulator(pkScriptSystem, "GetBombardRange", args.get(), iValue)) {
+				// Defend against modder stupidity!
+				if (iValue != 0 && ::abs(iValue) <= GC.getMAX_CITY_ATTACK_RANGE()) {
+					bIndirectFireAllowed = (iValue < 0);
+					return ::abs(iValue);
+				}
+			}
+		}
+	}
+	
+	bIndirectFireAllowed = GC.getCAN_CITY_USE_INDIRECT_FIRE();
+	return GC.getCITY_ATTACK_RANGE();
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 bool CvCity::canRangeStrike() const
 {
@@ -14879,8 +14915,13 @@ bool CvCity::CanRangeStrikeNow() const
 		return false;
 	}
 
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+	bool bIndirectFireAllowed; // By reference, yuck!!!
+	int iRange = getBombardRange(bIndirectFireAllowed);
+#else
 	int iRange = GC.getCITY_ATTACK_RANGE();
 	bool bIndirectFireAllowed = GC.getCAN_CITY_USE_INDIRECT_FIRE();
+#endif
 	CvPlot* pPlot = plot();
 	int iX = getX();
 	int iY = getY();
@@ -14990,14 +15031,23 @@ bool CvCity::canRangeStrikeAt(int iX, int iY) const
 		return false;
 	}
 
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+	bool bIndirectFireAllowed; // By reference, yuck!!!
+	int iAttackRange = getBombardRange(bIndirectFireAllowed);
+#else
 	int iAttackRange = GC.getCITY_ATTACK_RANGE();
+#endif
 
 	if(plotDistance(plot()->getX(), plot()->getY(), pTargetPlot->getX(), pTargetPlot->getY()) > iAttackRange)
 	{
 		return false;
 	}
 
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+	if(!bIndirectFireAllowed)
+#else
 	if(!GC.getCAN_CITY_USE_INDIRECT_FIRE())
+#endif
 	{
 		if(!plot()->canSeePlot(pTargetPlot, getTeam(), iAttackRange, NO_DIRECTION))
 		{
@@ -15285,7 +15335,11 @@ void CvCity::DoNearbyEnemy()
 	if(!canRangeStrike())
 		return;
 
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+	int iSearchRange = getBombardRange();
+#else
 	int iSearchRange = GC.getCITY_ATTACK_RANGE();
+#endif
 	CvPlot* pBestPlot = NULL;
 
 	bool bFoundEnemy = false;

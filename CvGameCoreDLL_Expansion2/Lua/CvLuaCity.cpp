@@ -183,6 +183,10 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 
 	Method(GetNumBuilding);
 	Method(IsHasBuilding);
+#if defined(MOD_API_EXTENSIONS)
+	Method(GetNumBuildingClass);
+	Method(IsHasBuildingClass);
+#endif
 	Method(GetNumActiveBuilding);
 	Method(GetID);
 	Method(GetX);
@@ -450,6 +454,9 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(SetDamage);
 	Method(ChangeDamage);
 	Method(GetMaxHitPoints);
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+	Method(GetBombardRange);
+#endif
 	Method(CanRangeStrike);
 	Method(CanRangeStrikeNow);
 	Method(CanRangeStrikeAt);
@@ -485,6 +492,13 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 
 	Method(GetBuildingEspionageModifier);
 	Method(GetBuildingGlobalEspionageModifier);
+
+#if defined(MOD_API_ESPIONAGE)
+	Method(HasDiplomat);
+	Method(HasSpy);
+	Method(HasCounterSpy);
+	Method(GetCounterSpy);
+#endif
 
 #if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 	Method(GetBuildingConversionModifier);
@@ -1708,6 +1722,46 @@ int CvLuaCity::lIsHasBuilding(lua_State* L)
 	}
 	return 1;
 }
+#if defined(MOD_API_EXTENSIONS)
+//------------------------------------------------------------------------------
+//int getNumBuildingClass(BuildingClassTypes eBuildingClassType);
+int CvLuaCity::lGetNumBuildingClass(lua_State* L)
+{
+	CvCity* pkCity = GetInstance(L);
+	const BuildingClassTypes eBuildingClassType = (BuildingClassTypes)lua_tointeger(L, 2);
+	if(eBuildingClassType != NO_BUILDINGCLASS)
+	{
+		CvCivilizationInfo& playerCivilizationInfo = GET_PLAYER(pkCity->getOwner()).getCivilizationInfo();
+		BuildingTypes eBuilding = (BuildingTypes)playerCivilizationInfo.getCivilizationBuildings(eBuildingClassType);
+		const int iResult = pkCity->GetCityBuildings()->GetNumBuilding(eBuilding);
+		lua_pushinteger(L, iResult);
+	}
+	else
+	{
+		lua_pushinteger(L, 0);
+	}
+	return 1;
+}
+//------------------------------------------------------------------------------
+//bool isHasBuildingClass(BuildingClassTypes eBuildingClassType);
+int CvLuaCity::lIsHasBuildingClass(lua_State* L)
+{
+	CvCity* pkCity = GetInstance(L);
+	const BuildingClassTypes eBuildingClassType = (BuildingClassTypes)lua_tointeger(L, 2);
+	if(eBuildingClassType != NO_BUILDINGCLASS)
+	{
+		CvCivilizationInfo& playerCivilizationInfo = GET_PLAYER(pkCity->getOwner()).getCivilizationInfo();
+		BuildingTypes eBuilding = (BuildingTypes)playerCivilizationInfo.getCivilizationBuildings(eBuildingClassType);
+		const bool bResult = pkCity->GetCityBuildings()->GetNumBuilding(eBuilding);
+		lua_pushboolean(L, bResult);
+	}
+	else
+	{
+		lua_pushboolean(L, false);
+	}
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //int getNumActiveBuilding(BuildingTypes eBuildingType);
 int CvLuaCity::lGetNumActiveBuilding(lua_State* L)
@@ -3579,6 +3633,19 @@ int CvLuaCity::lGetMaxHitPoints(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+//int, bool GetBombardRange();
+int CvLuaCity::lGetBombardRange(lua_State* L)
+{
+	CvCity* pkCity = GetInstance(L);
+	bool bIndirectFireAllowed;
+	const int iResult = pkCity->getBombardRange(bIndirectFireAllowed);
+
+	lua_pushinteger(L, iResult);
+	lua_pushinteger(L, bIndirectFireAllowed);
+	return 2;
+}
+#endif
 //------------------------------------------------------------------------------
 //bool CanRangeStrike()
 int CvLuaCity::lCanRangeStrike(lua_State* L)
@@ -3955,6 +4022,53 @@ int CvLuaCity::lGetBuildingGlobalEspionageModifier(lua_State* L)
 	}
 	return 1;
 }
+
+#if defined(MOD_API_ESPIONAGE)
+//------------------------------------------------------------------------------
+int CvLuaCity::lHasDiplomat(lua_State* L)
+{
+	bool bResult = false;
+	CvCity* pkCity = GetInstance(L);
+	const PlayerTypes iPlayer = toValue<PlayerTypes>(L, 2);
+	if(iPlayer != NO_PLAYER && pkCity->isCapital())
+	{
+		int iSpyIndex = pkCity->GetCityEspionage()->m_aiSpyAssignment[iPlayer];
+		bResult = (iSpyIndex != -1 && GET_PLAYER(iPlayer).GetEspionage()->IsDiplomat(iSpyIndex));
+	}
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+int CvLuaCity::lHasSpy(lua_State* L)
+{
+	bool bResult = false;
+	CvCity* pkCity = GetInstance(L);
+	const PlayerTypes iPlayer = toValue<PlayerTypes>(L, 2);
+	if(iPlayer != NO_PLAYER)
+	{
+		int iSpyIndex = pkCity->GetCityEspionage()->m_aiSpyAssignment[iPlayer];
+		bResult = (iSpyIndex != -1 && !GET_PLAYER(iPlayer).GetEspionage()->IsDiplomat(iSpyIndex));
+	}
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+int CvLuaCity::lHasCounterSpy(lua_State* L)
+{
+	bool bResult = false;
+	CvCity* pkCity = GetInstance(L);
+	bResult = (pkCity->GetCityEspionage()->m_aiSpyAssignment[pkCity->getOwner()] != -1);
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+int CvLuaCity::lGetCounterSpy(lua_State* L)
+{
+	CvCity* pkCity = GetInstance(L);
+	lua_pushinteger(L, pkCity->GetCityEspionage()->m_aiSpyAssignment[pkCity->getOwner()]);
+	return 1;
+}
+#endif
 
 #if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 //int GetBuildingConversionModifier(BuildingClassTypes eBuildingClass)

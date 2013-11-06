@@ -167,7 +167,11 @@ void CvDangerPlots::UpdateDanger(bool bPretendWarWithAllCivs, bool bIgnoreVisibi
 				continue;
 			}
 
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+			int iRange = pLoopCity->getBombardRange();
+#else
 			int iRange = GC.getCITY_ATTACK_RANGE();
+#endif
 			CvPlot* pCityPlot = pLoopCity->plot();
 			AssignCityDangerValue(pLoopCity, pCityPlot);
 			CvPlot* pLoopPlot = NULL;

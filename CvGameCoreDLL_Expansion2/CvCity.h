@@ -729,6 +729,11 @@ public:
 	bool isMadeAttack() const;
 	void setMadeAttack(bool bNewValue);
 
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+	int getBombardRange(bool& bIndirectFireAllowed) const;
+	int getBombardRange() const;
+#endif
+
 	bool canRangeStrike() const;
 	bool CanRangeStrikeNow() const;
 	bool IsHasBuildingThatAllowsRangeStrike() const;

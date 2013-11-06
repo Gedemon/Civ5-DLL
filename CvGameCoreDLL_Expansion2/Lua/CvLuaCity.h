@@ -182,6 +182,10 @@ protected:
 
 	static int lGetNumBuilding(lua_State* L);
 	static int lIsHasBuilding(lua_State* L);
+#if defined(MOD_API_EXTENSIONS)
+	static int lGetNumBuildingClass(lua_State* L);
+	static int lIsHasBuildingClass(lua_State* L);
+#endif
 	static int lGetNumActiveBuilding(lua_State* L);
 	static int lGetID(lua_State* L);
 	static int lGetX(lua_State* L);
@@ -453,6 +457,9 @@ protected:
 	static int lChangeDamage(lua_State* L);
 	static int lGetMaxHitPoints(lua_State* L);
 
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+	static int lGetBombardRange(lua_State* L);
+#endif
 	static int lCanRangeStrike(lua_State* L);
 	static int lCanRangeStrikeNow(lua_State* L);
 	static int lCanRangeStrikeAt(lua_State* L);
@@ -491,6 +498,13 @@ protected:
 
 	static int lGetBuildingEspionageModifier(lua_State* L);
 	static int lGetBuildingGlobalEspionageModifier(lua_State* L);
+	
+#if defined(MOD_API_ESPIONAGE)
+	static int lHasDiplomat(lua_State* L);
+	static int lHasSpy(lua_State* L);
+	static int lHasCounterSpy(lua_State* L);
+	static int lGetCounterSpy(lua_State* L);
+#endif
 
 #if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 	static int lGetBuildingConversionModifier(lua_State* L);

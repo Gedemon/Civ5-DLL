@@ -3258,8 +3258,12 @@ void CvPlayer::DoLiberatePlayer(PlayerTypes ePlayer, int iOldCityID)
 			// Have I met the player who conquered the city?
 			if(GET_TEAM(GET_PLAYER(eMajor).getTeam()).isHasMet(getTeam()))
 			{
+#if defined(MOD_CONFIG_AI_IN_XML)
+				int iWarmongerOffset = CvDiplomacyAIHelpers::GetWarmongerOffset(ePlayer);
+#else
 				int iNumCities = max(GET_PLAYER(ePlayer).getNumCities(), 1);
 				int iWarmongerOffset = CvDiplomacyAIHelpers::GetWarmongerOffset(iNumCities);
+#endif
 				GET_PLAYER(eMajor).GetDiplomacyAI()->ChangeOtherPlayerWarmongerAmount(GetID(), -iWarmongerOffset);
 			}
 		}
@@ -5507,13 +5511,14 @@ bool CvPlayer::canRaze(CvCity* pCity, bool bIgnoreCapitals) const
 	}
 
 #if defined(MOD_EVENTS_CITY_RAZING)
-	if (MOD_EVENTS_CITY_RAZING) { // TODO - WH - do we still need this?
+	if (MOD_EVENTS_CITY_RAZING) {
 		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
 		if (pkScriptSystem) {
 			CvLuaArgsHandle args;
-			args->Push(GetID());
+			args->Push(pCity->getOwner());
 			args->Push(pCity->GetID());
 
+			// Note the subtle difference between CanRazeOverride and PlayerCanRaze, the former needs everyone to agree, the latter anyone
 			bool bResult = false;
 			if (LuaSupport::CallTestAny(pkScriptSystem, "PlayerCanRaze", args.get(), bResult)) {
 				if (bResult) {
@@ -5748,6 +5753,8 @@ bool CvPlayer::canReceiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit) 
 	CvAssertMsg(bResult, "Cannot find goody info.");
 	kGoodyInfo.CacheResult(kResult);
 
+	// TODO - WH - send an event to see if the player can NOT have this goody
+	
 	if(!CvGoodyHuts::IsCanPlayerReceiveGoody(GetID(), eGoody))
 	{
 		return false;

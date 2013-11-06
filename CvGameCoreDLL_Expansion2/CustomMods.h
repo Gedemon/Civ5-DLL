@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 31)
+#define MOD_DLL_VERSION_NUMBER ((uint) 32)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -82,6 +82,8 @@
 #define MOD_GLOBAL_VENICE_KEEPS_RESOURCES           gCustomMods.isGLOBAL_VENICE_KEEPS_RESOURCES()
 // Units attacking from cities, forts or citadels will not follow-up if they kill the defender
 #define MOD_GLOBAL_NO_FOLLOWUP_FROM_CITIES          gCustomMods.isGLOBAL_NO_FOLLOWUP_FROM_CITIES()
+// Units that can move after attacking can also capture civilian units (eg workers in empty barbarian camps)
+#define MOD_GLOBAL_CAPTURE_AFTER_ATTACKING          gCustomMods.isGLOBAL_CAPTURE_AFTER_ATTACKING()
 // Remove assembled spaceship parts from conquered capitals
 #define MOD_GLOBAL_NO_CONQUERED_SPACESHIPS          gCustomMods.isGLOBAL_NO_CONQUERED_SPACESHIPS()
 // Adjacent allied ships block blockades by enemy ships 2 or more tiles away
@@ -266,6 +268,10 @@
 //   GameEvents.PlayerCanRaze(function(iPlayer, iCity) return false end)
 #define MOD_EVENTS_CITY_RAZING                      gCustomMods.isEVENTS_CITY_RAZING()
 	
+// Events sent to ascertain the bombard range for a city, and if indirect fire is allowed
+//   GameEvents.GetBombardRange(function(iPlayer, iCity) return (-1 * GameDefines.CITY_ATTACK_RANGE) end)
+#define MOD_EVENTS_CITY_BOMBARD                     gCustomMods.isEVENTS_CITY_BOMBARD()
+
 // Events sent to ascertain if an area can have civ specific resources and to place those resources
 //   GameEvents.AreaCanHaveAnyResource(function(iPlayer, iArea) return true end)
 //   GameEvents.PlaceResource(function(iPlayer, iResource, iCount, iPlotX, iPlotY) end)
@@ -454,6 +460,7 @@ public:
 	inline bool isGLOBAL_CS_GIFTS()                         { return m_bGLOBAL_CS_GIFTS; }
 	inline bool isGLOBAL_VENICE_KEEPS_RESOURCES()           { return m_bGLOBAL_VENICE_KEEPS_RESOURCES; }
 	inline bool isGLOBAL_NO_FOLLOWUP_FROM_CITIES()          { return m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES; }
+	inline bool isGLOBAL_CAPTURE_AFTER_ATTACKING()          { return m_bGLOBAL_CAPTURE_AFTER_ATTACKING; }
 	inline bool isGLOBAL_NO_CONQUERED_SPACESHIPS()          { return m_bGLOBAL_NO_CONQUERED_SPACESHIPS; }
 	inline bool isGLOBAL_ALLIES_BLOCK_BLOCKADES()           { return m_bGLOBAL_ALLIES_BLOCK_BLOCKADES; }
 	inline bool isGLOBAL_SHORT_EMBARKED_BLOCKADES()         { return m_bGLOBAL_SHORT_EMBARKED_BLOCKADES; }
@@ -517,6 +524,7 @@ public:
 	inline bool isEVENTS_CITY()                             { return m_bEVENTS_CITY; }
 	inline bool isEVENTS_CITY_BORDERS()                     { return m_bEVENTS_CITY_BORDERS; }
 	inline bool isEVENTS_CITY_RAZING()                      { return m_bEVENTS_CITY_RAZING; }
+	inline bool isEVENTS_CITY_BOMBARD()                     { return m_bEVENTS_CITY_BOMBARD; }
 	inline bool isEVENTS_AREA_RESOURCES()                   { return m_bEVENTS_AREA_RESOURCES; }
 	inline bool isEVENTS_PARADROPS()                        { return m_bEVENTS_PARADROPS; }
 	inline bool isEVENTS_UNIT_PREKILL()                     { return m_bEVENTS_UNIT_PREKILL; }
@@ -582,6 +590,7 @@ protected:
 	bool m_bGLOBAL_CS_GIFTS;
 	bool m_bGLOBAL_VENICE_KEEPS_RESOURCES;
 	bool m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES;
+	bool m_bGLOBAL_CAPTURE_AFTER_ATTACKING;
 	bool m_bGLOBAL_NO_CONQUERED_SPACESHIPS;
 	bool m_bGLOBAL_ALLIES_BLOCK_BLOCKADES;
 	bool m_bGLOBAL_SHORT_EMBARKED_BLOCKADES;
@@ -645,6 +654,7 @@ protected:
 	bool m_bEVENTS_CITY;
 	bool m_bEVENTS_CITY_BORDERS;
 	bool m_bEVENTS_CITY_RAZING;
+	bool m_bEVENTS_CITY_BOMBARD;
 	bool m_bEVENTS_AREA_RESOURCES;
 	bool m_bEVENTS_PARADROPS;
 	bool m_bEVENTS_UNIT_PREKILL;

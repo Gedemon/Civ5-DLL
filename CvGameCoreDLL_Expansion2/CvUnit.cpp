@@ -2729,7 +2729,16 @@ bool CvUnit::canMoveInto(const CvPlot& plot, byte bMoveFlags) const
 	{
 		if(isOutOfAttacks())
 		{
+#if defined(MOD_GLOBAL_CAPTURE_AFTER_ATTACKING)
+			// If there are only enemy civilians in the plot, then we don't need remaining attacks to capture them
+			// eg a worker in a barbarian camp where we just killed the defender
+			if (plot.getBestDefender(NO_PLAYER) != ((UnitHandle) NULL))
+			{
+				return false;
+			}
+#else
 			return false;
+#endif
 		}
 
 		// Does unit only attack cities?
@@ -14811,7 +14820,11 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 	setInfoBarDirty(true);
 
 	// if there is an enemy city nearby, alert any scripts to this
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+	int iAttackRange = (MOD_EVENTS_CITY_BOMBARD ? GC.getMAX_CITY_ATTACK_RANGE() : GC.getCITY_ATTACK_RANGE());
+#else
 	int iAttackRange = GC.getCITY_ATTACK_RANGE();
+#endif
 	for(int iDX = -iAttackRange; iDX <= iAttackRange; iDX++)
 	{
 		for(int iDY = -iAttackRange; iDY <= iAttackRange; iDY++)
@@ -14823,8 +14836,15 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 				{
 					// do it
 					CvCity* pkPlotCity = pTargetPlot->getPlotCity();
-					auto_ptr<ICvCity1> pPlotCity = GC.WrapCityPointer(pkPlotCity);
-					DLLUI->SetSpecificCityInfoDirty(pPlotCity.get(), CITY_UPDATE_TYPE_ENEMY_IN_RANGE);
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+					if (!MOD_EVENTS_CITY_BOMBARD || plotXYWithRangeCheck(getX(), getY(), iDX, iDY, pkPlotCity->getBombardRange()))
+					{
+#endif
+						auto_ptr<ICvCity1> pPlotCity = GC.WrapCityPointer(pkPlotCity);
+						DLLUI->SetSpecificCityInfoDirty(pPlotCity.get(), CITY_UPDATE_TYPE_ENEMY_IN_RANGE);
+#if defined(MOD_EVENTS_CITY_BOMBARD)
+					}
+#endif
 				}
 			}
 		}
