@@ -879,16 +879,7 @@ void CvDllNetMessageHandler::ResponseSellBuilding(PlayerTypes ePlayer, int iCity
 
 #if defined(MOD_EVENTS_CITY)
 		if (MOD_EVENTS_CITY) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(ePlayer);
-				args->Push(iCityID);
-				args->Push(eBuilding);
-
-				bool bResult;
-				LuaSupport::CallHook(pkScriptSystem, "CitySoldBuilding", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_CitySoldBuilding, ePlayer, iCityID, eBuilding);
 		}
 #endif
 	}

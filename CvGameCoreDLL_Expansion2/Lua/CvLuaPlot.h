@@ -42,8 +42,7 @@ protected:
 	static int lGetTerrainType(lua_State* L);
 
 #if defined(MOD_API_PLOT_BASED_DAMAGE)
-	//! (LUA) CvPlot::GetTerrainType.
-	static int lGetTurnDamage(lua_State* L);
+	LUAAPIEXTN(GetTurnDamage);
 #endif
 
 	//! (LUA) CvPlot::IsRiver.
@@ -72,7 +71,7 @@ protected:
 	static int lIsAdjacentToLand(lua_State* L);
 	static int lIsAdjacentToShallowWater(lua_State* L);
 #if defined(MOD_PROMOTIONS_CROSS_ICE)
-	static int lIsAdjacentToIce(lua_State* L);
+	LUAAPIEXTN(IsAdjacentToIce);
 #endif
 	static int lIsCoastalLand(lua_State* L);
 
@@ -133,7 +132,7 @@ protected:
 	static int lIsCity(lua_State* L);
 	static int lIsFriendlyCity(lua_State* L);
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
-	static int lIsFriendlyCityOrPassableImprovement(lua_State* L);
+	LUAAPIEXTN(IsFriendlyCityOrPassableImprovement);
 #endif
 	static int lIsEnemyCity(lua_State* L);
 	static int lIsBeingWorked(lua_State* L);
@@ -149,7 +148,7 @@ protected:
 	static int lIsFighting(lua_State* L);
 
 #if defined(MOD_GLOBAL_STACKING_RULES)
-	static int lGetUnitLimit(lua_State* L);
+	LUAAPIEXTN(GetUnitLimit);
 #endif
 
 	static int lIsRoute(lua_State* L);
@@ -161,7 +160,7 @@ protected:
 	static int lGetX(lua_State* L);
 	static int lGetY(lua_State* L);
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lGetIndex(lua_State* L);
+	LUAAPIEXTN(GetIndex);
 #endif
 	static int lAt(lua_State* L);
 	static int lGetPlotIndex(lua_State* L);
@@ -211,7 +210,7 @@ protected:
 	static int lIsFlatlands(lua_State* L);
 	static int lIsHills(lua_State* L);
 #if defined(MOD_PATHFINDER_TERRAFIRMA)
-	static int lIsTerraFirma(lua_State* L);
+	LUAAPIEXTN(IsTerraFirma);
 #endif
 	static int lIsOpenGround(lua_State* L);
 	static int lIsRoughGround(lua_State* L);

@@ -75,7 +75,7 @@ protected:
 	static int lCanDisembarkOnto(lua_State* L);
 	static int lCanRebaseAt(lua_State* L);
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lRebaseAt(lua_State* L);
+	LUAAPIEXTN(RebaseAt);
 #endif
 	static int lEmbark(lua_State* L);
 
@@ -98,11 +98,11 @@ protected:
 	static int lCanMakeTradeRouteAt(lua_State* L);
 
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lCanPlunderTradeRoute(lua_State* L);
-	static int lPlunderTradeRoute(lua_State* L);
+	LUAAPIEXTN(CanPlunderTradeRoute);
+	LUAAPIEXTN(PlunderTradeRoute);
 
-	static int lCanCreateGreatWork(lua_State* L);
-	static int lCreateGreatWork(lua_State* L);
+	LUAAPIEXTN(CanCreateGreatWork);
+	LUAAPIEXTN(CreateGreatWork);
 #endif
 
 	static int lGetExoticGoodsGoldAmount(lua_State* L);
@@ -150,7 +150,7 @@ protected:
 	static int lUpgradePrice(lua_State* L);
 	static int lCanUpgradeRightNow(lua_State* L);
 #if defined(MOD_GLOBAL_CS_UPGRADES)
-	static int lCanUpgradeInTerritory(lua_State* L);
+	LUAAPIEXTN(CanUpgradeInTerritory);
 #endif
 	static int lGetNumResourceNeededToUpgrade(lua_State* L);
 
@@ -160,7 +160,7 @@ protected:
 	static int lGetCaptureUnitType(lua_State* L);
 	static int lGetUnitCombatType(lua_State* L);
 #if defined(MOD_GLOBAL_PROMOTION_CLASSES)
-	static int lGetUnitPromotionType(lua_State* L);
+	LUAAPIEXTN(GetUnitPromotionType);
 #endif
 	static int lGetUnitAIType(lua_State* L);
 	static int lSetUnitAIType(lua_State* L);
@@ -226,9 +226,9 @@ protected:
 
 	static int lIsTrade(lua_State* L);
 #if defined(MOD_API_TRADEROUTES)
-	static int lGetTradeRouteIndex(lua_State* L);
-	static int lIsRecalledTrader(lua_State* L);
-	static int lRecallTrader(lua_State* L);
+	LUAAPIEXTN(GetTradeRouteIndex);
+	LUAAPIEXTN(IsRecalledTrader);
+	LUAAPIEXTN(RecallTrader);
 #endif
 
 	static int lGetBaseRangedCombatStrength(lua_State* L);
@@ -271,24 +271,24 @@ protected:
 	static int lCanMoveImpassable(lua_State* L);
 	static int lCanMoveAllTerrain(lua_State* L);
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lIsHoveringUnit(lua_State* L);
+	LUAAPIEXTN(IsHoveringUnit);
 #endif
 	static int lFlatMovementCost(lua_State* L);
 	static int lIgnoreTerrainCost(lua_State* L);
 #if defined(MOD_API_PLOT_BASED_DAMAGE)
-	static int lIgnoreTerrainDamage(lua_State* L);
-	static int lIgnoreFeatureDamage(lua_State* L);
-	static int lExtraTerrainDamage(lua_State* L);
-	static int lExtraFeatureDamage(lua_State* L);
+	LUAAPIEXTN(IgnoreTerrainDamage);
+	LUAAPIEXTN(IgnoreFeatureDamage);
+	LUAAPIEXTN(ExtraTerrainDamage);
+	LUAAPIEXTN(ExtraFeatureDamage);
 #endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
-	static int lCanCrossMountains(lua_State* L);
+	LUAAPIEXTN(CanCrossMountains);
 #endif
 #if defined(MOD_PROMOTIONS_CROSS_OCEANS)
-	static int lCanCrossOceans(lua_State* L);
+	LUAAPIEXTN(CanCrossOceans);
 #endif
 #if defined(MOD_PROMOTIONS_CROSS_ICE)
-	static int lCanCrossIce(lua_State* L);
+	LUAAPIEXTN(CanCrossIce);
 #endif
 	static int lIsNeverInvisible(lua_State* L);
 	static int lIsInvisible(lua_State* L);
@@ -396,7 +396,7 @@ protected:
 
 	static int lGetExtraVisibilityRange(lua_State* L);
 #if defined(MOD_PROMOTIONS_VARIABLE_RECON)
-	static int lGetExtraReconRange(lua_State* L);
+	LUAAPIEXTN(GetExtraReconRange);
 #endif
 	static int lGetExtraMoves(lua_State* L);
 	static int lGetExtraMoveDiscount(lua_State* L);
@@ -477,8 +477,8 @@ protected:
 	static int lIsTerrainDoubleMove(lua_State* L);
 	static int lIsFeatureDoubleMove(lua_State* L);
 #if defined(MOD_PROMOTIONS_HALF_MOVE)
-	static int lIsTerrainHalfMove(lua_State* L);
-	static int lIsFeatureHalfMove(lua_State* L);
+	LUAAPIEXTN(IsTerrainHalfMove);
+	LUAAPIEXTN(IsFeatureHalfMove);
 #endif
 
 	static int lGetScriptData(lua_State* L);
@@ -509,9 +509,9 @@ protected:
 	static int lGetNumFollowersAfterSpread(lua_State* L);
 	static int lGetMajorityReligionAfterSpread(lua_State* L);
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lSetReligion(lua_State* L);
-	static int lSetConversionStrength(lua_State* L);
-	static int lSetSpreadsLeft(lua_State* L);
+	LUAAPIEXTN(SetReligion);
+	LUAAPIEXTN(SetConversionStrength);
+	LUAAPIEXTN(SetSpreadsLeft);
 #endif
 
 	static int lGetTourismBlastStrength(lua_State* L);

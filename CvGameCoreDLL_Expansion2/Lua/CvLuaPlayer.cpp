@@ -4230,7 +4230,7 @@ int CvLuaPlayer::lGetTradeRoutes(lua_State* L)
 
 		lua_pushinteger(L, pConnection->m_iTurnRouteComplete - GC.getGame().getGameTurn());
 		lua_setfield(L, t, "TurnsLeft");
-#if defined(MOD_API_LUA_EXTENSIONS)
+#if defined(MOD_API_TRADEROUTES)
 		lua_pushinteger(L, pConnection->m_unitID);
 		lua_setfield(L, t, "UnitID");
 		lua_pushboolean(L, pConnection->m_bTradeUnitRecalled);
@@ -10869,7 +10869,7 @@ int CvLuaPlayer::lEspionageCreateSpy(lua_State* L)
 	CvPlayer* pkPlayer = GetInstance(L);
 	pkPlayer->GetEspionage()->CreateSpy();
 
-	return 1;
+	return 0;
 }
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lEspionagePromoteSpy(lua_State* L)
@@ -10878,7 +10878,7 @@ int CvLuaPlayer::lEspionagePromoteSpy(lua_State* L)
 	int iSpyIndex = lua_tointeger(L, 2);
 	pkPlayer->GetEspionage()->LevelUpSpy(iSpyIndex);
 
-	return 1;
+	return 0;
 }
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lEspionageSetPassive(lua_State* L)
@@ -10888,7 +10888,7 @@ int CvLuaPlayer::lEspionageSetPassive(lua_State* L)
 	bool bPassive = lua_toboolean(L, 3);
 	pkPlayer->GetEspionage()->SetPassive(iSpyIndex, bPassive);
 
-	return 1;
+	return 0;
 }
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lEspionageSetOutcome(lua_State* L)
@@ -10899,7 +10899,7 @@ int CvLuaPlayer::lEspionageSetOutcome(lua_State* L)
 	bool bAffectsDiplomacy = lua_toboolean(L, 4);
 	pkPlayer->GetEspionage()->SetOutcome(iSpyIndex, iSpyResult, bAffectsDiplomacy);
 
-	return 1;
+	return 0;
 }
 #endif
 //------------------------------------------------------------------------------

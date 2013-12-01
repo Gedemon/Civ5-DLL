@@ -2261,22 +2261,8 @@ bool CvPlot::canHaveImprovement(ImprovementTypes eImprovement, TeamTypes eTeam, 
 
 #if defined(MOD_EVENTS_PLOT)
 	if (MOD_EVENTS_PLOT) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if(pkScriptSystem)
-		{
-			CvLuaArgsHandle args;
-			args->Push(getX());
-			args->Push(getY());
-			args->Push(eImprovement);
-
-			bool bResult = false;
-			if(LuaSupport::CallTestAll(pkScriptSystem, "PlotCanImprove", args.get(), bResult))
-			{
-				if(bResult == false)
-				{
-					return false;
-				}
-			}
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlotCanImprove, getX(), getY(), eImprovement) == GAMEEVENTRETURN_FALSE) {
+			return false;
 		}
 	}
 #endif
@@ -4475,6 +4461,12 @@ void CvPlot::setArea(int iNewValue)
 			processArea(area(), -1);
 		}
 
+#if defined(MOD_EVENTS_TERRAFORMING)
+		if (MOD_EVENTS_TERRAFORMING) {
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingPlot, TERRAFORMINGEVENT_AREA, m_iX, m_iY, 0, iNewValue, m_iArea, -1, -1);
+		}
+#endif
+
 		m_iArea = iNewValue;
 
 		if(area() != NULL)
@@ -4499,6 +4491,12 @@ void CvPlot::setLandmass(int iNewValue)
 			pLandmass->ChangeCentroidX(-m_iX);
 			pLandmass->ChangeCentroidY(-m_iY);
 		}
+
+#if defined(MOD_EVENTS_TERRAFORMING)
+		if (MOD_EVENTS_TERRAFORMING) {
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingPlot, TERRAFORMINGEVENT_LANDMASS, m_iX, m_iY, 0, iNewValue, m_iLandmass, -1, -1);
+		}
+#endif
 
 		m_iLandmass = iNewValue;
 
@@ -4776,6 +4774,12 @@ void CvPlot::setNEOfRiver(bool bNewValue, FlowDirectionTypes eRiverDir)
 		CvAssertMsg(m_eRiverSWFlowDirection == NO_FLOWDIRECTION && eRiverDir != NO_FLOWDIRECTION, "invalid parameter");
 		if(isNEOfRiver() != bNewValue)
 		{
+#if defined(MOD_EVENTS_TERRAFORMING)
+			if (MOD_EVENTS_TERRAFORMING) {
+				GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingPlot, TERRAFORMINGEVENT_RIVER, m_iX, m_iY, DIRECTION_NORTHEAST, ((int) bNewValue), ((int) m_bNEOfRiver), eRiverDir, m_eRiverSWFlowDirection);
+			}
+#endif
+
 			m_bNEOfRiver = bNewValue;
 
 			updateRiverCrossing();
@@ -4822,6 +4826,12 @@ void CvPlot::setWOfRiver(bool bNewValue, FlowDirectionTypes eRiverDir)
 		CvAssertMsg(m_eRiverEFlowDirection == NO_FLOWDIRECTION && eRiverDir != NO_FLOWDIRECTION, "invalid parameter");
 		if(isWOfRiver() != bNewValue)
 		{
+#if defined(MOD_EVENTS_TERRAFORMING)
+			if (MOD_EVENTS_TERRAFORMING) {
+				GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingPlot, TERRAFORMINGEVENT_RIVER, m_iX, m_iY, DIRECTION_WEST, ((int) bNewValue), ((int) m_bWOfRiver), eRiverDir, m_eRiverEFlowDirection);
+			}
+#endif
+
 			m_bWOfRiver = bNewValue;
 
 			updateRiverCrossing();
@@ -4868,6 +4878,12 @@ void CvPlot::setNWOfRiver(bool bNewValue, FlowDirectionTypes eRiverDir)
 		CvAssertMsg(m_eRiverSEFlowDirection == NO_FLOWDIRECTION && eRiverDir != NO_FLOWDIRECTION, "invalid parameter");
 		if(isNWOfRiver() != bNewValue)
 		{
+#if defined(MOD_EVENTS_TERRAFORMING)
+			if (MOD_EVENTS_TERRAFORMING) {
+				GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingPlot, TERRAFORMINGEVENT_RIVER, m_iX, m_iY, DIRECTION_NORTHWEST, ((int) bNewValue), ((int) m_bNWOfRiver), eRiverDir, m_eRiverSEFlowDirection);
+			}
+#endif
+
 			m_bNWOfRiver = bNewValue;
 
 			updateRiverCrossing();
@@ -5562,6 +5578,12 @@ void CvPlot::setPlotType(PlotTypes eNewValue, bool bRecalculate, bool bRebuildGr
 
 		updateSeeFromSight(false);
 
+#if defined(MOD_EVENTS_TERRAFORMING)
+		if (MOD_EVENTS_TERRAFORMING) {
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingPlot, TERRAFORMINGEVENT_PLOT, m_iX, m_iY, 0, eNewValue, m_ePlotType, -1, -1);
+		}
+#endif
+
 		m_ePlotType = eNewValue;
 
 		updateYield();
@@ -5805,6 +5827,12 @@ void CvPlot::setTerrainType(TerrainTypes eNewValue, bool bRecalculate, bool bReb
 			updateSeeFromSight(false);
 		}
 
+#if defined(MOD_EVENTS_TERRAFORMING)
+		if (MOD_EVENTS_TERRAFORMING) {
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingPlot, TERRAFORMINGEVENT_TERRAIN, m_iX, m_iY, 0, eNewValue, m_eTerrainType, -1, -1);
+		}
+#endif
+
 		m_eTerrainType = eNewValue;
 
 		updateYield();
@@ -5853,6 +5881,12 @@ void CvPlot::setFeatureType(FeatureTypes eNewValue, int iVariety)
 
 		auto_ptr<ICvPlot1> pDllPlot(new CvDllPlot(this));
 		gDLL->GameplayFeatureChanged(pDllPlot.get(), eNewValue);
+
+#if defined(MOD_EVENTS_TERRAFORMING)
+		if (MOD_EVENTS_TERRAFORMING) {
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingPlot, TERRAFORMINGEVENT_FEATURE, m_iX, m_iY, 0, eNewValue, m_eFeatureType, -1, -1);
+		}
+#endif
 
 		m_eFeatureType = eNewValue;
 
@@ -5904,18 +5938,7 @@ void CvPlot::setFeatureType(FeatureTypes eNewValue, int iVariety)
 
 #if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
 		if (MOD_EVENTS_TILE_IMPROVEMENTS) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(getX());
-				args->Push(getY());
-				args->Push(getOwner());
-				args->Push(eOldFeature);
-				args->Push(eNewValue);
-
-				bool bResult = false;
-				LuaSupport::CallHook(pkScriptSystem, "TileFeatureChanged", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TileFeatureChanged, getX(), getY(), getOwner(), eOldFeature, eNewValue);
 		}
 #endif
 	}
@@ -6516,19 +6539,7 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 		
 #if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
 		if (MOD_EVENTS_TILE_IMPROVEMENTS) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(getX());
-				args->Push(getY());
-				args->Push(getOwner());
-				args->Push(eOldImprovement);
-				args->Push(eNewValue);
-				args->Push(IsImprovementPillaged());
-
-				bool bResult = false;
-				LuaSupport::CallHook(pkScriptSystem, "TileImprovementChanged", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TileImprovementChanged, getX(), getY(), getOwner(), eOldImprovement, eNewValue, IsImprovementPillaged());
 		}
 #endif
 	}
@@ -6590,19 +6601,7 @@ void CvPlot::SetImprovementPillaged(bool bPillaged)
 		
 #if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
 		if (bEvents && MOD_EVENTS_TILE_IMPROVEMENTS) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(getX());
-				args->Push(getY());
-				args->Push(getOwner());
-				args->Push(getImprovementType());
-				args->Push(getImprovementType());
-				args->Push(IsImprovementPillaged());
-
-				bool bResult = false;
-				LuaSupport::CallHook(pkScriptSystem, "TileImprovementChanged", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TileImprovementChanged, getX(), getY(), getOwner(), getImprovementType(), getImprovementType(), IsImprovementPillaged());
 		}
 #endif
 	}
@@ -6813,19 +6812,7 @@ void CvPlot::setRouteType(RouteTypes eNewValue)
 
 #if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
 		if (MOD_EVENTS_TILE_IMPROVEMENTS) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(getX());
-				args->Push(getY());
-				args->Push(getOwner());
-				args->Push(eOldRoute);
-				args->Push(eNewValue);
-				args->Push(IsRoutePillaged());
-
-				bool bResult = false;
-				LuaSupport::CallHook(pkScriptSystem, "TileRouteChanged", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TileRouteChanged, getX(), getY(), getOwner(), eOldRoute, eNewValue, IsRoutePillaged());
 		}
 #endif
 	}
@@ -6859,19 +6846,7 @@ void CvPlot::SetRoutePillaged(bool bPillaged)
 
 #if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
 		if (bEvents && MOD_EVENTS_TILE_IMPROVEMENTS) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(getX());
-				args->Push(getY());
-				args->Push(getOwner());
-				args->Push(getRouteType());
-				args->Push(getRouteType());
-				args->Push(IsRoutePillaged());
-
-				bool bResult = false;
-				LuaSupport::CallHook(pkScriptSystem, "TileRouteChanged", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TileRouteChanged, getX(), getY(), getOwner(), getRouteType(), getRouteType(), IsRoutePillaged());
 		}
 #endif
 	}
@@ -7127,6 +7102,14 @@ void CvPlot::setPlotCity(CvCity* pNewValue)
 				}
 			}
 		}
+
+#if defined(MOD_EVENTS_TERRAFORMING)
+		if (MOD_EVENTS_TERRAFORMING) {
+			int iNewOwner = (pNewValue != NULL) ? pNewValue->getOwner() : -1;
+			int iNewCity = (pNewValue != NULL) ? pNewValue->GetID() : -1;
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingPlot, TERRAFORMINGEVENT_CITY, m_iX, m_iY, 0, iNewOwner, m_plotCity.eOwner, iNewCity, m_plotCity.iID);
+		}
+#endif
 
 		if(pNewValue != NULL)
 		{
@@ -8551,18 +8534,7 @@ bool CvPlot::setRevealed(TeamTypes eTeam, bool bNewValue, bool bTerrainOnly, Tea
 
 #if defined(MOD_EVENTS_NW_DISCOVERY)
 					if (MOD_EVENTS_NW_DISCOVERY) {
-						ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-						if (pkScriptSystem) {
-							CvLuaArgsHandle args;
-							args->Push(eTeam);
-							args->Push(getFeatureType());
-							args->Push(getX());
-							args->Push(getY());
-							args->Push((getNumMajorCivsRevealed() == 0)); // bFirst
-
-							bool bResult = false;
-							LuaSupport::CallHook(pkScriptSystem, "NaturalWonderDiscovered", args.get(), bResult);
-						}
+						GAMEEVENTINVOKE_HOOK(GAMEEVENT_NaturalWonderDiscovered, eTeam, getFeatureType(), getX(), getY(), (getNumMajorCivsRevealed() == 0));
 					}
 #endif
 					
@@ -10899,6 +10871,12 @@ char CvPlot::GetContinentType() const
 //	--------------------------------------------------------------------------------
 void CvPlot::SetContinentType(const char cContinent)
 {
+#if defined(MOD_EVENTS_TERRAFORMING)
+	if (MOD_EVENTS_TERRAFORMING) {
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingPlot, TERRAFORMINGEVENT_CONTINENT, m_iX, m_iY, 0, cContinent, m_cContinentType, -1, -1);
+	}
+#endif
+
 	m_cContinentType = cContinent;
 }
 

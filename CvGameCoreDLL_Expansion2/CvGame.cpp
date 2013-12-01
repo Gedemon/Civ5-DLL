@@ -403,6 +403,12 @@ bool CvGame::init2()
 	initScoreCalculation();
 	setFinalInitialized(true);
 
+#if defined(MOD_EVENTS_TERRAFORMING)
+	if (MOD_EVENTS_TERRAFORMING) {
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingMap, TERRAFORMINGEVENT_LOAD, 0);
+	}
+#endif
+
 	return true;
 }
 
@@ -536,7 +542,7 @@ bool CvGame::InitMap(CvGameInitialItemsOverrides& kGameInitialItemsOverrides)
 			}
 		}
 	}
-
+	
 	return true;
 }
 //------------------------------------------------------------------------------
@@ -5154,18 +5160,7 @@ void CvGame::DoFromUIDiploEvent(FromUIDiploEventTypes eEvent, PlayerTypes eAIPla
 {
 #if defined(MOD_EVENTS_DIPLO_EVENTS)
 	if (MOD_EVENTS_DIPLO_EVENTS) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if(pkScriptSystem)
-		{
-			CvLuaArgsHandle args;
-			args->Push(eEvent);
-			args->Push(eAIPlayer);
-			args->Push(iArg1);
-			args->Push(iArg2);
-
-			bool bResult;
-			LuaSupport::CallHook(pkScriptSystem, "UiDiploEvent", args.get(), bResult);
-		}
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_UiDiploEvent, eEvent, eAIPlayer, iArg1, iArg2);
 	}
 #endif
 

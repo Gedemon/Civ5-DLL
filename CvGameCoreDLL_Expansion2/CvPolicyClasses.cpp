@@ -3441,6 +3441,22 @@ void CvPlayerPolicies::DoSwitchIdeologies(PolicyBranchTypes eNewBranchType)
 	m_pPlayer->setJONSCulture(0);
 	m_pPlayer->ChangeNumFreeTenets(iNewBranchTenets, false /*bCountAsFreePolicies*/);
 
+#if defined(MOD_BUGFIX_MISSING_POLICY_EVENTS)
+	if (MOD_BUGFIX_MISSING_POLICY_EVENTS)
+	{
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if(pkScriptSystem)
+		{
+			CvLuaArgsHandle args;
+			args->Push(m_pPlayer->GetID());
+			args->Push(eNewBranchType);
+
+			bool bResult = false;
+			LuaSupport::CallHook(pkScriptSystem, "PlayerAdoptPolicyBranch", args.get(), bResult);
+		}
+	}
+#endif
+
 	if (GC.getGame().getActivePlayer() == m_pPlayer->GetID())
 	{
 		DLLUI->setDirty(Policies_DIRTY_BIT, true);

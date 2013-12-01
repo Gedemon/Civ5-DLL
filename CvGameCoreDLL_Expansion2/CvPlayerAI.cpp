@@ -491,18 +491,11 @@ void CvPlayerAI::AI_chooseFreeTech()
 
 #if defined(MOD_EVENTS_AI_OVERRIDE_TECH)
 	if (MOD_EVENTS_AI_OVERRIDE_TECH && eBestTech == NO_TECH) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if(pkScriptSystem) {
-			CvLuaArgsHandle args;
-			args->Push(GetID());
-			args->Push(true); // bFreeTech
-
-			int iValue = 0;
-			if (LuaSupport::CallAccumulator(pkScriptSystem, "AiOverrideChooseNextTech", args.get(), iValue)) {
-				// Defend against modder stupidity!
-				if (iValue >= 0 && iValue < GC.getNumTechInfos() && !GET_TEAM(getTeam()).GetTeamTechs()->HasTech((TechTypes) iValue)) {
-					eBestTech = (TechTypes)iValue;
-				}
+		int iValue = 0;
+		if (GAMEEVENTINVOKE_VALUE(iValue, GAMEEVENT_AiOverrideChooseNextTech, GetID(), true) == GAMEEVENTRETURN_VALUE) {
+			// Defend against modder stupidity!
+			if (iValue >= 0 && iValue < GC.getNumTechInfos() && !GET_TEAM(getTeam()).GetTeamTechs()->HasTech((TechTypes) iValue)) {
+				eBestTech = (TechTypes)iValue;
 			}
 		}
 	}
@@ -555,18 +548,11 @@ void CvPlayerAI::AI_chooseResearch()
 	{
 #if defined(MOD_EVENTS_AI_OVERRIDE_TECH)
 		if (MOD_EVENTS_AI_OVERRIDE_TECH && eBestTech == NO_TECH) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if(pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(GetID());
-				args->Push(false); // bFreeTech
-
-				int iValue = 0;
-				if (LuaSupport::CallAccumulator(pkScriptSystem, "AiOverrideChooseNextTech", args.get(), iValue)) {
-					// Defend against modder stupidity!
-					if (iValue >= 0 && iValue < GC.getNumTechInfos() && !GET_TEAM(getTeam()).GetTeamTechs()->HasTech((TechTypes) iValue)) {
-						eBestTech = (TechTypes)iValue;
-					}
+			int iValue = 0;
+			if (GAMEEVENTINVOKE_VALUE(iValue, GAMEEVENT_AiOverrideChooseNextTech, GetID(), false) == GAMEEVENTRETURN_VALUE) {
+				// Defend against modder stupidity!
+				if (iValue >= 0 && iValue < GC.getNumTechInfos() && !GET_TEAM(getTeam()).GetTeamTechs()->HasTech((TechTypes) iValue)) {
+					eBestTech = (TechTypes)iValue;
 				}
 			}
 		}

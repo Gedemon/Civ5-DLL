@@ -53,7 +53,9 @@ public:
 	{
 	    HAS_ANY_ROUTE   = 0x1,
 	    HAS_WATER_ROUTE = 0x2,
+#if !defined(MOD_EVENTS_CITY_CONNECTIONS)
 	    HAS_BEST_ROUTE  = 0x4,
+#endif
 	};
 
 	struct RouteInfo

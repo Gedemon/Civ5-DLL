@@ -2021,18 +2021,8 @@ void CvPlayerTraits::AddUniqueLuxuries(CvCity *pCity)
 			
 #if defined(MOD_EVENTS_AREA_RESOURCES)
 			if (MOD_EVENTS_AREA_RESOURCES) {
-				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-				if (pkScriptSystem) {
-					CvLuaArgsHandle args;
-					args->Push(m_pPlayer->GetID());
-					args->Push(iArea);
-
-					bool bResult = false;
-					if (LuaSupport::CallTestAll(pkScriptSystem, "AreaCanHaveAnyResource", args.get(), bResult)) {
-						if (bResult == false) {
-							return ;
-						}
-					}
+				if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_AreaCanHaveAnyResource, m_pPlayer->GetID(), iArea) == GAMEEVENTRETURN_FALSE) {
+					return;
 				}
 			}
 #endif
@@ -2064,18 +2054,7 @@ void CvPlayerTraits::AddUniqueLuxuries(CvCity *pCity)
 		{
 #if defined(MOD_EVENTS_AREA_RESOURCES)
 			if (MOD_EVENTS_AREA_RESOURCES) {
-				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-				if (pkScriptSystem) {
-					CvLuaArgsHandle args;
-					args->Push(m_pPlayer->GetID());
-					args->Push(eResourceToGive);
-					args->Push(m_iUniqueLuxuryQuantity);
-					args->Push(pCity->plot()->getX());
-					args->Push(pCity->plot()->getY());
-
-					bool bResult;
-					LuaSupport::CallHook(pkScriptSystem, "PlaceResource", args.get(), bResult);
-				}
+				GAMEEVENTINVOKE_HOOK(GAMEEVENT_PlaceResource, m_pPlayer->GetID(), eResourceToGive, m_iUniqueLuxuryQuantity, pCity->getX(), pCity->getY());
 			} else {
 #endif
 				pCity->plot()->setResourceType(NO_RESOURCE, 0, true);

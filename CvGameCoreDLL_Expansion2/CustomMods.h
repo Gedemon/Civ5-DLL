@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 32)
+#define MOD_DLL_VERSION_NUMBER ((uint) 33)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -40,13 +40,6 @@
 // Comment out this line to remove minidumps - see http://forums.civfanatics.com/showthread.php?t=498919
 // If minidumps are enabled, do NOT set GenerateDebugInfo=No (Props -> Config Props -> Linker -> Debugging)
 #define MOD_DEBUG_MINIDUMP
-
-// Uncomment this line for the WWII specific version of the DLL
-// #define WWII_CUSTOM_BUILD
-#if defined(WWII_CUSTOM_BUILD)
-#undef MOD_DLL_CUSTOM_BUILD_NAME
-#define MOD_DLL_CUSTOM_BUILD_NAME " - WWII custom"
-#else
 
 
 // Comment these lines out to remove the associated code from the DLL,
@@ -76,6 +69,8 @@
 #define MOD_GLOBAL_CS_UPGRADES                      gCustomMods.isGLOBAL_CS_UPGRADES()
 // City States will only raze captured cities if they are very unhappy
 #define MOD_GLOBAL_CS_RAZE_RARELY                   gCustomMods.isGLOBAL_CS_RAZE_RARELY()
+// City States can be liberated after they have been "bought" (Austria's or Venice's UA)
+#define MOD_GLOBAL_CS_LIBERATE_AFTER_BUYOUT         gCustomMods.isGLOBAL_CS_LIBERATE_AFTER_BUYOUT()
 // City States give different gifts depending on their type (cultural, religious, maritime, etc)
 #define MOD_GLOBAL_CS_GIFTS                         gCustomMods.isGLOBAL_CS_GIFTS()
 // Mercantile City States acquired via a Merchant of Venice do not lose their unique resources
@@ -169,8 +164,13 @@
 // Fixes the AI's inability to use combat units for founding cities
 #define MOD_AI_SECONDARY_SETTLERS                   gCustomMods.isAI_SECONDARY_SETTLERS()
 
-// Event sent when a team circumnavigates the globe -->
-//   GameEvents.CircumnavigatedGlobe.Add(function(eTeam) end)
+// Events sent when terraforming occurs
+//   GameEvents.TerraformingMap.Add(function(iEvent, iLoad) end)
+//   GameEvents.TerraformingPlot.Add(function(iEvent, iPlotX, iPlotY, iInfo, iNewValue, iOldValue, iNewExtra, iOldExtra) end)
+#define MOD_EVENTS_TERRAFORMING                     gCustomMods.isEVENTS_TERRAFORMING()
+
+// Event sent when a team circumnavigates the globe
+//   GameEvents.CircumnavigatedGlobe.Add(function(iTeam) end)
 #define MOD_EVENTS_CIRCUMNAVIGATION                 gCustomMods.isEVENTS_CIRCUMNAVIGATION()
 
 // Event sent when the player enters a new era, see also NewEraPopup.lua and BUTTONPOPUP_NEW_ERA
@@ -190,6 +190,10 @@
 //   GameEvents.MinorAlliesChanged.Add(function(iMinor, iMajor, bIsAlly, iOldFriendship, iNewFriendship) end)
 #define MOD_EVENTS_MINORS                           gCustomMods.isEVENTS_MINORS()
 
+// Event sent when a Goody Hut is entered
+//   GameEvents.GoodyHutCanNotReceive.Add(function(iPlayer, iUnit, eGoody, bPick) return false end)
+#define MOD_EVENTS_GOODY_CHOICE                     gCustomMods.isEVENTS_GOODY_CHOICE()
+
 // Events sent if a Goody Hut is giving a tech
 //   GameEvents.GoodyHutCanResearch.Add(function(iPlayer, eTech) return true end)
 //   GameEvents.GoodyHutTechResearched.Add(function(iPlayer, eTech) end)
@@ -204,8 +208,8 @@
 #define MOD_EVENTS_GREAT_PEOPLE                     gCustomMods.isEVENTS_GREAT_PEOPLE()
 
 // Events sent when a player is about to found a religion
-//   GameEvents.PlayerCanFoundPantheon(function(iPlayer) return true end)
-//   GameEvents.PlayerCanFoundReligion(function(iPlayer, iCity) return true end)
+//   GameEvents.PlayerCanFoundPantheon.Add(function(iPlayer) return true end)
+//   GameEvents.PlayerCanFoundReligion.Add(function(iPlayer, iCity) return true end)
 //   GameEvents.GetReligionToFound.Add(function(iPlayer, iPreferredReligion, bIsAlreadyFounded) return iPreferredReligion end)
 //   GameEvents.PantheonFounded.Add(function(iPlayer, iCapitalCity, iReligion, iBelief1) end)
 //   GameEvents.ReligionFounded.Add(function(iPlayer, iHolyCity, iReligion, iBelief1, iBelief2, iBelief3, iBelief4, iBelief5) end)
@@ -214,15 +218,12 @@
 
 // Events sent when choosing beliefs
 //   GameEvents.PlayerCanHaveBelief.Add(function(iPlayer, iBelief) return true end)
-//   GameEvents.ReligionCanHaveBelief.Add(function(iReligion, iBelief) return true end)
+//   GameEvents.ReligionCanHaveBelief.Add(function(iPlayer, iReligion, iBelief) return true end)
 #define MOD_EVENTS_ACQUIRE_BELIEFS                  gCustomMods.isEVENTS_ACQUIRE_BELIEFS()
 
 // Event sent to ascertain if a unit can start a paradrop from this tile
-// This is a "TestAny" event so is currently fairly unique!!!
 //   GameEvents.CanParadropFrom.Add(function(iPlayer, iUnit, iPlotX, iPlotY) return false end)
-// This is a standard "TestAll" event
 //   GameEvents.CannotParadropFrom.Add(function(iPlayer, iUnit, iPlotX, iPlotY) return false end)
-// This is a standard "Hook" event
 //   GameEvents.ParadropAt.Add(function(iPlayer, iUnit, iFromX, iFromY, iToX, iToY) end)
 #define MOD_EVENTS_PARADROPS                        gCustomMods.isEVENTS_PARADROPS()
 
@@ -237,7 +238,6 @@
 // Event sent when a nuke is fired
 //   GameEvents.NuclearDetonation.Add(function(iPlayer, iX, iY, bWar, bBystanders) end)
 #define MOD_EVENTS_NUCLEAR_DETONATION               gCustomMods.isEVENTS_NUCLEAR_DETONATION()
-#endif
 
 // Events sent about war and peace
 //   GameEvents.IsAbleToDeclareWar.Add(function(iPlayer, iAgainstTeam) return true end)
@@ -255,26 +255,31 @@
 //   GameEvents.CityTrained.Add(function(iPlayer, iCity, iUnit, bGold, bFaith) end)
 //   GameEvents.CityConstructed.Add(function(iPlayer, iCity, iBuilding, bGold, bFaith) end)
 //   GameEvents.CityCreated.Add(function(iPlayer, iCity, iProject, bGold, bFaith) end)
+//   GameEvents.CityPrepared.Add(function(iPlayer, iCity, iSpecialist, bGold, bFaith) end)
 //   GameEvents.CityBoughtPlot.Add(function(iPlayer, iCity, iPlotX, iPlotY, bGold, bCulture) end)
 //   GameEvents.CitySoldBuilding.Add(function(iPlayer, iCity, iBuilding) end)
 #define MOD_EVENTS_CITY                             gCustomMods.isEVENTS_CITY()
 
 // Event sent to ascertain if a city can acquire a plot
-//   GameEvents.CityCanAcquirePlot(function(iPlayer, iCity, iPlotX, iPlotY) return true end)
+//   GameEvents.CityCanAcquirePlot.Add(function(iPlayer, iCity, iPlotX, iPlotY) return true end)
 #define MOD_EVENTS_CITY_BORDERS                     gCustomMods.isEVENTS_CITY_BORDERS()
 	
 // Event sent to ascertain if a player can over-ride the standard razing rules for the specified city and raze it anyway
-// This is a "TestAny" event so is currently fairly unique!!!
-//   GameEvents.PlayerCanRaze(function(iPlayer, iCity) return false end)
+//   GameEvents.PlayerCanRaze.Add(function(iPlayer, iCity) return false end)
 #define MOD_EVENTS_CITY_RAZING                      gCustomMods.isEVENTS_CITY_RAZING()
 	
 // Events sent to ascertain the bombard range for a city, and if indirect fire is allowed
-//   GameEvents.GetBombardRange(function(iPlayer, iCity) return (-1 * GameDefines.CITY_ATTACK_RANGE) end)
+//   GameEvents.GetBombardRange.Add(function(iPlayer, iCity) return (-1 * GameDefines.CITY_ATTACK_RANGE) end)
 #define MOD_EVENTS_CITY_BOMBARD                     gCustomMods.isEVENTS_CITY_BOMBARD()
 
+// Events sent to ascertain if one city is connected to another
+//   GameEvents.CityConnections.Add(function(iPlayer, bDomestic) return false end)
+//   GameEvents.CityConnected.Add(function(iPlayer, iCityX, iCityY, iToCityX, iToCityY, bDomestic) return false end)
+#define MOD_EVENTS_CITY_CONNECTIONS                 gCustomMods.isEVENTS_CITY_CONNECTIONS()
+
 // Events sent to ascertain if an area can have civ specific resources and to place those resources
-//   GameEvents.AreaCanHaveAnyResource(function(iPlayer, iArea) return true end)
-//   GameEvents.PlaceResource(function(iPlayer, iResource, iCount, iPlotX, iPlotY) end)
+//   GameEvents.AreaCanHaveAnyResource.Add(function(iPlayer, iArea) return true end)
+//   GameEvents.PlaceResource.Add(function(iPlayer, iResource, iCount, iPlotX, iPlotY) end)
 #define MOD_EVENTS_AREA_RESOURCES                   gCustomMods.isEVENTS_AREA_RESOURCES()
 
 // Events sent as units are promoted/upgraded
@@ -286,13 +291,9 @@
 #define MOD_EVENTS_UNIT_UPGRADES                    gCustomMods.isEVENTS_UNIT_UPGRADES()
 
 // Events sent to ascertain if a unit can rebase to a specific plot (either a city or a carrier)
-// This is a "TestAny" event so is currently fairly unique!!!
-//   GameEvents.CanLoadAt(function(iPlayer, iUnit, iPlotX, iPlotY) return false end)
-// This is a "TestAny" event so is currently fairly unique!!!
+//   GameEvents.CanLoadAt.Add(function(iPlayer, iUnit, iPlotX, iPlotY) return false end)
 //   GameEvents.CanRebaseInCity.Add(function(iPlayer, iUnit, iPlotX, iPlotY) return false end)
-// This is a "TestAny" event so is currently fairly unique!!!
 //   GameEvents.CanRebaseTo.Add(function(iPlayer, iUnit, iPlotX, iPlotY, bIsCity) return false end)
-// This is a standard "Hook" event
 //   GameEvents.RebaseTo.Add(function(iPlayer, iUnit, iPlotX, iPlotY) end)
 #define MOD_EVENTS_REBASE                           gCustomMods.isEVENTS_REBASE()
 
@@ -306,14 +307,12 @@
 #define MOD_EVENTS_RED_COMBAT_RESULT                (MOD_EVENTS_RED_COMBAT && gCustomMods.isEVENTS_RED_COMBAT_RESULT())
 #define MOD_EVENTS_RED_COMBAT_ENDED                 (MOD_EVENTS_RED_COMBAT && gCustomMods.isEVENTS_RED_COMBAT_ENDED())
 
-#if !defined(WWII_CUSTOM_BUILD)
 // Enables the Espionage API - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_API_ESPIONAGE                           gCustomMods.isAPI_ESPIONAGE()
 // Enables the Trade Routes API - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_API_TRADEROUTES                         gCustomMods.isAPI_TRADEROUTES()
 // Enables the Religion API
 #define MOD_API_RELIGION                            gCustomMods.isAPI_RELIGION()
-#endif
 // Enabes the Plot Based Damage API (replaces fixed damage from mountains)
 #define MOD_API_PLOT_BASED_DAMAGE                   gCustomMods.isAPI_PLOT_BASED_DAMAGE()
 // Enables the Extensions API
@@ -326,6 +325,10 @@
 
 // Minor bug fixes (missing catch-all else clauses, etc)
 #define MOD_BUGFIX_MINOR 							(true)
+// Adds missing policy events when adopting an ideology
+#define MOD_BUGFIX_MISSING_POLICY_EVENTS			(true)
+// Fixes trade routes sticking to coastal water when the player has the EmbarkAllWater trait
+#define MOD_BUGFIX_TRADE_ROUTES_EMBARK_ALL_WATER	(true)
 // Fixes the bug in the Lua Plot:ChangeVisibilityCount() method where iChange is treated as a boolean and not a signed int
 #define MOD_BUGFIX_LUA_CHANGE_VISIBILITY_COUNT      gCustomMods.isBUGFIX_LUA_CHANGE_VISIBILITY_COUNT()
 // Fixes the CanMoveAfterPurchase() bug where it is only tested for at one specific point in the code
@@ -396,12 +399,101 @@
 // NOTHING BELOW HERE SHOULD NEED CHANGING
 //
 
+// Terraforming event types
+enum TerraformingEventTypes {
+	NO_TERRAFORMINGEVENT = -1,
+	TERRAFORMINGEVENT_LOAD,
+	TERRAFORMINGEVENT_AREA,
+	TERRAFORMINGEVENT_LANDMASS,
+	TERRAFORMINGEVENT_CONTINENT,
+	TERRAFORMINGEVENT_PLOT,
+	TERRAFORMINGEVENT_TERRAIN,
+	TERRAFORMINGEVENT_FEATURE,
+	TERRAFORMINGEVENT_RIVER,
+	TERRAFORMINGEVENT_CITY,
+	NUM_TERRAFORMINGEVENT_TYPES
+};
+
+
+// LUA API wrappers
+#define LUAAPIEXTN(sMethod)	static int l##sMethod(lua_State* L)
+
+
+// Game Event wrappers
+#include "Lua\CvLuaSupport.h"
+#define GAMEEVENTINVOKE_HOOK    gCustomMods.eventHook
+#define GAMEEVENTINVOKE_TESTANY gCustomMods.eventTestAny
+#define GAMEEVENTINVOKE_TESTALL gCustomMods.eventTestAll
+#define GAMEEVENTINVOKE_VALUE   gCustomMods.eventAccumulator
+
+#define GAMEEVENTRETURN_NONE  -1
+#define GAMEEVENTRETURN_FALSE  0
+#define GAMEEVENTRETURN_TRUE   1
+#define GAMEEVENTRETURN_HOOK   GAMEEVENTRETURN_TRUE
+#define GAMEEVENTRETURN_VALUE  GAMEEVENTRETURN_TRUE
+
+#define GAMEEVENT_AiOverrideChooseNextTech	"AiOverrideChooseNextTech",		"ib"
+#define GAMEEVENT_AreaCanHaveAnyResource	"AreaCanHaveAnyResource",		"ii"
+#define GAMEEVENT_CanHaveAnyUpgrade			"CanHaveAnyUpgrade",			"ii"
+#define GAMEEVENT_CanHavePromotion			"CanHavePromotion",				"iii"
+#define GAMEEVENT_CanHaveUpgrade			"CanHaveUpgrade",				"iiii"
+#define GAMEEVENT_CanLoadAt					"CanLoadAt",					"iiii"
+#define GAMEEVENT_CanMoveInto				"CanMoveInto",					"iiiibb"
+#define GAMEEVENT_CannotParadropFrom		"CannotParadropFrom",			"iiii"
+#define GAMEEVENT_CanParadropFrom			"CanParadropFrom",				"iiii"
+#define GAMEEVENT_CanRebaseInCity			"CanRebaseInCity",				"iiii"
+#define GAMEEVENT_CanRebaseTo				"CanRebaseTo",					"iiiib"
+#define GAMEEVENT_CircumnavigatedGlobe		"CircumnavigatedGlobe",			"i"
+#define GAMEEVENT_CityBoughtPlot			"CityBoughtPlot",				"iiiibb"
+#define GAMEEVENT_CityCanAcquirePlot		"CityCanAcquirePlot",			"iiii"
+#define GAMEEVENT_CityConnected				"CityConnected",				"iiiiib"
+#define GAMEEVENT_CityConnections			"CityConnections",				"ib"
+#define GAMEEVENT_CityConstructed			"CityConstructed",				"iiibb"
+#define GAMEEVENT_CityCreated				"CityCreated",					"iiibb"
+#define GAMEEVENT_CityPrepared				"CityPrepared",					"iiibb"
+#define GAMEEVENT_CitySoldBuilding			"CitySoldBuilding",				"iii"
+#define GAMEEVENT_CityTrained				"CityTrained",					"iiibb"
+#define GAMEEVENT_DeclareWar				"DeclareWar",					"ii"
+#define GAMEEVENT_GetBombardRange			"GetBombardRange",				"ii"
+#define GAMEEVENT_GetReligionToFound		"GetReligionToFound",			"iib"
+#define GAMEEVENT_GoodyHutCanNotReceive		"GoodyHutCanNotReceive",		"iiib"
+#define GAMEEVENT_GoodyHutCanResearch		"GoodyHutCanResearch",			"ii"
+#define GAMEEVENT_GoodyHutTechResearched	"GoodyHutTechResearched",		"ii"
+#define GAMEEVENT_GreatPersonExpended		"GreatPersonExpended",			"iiiii"
+#define GAMEEVENT_IsAbleToDeclareWar		"IsAbleToDeclareWar",			"ii"
+#define GAMEEVENT_IsAbleToMakePeace			"IsAbleToMakePeace",			"ii"
+#define GAMEEVENT_MakePeace					"MakePeace",					"ii"
+#define GAMEEVENT_MinorAlliesChanged		"MinorAlliesChanged",			"iibii"
+#define GAMEEVENT_MinorFriendsChanged		"MinorFriendsChanged",			"iibii"
+#define GAMEEVENT_NaturalWonderDiscovered	"NaturalWonderDiscovered",		"iiiib"
+#define GAMEEVENT_NuclearDetonation			"NuclearDetonation",			"iiibb"
+#define GAMEEVENT_PantheonFounded			"PantheonFounded",				"iiii"
+#define GAMEEVENT_ParadropAt				"ParadropAt",					"iiiiii"
+#define GAMEEVENT_PlaceResource				"PlaceResource",				"iiiii"
+#define GAMEEVENT_PlayerCanBuild			"PlayerCanBuild",				"iiiii"
+#define GAMEEVENT_PlayerCanFoundPantheon	"PlayerCanFoundPantheon",		"i"
+#define GAMEEVENT_PlayerCanFoundReligion	"PlayerCanFoundReligion",		"ii"
+#define GAMEEVENT_PlayerCanHaveBelief		"PlayerCanHaveBelief",			"ii"
+#define GAMEEVENT_PlayerCanRaze				"PlayerCanRaze",				"ii"
+#define GAMEEVENT_PlotCanImprove			"PlotCanImprove",				"iii"
+#define GAMEEVENT_RebaseTo					"RebaseTo",						"iiii"
+#define GAMEEVENT_ReligionCanHaveBelief		"ReligionCanHaveBelief",		"iii"
+#define GAMEEVENT_ReligionEnhanced			"ReligionEnhanced",				"iiii"
+#define GAMEEVENT_ReligionFounded			"ReligionFounded",				"iiiiiiii"
+#define GAMEEVENT_TeamSetEra				"TeamSetEra",					"iib"
+#define GAMEEVENT_TerraformingMap			"TerraformingMap",				"ii"
+#define GAMEEVENT_TerraformingPlot			"TerraformingPlot",				"iiiiiiii"
+#define GAMEEVENT_TileFeatureChanged		"TileFeatureChanged",			"iiiii"
+#define GAMEEVENT_TileImprovementChanged	"TileImprovementChanged",		"iiiiib"
+#define GAMEEVENT_TileRouteChanged			"TileRouteChanged",				"iiiiib"
+#define GAMEEVENT_UiDiploEvent				"UiDiploEvent",					"iiii"
+#define GAMEEVENT_UnitPrekill				"UnitPrekill",					"iiiiibi"
+#define GAMEEVENT_UnitPromoted				"UnitPromoted",					"iii"
+#define GAMEEVENT_UnitUpgraded				"UnitUpgraded",					"iiib"
+
+
 // Serialization wrappers
 #define MOD_SERIALIZE
-
-#if defined(WWII_CUSTOM_BUILD)
-#undef MOD_SERIALIZE
-#endif
 
 #if defined(MOD_SERIALIZE)
 #define MOD_SERIALIZE_INIT_READ(stream) uint uDllSaveVersion; stream >> uDllSaveVersion
@@ -422,6 +514,7 @@
 #define MOD_DB_COL_VALUE "Value"
 #define MOD_DB_COL_CLASS "Class"
 
+
 // Custom mod logger
 #if defined(CUSTOMLOGDEBUG)
 #define	CUSTOMLOG(sFmt, ...) {															\
@@ -434,10 +527,21 @@
 #endif
 
 
-// Class used to cache the database control settings
+// Class used to cache the database control settings and provide utility functions
 class CustomMods {
 public:
 	CustomMods();
+
+	int eventHook(const char* szName, const char* p, ...);
+	int eventTestAll(const char* szName, const char* p, ...);
+	int eventTestAny(const char* szName, const char* p, ...);
+	int eventAccumulator(int& iValue, const char* szName, const char* p, ...);
+
+	// CvLuaArgsHandle in the next four methos MUST be passed by reference (&args)
+	int eventHook(const char* szName, CvLuaArgsHandle &args);
+	int eventTestAll(const char* szName, CvLuaArgsHandle &args);
+	int eventTestAny(const char* szName, CvLuaArgsHandle &args);
+	int eventAccumulator(int& iValue, const char* szName, CvLuaArgsHandle &args);
 
 	void preloadCache();
 	void reloadCache();
@@ -457,6 +561,7 @@ public:
 	inline bool isGLOBAL_CS_GIFT_SHIPS()                    { return m_bGLOBAL_CS_GIFT_SHIPS; }
 	inline bool isGLOBAL_CS_UPGRADES()                      { return m_bGLOBAL_CS_UPGRADES; }
 	inline bool isGLOBAL_CS_RAZE_RARELY()                   { return m_bGLOBAL_CS_RAZE_RARELY; }
+	inline bool isGLOBAL_CS_LIBERATE_AFTER_BUYOUT()         { return m_bGLOBAL_CS_LIBERATE_AFTER_BUYOUT; }
 	inline bool isGLOBAL_CS_GIFTS()                         { return m_bGLOBAL_CS_GIFTS; }
 	inline bool isGLOBAL_VENICE_KEEPS_RESOURCES()           { return m_bGLOBAL_VENICE_KEEPS_RESOURCES; }
 	inline bool isGLOBAL_NO_FOLLOWUP_FROM_CITIES()          { return m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES; }
@@ -510,11 +615,13 @@ public:
 	inline bool isAI_SECONDARY_WORKERS()                    { return m_bAI_SECONDARY_WORKERS; }
 	inline bool isAI_SECONDARY_SETTLERS()                   { return m_bAI_SECONDARY_SETTLERS; }
 
+	inline bool isEVENTS_TERRAFORMING()                     { return m_bEVENTS_TERRAFORMING; }
 	inline bool isEVENTS_CIRCUMNAVIGATION()                 { return m_bEVENTS_CIRCUMNAVIGATION; }
 	inline bool isEVENTS_NEW_ERA()                          { return m_bEVENTS_NEW_ERA; }
 	inline bool isEVENTS_NW_DISCOVERY()                     { return m_bEVENTS_NW_DISCOVERY; }
 	inline bool isEVENTS_DIPLO_EVENTS()                     { return m_bEVENTS_DIPLO_EVENTS; }
 	inline bool isEVENTS_MINORS()                           { return m_bEVENTS_MINORS; }
+	inline bool isEVENTS_GOODY_CHOICE()                     { return m_bEVENTS_GOODY_CHOICE; }
 	inline bool isEVENTS_GOODY_TECH()                       { return m_bEVENTS_GOODY_TECH; }
 	inline bool isEVENTS_AI_OVERRIDE_TECH()                 { return m_bEVENTS_AI_OVERRIDE_TECH; }
 	inline bool isEVENTS_GREAT_PEOPLE()                     { return m_bEVENTS_GREAT_PEOPLE; }
@@ -525,6 +632,7 @@ public:
 	inline bool isEVENTS_CITY_BORDERS()                     { return m_bEVENTS_CITY_BORDERS; }
 	inline bool isEVENTS_CITY_RAZING()                      { return m_bEVENTS_CITY_RAZING; }
 	inline bool isEVENTS_CITY_BOMBARD()                     { return m_bEVENTS_CITY_BOMBARD; }
+	inline bool isEVENTS_CITY_CONNECTIONS()                 { return m_bEVENTS_CITY_CONNECTIONS; }
 	inline bool isEVENTS_AREA_RESOURCES()                   { return m_bEVENTS_AREA_RESOURCES; }
 	inline bool isEVENTS_PARADROPS()                        { return m_bEVENTS_PARADROPS; }
 	inline bool isEVENTS_UNIT_PREKILL()                     { return m_bEVENTS_UNIT_PREKILL; }
@@ -587,6 +695,7 @@ protected:
 	bool m_bGLOBAL_CS_GIFT_SHIPS;
 	bool m_bGLOBAL_CS_UPGRADES;
 	bool m_bGLOBAL_CS_RAZE_RARELY;
+	bool m_bGLOBAL_CS_LIBERATE_AFTER_BUYOUT;
 	bool m_bGLOBAL_CS_GIFTS;
 	bool m_bGLOBAL_VENICE_KEEPS_RESOURCES;
 	bool m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES;
@@ -640,11 +749,13 @@ protected:
 	bool m_bAI_SECONDARY_WORKERS;
 	bool m_bAI_SECONDARY_SETTLERS;
 
+	bool m_bEVENTS_TERRAFORMING;
 	bool m_bEVENTS_CIRCUMNAVIGATION;
 	bool m_bEVENTS_NEW_ERA;
 	bool m_bEVENTS_NW_DISCOVERY;
 	bool m_bEVENTS_DIPLO_EVENTS;
 	bool m_bEVENTS_MINORS;
+	bool m_bEVENTS_GOODY_CHOICE;
 	bool m_bEVENTS_GOODY_TECH;
 	bool m_bEVENTS_AI_OVERRIDE_TECH;
 	bool m_bEVENTS_GREAT_PEOPLE;
@@ -655,6 +766,7 @@ protected:
 	bool m_bEVENTS_CITY_BORDERS;
 	bool m_bEVENTS_CITY_RAZING;
 	bool m_bEVENTS_CITY_BOMBARD;
+	bool m_bEVENTS_CITY_CONNECTIONS;
 	bool m_bEVENTS_AREA_RESOURCES;
 	bool m_bEVENTS_PARADROPS;
 	bool m_bEVENTS_UNIT_PREKILL;

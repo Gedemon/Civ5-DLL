@@ -6143,18 +6143,7 @@ void CvMinorCivAI::DoFriendshipChangeEffects(PlayerTypes ePlayer, int iOldFriend
 
 #if defined(MOD_EVENTS_MINORS)
 		if (MOD_EVENTS_MINORS) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(m_pPlayer->GetID());
-				args->Push(ePlayer);
-				args->Push(true);
-				args->Push(iOldFriendship);
-				args->Push(iNewFriendship);
-
-				bool bResult;
-				LuaSupport::CallHook(pkScriptSystem, "MinorFriendsChanged", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_MinorFriendsChanged, m_pPlayer->GetID(), ePlayer, true, iOldFriendship, iNewFriendship);
 		}
 #endif
 	}
@@ -6166,18 +6155,7 @@ void CvMinorCivAI::DoFriendshipChangeEffects(PlayerTypes ePlayer, int iOldFriend
 
 #if defined(MOD_EVENTS_MINORS)
 		if (MOD_EVENTS_MINORS) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(m_pPlayer->GetID());
-				args->Push(ePlayer);
-				args->Push(false);
-				args->Push(iOldFriendship);
-				args->Push(iNewFriendship);
-
-				bool bResult;
-				LuaSupport::CallHook(pkScriptSystem, "MinorFriendsChanged", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_MinorFriendsChanged, m_pPlayer->GetID(), ePlayer, false, iOldFriendship, iNewFriendship);
 		}
 #endif
 	}
@@ -6197,18 +6175,7 @@ void CvMinorCivAI::DoFriendshipChangeEffects(PlayerTypes ePlayer, int iOldFriend
 
 #if defined(MOD_EVENTS_MINORS)
 		if (MOD_EVENTS_MINORS) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(m_pPlayer->GetID());
-				args->Push(ePlayer);
-				args->Push(true);
-				args->Push(iOldFriendship);
-				args->Push(iNewFriendship);
-
-				bool bResult;
-				LuaSupport::CallHook(pkScriptSystem, "MinorAlliesChanged", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_MinorAlliesChanged, m_pPlayer->GetID(), ePlayer, true, iOldFriendship, iNewFriendship);
 		}
 #endif
 	}
@@ -6220,18 +6187,7 @@ void CvMinorCivAI::DoFriendshipChangeEffects(PlayerTypes ePlayer, int iOldFriend
 
 #if defined(MOD_EVENTS_MINORS)
 		if (MOD_EVENTS_MINORS) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(m_pPlayer->GetID());
-				args->Push(ePlayer);
-				args->Push(false);
-				args->Push(iOldFriendship);
-				args->Push(iNewFriendship);
-
-				bool bResult;
-				LuaSupport::CallHook(pkScriptSystem, "MinorAlliesChanged", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_MinorAlliesChanged, m_pPlayer->GetID(), ePlayer, false, iOldFriendship, iNewFriendship);
 		}
 #endif
 	}
@@ -6653,6 +6609,13 @@ bool CvMinorCivAI::IsPlayerHasOpenBordersAutomatically(PlayerTypes ePlayer)
 /// Major liberates a Minor by recapturing its City!
 void CvMinorCivAI::DoLiberationByMajor(PlayerTypes eLiberator, TeamTypes eConquerorTeam)
 {
+#if defined(MOD_BUGFIX_MINOR)
+	// This is a bug fix as the Lua API can be used to by-pass the bought-out tests and liberate the minor regardless
+
+	// Clear the "bought out by" indicator
+	SetMajorBoughtOutBy(NO_PLAYER);
+#endif
+
 	Localization::String strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_MINOR_LIBERATION");
 	strMessage << GetPlayer()->getNameKey() << GET_PLAYER(eLiberator).getNameKey();
 	Localization::String strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_MINOR_LIBERATION");
@@ -8195,7 +8158,7 @@ void CvMinorCivAI::DoAcquire(PlayerTypes eMajor, int &iNumUnits, int& iCapitalX,
 	SetDisableNotifications(false);
 
 	SetMajorBoughtOutBy(eMajor);
-
+	
 	GC.getGame().DoUpdateDiploVictory();
 
 	GC.GetEngineUserInterface()->setDirty(GameData_DIRTY_BIT, true);

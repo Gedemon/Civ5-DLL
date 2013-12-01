@@ -1907,19 +1907,7 @@ void CvUnitCombat::GenerateNuclearCombatInfo(CvUnit& kAttacker, CvPlot& plot, Cv
 
 #if defined(MOD_EVENTS_NUCLEAR_DETONATION)
 	if (MOD_EVENTS_NUCLEAR_DETONATION) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {	
-			CvLuaArgsHandle args;
-
-			args->Push(kAttacker.getOwner());
-			args->Push(plot.getX());
-			args->Push(plot.getY());
-			args->Push(bWar);
-			args->Push(bBystander);
-
-			bool bResult;
-			LuaSupport::CallHook(pkScriptSystem, "NuclearDetonation", args.get(), bResult);
-		}
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_NuclearDetonation, kAttacker.getOwner(), plot.getX(), plot.getY(), bWar, bBystander);
 	}
 #endif
 

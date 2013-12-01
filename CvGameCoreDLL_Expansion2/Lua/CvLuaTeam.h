@@ -133,9 +133,9 @@ protected:
 	static int lIsPermanentAllianceTrading(lua_State* L);
 	static int lChangePermanentAllianceTradingCount(lua_State* L);
 #if defined(MOD_TECHS_CITY_WORKING)
-	static int lGetCityWorkingChange(lua_State* L);
-	static int lIsCityWorkingChange(lua_State* L);
-	static int lChangeCityWorkingChange(lua_State* L);
+	LUAAPIEXTN(GetCityWorkingChange);
+	LUAAPIEXTN(IsCityWorkingChange);
+	LUAAPIEXTN(ChangeCityWorkingChange);
 #endif
 	static int lGetBridgeBuildingCount(lua_State* L);
 	static int lIsBridgeBuilding(lua_State* L);
@@ -173,7 +173,7 @@ protected:
 
 	static int lHasEmbassyAtTeam(lua_State* L);
 #if defined(MOD_API_EXTENSIONS)
-	static int lHasSpyAtTeam(lua_State* L);
+	LUAAPIEXTN(HasSpyAtTeam);
 #endif
 	static int lIsAllowsOpenBordersToTeam(lua_State* L);
 	static int lIsForcePeace(lua_State* L);

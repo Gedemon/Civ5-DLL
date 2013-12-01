@@ -1021,22 +1021,8 @@ bool CvTeam::canDeclareWar(TeamTypes eTeam) const
 
 #if defined(MOD_EVENTS_WAR_AND_PEACE)
 	if (MOD_EVENTS_WAR_AND_PEACE) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			// Construct and push in some event arguments.
-			CvLuaArgsHandle args(2);
-			args->Push(eOriginatingPlayer);
-			args->Push(eTeam);
-
-			// Attempt to execute the game events.
-			// Will return false if there are no registered listeners.
-			bool bResult = false;
-			if (LuaSupport::CallTestAll(pkScriptSystem, "IsAbleToDeclareWar", args.get(), bResult)) {
-				// Check the result.
-				if (bResult == false) {
-					return false;
-				}
-			}
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_IsAbleToDeclareWar, eOriginatingPlayer, eTeam) == GAMEEVENTRETURN_FALSE) {
+			return false;
 		}
 	}
 #endif
@@ -1167,15 +1153,7 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyP
 	GET_TEAM(eTeam).setAtWar(GetID(), true);
 #if defined(MOD_EVENTS_WAR_AND_PEACE)
 	if (MOD_EVENTS_WAR_AND_PEACE) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			CvLuaArgsHandle args;
-			args->Push(eOriginatingPlayer);
-			args->Push(eTeam);
-
-			bool bResult;
-			LuaSupport::CallHook(pkScriptSystem, "DeclareWar", args.get(), bResult);
-		}
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_DeclareWar, eOriginatingPlayer, eTeam);
 	}
 #endif
 
@@ -1499,15 +1477,7 @@ void CvTeam::DoMakePeace(TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotific
 		GET_TEAM(eTeam).setAtWar(GetID(), false);
 #if defined(MOD_EVENTS_WAR_AND_PEACE)
 		if (MOD_EVENTS_WAR_AND_PEACE) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(eOriginatingPlayer);
-				args->Push(eTeam);
-
-				bool bResult;
-				LuaSupport::CallHook(pkScriptSystem, "MakePeace", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_MakePeace, eOriginatingPlayer, eTeam);
 		}
 #endif
 
@@ -6145,14 +6115,7 @@ void CvTeam::testCircumnavigated()
 
 #if defined(MOD_EVENTS_CIRCUMNAVIGATION)
 					if (MOD_EVENTS_CIRCUMNAVIGATION) {
-						ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-						if (pkScriptSystem) {
-							CvLuaArgsHandle args;
-							args->Push(eTeamID);
-
-							bool bResult = false;
-							LuaSupport::CallHook(pkScriptSystem, "CircumnavigatedGlobe", args.get(), bResult);
-						}
+						GAMEEVENTINVOKE_HOOK(GAMEEVENT_CircumnavigatedGlobe, eTeamID);
 						
 						// Notifications should now be sent via the event
 						// CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_CIRC_GLOBE");
@@ -6883,17 +6846,7 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 
 #if defined(MOD_EVENTS_NEW_ERA)
 		if (MOD_EVENTS_NEW_ERA && GetCurrentEra() != GC.getGame().getStartEra()) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if(pkScriptSystem)
-			{
-				CvLuaArgsHandle args;
-				args->Push(GetID());
-				args->Push(GetCurrentEra());
-				args->Push((GetID() < MAX_MAJOR_CIVS) && !bAlreadyProvided);
-
-				bool bResult = false;
-				LuaSupport::CallHook(pkScriptSystem, "TeamSetEra", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TeamSetEra, GetID(), GetCurrentEra(), ((GetID() < MAX_MAJOR_CIVS) && !bAlreadyProvided));
 		}
 #endif
 	}

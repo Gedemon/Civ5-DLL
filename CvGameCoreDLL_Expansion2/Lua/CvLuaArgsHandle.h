@@ -17,12 +17,18 @@
 
 #include "ICvDLLScriptSystem.h"
 
+#include "..\CustomMods.h"
+
 //This is a simple utility class to manage construction and destruction of ScriptSystemArguments (used by GameEvents).
 class CvLuaArgsHandle
 {
 public:
 	CvLuaArgsHandle();
 	CvLuaArgsHandle(uint uiReserve);
+#if defined(MOD_API_EXTENSIONS)
+	CvLuaArgsHandle(ICvEngineScriptSystem1* pkScriptSystem);
+	CvLuaArgsHandle(ICvEngineScriptSystem1* pkScriptSystem, uint uiReserve);
+#endif
 	~CvLuaArgsHandle();
 
 	ICvEngineScriptSystemArgs1* operator->() const;

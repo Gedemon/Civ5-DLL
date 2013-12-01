@@ -2180,10 +2180,22 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 	// For buyouts, set it up like a new city founded by this player, to avoid liberation later on etc.
 	if(bIsMinorCivBuyout)
 	{
-		pNewCity->setPreviousOwner(NO_PLAYER);
-		pNewCity->setOriginalOwner(m_eID);
-		pNewCity->setGameTurnFounded(GC.getGame().getGameTurn());
-		pNewCity->SetEverCapital(false);
+#if defined(MOD_GLOBAL_CS_LIBERATE_AFTER_BUYOUT)
+		if (MOD_GLOBAL_CS_LIBERATE_AFTER_BUYOUT) {
+			pNewCity->setPreviousOwner(eOldOwner);
+			pNewCity->setOriginalOwner(eOriginalOwner);
+			pNewCity->setGameTurnFounded(iGameTurnFounded);
+			pNewCity->SetEverCapital(bEverCapital);
+		} else {
+#endif
+			pNewCity->setPreviousOwner(NO_PLAYER);
+			pNewCity->setOriginalOwner(m_eID);
+			pNewCity->setGameTurnFounded(GC.getGame().getGameTurn());
+			pNewCity->SetEverCapital(false);
+#if defined(MOD_GLOBAL_CS_LIBERATE_AFTER_BUYOUT)
+		}
+#endif
+
 		AwardFreeBuildings(pNewCity);
 	}
 	// Otherwise, set it up using the data from the old city
@@ -5512,19 +5524,9 @@ bool CvPlayer::canRaze(CvCity* pCity, bool bIgnoreCapitals) const
 
 #if defined(MOD_EVENTS_CITY_RAZING)
 	if (MOD_EVENTS_CITY_RAZING) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			CvLuaArgsHandle args;
-			args->Push(pCity->getOwner());
-			args->Push(pCity->GetID());
-
-			// Note the subtle difference between CanRazeOverride and PlayerCanRaze, the former needs everyone to agree, the latter anyone
-			bool bResult = false;
-			if (LuaSupport::CallTestAny(pkScriptSystem, "PlayerCanRaze", args.get(), bResult)) {
-				if (bResult) {
-					return true;
-				}
-			}
+		// Note the subtle difference between CanRazeOverride and PlayerCanRaze, the former needs everyone to agree, the latter anyone
+		if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_PlayerCanRaze, pCity->getOwner(), pCity->GetID()) == GAMEEVENTRETURN_TRUE) {
+			return true;
 		}
 	}
 #endif
@@ -5753,7 +5755,15 @@ bool CvPlayer::canReceiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit) 
 	CvAssertMsg(bResult, "Cannot find goody info.");
 	kGoodyInfo.CacheResult(kResult);
 
-	// TODO - WH - send an event to see if the player can NOT have this goody
+#if defined(MOD_EVENTS_GOODY_CHOICE)
+	if (MOD_EVENTS_GOODY_CHOICE) {
+		bool bPick = (pUnit && pUnit->isHasPromotion((PromotionTypes)GC.getPROMOTION_GOODY_HUT_PICKER()));
+		if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_GoodyHutCanNotReceive, GetID(), pUnit->GetID(), eGoody, bPick) == GAMEEVENTRETURN_TRUE) {
+			return false;
+		}
+	}
+#endif
+
 	
 	if(!CvGoodyHuts::IsCanPlayerReceiveGoody(GetID(), eGoody))
 	{
@@ -6425,17 +6435,7 @@ void CvPlayer::receiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit)
 #if defined(MOD_EVENTS_UNIT_UPGRADES)
 		// MUST call the event before convert() as that kills the old unit
 		if (MOD_EVENTS_UNIT_UPGRADES) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(GetID());
-				args->Push(pUnit->GetID());
-				args->Push(pNewUnit->GetID());
-				args->Push(true); // bGoodyHut
-
-				bool bResult;
-				LuaSupport::CallHook(pkScriptSystem, "UnitUpgraded", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_UnitUpgraded, GetID(), pUnit->GetID(), pNewUnit->GetID(), true);
 		}
 #endif
 
@@ -6470,18 +6470,8 @@ void CvPlayer::receiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit)
 					bool bUseTech = true;
 					
 					if (MOD_EVENTS_GOODY_TECH) {
-						ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-						if (pkScriptSystem) {
-							CvLuaArgsHandle args;
-							args->Push(GetID());
-							args->Push(((TechTypes)iI));
-
-							// Attempt to execute the game events.
-							// Will return false if there are no registered listeners.
-							bool bResult = false;
-							if (LuaSupport::CallTestAll(pkScriptSystem, "GoodyHutCanResearch", args.get(), bResult)) {
-								bUseTech = bResult;
-							}
+						if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_GoodyHutCanResearch, GetID(), iI) == GAMEEVENTRETURN_FALSE) {
+							bUseTech = false;
 						}
 					}
 					
@@ -6505,15 +6495,7 @@ void CvPlayer::receiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit)
 
 #if defined(MOD_EVENTS_GOODY_TECH)
 		if (MOD_EVENTS_GOODY_TECH) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args(2);
-				args->Push(GetID());
-				args->Push(eBestTech);
-
-				bool bResult;
-				LuaSupport::CallHook(pkScriptSystem, "GoodyHutTechResearched", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_GoodyHutTechResearched, GetID(), eBestTech);
 		}
 #endif
 
@@ -13195,18 +13177,7 @@ void CvPlayer::DoGreatPersonExpended(UnitTypes /*eGreatPersonUnit*/)
 	
 #if defined(MOD_EVENTS_GREAT_PEOPLE)
 	if (MOD_EVENTS_GREAT_PEOPLE) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			CvLuaArgsHandle args;
-			args->Push(GetID());
-			args->Push(pGreatPersonUnit->GetID());
-			args->Push(eGreatPersonUnit);
-			args->Push(pGreatPersonUnit->getX());
-			args->Push(pGreatPersonUnit->getY());
-
-			bool bResult;
-			LuaSupport::CallHook(pkScriptSystem, "GreatPersonExpended", args.get(), bResult);
-		}
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_GreatPersonExpended, GetID(), pGreatPersonUnit->GetID(), eGreatPersonUnit, pGreatPersonUnit->getX(), pGreatPersonUnit->getY());
 	}
 #endif
 }

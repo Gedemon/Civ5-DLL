@@ -3863,7 +3863,11 @@ void TradePathInitialize(const void* pointer, CvAStar* finder)
 	CvPlayer& kPlayer = GET_PLAYER(ePlayer);
 	TeamTypes eTeam = kPlayer.getTeam();
 	pCacheData->m_pTeam = &GET_TEAM(eTeam);
+#if defined(MOD_BUGFIX_TRADE_ROUTES_EMBARK_ALL_WATER)
+	pCacheData->m_bCanEmbarkAllWaterPassage = pCacheData->m_pTeam->canEmbarkAllWaterPassage() || kPlayer.GetPlayerTraits()->IsEmbarkedAllWater();
+#else
 	pCacheData->m_bCanEmbarkAllWaterPassage = pCacheData->m_pTeam->canEmbarkAllWaterPassage();
+#endif
 
 	CvPlayerTraits* pPlayerTraits = kPlayer.GetPlayerTraits();
 	if (pPlayerTraits)

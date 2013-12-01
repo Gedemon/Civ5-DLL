@@ -1025,6 +1025,23 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(CONTROL_RESTART_GAME);
 	EnumEnd(L);
 
+#if defined(MOD_EVENTS_TERRAFORMING)	
+	// TerraformingEventTypes
+	EnumStart(L, "TerraformingEventTypes");
+	RegisterEnum(NO_TERRAFORMINGEVENT);
+	RegisterEnum(TERRAFORMINGEVENT_LOAD);
+	RegisterEnum(TERRAFORMINGEVENT_AREA);
+	RegisterEnum(TERRAFORMINGEVENT_LANDMASS);
+	RegisterEnum(TERRAFORMINGEVENT_CONTINENT);
+	RegisterEnum(TERRAFORMINGEVENT_PLOT);
+	RegisterEnum(TERRAFORMINGEVENT_TERRAIN);
+	RegisterEnum(TERRAFORMINGEVENT_FEATURE);
+	RegisterEnum(TERRAFORMINGEVENT_RIVER);
+	RegisterEnum(TERRAFORMINGEVENT_CITY);
+	RegisterEnum(NUM_TERRAFORMINGEVENT_TYPES);
+	EnumEnd(L);
+#endif
+
 	return 0;
 }
 //------------------------------------------------------------------------------

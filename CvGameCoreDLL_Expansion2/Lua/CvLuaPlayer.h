@@ -80,7 +80,7 @@ protected:
 
 	static int lIsCapitalConnectedToCity(lua_State* L);
 #if defined(MOD_API_EXTENSIONS)
-	static int lIsPlotConnectedToPlot(lua_State* L);
+	LUAAPIEXTN(IsPlotConnectedToPlot);
 #endif
 
 	static int lIsTurnActive(lua_State* L);
@@ -117,7 +117,7 @@ protected:
 	static int lGetProjectProductionNeeded(lua_State* L);
 
 #if defined(MOD_PROCESS_STOCKPILE)
-	static int lGetMaxStockpile(lua_State* L);
+	LUAAPIEXTN(GetMaxStockpile);
 #endif
 
 	static int lHasReadyUnit(lua_State* L);
@@ -251,7 +251,7 @@ protected:
 	static int lGetPublicOpinionUnhappinessTooltip(lua_State* L);
 
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lDoSwapGreatWorks(lua_State* L);
+	LUAAPIEXTN(DoSwapGreatWorks);
 #endif
 	static int lHasAvailableGreatWorkSlot(lua_State* L);
 	static int lGetCityOfClosestGreatWorkSlot(lua_State* L);
@@ -271,7 +271,7 @@ protected:
 	static int lHasCreatedPantheon(lua_State* L);
 	static int lGetBeliefInPantheon(lua_State* L);
 #if defined(MOD_API_RELIGION)
-	static int lGetBeliefsInPantheon(lua_State* L);
+	LUAAPIEXTN(GetBeliefsInPantheon);
 #endif
 	static int lCanCreatePantheon(lua_State* L);
 	static int lHasCreatedReligion(lua_State* L);
@@ -747,8 +747,8 @@ protected:
 	static int lGetPlotDanger(lua_State* L);
 
 #if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
-	static int lGetCityWorkingChange(lua_State* L);
-	static int lChangeCityWorkingChange(lua_State* L);
+	LUAAPIEXTN(GetCityWorkingChange);
+	LUAAPIEXTN(ChangeCityWorkingChange);
 #endif
 
 	// Diplomacy Stuff
@@ -849,7 +849,7 @@ protected:
 	static int lGetNotificationDismissed(lua_State* L);
 	static int lAddNotification(lua_State* L);
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lDismissNotification(lua_State* L);
+	LUAAPIEXTN(DismissNotification);
 #endif
 
 	static int lGetRecommendedWorkerPlots(lua_State* L);
@@ -928,7 +928,7 @@ protected:
 	static int lGetPolicyEspionageCatchSpiesModifier(lua_State* L);
 	
 #if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	static int lGetPolicyConversionModifier(lua_State* L);
+	LUAAPIEXTN(GetPolicyConversionModifier);
 #endif
 
 	static int lGetPlayerBuildingClassYieldChange(lua_State* L);
@@ -950,10 +950,10 @@ protected:
 	static int lGetNumUnassignedSpies(lua_State* L);
 	static int lGetEspionageSpies(lua_State* L);
 #if defined(MOD_API_ESPIONAGE)
-	static int lEspionageCreateSpy(lua_State* L);
-	static int lEspionagePromoteSpy(lua_State* L);
-	static int lEspionageSetPassive(lua_State* L);
-	static int lEspionageSetOutcome(lua_State* L);
+	LUAAPIEXTN(EspionageCreateSpy);
+	LUAAPIEXTN(EspionagePromoteSpy);
+	LUAAPIEXTN(EspionageSetPassive);
+	LUAAPIEXTN(EspionageSetOutcome);
 #endif
 	static int lHasSpyEstablishedSurveillance(lua_State* L);
 	static int lIsSpyDiplomat(lua_State* L);
@@ -977,7 +977,7 @@ protected:
 	static int lGetNumInternationalTradeRoutesAvailable(lua_State* L);
 #if defined(MOD_API_TRADEROUTES)
     static int GetPotentialInternationalTradeRouteDestinationsHelper(lua_State* L, CvPlayerAI* pkPlayer, CvUnit* pkUnit, CvPlot* pkUnitPlot);
-	static int lGetPotentialInternationalTradeRouteDestinationsFrom(lua_State* L);
+	LUAAPIEXTN(GetPotentialInternationalTradeRouteDestinationsFrom);
 #endif
 	static int lGetPotentialInternationalTradeRouteDestinations(lua_State* L);
 	static int lGetInternationalTradeRouteBaseBonus(lua_State* L);

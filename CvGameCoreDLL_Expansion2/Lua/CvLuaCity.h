@@ -115,7 +115,7 @@ protected:
 	static int lGetProjectProductionTurnsLeft(lua_State* L);
 	static int lGetSpecialistProductionTurnsLeft(lua_State* L);
 #if defined(MOD_PROCESS_STOCKPILE)
-	static int lGetProcessProductionTurnsLeft(lua_State* L);
+	LUAAPIEXTN(GetProcessProductionTurnsLeft);
 #endif
 
 	static int lCreateApolloProgram(lua_State* L);
@@ -166,7 +166,7 @@ protected:
 	static int lIsOriginalMajorCapital(lua_State* L);
 	static int lIsCoastal(lua_State* L);
 #if defined(MOD_API_EXTENSIONS)
-	static int lIsAddsFreshWater(lua_State* L);
+	LUAAPIEXTN(IsAddsFreshWater);
 #endif
 
 	static int lFoodConsumption(lua_State* L);
@@ -183,8 +183,8 @@ protected:
 	static int lGetNumBuilding(lua_State* L);
 	static int lIsHasBuilding(lua_State* L);
 #if defined(MOD_API_EXTENSIONS)
-	static int lGetNumBuildingClass(lua_State* L);
-	static int lIsHasBuildingClass(lua_State* L);
+	LUAAPIEXTN(GetNumBuildingClass);
+	LUAAPIEXTN(IsHasBuildingClass);
 #endif
 	static int lGetNumActiveBuilding(lua_State* L);
 	static int lGetID(lua_State* L);
@@ -253,8 +253,8 @@ protected:
 	static int lChangeCultureRateModifier(lua_State* L);
 
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lGetTourismRateModifier(lua_State* L);
-	static int lChangeTourismRateModifier(lua_State* L);
+	LUAAPIEXTN(GetTourismRateModifier);
+	LUAAPIEXTN(ChangeTourismRateModifier);
 #endif
 
 	static int lGetNumGreatWorks(lua_State* L);
@@ -304,8 +304,8 @@ protected:
 	static int lGetLocalResourceWonderProductionMod(lua_State* L);
 
 #if defined(MOD_BUILDINGS_CITY_WORKING)
-	static int lGetCityWorkingChange(lua_State* L);
-	static int lChangeCityWorkingChange(lua_State* L);
+	LUAAPIEXTN(GetCityWorkingChange);
+	LUAAPIEXTN(ChangeCityWorkingChange);
 #endif
 
 	static int lChangeHealRate(lua_State* L);
@@ -376,7 +376,7 @@ protected:
 	static int lGetBaseYieldRate(lua_State* L);
 
 #if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
-	static int lGetBaseYieldRateFromGreatWorks(lua_State* L);
+	LUAAPIEXTN(GetBaseYieldRateFromGreatWorks);
 #endif
 
 	static int lGetBaseYieldRateFromTerrain(lua_State* L);
@@ -458,7 +458,7 @@ protected:
 	static int lGetMaxHitPoints(lua_State* L);
 
 #if defined(MOD_EVENTS_CITY_BOMBARD)
-	static int lGetBombardRange(lua_State* L);
+	LUAAPIEXTN(GetBombardRange);
 #endif
 	static int lCanRangeStrike(lua_State* L);
 	static int lCanRangeStrikeNow(lua_State* L);
@@ -476,7 +476,7 @@ protected:
 	static int lSetNumRealBuilding(lua_State* L);
 	static int lGetNumFreeBuilding(lua_State* L);
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lSetNumFreeBuilding(lua_State* L);
+	LUAAPIEXTN(SetNumFreeBuilding);
 #endif
 	static int lIsBuildingSellable(lua_State* L);
 	static int lGetSellBuildingRefund(lua_State* L);
@@ -500,15 +500,15 @@ protected:
 	static int lGetBuildingGlobalEspionageModifier(lua_State* L);
 	
 #if defined(MOD_API_ESPIONAGE)
-	static int lHasDiplomat(lua_State* L);
-	static int lHasSpy(lua_State* L);
-	static int lHasCounterSpy(lua_State* L);
-	static int lGetCounterSpy(lua_State* L);
+	LUAAPIEXTN(HasDiplomat);
+	LUAAPIEXTN(HasSpy);
+	LUAAPIEXTN(HasCounterSpy);
+	LUAAPIEXTN(GetCounterSpy);
 #endif
 
 #if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	static int lGetBuildingConversionModifier(lua_State* L);
-	static int lGetBuildingGlobalConversionModifier(lua_State* L);
+	LUAAPIEXTN(GetBuildingConversionModifier);
+	LUAAPIEXTN(GetBuildingGlobalConversionModifier);
 #endif
 
 	static int lAI_avoidGrowth(lua_State* L);

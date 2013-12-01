@@ -2310,11 +2310,20 @@ int CvLuaGame::lGetAvailableBonusBeliefs(lua_State* L)
 //------------------------------------------------------------------------------
 int CvLuaGame::lGetAvailableReformationBeliefs(lua_State* L)
 {
+#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+	PlayerTypes ePlayer = (PlayerTypes)luaL_optint(L, 1, NO_PLAYER);
+	ReligionTypes eReligion = (ReligionTypes)luaL_optint(L, 2, NO_RELIGION);
+#endif
+
 	lua_createtable(L, 0, 0);
 	const int t = lua_gettop(L);
 	int idx = 1;
 
+#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+	std::vector<BeliefTypes> availableBeliefs = GC.getGame().GetGameReligions()->GetAvailableReformationBeliefs(ePlayer, eReligion);
+#else
 	std::vector<BeliefTypes> availableBeliefs = GC.getGame().GetGameReligions()->GetAvailableReformationBeliefs();
+#endif
 	for(std::vector<BeliefTypes>::iterator it = availableBeliefs.begin();
 	        it!= availableBeliefs.end(); ++it)
 	{

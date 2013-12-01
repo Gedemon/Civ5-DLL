@@ -32,6 +32,22 @@ CvLuaArgsHandle::CvLuaArgsHandle(uint uiReserve)
 		m_Ptr = pkScriptSystem->CreateArgs(uiReserve);
 	}
 }
+#if defined(MOD_API_EXTENSIONS)
+CvLuaArgsHandle::CvLuaArgsHandle(ICvEngineScriptSystem1* pkScriptSystem)
+{
+	if(pkScriptSystem)
+	{
+		m_Ptr = pkScriptSystem->CreateArgs();
+	}
+}
+CvLuaArgsHandle::CvLuaArgsHandle(ICvEngineScriptSystem1* pkScriptSystem, uint uiReserve)
+{
+	if(pkScriptSystem)
+	{
+		m_Ptr = pkScriptSystem->CreateArgs(uiReserve);
+	}
+}
+#endif
 //------------------------------------------------------------------------------
 CvLuaArgsHandle::~CvLuaArgsHandle()
 {

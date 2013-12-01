@@ -318,7 +318,7 @@ protected:
 	static int lSetMinimumFaithNextPantheon(lua_State* L);
 
 #if defined(MOD_API_RELIGION)
-	static int lIsInSomeReligion(lua_State* L);
+	LUAAPIEXTN(IsInSomeReligion);
 #endif
 	static int lGetAvailablePantheonBeliefs(lua_State* L);
 	static int lGetAvailableFounderBeliefs(lua_State* L);
@@ -339,7 +339,7 @@ protected:
 
 	static int lFoundPantheon(lua_State* L);
 #if defined(MOD_API_RELIGION)
-	static int lEnhancePantheon(lua_State* L);
+	LUAAPIEXTN(EnhancePantheon);
 #endif
 	static int lFoundReligion(lua_State* L);
 	static int lEnhanceReligion(lua_State* L);
@@ -351,8 +351,8 @@ protected:
 	static int lGetTurnsUntilMinorCivElection(lua_State* L);
 	
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lIsAchievementUnlocked(lua_State* L);
-	static int lGetSteamStat(lua_State* L);
+	LUAAPIEXTN(IsAchievementUnlocked);
+	LUAAPIEXTN(GetSteamStat);
 #endif
 
 	static int lGetNumActiveLeagues(lua_State* L);
@@ -363,7 +363,7 @@ protected:
 	static int lIsProcessingMessages(lua_State* L);
 
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lCreateGreatWork(lua_State* L);
+	LUAAPIEXTN(CreateGreatWork);
 #endif
 	static int lGetGreatWorkTooltip(lua_State* L);
 	static int lGetGreatWorkName(lua_State* L);
@@ -383,7 +383,7 @@ protected:
 	static int lGetLongestCityConnectionPlots(lua_State* L);
 
 #if defined(MOD_API_TRADEROUTES)
-	static int lGetTradeRoute(lua_State* L);
+	LUAAPIEXTN(GetTradeRoute);
 #endif
 	static int lSelectedUnit_SpeculativePopupTradeRoute_Display(lua_State* L);
 	static int lSelectedUnit_SpeculativePopupTradeRoute_Hide(lua_State* L);
@@ -394,8 +394,8 @@ protected:
 	static int lGetNumHiddenArchaeologySites(lua_State *L);
 
 #if defined(MOD_API_LUA_EXTENSIONS)
-	static int lReloadGameDataDefines(lua_State* L);
-	static int lReloadCustomModOptions(lua_State* L);
+	LUAAPIEXTN(ReloadGameDataDefines);
+	LUAAPIEXTN(ReloadCustomModOptions);
 #endif
 };
 

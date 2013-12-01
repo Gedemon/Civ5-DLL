@@ -623,22 +623,8 @@ bool CvDeal::IsPossibleToTradeItem(PlayerTypes ePlayer, PlayerTypes eToPlayer, T
 			
 #if defined(MOD_EVENTS_WAR_AND_PEACE)
 		if (MOD_EVENTS_WAR_AND_PEACE) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				// Construct and push in some event arguments.
-				CvLuaArgsHandle args(2);
-				args->Push(ePlayer);
-				args->Push(eToTeam);
-
-				// Attempt to execute the game events.
-				// Will return false if there are no registered listeners.
-				bool bResult = false;
-				if (LuaSupport::CallTestAll(pkScriptSystem, "IsAbleToMakePeace", args.get(), bResult)) {
-					// Check the result.
-					if (bResult == false) {
-						return false;
-					}
-				}
+			if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_IsAbleToMakePeace, ePlayer, eToTeam) == GAMEEVENTRETURN_FALSE) {
+				return false;
 			}
 		}
 #endif

@@ -191,8 +191,8 @@ public:
 	int getProductionTurnsLeft(ProjectTypes eProject, int iNum) const;
 	int getProductionTurnsLeft(SpecialistTypes eSpecialist, int iNum) const;
 #if defined(MOD_PROCESS_STOCKPILE)
-	int getProductionNeeded(ProcessTypes eSpecialist) const;
-	int getProductionTurnsLeft(ProcessTypes eSpecialist, int iNum) const;
+	int getProductionNeeded(ProcessTypes eProcess) const;
+	int getProductionTurnsLeft(ProcessTypes eProcess, int iNum) const;
 #endif
 	int GetPurchaseCost(UnitTypes eUnit);
 	int GetFaithPurchaseCost(UnitTypes eUnit, bool bIncludeBeliefDiscounts);

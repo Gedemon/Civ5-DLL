@@ -1408,6 +1408,12 @@ void CvMap::Read(FDataStream& kStream)
 	updateAdjacency();
 
 	gDLL->DoMapSetup(numPlots());
+
+#if defined(MOD_EVENTS_TERRAFORMING)
+	if (MOD_EVENTS_TERRAFORMING) {
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_TerraformingMap, TERRAFORMINGEVENT_LOAD, 1);
+	}
+#endif
 }
 
 //	--------------------------------------------------------------------------------

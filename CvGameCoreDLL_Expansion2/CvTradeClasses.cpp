@@ -416,6 +416,9 @@ bool CvGameTrade::CreateTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, Domai
 	m_aTradeConnections[iNewTradeRouteIndex].m_iCircuitsCompleted = 0;
 	m_aTradeConnections[iNewTradeRouteIndex].m_iCircuitsToComplete = iCircuitsToComplete;
 	m_aTradeConnections[iNewTradeRouteIndex].m_iTurnRouteComplete = (iTurnsPerCircuit * iCircuitsToComplete) + GC.getGame().getGameTurn();
+#if defined(MOD_API_TRADEROUTES)
+	m_aTradeConnections[iNewTradeRouteIndex].m_bTradeUnitRecalled = false;
+#endif
 
 	GET_PLAYER(eOriginPlayer).GetTrade()->UpdateTradeConnectionValues();
 	if (eDestPlayer != eOriginPlayer)
@@ -1694,7 +1697,6 @@ FDataStream& operator>>(FDataStream& loadFrom, CvGameTrade& writeTo)
 		}
 
 #if defined(MOD_API_TRADEROUTES)
-		writeTo.m_aTradeConnections[i].m_bTradeUnitRecalled = false;
         MOD_SERIALIZE_READ(23, loadFrom, writeTo.m_aTradeConnections[i].m_bTradeUnitRecalled, false);
 #endif
 

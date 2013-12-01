@@ -1367,20 +1367,7 @@ void CvUnit::kill(bool bDelay, PlayerTypes ePlayer /*= NO_PLAYER*/)
 	
 #if defined(MOD_EVENTS_UNIT_PREKILL)
 	if (MOD_EVENTS_UNIT_PREKILL) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			CvLuaArgsHandle args;
-			args->Push(((int)getOwner()));
-			args->Push(GetID());
-			args->Push(getUnitType());
-			args->Push(getX());
-			args->Push(getY());
-			args->Push(bDelay);
-			args->Push(ePlayer);
-
-			bool bResult;
-			LuaSupport::CallHook(pkScriptSystem, "UnitPrekill", args.get(), bResult);
-		}
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_UnitPrekill, getOwner(), GetID(), getUnitType(), getX(), getY(), bDelay, ePlayer);
 	}
 #endif
 
@@ -2955,22 +2942,8 @@ bool CvUnit::canMoveInto(const CvPlot& plot, byte bMoveFlags) const
 
 #if defined(MOD_EVENTS_CAN_MOVE_INTO)
 	if (MOD_EVENTS_CAN_MOVE_INTO && m_pUnitInfo->IsSendCanMoveIntoEvent()) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			CvLuaArgsHandle args;
-			args->Push(((int)getOwner()));
-			args->Push(GetID());
-			args->Push(plot.getX());
-			args->Push(plot.getY());
-			args->Push((bMoveFlags & MOVEFLAG_ATTACK) != 0);
-			args->Push((bMoveFlags & MOVEFLAG_DECLARE_WAR) != 0);
-
-			bool bResult = false;
-			if (LuaSupport::CallTestAll(pkScriptSystem, "CanMoveInto", args.get(), bResult)) {
-				if (bResult == false) {
-					return false;
-				}
-			}
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CanMoveInto, getOwner(), GetID(), plot.getX(), plot.getY(), ((bMoveFlags & MOVEFLAG_ATTACK) != 0), ((bMoveFlags & MOVEFLAG_DECLARE_WAR) != 0)) == GAMEEVENTRETURN_FALSE) {
+			return false;
 		}
 	}
 #endif
@@ -3923,20 +3896,8 @@ bool CvUnit::canLoad(const CvPlot& targetPlot) const
 
 #if defined(MOD_EVENTS_REBASE)
 				if (MOD_EVENTS_REBASE) {
-					ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-					if (pkScriptSystem) {
-						CvLuaArgsHandle args;
-						args->Push(getOwner());
-						args->Push(GetID());
-						args->Push(targetPlot.getX());
-						args->Push(targetPlot.getY());
-
-						bool bResult = false;
-						if (LuaSupport::CallTestAny(pkScriptSystem, "CanLoadAt", args.get(), bResult)) {
-							if (bResult == true) {
-								return true;
-							}
-						}
+					if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CanLoadAt, getOwner(), GetID(), targetPlot.getX(), targetPlot.getY()) == GAMEEVENTRETURN_TRUE) {
+						return true;
 					}
 				}
 #endif
@@ -5814,43 +5775,13 @@ bool CvUnit::canParadrop(const CvPlot* pPlot, bool bOnlyTestVisibility) const
 		if (MOD_EVENTS_PARADROPS) {
 			if(pPlot->IsFriendlyTerritory(getOwner())) {
 				// We're in friendly territory, call the event to see if we CAN'T start from here anyway
-				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-				if (pkScriptSystem) {
-					CvLuaArgsHandle args;
-					args->Push(((int)getOwner()));
-					args->Push(GetID());
-					args->Push(pPlot->getX());
-					args->Push(pPlot->getY());
-
-					// Attempt to execute the game events.
-					// Will return false if there are no registered listeners.
-					bool bResult = false;
-					if (LuaSupport::CallTestAll(pkScriptSystem, "CannotParadropFrom", args.get(), bResult)) {
-						// CUSTOMLOG("CannotParadropFrom(%i, %i, %i, %i) = %s", (int)getOwner(), GetID(), pPlot->getX(), pPlot->getY(), (bResult ? "Yes" : "No"));
-						if (bResult == true) {
-							return false;
-						}
-					}
+				if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CannotParadropFrom, getOwner(), GetID(), pPlot->getX(), pPlot->getY()) == GAMEEVENTRETURN_TRUE) {
+					return false;
 				}
 			} else {
 				// We're not in friendly territory, call the event to see if we CAN start from here anyway
-				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-				if (pkScriptSystem) {
-					CvLuaArgsHandle args;
-					args->Push(((int)getOwner()));
-					args->Push(GetID());
-					args->Push(pPlot->getX());
-					args->Push(pPlot->getY());
-
-					// Attempt to execute the game events.
-					// Will return false if there are no registered listeners.
-					bool bResult = false;
-					if (LuaSupport::CallTestAny(pkScriptSystem, "CanParadropFrom", args.get(), bResult)) {
-						// CUSTOMLOG("CanParadropFrom(%i, %i, %i, %i) = %s", (int)getOwner(), GetID(), pPlot->getX(), pPlot->getY(), (bResult ? "Yes" : "No"));
-						if (bResult == true) {
-							return true;
-						}
-					}
+				if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CanParadropFrom, getOwner(), GetID(), pPlot->getX(), pPlot->getY()) == GAMEEVENTRETURN_TRUE) {
+					return true;
 				}
 				
 				return false;
@@ -5963,19 +5894,7 @@ bool CvUnit::paradrop(int iX, int iY)
 
 #if defined(MOD_EVENTS_PARADROPS)
 	if (MOD_EVENTS_PARADROPS) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			CvLuaArgsHandle args;
-			args->Push(((int)getOwner()));
-			args->Push(GetID());
-			args->Push(fromPlot->getX());
-			args->Push(fromPlot->getY());
-			args->Push(pPlot->getX());
-			args->Push(pPlot->getY());
-
-			bool bResult;
-			LuaSupport::CallHook(pkScriptSystem, "ParadropAt", args.get(), bResult);
-		}
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_ParadropAt, getOwner(), GetID(), fromPlot->getX(), fromPlot->getY(), pPlot->getX(), pPlot->getY());
 	}
 #endif
 
@@ -6712,20 +6631,8 @@ bool CvUnit::canRebaseAt(const CvPlot* pPlot, int iX, int iY) const
 
 #if defined(MOD_EVENTS_REBASE)
 		if (!bCityToRebase && MOD_EVENTS_REBASE) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(getOwner());
-				args->Push(GetID());
-				args->Push(iX);
-				args->Push(iY);
-
-				bool bResult = false;
-				if (LuaSupport::CallTestAny(pkScriptSystem, "CanRebaseInCity", args.get(), bResult)) {
-					if (bResult == true) {
-						bCityToRebase = true;
-					}
-				}
+			if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CanRebaseInCity, getOwner(), GetID(), iX, iY) == GAMEEVENTRETURN_TRUE) {
+				bCityToRebase = true;
 			}
 		}
 #endif
@@ -6759,20 +6666,8 @@ bool CvUnit::canRebaseAt(const CvPlot* pPlot, int iX, int iY) const
 	{
 #if defined(MOD_EVENTS_REBASE)
 		if (MOD_EVENTS_REBASE) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(getOwner());
-				args->Push(GetID());
-				args->Push(iX);
-				args->Push(iY);
-
-				bool bResult = false;
-				if (LuaSupport::CallTestAny(pkScriptSystem, "CanRebaseTo", args.get(), bResult)) {
-					if (bResult == true) {
-						return true;
-					}
-				}
+			if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CanRebaseTo, getOwner(), GetID(), iX, iY, bCityToRebase) == GAMEEVENTRETURN_TRUE) {
+				return true;
 			}
 		}
 #endif
@@ -6821,17 +6716,7 @@ bool CvUnit::rebase(int iX, int iY)
 
 #if defined(MOD_EVENTS_REBASE)
 	if (MOD_EVENTS_REBASE) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			CvLuaArgsHandle args;
-			args->Push(getOwner());
-			args->Push(GetID());
-			args->Push(iX);
-			args->Push(iY);
-
-			bool bResult;
-			LuaSupport::CallHook(pkScriptSystem, "RebaseTo", args.get(), bResult);
-		}
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_RebaseTo, getOwner(), GetID(), iX, iY);
 	}
 #endif
 
@@ -7307,18 +7192,8 @@ bool CvUnit::CanFoundReligion(const CvPlot* pPlot) const
 
 #if defined(MOD_EVENTS_FOUND_RELIGION)
 	if (MOD_EVENTS_FOUND_RELIGION ) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			CvLuaArgsHandle args;
-			args->Push(getOwner());
-			args->Push(pCity->GetID());
-
-			bool bResult = false;
-			if (LuaSupport::CallTestAll(pkScriptSystem, "PlayerCanFoundReligion", args.get(), bResult)) {
-				if (bResult == false) {
-					return false;
-				}
-			}
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanFoundReligion, getOwner(), pCity->GetID()) == GAMEEVENTRETURN_FALSE) {
+			return false;
 		}
 	}
 #endif
@@ -9305,24 +9180,8 @@ bool CvUnit::canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestVisible,
 
 #if defined(MOD_EVENTS_PLOT)
 	if (MOD_EVENTS_PLOT) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if(pkScriptSystem)
-		{
-			CvLuaArgsHandle args;
-			args->Push(((int)getOwner()));
-			args->Push(GetID());
-			args->Push(getX());
-			args->Push(getY());
-			args->Push(eBuild);
-
-			bool bResult = false;
-			if(LuaSupport::CallTestAll(pkScriptSystem, "PlayerCanBuild", args.get(), bResult))
-			{
-				if(bResult == false)
-				{
-					return false;
-				}
-			}
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanBuild, getOwner(), GetID(), getX(), getY(), eBuild) == GAMEEVENTRETURN_FALSE) {
+			return false;
 		}
 	}
 #endif
@@ -9644,16 +9503,7 @@ void CvUnit::promote(PromotionTypes ePromotion, int iLeaderUnitId)
 
 #if defined(MOD_EVENTS_UNIT_UPGRADES)
 		if (MOD_EVENTS_UNIT_UPGRADES) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(((int)getOwner()));
-				args->Push(GetID());
-				args->Push(ePromotion);
-
-				bool bResult;
-				LuaSupport::CallHook(pkScriptSystem, "UnitPromoted", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_UnitPromoted, getOwner(), GetID(), ePromotion);
 		}
 #endif
 	}
@@ -9925,18 +9775,8 @@ bool CvUnit::CanUpgradeRightNow(bool bOnlyTestVisible) const
 		
 #if defined(MOD_EVENTS_UNIT_UPGRADES)
 		if (MOD_EVENTS_UNIT_UPGRADES) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(((int)getOwner()));
-				args->Push(GetID());
-
-				bool bResult = false;
-				if (LuaSupport::CallTestAll(pkScriptSystem, "CanHaveAnyUpgrade", args.get(), bResult)) {
-					if (bResult == false) {
-						return false;
-					}
-				}
+			if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CanHaveAnyUpgrade, getOwner(), GetID()) == GAMEEVENTRETURN_FALSE) {
+				return false;
 			}
 		}
 #endif
@@ -9998,20 +9838,8 @@ UnitTypes CvUnit::GetUpgradeUnitType() const
 
 #if defined(MOD_EVENTS_UNIT_UPGRADES)
 				if (MOD_EVENTS_UNIT_UPGRADES) {
-					ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-					if (pkScriptSystem) {
-						CvLuaArgsHandle args;
-						args->Push(((int)getOwner()));
-						args->Push(GetID());
-						args->Push(iI);
-						args->Push(eUpgradeUnitType);
-
-						bool bResult = false;
-						if (LuaSupport::CallTestAll(pkScriptSystem, "CanHaveUpgrade", args.get(), bResult)) {
-							if (bResult == false) {
-								continue;
-							}
-						}
+					if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CanHaveUpgrade, getOwner(), GetID(), iI, eUpgradeUnitType) == GAMEEVENTRETURN_FALSE) {
+						continue;
 					}
 				}
 #endif
@@ -10140,17 +9968,7 @@ CvUnit* CvUnit::DoUpgrade()
 #if defined(MOD_EVENTS_UNIT_UPGRADES)
 		// MUST call the event before convert() as that kills the old unit
 		if (MOD_EVENTS_UNIT_UPGRADES) {
-			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-			if (pkScriptSystem) {
-				CvLuaArgsHandle args;
-				args->Push(((int)getOwner()));
-				args->Push(GetID());
-				args->Push(pNewUnit->GetID());
-				args->Push(false); // bGoodyHut
-
-				bool bResult;
-				LuaSupport::CallHook(pkScriptSystem, "UnitUpgraded", args.get(), bResult);
-			}
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_UnitUpgraded, getOwner(), GetID(), pNewUnit->GetID(), false);
 		}
 #endif
 		pNewUnit->convert(this, true);
@@ -18567,19 +18385,8 @@ bool CvUnit::canAcquirePromotion(PromotionTypes ePromotion) const
 	
 #if defined(MOD_EVENTS_UNIT_UPGRADES)
 	if (MOD_EVENTS_UNIT_UPGRADES) {
-		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-		if (pkScriptSystem) {
-			CvLuaArgsHandle args;
-			args->Push(((int)getOwner()));
-			args->Push(GetID());
-			args->Push(ePromotion);
-
-			bool bResult = false;
-			if (LuaSupport::CallTestAll(pkScriptSystem, "CanHavePromotion", args.get(), bResult)) {
-				if (bResult == false) {
-					return false;
-				}
-			}
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CanHavePromotion, getOwner(), GetID(), ePromotion) == GAMEEVENTRETURN_FALSE) {
+			return false;
 		}
 	}
 #endif

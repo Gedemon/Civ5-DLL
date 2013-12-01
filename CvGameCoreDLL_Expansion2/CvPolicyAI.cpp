@@ -548,6 +548,22 @@ void CvPolicyAI::DoChooseIdeology(CvPlayer *pPlayer)
 	}
 	pPlayer->GetPlayerPolicies()->SetPolicyBranchUnlocked(eChosenBranch, true, false);
 	LogBranchChoice(eChosenBranch);
+
+#if defined(MOD_BUGFIX_MISSING_POLICY_EVENTS)
+	if (MOD_BUGFIX_MISSING_POLICY_EVENTS)
+	{
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if(pkScriptSystem)
+		{
+			CvLuaArgsHandle args;
+			args->Push(pPlayer->GetID());
+			args->Push(eChosenBranch);
+
+			bool bResult = false;
+			LuaSupport::CallHook(pkScriptSystem, "PlayerAdoptPolicyBranch", args.get(), bResult);
+		}
+	}
+#endif
 }
 
 /// Should the AI look at switching ideology branches?

@@ -20,6 +20,7 @@ CustomMods::CustomMods() :
 	m_bGLOBAL_CS_GIFT_SHIPS(false),
 	m_bGLOBAL_CS_UPGRADES(false),
 	m_bGLOBAL_CS_RAZE_RARELY(false),
+	m_bGLOBAL_CS_LIBERATE_AFTER_BUYOUT(false),
 	m_bGLOBAL_CS_GIFTS(false),
 	m_bGLOBAL_VENICE_KEEPS_RESOURCES(false),
 	m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES(false),
@@ -73,10 +74,13 @@ CustomMods::CustomMods() :
 	m_bAI_SECONDARY_WORKERS(false),
 	m_bAI_SECONDARY_SETTLERS(false),
 
+	m_bEVENTS_TERRAFORMING(false),
+	m_bEVENTS_CIRCUMNAVIGATION(false),
 	m_bEVENTS_NEW_ERA(false),
 	m_bEVENTS_NW_DISCOVERY(false),
 	m_bEVENTS_DIPLO_EVENTS(false),
 	m_bEVENTS_MINORS(false),
+	m_bEVENTS_GOODY_CHOICE(false),
 	m_bEVENTS_GOODY_TECH(false),
 	m_bEVENTS_AI_OVERRIDE_TECH(false),
 	m_bEVENTS_GREAT_PEOPLE(false),
@@ -87,6 +91,7 @@ CustomMods::CustomMods() :
 	m_bEVENTS_CITY_BORDERS(false),
 	m_bEVENTS_CITY_RAZING(false),
 	m_bEVENTS_CITY_BOMBARD(false),
+	m_bEVENTS_CITY_CONNECTIONS(false),
 	m_bEVENTS_AREA_RESOURCES(false),
 	m_bEVENTS_PARADROPS(false),
 	m_bEVENTS_UNIT_PREKILL(false),
@@ -137,6 +142,148 @@ CustomMods::CustomMods() :
 {
 }
 
+
+// I would rather have all of this shit here (where it need never be read more than once) to make the calling of events cleaner in the main code
+int CustomMods::eventHook(const char* szName, const char* p, ...) {
+	CvLuaArgsHandle args;
+
+	va_list vl;
+	va_start(vl, p);
+
+	for (const char* it = p; *it; ++it) {
+		if (*it == 'b') {
+			// It's a boolean
+			args->Push(va_arg(vl, bool));
+		} else {
+			// Assume it's an int
+			args->Push(va_arg(vl, int));
+		}
+	}
+
+	va_end(vl);
+
+	return eventHook(szName, args);
+}
+
+int CustomMods::eventTestAll(const char* szName, const char* p, ...) {
+	CvLuaArgsHandle args;
+
+	va_list vl;
+	va_start(vl, p);
+
+	for (const char* it = p; *it; ++it) {
+		if (*it == 'b') {
+			// It's a boolean
+			args->Push(va_arg(vl, bool));
+		} else {
+			// Assume it's an int
+			args->Push(va_arg(vl, int));
+		}
+	}
+
+	va_end(vl);
+
+	return eventTestAll(szName, args);
+}
+
+int CustomMods::eventTestAny(const char* szName, const char* p, ...) {
+	CvLuaArgsHandle args;
+
+	va_list vl;
+	va_start(vl, p);
+
+	for (const char* it = p; *it; ++it) {
+		if (*it == 'b') {
+			// It's a boolean
+			args->Push(va_arg(vl, bool));
+		} else {
+			// Assume it's an int
+			args->Push(va_arg(vl, int));
+		}
+	}
+
+	va_end(vl);
+
+	return eventTestAny(szName, args);
+}
+
+int CustomMods::eventAccumulator(int &iValue, const char* szName, const char* p, ...) {
+	CvLuaArgsHandle args;
+
+	va_list vl;
+	va_start(vl, p);
+
+	for (const char* it = p; *it; ++it) {
+		if (*it == 'b') {
+			// It's a boolean
+			args->Push(va_arg(vl, bool));
+		} else {
+			// Assume it's an int
+			args->Push(va_arg(vl, int));
+		}
+	}
+
+	va_end(vl);
+
+	return eventAccumulator(iValue, szName, args);
+}
+
+int CustomMods::eventHook(const char* szName, CvLuaArgsHandle &args) {
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if (pkScriptSystem) {
+		bool bResult;
+		if (LuaSupport::CallHook(pkScriptSystem, szName, args.get(), bResult)) {
+			return GAMEEVENTRETURN_HOOK;
+		}
+	}
+
+	return GAMEEVENTRETURN_NONE;
+}
+
+int CustomMods::eventTestAll(const char* szName, CvLuaArgsHandle &args) {
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if (pkScriptSystem) {
+		bool bResult = false;
+		if (LuaSupport::CallTestAll(pkScriptSystem, szName, args.get(), bResult)) {
+			if (bResult) {
+				return GAMEEVENTRETURN_TRUE;
+			} else {
+				return GAMEEVENTRETURN_FALSE;
+			}
+		}
+	}
+
+	return GAMEEVENTRETURN_NONE;
+}
+
+int CustomMods::eventTestAny(const char* szName, CvLuaArgsHandle &args) {
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if (pkScriptSystem) {
+		bool bResult = false;
+		if (LuaSupport::CallTestAny(pkScriptSystem, szName, args.get(), bResult)) {
+			if (bResult) {
+				return GAMEEVENTRETURN_TRUE;
+			} else {
+				return GAMEEVENTRETURN_FALSE;
+			}
+		}
+	}
+
+	return GAMEEVENTRETURN_NONE;
+}
+
+int CustomMods::eventAccumulator(int &iValue, const char* szName, CvLuaArgsHandle &args) {
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if (pkScriptSystem) {
+		if (LuaSupport::CallAccumulator(pkScriptSystem, szName, args.get(), iValue)) {
+			return GAMEEVENTRETURN_TRUE;
+		}
+	}
+
+	return GAMEEVENTRETURN_NONE;
+}
+
+
 void CustomMods::preloadCache() {
 	(void) getOption("EVENTS_CIRCUMNAVIGATION");
 }
@@ -180,6 +327,7 @@ int CustomMods::getOption(string sOption, int defValue) {
 		m_bGLOBAL_CS_GIFT_SHIPS                   = (m_options[string("GLOBAL_CS_GIFT_SHIPS")] == 1);
 		m_bGLOBAL_CS_UPGRADES                     = (m_options[string("GLOBAL_CS_UPGRADES")] == 1);
 		m_bGLOBAL_CS_RAZE_RARELY                  = (m_options[string("GLOBAL_CS_RAZE_RARELY")] == 1);
+		m_bGLOBAL_CS_LIBERATE_AFTER_BUYOUT        = (m_options[string("GLOBAL_CS_LIBERATE_AFTER_BUYOUT")] == 1);
 		m_bGLOBAL_CS_GIFTS                        = (m_options[string("GLOBAL_CS_GIFTS")] == 1);
 		m_bGLOBAL_VENICE_KEEPS_RESOURCES          = (m_options[string("GLOBAL_VENICE_KEEPS_RESOURCES")] == 1);
 		m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES         = (m_options[string("GLOBAL_NO_FOLLOWUP_FROM_CITIES")] == 1);
@@ -233,11 +381,13 @@ int CustomMods::getOption(string sOption, int defValue) {
 		m_bAI_SECONDARY_WORKERS                   = (m_options[string("AI_SECONDARY_WORKERS")] == 1);
 		m_bAI_SECONDARY_SETTLERS                  = (m_options[string("AI_SECONDARY_SETTLERS")] == 1);
 
+		m_bEVENTS_TERRAFORMING                    = (m_options[string("EVENTS_TERRAFORMING")] == 1);
 		m_bEVENTS_CIRCUMNAVIGATION                = (m_options[string("EVENTS_CIRCUMNAVIGATION")] == 1);
 		m_bEVENTS_NEW_ERA                         = (m_options[string("EVENTS_NEW_ERA")] == 1);
 		m_bEVENTS_NW_DISCOVERY                    = (m_options[string("EVENTS_NW_DISCOVERY")] == 1);
 		m_bEVENTS_DIPLO_EVENTS                    = (m_options[string("EVENTS_DIPLO_EVENTS")] == 1);
 		m_bEVENTS_MINORS                          = (m_options[string("EVENTS_MINORS")] == 1);
+		m_bEVENTS_GOODY_CHOICE                    = (m_options[string("EVENTS_GOODY_CHOICE")] == 1);
 		m_bEVENTS_GOODY_TECH                      = (m_options[string("EVENTS_GOODY_TECH")] == 1);
 		m_bEVENTS_AI_OVERRIDE_TECH                = (m_options[string("EVENTS_AI_OVERRIDE_TECH")] == 1);
 		m_bEVENTS_GREAT_PEOPLE                    = (m_options[string("EVENTS_GREAT_PEOPLE")] == 1);
@@ -248,6 +398,7 @@ int CustomMods::getOption(string sOption, int defValue) {
 		m_bEVENTS_CITY_BORDERS                    = (m_options[string("EVENTS_CITY_BORDERS")] == 1);
 		m_bEVENTS_CITY_RAZING                     = (m_options[string("EVENTS_CITY_RAZING")] == 1);
 		m_bEVENTS_CITY_BOMBARD                    = (m_options[string("EVENTS_CITY_BOMBARD")] == 1);
+		m_bEVENTS_CITY_CONNECTIONS                = (m_options[string("EVENTS_CITY_CONNECTIONS")] == 1);
 		m_bEVENTS_AREA_RESOURCES                  = (m_options[string("EVENTS_AREA_RESOURCES")] == 1);
 		m_bEVENTS_PARADROPS                       = (m_options[string("EVENTS_PARADROPS")] == 1);
 		m_bEVENTS_UNIT_PREKILL                    = (m_options[string("EVENTS_UNIT_PREKILL")] == 1);
