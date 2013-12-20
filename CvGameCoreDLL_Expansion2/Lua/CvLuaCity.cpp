@@ -3805,7 +3805,7 @@ int CvLuaCity::lSetNumFreeBuilding(lua_State* L)
 		pkCity->GetCityBuildings()->SetNumFreeBuilding(iIndex, iNewValue);
 	}
 
-	return 1;
+	return 0;
 }
 #endif
 //------------------------------------------------------------------------------

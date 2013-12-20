@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 33)
+#define MOD_DLL_VERSION_NUMBER ((uint) 34)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -87,6 +87,8 @@
 #define MOD_GLOBAL_SHORT_EMBARKED_BLOCKADES         gCustomMods.isGLOBAL_SHORT_EMBARKED_BLOCKADES()
 // Other player's settlers captured from Barbarians will sometimes remain as settlers
 #define MOD_GLOBAL_GRATEFUL_SETTLERS                gCustomMods.isGLOBAL_GRATEFUL_SETTLERS()
+// Units that can found a city take their religion with them
+#define MOD_GLOBAL_RELIGIOUS_SETTLERS               gCustomMods.isGLOBAL_RELIGIOUS_SETTLERS()
 // TODO - WH - Fix this! Route To will only build roads, or upgrade road to rail, for human players
 #define MOD_GLOBAL_QUICK_ROUTES                     gCustomMods.isGLOBAL_QUICK_ROUTES()
 // Subs under ice are immune to all attacks except from other subs
@@ -415,8 +417,28 @@ enum TerraformingEventTypes {
 };
 
 
+// Custom mod logger
+#if defined(CUSTOMLOGDEBUG)
+#define	CUSTOMLOG(sFmt, ...) {															\
+	CvString sMsg;																		\
+	CvString::format(sMsg, sFmt, __VA_ARGS__);											\
+	LOGFILEMGR.GetLog(CUSTOMLOGDEBUG, FILogFile::kDontTimeStamp)->Msg(sMsg.c_str());	\
+}
+#else
+#define	CUSTOMLOG(sFmt, ...) __noop
+#endif
+
+
+// GlobalDefines wrappers
+#define GD_INT_DECL(name)       int m_i##name
+#define GD_INT_DEF(name)        inline int get##name() { return m_i##name; }
+#define GD_INT_INIT(name, def)  m_i##name(def)
+#define GD_INT_CACHE(name)      m_i##name = getDefineINT(#name); CUSTOMLOG("<Defines>: %s = %i", #name, m_i##name)
+#define GD_INT_GET(name)        GC.get##name()
+
+
 // LUA API wrappers
-#define LUAAPIEXTN(sMethod)	static int l##sMethod(lua_State* L)
+#define LUAAPIEXTN(method)	static int l##method(lua_State* L)
 
 
 // Game Event wrappers
@@ -515,16 +537,9 @@ enum TerraformingEventTypes {
 #define MOD_DB_COL_CLASS "Class"
 
 
-// Custom mod logger
-#if defined(CUSTOMLOGDEBUG)
-#define	CUSTOMLOG(sFmt, ...) {															\
-	CvString sMsg;																		\
-	CvString::format(sMsg, sFmt, __VA_ARGS__);											\
-	LOGFILEMGR.GetLog(CUSTOMLOGDEBUG, FILogFile::kDontTimeStamp)->Msg(sMsg.c_str());	\
-}
-#else
-#define	CUSTOMLOG(sFmt, ...) ((void)0)
-#endif
+// CustomMod option wrappers
+#define MOD_OPT_DECL(name)  protected: bool m_b##name; public: inline bool is##name() { return m_b##name; }
+#define MOD_OPT_CACHE(name) m_b##name = (m_options[string(#name)] == 1);
 
 
 // Class used to cache the database control settings and provide utility functions
@@ -546,272 +561,143 @@ public:
 	void preloadCache();
 	void reloadCache();
 	int getOption(const char* szName, int defValue = 0);
-	int getOption(string sName, int defValue = 0);
+	int getOption(std::string sName, int defValue = 0);
 	int getCivOption(const char* szCiv, const char* szName, int defValue = 0);
 
-	inline bool isGLOBAL_STACKING_RULES()                   { return m_bGLOBAL_STACKING_RULES; }
-	inline bool isGLOBAL_LOCAL_GENERALS()                   { return m_bGLOBAL_LOCAL_GENERALS; }
-	inline bool isGLOBAL_PROMOTION_CLASSES()                { return m_bGLOBAL_PROMOTION_CLASSES; }
-	inline bool isGLOBAL_PASSABLE_FORTS()                   { return m_bGLOBAL_PASSABLE_FORTS; }
-	inline bool isGLOBAL_PASSABLE_FORTS_ANY()               { return m_bGLOBAL_PASSABLE_FORTS_ANY; }
-	inline bool isGLOBAL_ANYTIME_GOODY_GOLD()               { return m_bGLOBAL_ANYTIME_GOODY_GOLD; }
-	inline bool isGLOBAL_CITY_FOREST_BONUS()                { return m_bGLOBAL_CITY_FOREST_BONUS; }
-	inline bool isGLOBAL_CITY_WORKING()                     { return m_bGLOBAL_CITY_WORKING; }
-	inline bool isGLOBAL_ALPINE_PASSES()                    { return m_bGLOBAL_ALPINE_PASSES; }
-	inline bool isGLOBAL_CS_GIFT_SHIPS()                    { return m_bGLOBAL_CS_GIFT_SHIPS; }
-	inline bool isGLOBAL_CS_UPGRADES()                      { return m_bGLOBAL_CS_UPGRADES; }
-	inline bool isGLOBAL_CS_RAZE_RARELY()                   { return m_bGLOBAL_CS_RAZE_RARELY; }
-	inline bool isGLOBAL_CS_LIBERATE_AFTER_BUYOUT()         { return m_bGLOBAL_CS_LIBERATE_AFTER_BUYOUT; }
-	inline bool isGLOBAL_CS_GIFTS()                         { return m_bGLOBAL_CS_GIFTS; }
-	inline bool isGLOBAL_VENICE_KEEPS_RESOURCES()           { return m_bGLOBAL_VENICE_KEEPS_RESOURCES; }
-	inline bool isGLOBAL_NO_FOLLOWUP_FROM_CITIES()          { return m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES; }
-	inline bool isGLOBAL_CAPTURE_AFTER_ATTACKING()          { return m_bGLOBAL_CAPTURE_AFTER_ATTACKING; }
-	inline bool isGLOBAL_NO_CONQUERED_SPACESHIPS()          { return m_bGLOBAL_NO_CONQUERED_SPACESHIPS; }
-	inline bool isGLOBAL_ALLIES_BLOCK_BLOCKADES()           { return m_bGLOBAL_ALLIES_BLOCK_BLOCKADES; }
-	inline bool isGLOBAL_SHORT_EMBARKED_BLOCKADES()         { return m_bGLOBAL_SHORT_EMBARKED_BLOCKADES; }
-	inline bool isGLOBAL_GRATEFUL_SETTLERS()                { return m_bGLOBAL_GRATEFUL_SETTLERS; }
-	inline bool isGLOBAL_QUICK_ROUTES()                     { return m_bGLOBAL_QUICK_ROUTES; }
-	inline bool isGLOBAL_SUBS_UNDER_ICE_IMMUNITY()          { return m_bGLOBAL_SUBS_UNDER_ICE_IMMUNITY; }
-	inline bool isGLOBAL_PARATROOPS_MOVEMENT()              { return m_bGLOBAL_PARATROOPS_MOVEMENT; }
-	inline bool isGLOBAL_PARATROOPS_AA_DAMAGE()             { return m_bGLOBAL_PARATROOPS_AA_DAMAGE; }
-	inline bool isGLOBAL_NUKES_MELT_ICE()                   { return m_bGLOBAL_NUKES_MELT_ICE; } 
-	inline bool isGLOBAL_GREATWORK_YIELDTYPES()             { return m_bGLOBAL_GREATWORK_YIELDTYPES; } 
+	MOD_OPT_DECL(GLOBAL_STACKING_RULES);
+	MOD_OPT_DECL(GLOBAL_LOCAL_GENERALS);
+	MOD_OPT_DECL(GLOBAL_PROMOTION_CLASSES);
+	MOD_OPT_DECL(GLOBAL_PASSABLE_FORTS);
+	MOD_OPT_DECL(GLOBAL_PASSABLE_FORTS_ANY);
+	MOD_OPT_DECL(GLOBAL_ANYTIME_GOODY_GOLD);
+	MOD_OPT_DECL(GLOBAL_CITY_FOREST_BONUS);
+	MOD_OPT_DECL(GLOBAL_CITY_WORKING);
+	MOD_OPT_DECL(GLOBAL_ALPINE_PASSES);
+	MOD_OPT_DECL(GLOBAL_CS_GIFT_SHIPS);
+	MOD_OPT_DECL(GLOBAL_CS_UPGRADES);
+	MOD_OPT_DECL(GLOBAL_CS_RAZE_RARELY);
+	MOD_OPT_DECL(GLOBAL_CS_LIBERATE_AFTER_BUYOUT);
+	MOD_OPT_DECL(GLOBAL_CS_GIFTS);
+	MOD_OPT_DECL(GLOBAL_VENICE_KEEPS_RESOURCES);
+	MOD_OPT_DECL(GLOBAL_NO_FOLLOWUP_FROM_CITIES);
+	MOD_OPT_DECL(GLOBAL_CAPTURE_AFTER_ATTACKING);
+	MOD_OPT_DECL(GLOBAL_NO_CONQUERED_SPACESHIPS);
+	MOD_OPT_DECL(GLOBAL_ALLIES_BLOCK_BLOCKADES);
+	MOD_OPT_DECL(GLOBAL_SHORT_EMBARKED_BLOCKADES);
+	MOD_OPT_DECL(GLOBAL_GRATEFUL_SETTLERS);
+	MOD_OPT_DECL(GLOBAL_RELIGIOUS_SETTLERS);
+	MOD_OPT_DECL(GLOBAL_QUICK_ROUTES);
+	MOD_OPT_DECL(GLOBAL_SUBS_UNDER_ICE_IMMUNITY);
+	MOD_OPT_DECL(GLOBAL_PARATROOPS_MOVEMENT);
+	MOD_OPT_DECL(GLOBAL_PARATROOPS_AA_DAMAGE);
+	MOD_OPT_DECL(GLOBAL_NUKES_MELT_ICE); 
+	MOD_OPT_DECL(GLOBAL_GREATWORK_YIELDTYPES); 
 
-	inline bool isTRAITS_CROSSES_ICE()                      { return m_bTRAITS_CROSSES_ICE; }
-	inline bool isTRAITS_CITY_WORKING()                     { return m_bTRAITS_CITY_WORKING; }
+	MOD_OPT_DECL(TRAITS_CROSSES_ICE);
+	MOD_OPT_DECL(TRAITS_CITY_WORKING);
 
-	inline bool isPOLICIES_CITY_WORKING()                   { return m_bPOLICIES_CITY_WORKING; }
+	MOD_OPT_DECL(POLICIES_CITY_WORKING);
 
-	inline bool isTECHS_CITY_WORKING()                      { return m_bTECHS_CITY_WORKING; }
+	MOD_OPT_DECL(TECHS_CITY_WORKING);
 
-	inline bool isPROMOTIONS_VARIABLE_RECON()               { return m_bPROMOTIONS_VARIABLE_RECON; }
-	inline bool isPROMOTIONS_CROSS_MOUNTAINS()              { return m_bPROMOTIONS_CROSS_MOUNTAINS; }
-	inline bool isPROMOTIONS_CROSS_OCEANS()                 { return m_bPROMOTIONS_CROSS_OCEANS; }
-	inline bool isPROMOTIONS_CROSS_ICE()                    { return m_bPROMOTIONS_CROSS_ICE; }
-	inline bool isPROMOTIONS_HALF_MOVE()                    { return m_bPROMOTIONS_HALF_MOVE; }
-	inline bool isPROMOTIONS_DEEP_WATER_EMBARKATION()       { return m_bPROMOTIONS_DEEP_WATER_EMBARKATION; }
+	MOD_OPT_DECL(PROMOTIONS_VARIABLE_RECON);
+	MOD_OPT_DECL(PROMOTIONS_CROSS_MOUNTAINS);
+	MOD_OPT_DECL(PROMOTIONS_CROSS_OCEANS);
+	MOD_OPT_DECL(PROMOTIONS_CROSS_ICE);
+	MOD_OPT_DECL(PROMOTIONS_HALF_MOVE);
+	MOD_OPT_DECL(PROMOTIONS_DEEP_WATER_EMBARKATION);
 
-	inline bool isUI_CITY_PRODUCTION()                      { return m_bUI_CITY_PRODUCTION; }
-	inline bool isUI_CITY_EXPANSION()                       { return m_bUI_CITY_EXPANSION; }
+	MOD_OPT_DECL(UI_CITY_PRODUCTION);
+	MOD_OPT_DECL(UI_CITY_EXPANSION);
 
-	inline bool isBUILDINGS_PRO_RATA_PURCHASE()             { return m_bBUILDINGS_PRO_RATA_PURCHASE; }
-	inline bool isBUILDINGS_CITY_WORKING()                  { return m_bBUILDINGS_CITY_WORKING; }
+	MOD_OPT_DECL(BUILDINGS_PRO_RATA_PURCHASE);
+	MOD_OPT_DECL(BUILDINGS_CITY_WORKING);
 
-	inline bool isTRADE_WONDER_RESOURCE_ROUTES()            { return m_bTRADE_WONDER_RESOURCE_ROUTES; }
+	MOD_OPT_DECL(TRADE_WONDER_RESOURCE_ROUTES);
 
-	inline bool isUNITS_LOCAL_WORKERS()                     { return m_bUNITS_LOCAL_WORKERS; }
-	inline bool isUNITS_HOVERING_LAND_ONLY_HEAL()           { return m_bUNITS_HOVERING_LAND_ONLY_HEAL; }
-	inline bool isUNITS_HOVERING_COASTAL_ATTACKS()          { return m_bUNITS_HOVERING_COASTAL_ATTACKS; }
+	MOD_OPT_DECL(UNITS_LOCAL_WORKERS);
+	MOD_OPT_DECL(UNITS_HOVERING_LAND_ONLY_HEAL);
+	MOD_OPT_DECL(UNITS_HOVERING_COASTAL_ATTACKS);
 
-	inline bool isDIPLOMACY_TECH_BONUSES()                  { return m_bDIPLOMACY_TECH_BONUSES; }
+	MOD_OPT_DECL(DIPLOMACY_TECH_BONUSES);
 
-	inline bool isRELIGION_NO_PREFERRENCES()                { return m_bRELIGION_NO_PREFERRENCES; }
-	inline bool isRELIGION_RANDOMISE()                      { return m_bRELIGION_RANDOMISE; }
-	inline bool isRELIGION_CONVERSION_MODIFIERS()           { return m_bRELIGION_CONVERSION_MODIFIERS; }
-	inline bool isRELIGION_KEEP_PROPHET_OVERFLOW()          { return m_bRELIGION_KEEP_PROPHET_OVERFLOW; }
+	MOD_OPT_DECL(RELIGION_NO_PREFERRENCES);
+	MOD_OPT_DECL(RELIGION_RANDOMISE);
+	MOD_OPT_DECL(RELIGION_CONVERSION_MODIFIERS);
+	MOD_OPT_DECL(RELIGION_KEEP_PROPHET_OVERFLOW);
 
-	inline bool isPROCESS_STOCKPILE()                       { return m_bPROCESS_STOCKPILE; }
+	MOD_OPT_DECL(PROCESS_STOCKPILE);
 
-	inline bool isAI_SECONDARY_WORKERS()                    { return m_bAI_SECONDARY_WORKERS; }
-	inline bool isAI_SECONDARY_SETTLERS()                   { return m_bAI_SECONDARY_SETTLERS; }
+	MOD_OPT_DECL(AI_SECONDARY_WORKERS);
+	MOD_OPT_DECL(AI_SECONDARY_SETTLERS);
 
-	inline bool isEVENTS_TERRAFORMING()                     { return m_bEVENTS_TERRAFORMING; }
-	inline bool isEVENTS_CIRCUMNAVIGATION()                 { return m_bEVENTS_CIRCUMNAVIGATION; }
-	inline bool isEVENTS_NEW_ERA()                          { return m_bEVENTS_NEW_ERA; }
-	inline bool isEVENTS_NW_DISCOVERY()                     { return m_bEVENTS_NW_DISCOVERY; }
-	inline bool isEVENTS_DIPLO_EVENTS()                     { return m_bEVENTS_DIPLO_EVENTS; }
-	inline bool isEVENTS_MINORS()                           { return m_bEVENTS_MINORS; }
-	inline bool isEVENTS_GOODY_CHOICE()                     { return m_bEVENTS_GOODY_CHOICE; }
-	inline bool isEVENTS_GOODY_TECH()                       { return m_bEVENTS_GOODY_TECH; }
-	inline bool isEVENTS_AI_OVERRIDE_TECH()                 { return m_bEVENTS_AI_OVERRIDE_TECH; }
-	inline bool isEVENTS_GREAT_PEOPLE()                     { return m_bEVENTS_GREAT_PEOPLE; }
-	inline bool isEVENTS_FOUND_RELIGION()                   { return m_bEVENTS_FOUND_RELIGION; }
-	inline bool isEVENTS_ACQUIRE_BELIEFS()                  { return m_bEVENTS_ACQUIRE_BELIEFS; }
-	inline bool isEVENTS_PLOT()                             { return m_bEVENTS_PLOT; }
-	inline bool isEVENTS_CITY()                             { return m_bEVENTS_CITY; }
-	inline bool isEVENTS_CITY_BORDERS()                     { return m_bEVENTS_CITY_BORDERS; }
-	inline bool isEVENTS_CITY_RAZING()                      { return m_bEVENTS_CITY_RAZING; }
-	inline bool isEVENTS_CITY_BOMBARD()                     { return m_bEVENTS_CITY_BOMBARD; }
-	inline bool isEVENTS_CITY_CONNECTIONS()                 { return m_bEVENTS_CITY_CONNECTIONS; }
-	inline bool isEVENTS_AREA_RESOURCES()                   { return m_bEVENTS_AREA_RESOURCES; }
-	inline bool isEVENTS_PARADROPS()                        { return m_bEVENTS_PARADROPS; }
-	inline bool isEVENTS_UNIT_PREKILL()                     { return m_bEVENTS_UNIT_PREKILL; }
-	inline bool isEVENTS_CAN_MOVE_INTO()                    { return m_bEVENTS_CAN_MOVE_INTO; }
-	inline bool isEVENTS_UNIT_UPGRADES()                    { return m_bEVENTS_UNIT_UPGRADES; }
-	inline bool isEVENTS_WAR_AND_PEACE()                    { return m_bEVENTS_WAR_AND_PEACE; }
-	inline bool isEVENTS_NUCLEAR_DETONATION()               { return m_bEVENTS_NUCLEAR_DETONATION; }
-	inline bool isEVENTS_REBASE()                           { return m_bEVENTS_REBASE; }
+	MOD_OPT_DECL(EVENTS_TERRAFORMING);
+	MOD_OPT_DECL(EVENTS_CIRCUMNAVIGATION);
+	MOD_OPT_DECL(EVENTS_NEW_ERA);
+	MOD_OPT_DECL(EVENTS_NW_DISCOVERY);
+	MOD_OPT_DECL(EVENTS_DIPLO_EVENTS);
+	MOD_OPT_DECL(EVENTS_MINORS);
+	MOD_OPT_DECL(EVENTS_GOODY_CHOICE);
+	MOD_OPT_DECL(EVENTS_GOODY_TECH);
+	MOD_OPT_DECL(EVENTS_AI_OVERRIDE_TECH);
+	MOD_OPT_DECL(EVENTS_GREAT_PEOPLE);
+	MOD_OPT_DECL(EVENTS_FOUND_RELIGION);
+	MOD_OPT_DECL(EVENTS_ACQUIRE_BELIEFS);
+	MOD_OPT_DECL(EVENTS_PLOT);
+	MOD_OPT_DECL(EVENTS_CITY);
+	MOD_OPT_DECL(EVENTS_CITY_BORDERS);
+	MOD_OPT_DECL(EVENTS_CITY_RAZING);
+	MOD_OPT_DECL(EVENTS_CITY_BOMBARD);
+	MOD_OPT_DECL(EVENTS_CITY_CONNECTIONS);
+	MOD_OPT_DECL(EVENTS_AREA_RESOURCES);
+	MOD_OPT_DECL(EVENTS_PARADROPS);
+	MOD_OPT_DECL(EVENTS_UNIT_PREKILL);
+	MOD_OPT_DECL(EVENTS_CAN_MOVE_INTO);
+	MOD_OPT_DECL(EVENTS_UNIT_UPGRADES);
+	MOD_OPT_DECL(EVENTS_WAR_AND_PEACE);
+	MOD_OPT_DECL(EVENTS_NUCLEAR_DETONATION);
+	MOD_OPT_DECL(EVENTS_REBASE);
 
-	inline bool isEVENTS_RED_TURN()                         { return m_bEVENTS_RED_TURN; }
-	inline bool isEVENTS_RED_COMBAT()                       { return m_bEVENTS_RED_COMBAT; }
-	inline bool isEVENTS_RED_COMBAT_MISSION()               { return m_bEVENTS_RED_COMBAT_MISSION; }
-	inline bool isEVENTS_RED_COMBAT_ABORT()                 { return m_bEVENTS_RED_COMBAT_ABORT; }
-	inline bool isEVENTS_RED_COMBAT_RESULT()                { return m_bEVENTS_RED_COMBAT_RESULT; }
-	inline bool isEVENTS_RED_COMBAT_ENDED()                 { return m_bEVENTS_RED_COMBAT_ENDED; }
+	MOD_OPT_DECL(EVENTS_RED_TURN);
+	MOD_OPT_DECL(EVENTS_RED_COMBAT);
+	MOD_OPT_DECL(EVENTS_RED_COMBAT_MISSION);
+	MOD_OPT_DECL(EVENTS_RED_COMBAT_ABORT);
+	MOD_OPT_DECL(EVENTS_RED_COMBAT_RESULT);
+	MOD_OPT_DECL(EVENTS_RED_COMBAT_ENDED);
 
-	inline bool isAPI_ESPIONAGE()                           { return m_bAPI_ESPIONAGE; }
-	inline bool isAPI_TRADEROUTES()                         { return m_bAPI_TRADEROUTES; }
-	inline bool isAPI_RELIGION()                            { return m_bAPI_RELIGION; }
-	inline bool isAPI_PLOT_BASED_DAMAGE()                   { return m_bAPI_PLOT_BASED_DAMAGE; }
-	inline bool isAPI_EXTENSIONS()                          { return m_bAPI_EXTENSIONS; }
-	inline bool isAPI_LUA_EXTENSIONS()                      { return m_bAPI_LUA_EXTENSIONS; }
+	MOD_OPT_DECL(API_ESPIONAGE);
+	MOD_OPT_DECL(API_TRADEROUTES);
+	MOD_OPT_DECL(API_RELIGION);
+	MOD_OPT_DECL(API_PLOT_BASED_DAMAGE);
+	MOD_OPT_DECL(API_EXTENSIONS);
+	MOD_OPT_DECL(API_LUA_EXTENSIONS);
 
-	inline bool isCONFIG_AI_IN_XML()                        { return m_bCONFIG_AI_IN_XML; }
+	MOD_OPT_DECL(CONFIG_AI_IN_XML);
 
-	inline bool isBUGFIX_LUA_CHANGE_VISIBILITY_COUNT()      { return m_bBUGFIX_LUA_CHANGE_VISIBILITY_COUNT; }
-	inline bool isBUGFIX_MOVE_AFTER_PURCHASE()              { return m_bBUGFIX_MOVE_AFTER_PURCHASE; }
-	inline bool isBUGFIX_UNITCLASS_NOT_UNIT()               { return m_bBUGFIX_UNITCLASS_NOT_UNIT; }
-	inline bool isBUGFIX_BUILDINGCLASS_NOT_BUILDING()       { return m_bBUGFIX_BUILDINGCLASS_NOT_BUILDING; }
-	inline bool isBUGFIX_FREE_FOOD_BUILDING()               { return m_bBUGFIX_FREE_FOOD_BUILDING; }
-	inline bool isBUGFIX_NAVAL_FREE_UNITS()                 { return m_bBUGFIX_NAVAL_FREE_UNITS; }
-	inline bool isBUGFIX_NAVAL_NEAREST_WATER()              { return m_bBUGFIX_NAVAL_NEAREST_WATER; }
-	inline bool isBUGFIX_CITY_STACKING()                    { return m_bBUGFIX_CITY_STACKING; }
-	inline bool isBUGFIX_BARB_CAMP_TERRAINS()               { return m_bBUGFIX_BARB_CAMP_TERRAINS; }
-	inline bool isBUGFIX_BARB_CAMP_SPAWNING()               { return m_bBUGFIX_BARB_CAMP_SPAWNING; }
-	inline bool isBUGFIX_REMOVE_GHOST_ROUTES()              { return m_bBUGFIX_REMOVE_GHOST_ROUTES; }
-	inline bool isBUGFIX_UNITS_AWAKE_IN_DANGER()            { return m_bBUGFIX_UNITS_AWAKE_IN_DANGER; }
-	inline bool isBUGFIX_WORKERS_VISIBLE_DANGER()           { return m_bBUGFIX_WORKERS_VISIBLE_DANGER; }
-	inline bool isBUGFIX_INTERCEPTOR_STRENGTH()             { return m_bBUGFIX_INTERCEPTOR_STRENGTH; }
-	inline bool isBUGFIX_UNIT_POWER_CALC()                  { return m_bBUGFIX_UNIT_POWER_CALC; }
-	inline bool isBUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY()  { return m_bBUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY; }
-	inline bool isBUGFIX_UNIT_POWER_NAVAL_CONSISTENCY()     { return m_bBUGFIX_UNIT_POWER_NAVAL_CONSISTENCY; }
-	inline bool isBUGFIX_UNIT_PREREQ_PROJECT()              { return m_bBUGFIX_UNIT_PREREQ_PROJECT; }
-	inline bool isBUGFIX_HOVERING_PATHFINDER()              { return m_bBUGFIX_HOVERING_PATHFINDER; }
-	inline bool isBUGFIX_EMBARKING_PATHFINDER()             { return m_bBUGFIX_EMBARKING_PATHFINDER; }
+	MOD_OPT_DECL(BUGFIX_LUA_CHANGE_VISIBILITY_COUNT);
+	MOD_OPT_DECL(BUGFIX_MOVE_AFTER_PURCHASE);
+	MOD_OPT_DECL(BUGFIX_UNITCLASS_NOT_UNIT);
+	MOD_OPT_DECL(BUGFIX_BUILDINGCLASS_NOT_BUILDING);
+	MOD_OPT_DECL(BUGFIX_FREE_FOOD_BUILDING);
+	MOD_OPT_DECL(BUGFIX_NAVAL_FREE_UNITS);
+	MOD_OPT_DECL(BUGFIX_NAVAL_NEAREST_WATER);
+	MOD_OPT_DECL(BUGFIX_CITY_STACKING);
+	MOD_OPT_DECL(BUGFIX_BARB_CAMP_TERRAINS);
+	MOD_OPT_DECL(BUGFIX_BARB_CAMP_SPAWNING);
+	MOD_OPT_DECL(BUGFIX_REMOVE_GHOST_ROUTES);
+	MOD_OPT_DECL(BUGFIX_UNITS_AWAKE_IN_DANGER);
+	MOD_OPT_DECL(BUGFIX_WORKERS_VISIBLE_DANGER);
+	MOD_OPT_DECL(BUGFIX_INTERCEPTOR_STRENGTH);
+	MOD_OPT_DECL(BUGFIX_UNIT_POWER_CALC);
+	MOD_OPT_DECL(BUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY);
+	MOD_OPT_DECL(BUGFIX_UNIT_POWER_NAVAL_CONSISTENCY);
+	MOD_OPT_DECL(BUGFIX_UNIT_PREREQ_PROJECT);
+	MOD_OPT_DECL(BUGFIX_HOVERING_PATHFINDER);
+	MOD_OPT_DECL(BUGFIX_EMBARKING_PATHFINDER);
 
 protected:
 	bool m_bInit;
-	std::map<string, int> m_options;
-
-	bool m_bGLOBAL_STACKING_RULES;
-	bool m_bGLOBAL_LOCAL_GENERALS;
-	bool m_bGLOBAL_PROMOTION_CLASSES;
-	bool m_bGLOBAL_PASSABLE_FORTS;
-	bool m_bGLOBAL_PASSABLE_FORTS_ANY;
-	bool m_bGLOBAL_ANYTIME_GOODY_GOLD;
-	bool m_bGLOBAL_CITY_FOREST_BONUS;
-	bool m_bGLOBAL_CITY_WORKING;
-	bool m_bGLOBAL_ALPINE_PASSES;
-	bool m_bGLOBAL_CS_GIFT_SHIPS;
-	bool m_bGLOBAL_CS_UPGRADES;
-	bool m_bGLOBAL_CS_RAZE_RARELY;
-	bool m_bGLOBAL_CS_LIBERATE_AFTER_BUYOUT;
-	bool m_bGLOBAL_CS_GIFTS;
-	bool m_bGLOBAL_VENICE_KEEPS_RESOURCES;
-	bool m_bGLOBAL_NO_FOLLOWUP_FROM_CITIES;
-	bool m_bGLOBAL_CAPTURE_AFTER_ATTACKING;
-	bool m_bGLOBAL_NO_CONQUERED_SPACESHIPS;
-	bool m_bGLOBAL_ALLIES_BLOCK_BLOCKADES;
-	bool m_bGLOBAL_SHORT_EMBARKED_BLOCKADES;
-	bool m_bGLOBAL_GRATEFUL_SETTLERS;
-	bool m_bGLOBAL_QUICK_ROUTES;
-	bool m_bGLOBAL_SUBS_UNDER_ICE_IMMUNITY;
-	bool m_bGLOBAL_PARATROOPS_MOVEMENT;
-	bool m_bGLOBAL_PARATROOPS_AA_DAMAGE;
-	bool m_bGLOBAL_NUKES_MELT_ICE;
-	bool m_bGLOBAL_GREATWORK_YIELDTYPES;
-
-	bool m_bTRAITS_CROSSES_ICE;
-	bool m_bTRAITS_CITY_WORKING;
-
-	bool m_bPOLICIES_CITY_WORKING;
-
-	bool m_bTECHS_CITY_WORKING;
-
-	bool m_bPROMOTIONS_VARIABLE_RECON;
-	bool m_bPROMOTIONS_CROSS_MOUNTAINS;
-	bool m_bPROMOTIONS_CROSS_OCEANS;
-	bool m_bPROMOTIONS_CROSS_ICE;
-	bool m_bPROMOTIONS_HALF_MOVE;
-	bool m_bPROMOTIONS_DEEP_WATER_EMBARKATION;
-
-	bool m_bUI_CITY_PRODUCTION;
-	bool m_bUI_CITY_EXPANSION;
-
-	bool m_bBUILDINGS_PRO_RATA_PURCHASE;
-	bool m_bBUILDINGS_CITY_WORKING;
-
-	bool m_bTRADE_WONDER_RESOURCE_ROUTES;
-
-	bool m_bUNITS_LOCAL_WORKERS;
-	bool m_bUNITS_HOVERING_LAND_ONLY_HEAL;
-	bool m_bUNITS_HOVERING_COASTAL_ATTACKS;
-
-	bool m_bDIPLOMACY_TECH_BONUSES;
-
-	bool m_bRELIGION_NO_PREFERRENCES;
-	bool m_bRELIGION_RANDOMISE;
-	bool m_bRELIGION_CONVERSION_MODIFIERS;
-	bool m_bRELIGION_KEEP_PROPHET_OVERFLOW;
-
-	bool m_bPROCESS_STOCKPILE;
-
-	bool m_bAI_SECONDARY_WORKERS;
-	bool m_bAI_SECONDARY_SETTLERS;
-
-	bool m_bEVENTS_TERRAFORMING;
-	bool m_bEVENTS_CIRCUMNAVIGATION;
-	bool m_bEVENTS_NEW_ERA;
-	bool m_bEVENTS_NW_DISCOVERY;
-	bool m_bEVENTS_DIPLO_EVENTS;
-	bool m_bEVENTS_MINORS;
-	bool m_bEVENTS_GOODY_CHOICE;
-	bool m_bEVENTS_GOODY_TECH;
-	bool m_bEVENTS_AI_OVERRIDE_TECH;
-	bool m_bEVENTS_GREAT_PEOPLE;
-	bool m_bEVENTS_FOUND_RELIGION;
-	bool m_bEVENTS_ACQUIRE_BELIEFS;
-	bool m_bEVENTS_PLOT;
-	bool m_bEVENTS_CITY;
-	bool m_bEVENTS_CITY_BORDERS;
-	bool m_bEVENTS_CITY_RAZING;
-	bool m_bEVENTS_CITY_BOMBARD;
-	bool m_bEVENTS_CITY_CONNECTIONS;
-	bool m_bEVENTS_AREA_RESOURCES;
-	bool m_bEVENTS_PARADROPS;
-	bool m_bEVENTS_UNIT_PREKILL;
-	bool m_bEVENTS_CAN_MOVE_INTO;
-	bool m_bEVENTS_UNIT_UPGRADES;
-	bool m_bEVENTS_WAR_AND_PEACE;
-	bool m_bEVENTS_NUCLEAR_DETONATION;
-	bool m_bEVENTS_REBASE;
-
-	bool m_bEVENTS_RED_TURN;
-	bool m_bEVENTS_RED_COMBAT;
-	bool m_bEVENTS_RED_COMBAT_MISSION;
-	bool m_bEVENTS_RED_COMBAT_ABORT;
-	bool m_bEVENTS_RED_COMBAT_RESULT;
-	bool m_bEVENTS_RED_COMBAT_ENDED;
-
-	bool m_bAPI_ESPIONAGE;
-	bool m_bAPI_TRADEROUTES;
-	bool m_bAPI_RELIGION;
-	bool m_bAPI_PLOT_BASED_DAMAGE;
-	bool m_bAPI_EXTENSIONS;
-	bool m_bAPI_LUA_EXTENSIONS;
-
-	bool m_bCONFIG_AI_IN_XML;
-
-	bool m_bBUGFIX_LUA_CHANGE_VISIBILITY_COUNT;
-	bool m_bBUGFIX_MOVE_AFTER_PURCHASE;
-	bool m_bBUGFIX_UNITCLASS_NOT_UNIT;
-	bool m_bBUGFIX_BUILDINGCLASS_NOT_BUILDING;
-	bool m_bBUGFIX_FREE_FOOD_BUILDING;
-	bool m_bBUGFIX_NAVAL_FREE_UNITS;
-	bool m_bBUGFIX_NAVAL_NEAREST_WATER;
-	bool m_bBUGFIX_CITY_STACKING;
-	bool m_bBUGFIX_BARB_CAMP_TERRAINS;
-	bool m_bBUGFIX_BARB_CAMP_SPAWNING;
-	bool m_bBUGFIX_REMOVE_GHOST_ROUTES;
-	bool m_bBUGFIX_UNITS_AWAKE_IN_DANGER;
-	bool m_bBUGFIX_WORKERS_VISIBLE_DANGER;
-	bool m_bBUGFIX_INTERCEPTOR_STRENGTH;
-	bool m_bBUGFIX_UNIT_POWER_CALC;
-	bool m_bBUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY;
-	bool m_bBUGFIX_UNIT_POWER_NAVAL_CONSISTENCY;
-	bool m_bBUGFIX_UNIT_PREREQ_PROJECT;
-	bool m_bBUGFIX_HOVERING_PATHFINDER;
-	bool m_bBUGFIX_EMBARKING_PATHFINDER;
+	std::map<std::string, int> m_options;
 };
 
 extern CustomMods gCustomMods;

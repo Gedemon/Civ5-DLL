@@ -270,6 +270,9 @@ enum CvReligiousFollowChangeReason
     FOLLOWER_CHANGE_REMOVE_HERESY,
 	FOLLOWER_CHANGE_SCRIPTED_CONVERSION,
 	FOLLOWER_CHANGE_SPY_PRESSURE,
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+	FOLLOWER_CHANGE_ADOPT_FULLY,
+#endif
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

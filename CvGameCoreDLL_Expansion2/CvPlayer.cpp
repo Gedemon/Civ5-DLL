@@ -17724,20 +17724,26 @@ void CvPlayer::DoCivilianReturnLogic(bool bReturn, PlayerTypes eToPlayer, int iU
 
 				// Approach is very important
 				switch (GetDiplomacyAI()->GetMajorCivApproach(eToPlayer, false)) {
+					case MAJOR_CIV_APPROACH_WAR:
+						iPercent = iDefectProb * gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_WAR_MULTIPLIER", 0) / gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_DIVISOR", 8);
+						break;
 					case MAJOR_CIV_APPROACH_HOSTILE:
-						iPercent = iDefectProb / 4;
+						iPercent = iDefectProb * gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_HOSTILE_MULTIPLIER", 2) / gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_DIVISOR", 8);
 						break;
 					case MAJOR_CIV_APPROACH_GUARDED:
-						iPercent = iDefectProb / 2;
+						iPercent = iDefectProb * gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_GUARDED_MULTIPLIER", 4) / gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_DIVISOR", 8);
+						break;
+					case MAJOR_CIV_APPROACH_DECEPTIVE:
+						iPercent = iDefectProb * gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_DECEPTIVE_MULTIPLIER", 4) / gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_DIVISOR", 8);
 						break;
 					case MAJOR_CIV_APPROACH_AFRAID:
-						iPercent = iDefectProb / 2;
+						iPercent = iDefectProb * gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_AFRAID_MULTIPLIER", 4) / gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_DIVISOR", 8);
 						break;
 					case MAJOR_CIV_APPROACH_NEUTRAL:
-						iPercent = iDefectProb * 3 / 4;
+						iPercent = iDefectProb * gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_NEUTRAL_MULTIPLIER", 6) / gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_DIVISOR", 8);
 						break;
 					case MAJOR_CIV_APPROACH_FRIENDLY:
-						iPercent = iDefectProb * 5 / 4;
+						iPercent = iDefectProb * gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_FRIENDLY_MULTIPLIER", 10) / gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_DIVISOR", 8);
 						break;
 					default:
 						break;
@@ -17784,13 +17790,39 @@ void CvPlayer::DoCivilianReturnLogic(bool bReturn, PlayerTypes eToPlayer, int iU
 					iPercent /= 2;
 				}
 
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+				if (MOD_GLOBAL_RELIGIOUS_SETTLERS) {
+					ReligionTypes eReligion = pUnit->GetReligionData()->GetReligion();
+
+					if (eReligion > RELIGION_PANTHEON) {
+						const CvReligion* pkReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, NO_PLAYER);
+
+						if (pkReligion) {
+							CvPlot* pPlot = GC.getMap().plot(pkReligion->m_iHolyCityX, pkReligion->m_iHolyCityY);
+
+							if (pPlot) {
+								CvCity* pHolyCity = pPlot->getPlotCity();
+
+								if (pHolyCity->getOriginalOwner() == GetID()) {
+									// Bonus if the liberator founded their holy city
+									iPercent += gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_HOLYCITY_FOUNDER", 20);
+								} else if (pHolyCity->getOwner() == GetID()) {
+									// Serious bad karma if the liberator has captured their holy city
+									iPercent += gCustomMods.getOption("GLOBAL_GRATEFUL_SETTLERS_HOLYCITY_OCCUPIER", -20);
+								}
+							}
+						}
+					}
+				}
+#endif
+
 				// Limit the outcome
 				iPercent = std::min(80, iPercent);
 				
 				// Use the popularity difference between the players to skew the probability
 				int iSmileRatio = (GetExcessHappiness() * 100) / (std::max(0, GET_PLAYER(eToPlayer).GetExcessHappiness()) + 10);
 				iPercent = iPercent * std::min(150, std::max(75, iSmileRatio)) / 100;
-				CUSTOMLOG("Settler defect percent: %i", iPercent);
+				CUSTOMLOG("Settler defect percent: %i (Approach=%i, Opinion=%i)", iPercent, GetDiplomacyAI()->GetMajorCivApproach(eToPlayer, false), GetDiplomacyAI()->GetMajorCivOpinion(eToPlayer));
 
 				if (GC.getGame().getJonRandNum(100, "Settlers defect") < iPercent) {
 					if (GC.getGame().getActivePlayer() == GetID()) {

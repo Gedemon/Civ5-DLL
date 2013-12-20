@@ -2345,12 +2345,12 @@ void CvMinorCivAI::DoFirstContactWithMajor(TeamTypes eTeam, bool bSuppressMessag
 										}
 									}
 								}
-							} else if (eTrait == MINOR_CIV_TRAIT_MARITIME) {
+							} else if (eTrait == MINOR_CIV_TRAIT_MARITIME && pPlayer->getCapitalCity() != NULL) {
 								iGift = iGift + iFoodGift;
 
 								if (iFoodGift > 0) {
 									CvCity* pMinorCapital = GetPlayer()->getCapitalCity();
-									CvPlot* pPlot = pMinorCapital->plot();
+									CvPlot* pPlot = (pMinorCapital == NULL) ? GetPlayer()->getStartingPlot() : pMinorCapital->plot();
 
 									CvCity* pBestCity = NULL;
 

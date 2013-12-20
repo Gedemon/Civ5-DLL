@@ -10,8 +10,6 @@
 #ifndef CVDEFINES_H
 #define CVDEFINES_H
 
-#include "CustomMods.h"
-
 #define CITY_HOME_PLOT										(0)
 #if defined(MOD_GLOBAL_CITY_WORKING)
 #define MIN_CITY_RADIUS										(2)

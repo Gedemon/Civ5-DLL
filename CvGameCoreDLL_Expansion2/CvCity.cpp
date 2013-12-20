@@ -9346,7 +9346,39 @@ bool CvCity::IsBlockaded() const
 	{
 		return false;
 	}
+	
+#if defined(false)	
+	// TODO - WH - The standard logic says "if there is an enemy ship within two hexes of a port, it is blockaded"
+	// HOWEVER - this includes the situations where
+	// a) an enemy ship on the other side of a two-wide strip of land can blockade a port (ie enemy-land-port-water blockades the port)
+	// b) a port with two non-adjacent exits (ie on a one-wide strip of land) can be blockaded by a non-adjacent enemy (ie enemy-water-port-water blockades the port)
+	// What is needed is a check for every adjacent water plot to the port being blockaded, not a simple check of the port itself
 
+	for (int iPortLoop = 0; iPortLoop < NUM_DIRECTION_TYPES; ++iPortLoop) {
+		CvPlot* pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iPortLoop));
+		if (pAdjacentPlot && pAdjacentPlot->isWater() && !pAdjacentPlot->getVisibleEnemyDefender(getOwner())) {
+#if defined(MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES)
+			if (MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES) {
+				// Slightly complicated if there is a allied ship in range that is "un-blockading" the adjacent tiles
+				// A ship in port can escape into an adjacent water plot, but can it escape from there to the open sea?
+				for (int iWaterLoop = 0; iWaterLoop < NUM_DIRECTION_TYPES; ++iWaterLoop) {
+					CvPlot* pWaterPlot = plotDirection(pAdjacentPlot->getX(), pAdjacentPlot->getY(), ((DirectionTypes)iWaterLoop));
+					if (pWaterPlot && pWaterPlot->isWater() && pWaterPlot->getNumEnemies(getOwner()) == 0) {
+						// There's a gap in the cordon, so we're outta here!
+						return false;
+					}
+				}
+			} else {
+				return false;
+			}
+#else
+			return false;
+#endif
+		}
+	}
+	
+	return true;
+#else
 	int iRange = 2;
 	CvPlot* pLoopPlot = NULL;
 
@@ -9368,6 +9400,7 @@ bool CvCity::IsBlockaded() const
 	}
 
 	return false;
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -11516,7 +11549,7 @@ void CvCity::BuyPlot(int iPlotX, int iPlotY)
 	}
 
 	int iCost = GetBuyPlotCost(iPlotX, iPlotY);
-	CUSTOMLOG("Cost of plot at (%i, %i) is %i gold", iPlotX, iPlotY, iCost)
+	CUSTOMLOG("Cost of plot at (%i, %i) is %i gold", iPlotX, iPlotY, iCost);
 	CvPlayer& thisPlayer = GET_PLAYER(getOwner());
 	thisPlayer.GetTreasury()->LogExpenditure("", iCost, 1);
 	thisPlayer.GetTreasury()->ChangeGold(-iCost);

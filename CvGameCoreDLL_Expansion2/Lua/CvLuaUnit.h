@@ -12,8 +12,6 @@
 
 #include "CvLuaScopedInstance.h"
 
-#include "../CustomMods.h"
-
 class CvLuaUnit : public CvLuaScopedInstance<CvLuaUnit, CvUnit>
 {
 public:
@@ -97,10 +95,12 @@ protected:
 	static int lCanMakeTradeRoute(lua_State* L);
 	static int lCanMakeTradeRouteAt(lua_State* L);
 
-#if defined(MOD_API_LUA_EXTENSIONS)
+#if defined(MOD_API_TRADEROUTES)
 	LUAAPIEXTN(CanPlunderTradeRoute);
 	LUAAPIEXTN(PlunderTradeRoute);
+#endif
 
+#if defined(MOD_API_LUA_EXTENSIONS)
 	LUAAPIEXTN(CanCreateGreatWork);
 	LUAAPIEXTN(CreateGreatWork);
 #endif

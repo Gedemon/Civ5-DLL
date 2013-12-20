@@ -3660,7 +3660,12 @@ void CvCityReligions::AdoptReligionFully(ReligionTypes eReligion)
 	religion.m_bFoundedHere = false;
 	religion.m_eReligion = NO_RELIGION;
 	religion.m_iFollowers = 1;
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+	// This needs to be less than the pressure in a city with a pop of 1
+	religion.m_iPressure = religion.m_iFollowers * GC.getRELIGION_ATHEISM_PRESSURE_PER_POP() - 1;
+#else
 	religion.m_iPressure = religion.m_iFollowers * GC.getRELIGION_ATHEISM_PRESSURE_PER_POP();
+#endif
 	m_ReligionStatus.push_back(religion);
 
 	// Now add full pop of this religion
@@ -3669,6 +3674,12 @@ void CvCityReligions::AdoptReligionFully(ReligionTypes eReligion)
 	religion.m_iFollowers = m_pCity->getPopulation();
 	religion.m_iPressure = religion.m_iFollowers * GC.getRELIGION_ATHEISM_PRESSURE_PER_POP();
 	m_ReligionStatus.push_back(religion);
+
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+	if (MOD_GLOBAL_RELIGIOUS_SETTLERS) {
+		RecomputeFollowers(FOLLOWER_CHANGE_ADOPT_FULLY, NO_RELIGION);
+	}
+#endif
 
 	m_pCity->UpdateReligion(eReligion);
 }
@@ -4230,6 +4241,11 @@ void CvCityReligions::LogFollowersChange(CvReligiousFollowChangeReason eReason)
 		case FOLLOWER_CHANGE_SPY_PRESSURE:
 			strReasonString = "Spy pressure";
 			break;
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+		case FOLLOWER_CHANGE_ADOPT_FULLY:
+			strReasonString = "Adopt fully";
+			break;
+#endif
 		}
 		strOutBuf += strReasonString + ", ";
 		temp.Format("Pop: %d", m_pCity->getPopulation());

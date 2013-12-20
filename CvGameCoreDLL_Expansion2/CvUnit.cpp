@@ -630,6 +630,37 @@ void CvUnit::initWithNameOffset(int iID, UnitTypes eUnit, int iNameOffset, UnitA
 				GetReligionData()->SetReligiousStrength(getUnitInfo().GetReligiousStrength());
 			}
 		}
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+	}
+	else if (MOD_GLOBAL_RELIGIOUS_SETTLERS && (getUnitInfo().IsFound() || getUnitInfo().IsFoundAbroad()))
+	{
+		ReligionTypes eReligion = RELIGION_PANTHEON;
+
+		CvCity *pPlotCity = plot()->getPlotCity();
+		if (pPlotCity)
+		{
+			CvCityReligions *pCityReligions = pPlotCity->GetCityReligions();
+
+			int totalFollowers = pPlotCity->getPopulation();
+			int randFollower = GC.getGame().getJonRandNum(totalFollowers, "Religious Settlers: Picking a random religion for the settler") + 1;
+
+			for (int i = RELIGION_PANTHEON; i < GC.getNumReligionInfos(); i++)
+			{
+				int theseFollowers = pCityReligions->GetNumFollowers((ReligionTypes) i);
+
+				if (randFollower <= theseFollowers)
+				{
+					eReligion = (ReligionTypes) i;
+					break;
+				}
+
+				randFollower = randFollower - theseFollowers;
+				if (randFollower < 0) break;
+			}
+		}
+
+		GetReligionData()->SetReligion(eReligion);
+#endif
 	}
 	if (getUnitInfo().GetOneShotTourism() > 0)
 	{
@@ -7027,6 +7058,16 @@ bool CvUnit::found()
 		CUSTOMLOG("  ... success!  They founded %s", plot()->getPlotCity()->getName().c_str());
 	}
 #endif	
+
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+	if (MOD_GLOBAL_RELIGIOUS_SETTLERS && GetReligionData()->GetReligion() > RELIGION_PANTHEON)
+	{
+		CvCity *pNewCity = pPlot->getPlotCity();
+		if (pNewCity) {
+			pNewCity->GetCityReligions()->AdoptReligionFully(GetReligionData()->GetReligion());
+		}
+	}
+#endif
 
 	if(pPlot->isActiveVisible(false))
 	{

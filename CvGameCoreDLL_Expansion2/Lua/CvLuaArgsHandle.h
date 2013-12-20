@@ -17,8 +17,6 @@
 
 #include "ICvDLLScriptSystem.h"
 
-#include "..\CustomMods.h"
-
 //This is a simple utility class to manage construction and destruction of ScriptSystemArguments (used by GameEvents).
 class CvLuaArgsHandle
 {
