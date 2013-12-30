@@ -57,7 +57,18 @@ CvString LeagueHelpers::GetTextForChoice(ResolutionDecisionTypes eDecision, int 
 		}
 	case RESOLUTION_DECISION_CITY:
 		{
-			s = Localization::Lookup("TXT_KEY_RESOLUTION_CHOICE_CITY").toUTF8();
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+			if (MOD_GLOBAL_CSD_RESOLUTIONS) {
+				if (iChoice >= 0 && iChoice < MAX_CIV_PLAYERS)
+				{
+					Localization::String sTemp = Localization::Lookup("TXT_KEY_RESOLUTION_CHOICE_CITY_CSD");
+					sTemp << GET_PLAYER((PlayerTypes)iChoice).getCivilizationShortDescriptionKey();
+					s = sTemp.toUTF8();
+				}
+			} else
+#else
+				s = Localization::Lookup("TXT_KEY_RESOLUTION_CHOICE_CITY").toUTF8();
+#endif
 			break;
 		}
 	case RESOLUTION_DECISION_ANY_LUXURY_RESOURCE:
@@ -178,6 +189,10 @@ CvResolutionEffects::CvResolutionEffects(void)
 	iOneTimeGold = 0;
 	iOneTimeGoldPercent = 0;
 	bRaiseCityStateInfluenceToNeutral = false;
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+	bRaiseCityStateInfluenceToAlly = false;
+	bRaiseCityStateInfluenceToFriend = false;
+#endif
 	eLeagueProjectEnabled = NO_LEAGUE_PROJECT;
 	iGoldPerTurn = 0;
 	iResourceQuantity = 0;
@@ -211,6 +226,10 @@ CvResolutionEffects::CvResolutionEffects(ResolutionTypes eType)
 		iOneTimeGold						= pInfo->GetOneTimeGold();
 		iOneTimeGoldPercent					= pInfo->GetOneTimeGoldPercent();
 		bRaiseCityStateInfluenceToNeutral	= pInfo->IsRaiseCityStateInfluenceToNeutral();
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+		bRaiseCityStateInfluenceToAlly		= pInfo->IsRaiseCityStateInfluenceToAlly();
+		bRaiseCityStateInfluenceToFriend	= pInfo->IsRaiseCityStateInfluenceToFriend();
+#endif
 		eLeagueProjectEnabled				= pInfo->GetLeagueProjectEnabled();
 		iGoldPerTurn						= pInfo->GetGoldPerTurn();
 		iResourceQuantity					= pInfo->GetResourceQuantity();
@@ -348,6 +367,10 @@ FDataStream& operator>>(FDataStream& loadFrom, CvResolutionEffects& writeTo)
 	loadFrom >> writeTo.iOneTimeGold;
 	loadFrom >> writeTo.iOneTimeGoldPercent;
 	loadFrom >> writeTo.bRaiseCityStateInfluenceToNeutral;
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+	MOD_SERIALIZE_READ(35, loadFrom, writeTo.bRaiseCityStateInfluenceToAlly, false);
+	MOD_SERIALIZE_READ(35, loadFrom, writeTo.bRaiseCityStateInfluenceToFriend, false);
+#endif
 	if (uiVersion >= 3)
 	{
 		loadFrom >> writeTo.eLeagueProjectEnabled;
@@ -445,6 +468,10 @@ FDataStream& operator<<(FDataStream& saveTo, const CvResolutionEffects& readFrom
 	saveTo << readFrom.iOneTimeGold;
 	saveTo << readFrom.iOneTimeGoldPercent;
 	saveTo << readFrom.bRaiseCityStateInfluenceToNeutral;
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+	MOD_SERIALIZE_WRITE(saveTo, readFrom.bRaiseCityStateInfluenceToAlly);
+	MOD_SERIALIZE_WRITE(saveTo, readFrom.bRaiseCityStateInfluenceToFriend);
+#endif
 	saveTo << readFrom.eLeagueProjectEnabled;
 	saveTo << readFrom.iGoldPerTurn;
 	saveTo << readFrom.iResourceQuantity;
@@ -1250,6 +1277,9 @@ void CvActiveResolution::DoEffects(PlayerTypes ePlayer)
 	PlayerTypes eTargetPlayer = NO_PLAYER;
 	if (eProposerDecision == RESOLUTION_DECISION_ANY_MEMBER ||
 		eProposerDecision == RESOLUTION_DECISION_MAJOR_CIV_MEMBER ||
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+		(MOD_GLOBAL_CSD_RESOLUTIONS && eProposerDecision == RESOLUTION_DECISION_CITY) ||
+#endif
 		eProposerDecision == RESOLUTION_DECISION_OTHER_MAJOR_CIV_MEMBER)
 	{
 		eTargetPlayer = (PlayerTypes) GetProposerDecision()->GetDecision();
@@ -1279,6 +1309,9 @@ void CvActiveResolution::DoEffects(PlayerTypes ePlayer)
 	PlayerTypes eVotedPlayer = NO_PLAYER;
 	if (eVoterDecision == RESOLUTION_DECISION_ANY_MEMBER ||
 		eVoterDecision == RESOLUTION_DECISION_MAJOR_CIV_MEMBER ||
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+		(MOD_GLOBAL_CSD_RESOLUTIONS && eVoterDecision == RESOLUTION_DECISION_CITY) ||
+#endif
 		eVoterDecision == RESOLUTION_DECISION_OTHER_MAJOR_CIV_MEMBER)
 	{
 		eVotedPlayer = (PlayerTypes) GetVoterDecision()->GetDecision();
@@ -1315,22 +1348,93 @@ void CvActiveResolution::DoEffects(PlayerTypes ePlayer)
 	}
 	if (GetEffects()->bRaiseCityStateInfluenceToNeutral)
 	{
-		if (!GET_PLAYER(ePlayer).isMinorCiv())
-		{
-			int iNeutral = GC.getMINOR_FRIENDSHIP_ANCHOR_DEFAULT();
-			for (int iMinor = MAX_MAJOR_CIVS; iMinor < MAX_CIV_PLAYERS; iMinor++)
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+		if (MOD_GLOBAL_CSD_RESOLUTIONS) {
+			PlayerTypes eLoopPlayer;
+			for (int iPlayerLoop = 0; iPlayerLoop < MAX_CIV_PLAYERS; iPlayerLoop++)
 			{
-				PlayerTypes eMinor = (PlayerTypes) iMinor;
-				if (GET_PLAYER(eMinor).isAlive() && GET_PLAYER(eMinor).GetMinorCivAI()->GetBaseFriendshipWithMajor(ePlayer) < iNeutral)
+				eLoopPlayer = (PlayerTypes) iPlayerLoop;
+				if (!GET_PLAYER(eLoopPlayer).isMinorCiv())
 				{
-					if (pLeague->IsMember(eMinor))
+					if (GET_PLAYER(eLoopPlayer).isAlive())
 					{
-						GET_PLAYER(eMinor).GetMinorCivAI()->SetFriendshipWithMajor(ePlayer, iNeutral);
+						if (GET_PLAYER(eTargetPlayer).isMinorCiv() && GET_PLAYER(eTargetPlayer).isAlive())
+						{
+							if (pLeague->IsMember(eTargetPlayer))
+							{
+								GET_PLAYER(eTargetPlayer).GetMinorCivAI()->SetFriendshipWithMajor(eLoopPlayer, 40);
+							}
+						}
+					}
+				}	
+			}
+		} else {
+#else
+			if (!GET_PLAYER(ePlayer).isMinorCiv())
+			{
+				int iNeutral = GC.getMINOR_FRIENDSHIP_ANCHOR_DEFAULT();
+				for (int iMinor = MAX_MAJOR_CIVS; iMinor < MAX_CIV_PLAYERS; iMinor++)
+				{
+					PlayerTypes eMinor = (PlayerTypes) iMinor;
+					if (GET_PLAYER(eMinor).isAlive() && GET_PLAYER(eMinor).GetMinorCivAI()->GetBaseFriendshipWithMajor(ePlayer) < iNeutral)
+					{
+						if (pLeague->IsMember(eMinor))
+						{
+							GET_PLAYER(eMinor).GetMinorCivAI()->SetFriendshipWithMajor(ePlayer, iNeutral);
+						}
 					}
 				}
 			}
+#endif
+#if defined (MOD_GLOBAL_CSD_RESOLUTIONS)
+		}
+#endif
+	}
+
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+	if (MOD_GLOBAL_CSD_RESOLUTIONS) {
+		//To add/modify these, make sure to change or add all versions of the effect name throughout CvVvotingClasses.cpp and CvVotingClasses.h
+		//i.e. search for 'bRaiseCityStateInfluenceToAlly' on these two documents and change/add/remove all instances.
+		if (GetEffects()->bRaiseCityStateInfluenceToAlly)
+		{
+			if (!GET_PLAYER(ePlayer).isMinorCiv())
+			{
+				if (GET_PLAYER(eTargetPlayer).isMinorCiv() && GET_PLAYER(eTargetPlayer).isAlive())
+				{
+					if (pLeague->IsMember(eTargetPlayer))
+					{
+						GET_PLAYER(eTargetPlayer).GetMinorCivAI()->SetFriendshipWithMajor(ePlayer, 150);
+					}
+				}
+			}
+		}	
+
+		if (GetEffects()->bRaiseCityStateInfluenceToFriend)
+		{
+			PlayerTypes eLoopPlayer;
+			for (int iPlayerLoop = 0; iPlayerLoop < MAX_CIV_PLAYERS; iPlayerLoop++)
+			{
+				eLoopPlayer = (PlayerTypes) iPlayerLoop;
+				if (!GET_PLAYER(eLoopPlayer).isMinorCiv())
+				{
+					if (GET_PLAYER(eLoopPlayer).isAlive())
+					{
+						if (GET_PLAYER(eTargetPlayer).GetMinorCivAI()->GetAlly() == eLoopPlayer)
+						{
+							if (GET_PLAYER(eTargetPlayer).isMinorCiv() && GET_PLAYER(eTargetPlayer).isAlive())
+							{
+								if (pLeague->IsMember(eTargetPlayer))
+								{
+									GET_PLAYER(eTargetPlayer).GetMinorCivAI()->SetFriendshipWithMajor(eLoopPlayer, 50);
+								}
+							}
+						}
+					}
+				}	
+			}
 		}
 	}
+#endif
 
 	// == Ongoing Effects ==
 	if (GetEffects()->iGoldPerTurn != 0)
@@ -1505,6 +1609,9 @@ void CvActiveResolution::RemoveEffects(PlayerTypes ePlayer)
 	PlayerTypes eVotedPlayer = NO_PLAYER;
 	if (eVoterDecision == RESOLUTION_DECISION_ANY_MEMBER ||
 		eVoterDecision == RESOLUTION_DECISION_MAJOR_CIV_MEMBER ||
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+		(MOD_GLOBAL_CSD_RESOLUTIONS && eVoterDecision == RESOLUTION_DECISION_CITY) ||
+#endif
 		eVoterDecision == RESOLUTION_DECISION_OTHER_MAJOR_CIV_MEMBER)
 	{
 		eVotedPlayer = (PlayerTypes) GetVoterDecision()->GetDecision();
@@ -2891,6 +2998,17 @@ std::vector<int> CvLeague::GetChoicesForDecision(ResolutionDecisionTypes eDecisi
 		}
 		break;
 	case RESOLUTION_DECISION_CITY:
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+		if (MOD_GLOBAL_CSD_RESOLUTIONS) {
+			for (uint i = 0; i < m_vMembers.size(); i++)
+			{
+				if (GET_PLAYER(m_vMembers[i].ePlayer).isMinorCiv())
+				{
+					vChoices.push_back(m_vMembers[i].ePlayer);
+				}
+			}
+		}
+#endif
 		break;
 	case RESOLUTION_DECISION_ANY_LUXURY_RESOURCE:
 		for (int i = 0; i < GC.getNumResourceInfos(); i++)
@@ -10337,6 +10455,10 @@ CvResolutionEntry::CvResolutionEntry(void)
 	m_iOneTimeGold						= 0;
 	m_iOneTimeGoldPercent				= 0;
 	m_bRaiseCityStateInfluenceToNeutral	= false;
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+	m_bRaiseCityStateInfluenceToAlly	= false;
+	m_bRaiseCityStateInfluenceToFriend	= false;
+#endif
 	m_eLeagueProjectEnabled				= NO_LEAGUE_PROJECT;
 	m_iGoldPerTurn						= 0;
 	m_iResourceQuantity					= 0;
@@ -10383,6 +10505,10 @@ bool CvResolutionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtil
 	m_iOneTimeGold						= kResults.GetInt("OneTimeGold");
 	m_iOneTimeGoldPercent				= kResults.GetInt("OneTimeGoldPercent");
 	m_bRaiseCityStateInfluenceToNeutral	= kResults.GetBool("RaiseCityStateInfluenceToNeutral");
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+	m_bRaiseCityStateInfluenceToAlly	= kResults.GetBool("RaiseCityStateInfluenceToAlly");
+	m_bRaiseCityStateInfluenceToFriend	= kResults.GetBool("RaiseCityStateInfluenceToFriend");
+#endif
 	m_eLeagueProjectEnabled				= (LeagueProjectTypes) GC.getInfoTypeForString(kResults.GetText("LeagueProjectEnabled"), true);
 	m_iGoldPerTurn						= kResults.GetInt("GoldPerTurn");
 	m_iResourceQuantity					= kResults.GetInt("ResourceQuantity");
@@ -10471,6 +10597,18 @@ bool CvResolutionEntry::IsRaiseCityStateInfluenceToNeutral() const
 {
 	return m_bRaiseCityStateInfluenceToNeutral;
 }
+
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+bool CvResolutionEntry::IsRaiseCityStateInfluenceToAlly() const
+{
+	return MOD_GLOBAL_CSD_RESOLUTIONS && m_bRaiseCityStateInfluenceToAlly;
+}
+
+bool CvResolutionEntry::IsRaiseCityStateInfluenceToFriend() const
+{
+	return MOD_GLOBAL_CSD_RESOLUTIONS && m_bRaiseCityStateInfluenceToFriend;
+}
+#endif
 
 LeagueProjectTypes CvResolutionEntry::GetLeagueProjectEnabled() const
 {

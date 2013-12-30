@@ -36,6 +36,9 @@ class CvColorInfo;
 class CvPlayerColorInfo;
 class CvEntityEventInfo;
 class CvLandscapeInfo;
+#if defined(MOD_API_PLOT_YIELDS)
+class CvPlotInfo;
+#endif
 class CvTerrainInfo;
 class CvResourceClassInfo;
 class CvResourceInfo;
@@ -297,6 +300,12 @@ public:
 	int getNumMultiUnitFormationInfos();
 	std::vector<CvMultiUnitFormationInfo*>& getMultiUnitFormationInfo();
 	_Ret_maybenull_ CvMultiUnitFormationInfo* getMultiUnitFormationInfo(int i);
+
+#if defined(MOD_API_PLOT_YIELDS)
+	int getNumPlotInfos();
+	std::vector<CvPlotInfo*>& getPlotInfo();
+	CvPlotInfo* getPlotInfo(PlotTypes ePlotNum);
+#endif
 
 	int getNumTerrainInfos();
 	std::vector<CvTerrainInfo*>& getTerrainInfo();
@@ -7562,6 +7571,9 @@ protected:
 	std::vector<CvColorInfo*> m_paColorInfo;
 	std::vector<CvPlayerColorInfo*> m_paPlayerColorInfo;
 
+#if defined(MOD_API_PLOT_YIELDS)
+	std::vector<CvPlotInfo*> m_paPlotInfo;
+#endif
 	std::vector<CvTerrainInfo*> m_paTerrainInfo;
 	std::vector<CvYieldInfo*> m_paYieldInfo;
 	std::vector<CvRouteInfo*> m_paRouteInfo;

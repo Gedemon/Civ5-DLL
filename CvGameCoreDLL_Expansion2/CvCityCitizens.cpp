@@ -1851,7 +1851,7 @@ bool CvCityCitizens::IsPlotBlockaded(CvPlot* pPlot) const
 #endif
 					{
 						// Enemy boat within range to blockade our plot?
-						if(pNearbyPlot->IsActualEnemyUnit(ePlayer))
+						if(pNearbyPlot->IsActualEnemyUnit(ePlayer, true, true))
 						{
 #if defined(MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES)
 							if (MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES && iPlotDistance > 1) {

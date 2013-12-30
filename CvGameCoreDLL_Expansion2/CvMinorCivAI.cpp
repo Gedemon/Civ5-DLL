@@ -2551,6 +2551,70 @@ void CvMinorCivAI::DoTestEndWarsVSMinors(PlayerTypes eOldAlly, PlayerTypes eNewA
 	}
 }
 
+#if defined(MOD_GLOBAL_CS_NO_ALLIED_SKIRMISHES)
+// TODO - WH - clear any skirmishes between minors allied with the same major
+/// Are we at war with a minor also allied to our new BFF?
+void CvMinorCivAI::DoTestEndSkirmishes(PlayerTypes eNewAlly)
+{
+	if(!GetPlayer()->isAlive())
+		return;
+
+	PlayerTypes eOtherMinor;
+	int iOtherMinorLoop;
+	PlayerTypes eOtherAlly;
+	bool bForcedWar;
+
+	TeamTypes eLoopTeam;
+	for(int iTeamLoop = 0; iTeamLoop < MAX_CIV_TEAMS; iTeamLoop++)
+	{
+		eLoopTeam = (TeamTypes) iTeamLoop;
+
+		// Another Minor
+		if(!GET_TEAM(eLoopTeam).isMinorCiv())
+			continue;
+
+		// They're not alive!
+		if(!GET_TEAM(eLoopTeam).isAlive())
+			continue;
+
+		// At war with them
+		if(!GET_TEAM(GetPlayer()->getTeam()).isAtWar(eLoopTeam))
+			continue;
+
+		if(IsPermanentWar(eLoopTeam))
+			continue;
+
+		if(eNewAlly != NO_PLAYER)
+		{
+			// New ally IS at war (how???)
+			if(GET_TEAM(GET_PLAYER(eNewAlly).getTeam()).isAtWar(eLoopTeam))
+				continue;
+		}
+
+		for(iOtherMinorLoop = 0; iOtherMinorLoop < MAX_CIV_TEAMS; iOtherMinorLoop++)
+		{
+			eOtherMinor = (PlayerTypes) iOtherMinorLoop;
+
+			// Other minor is on this team
+			if(GET_PLAYER(eOtherMinor).getTeam() == eLoopTeam)
+			{
+				eOtherAlly = GET_PLAYER(eOtherMinor).GetMinorCivAI()->GetAlly();
+				if(eOtherAlly == eNewAlly)
+				{
+					// We are at war with our new ally's ally!
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+					GET_TEAM(GetPlayer()->getTeam()).makePeace(eLoopTeam, true, false, GetPlayer()->GetID());
+#else
+					GET_TEAM(GetPlayer()->getTeam()).makePeace(eLoopTeam);
+#endif
+				}
+			}
+
+		}
+	}
+}
+#endif
+
 /// Update what our status is
 void CvMinorCivAI::DoTurnStatus()
 {
@@ -6001,6 +6065,9 @@ void CvMinorCivAI::SetAlly(PlayerTypes eNewAlly)
 	}
 
 	DoTestEndWarsVSMinors(eOldAlly, eNewAlly);
+#if defined(MOD_GLOBAL_CS_NO_ALLIED_SKIRMISHES)
+	DoTestEndSkirmishes(eNewAlly);
+#endif
 
 	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
 	if(pkScriptSystem)

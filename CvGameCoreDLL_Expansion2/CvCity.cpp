@@ -4889,14 +4889,11 @@ int CvCity::GetPurchaseCost(BuildingTypes eBuilding)
 
 #if defined(MOD_BUILDINGS_PRO_RATA_PURCHASE)
 	int iProductionNeeded = getProductionNeeded(eBuilding);
-	// CUSTOMLOG("Base production needed for %s is %i", pkBuildingInfo->GetType(), iProductionNeeded);
 
 	if (MOD_BUILDINGS_PRO_RATA_PURCHASE) {
 		// Deduct any current production towards this building
 		int iProductionToDate = m_pCityBuildings->GetBuildingProduction(eBuilding);
-		// CUSTOMLOG("Production to date for %s is %i", pkBuildingInfo->GetType(), iProductionToDate);
 		iProductionNeeded -= (iProductionToDate * gCustomMods.getOption("BUILDINGS_PRO_RATA_PURCHASE_DEPRECIATION", 80)) / 100;
-		// CUSTOMLOG("Pro-rata production needed for %s is %i", pkBuildingInfo->GetType(), iProductionNeeded);
 	}
 	
 	int iCost = GetPurchaseCostFromProduction(iProductionNeeded);
@@ -4915,7 +4912,6 @@ int CvCity::GetPurchaseCost(BuildingTypes eBuilding)
 	iCost /= iDivisor;
 	iCost *= iDivisor;
 
-	// CUSTOMLOG("Gold cost of %s is %i", pkBuildingInfo->GetType(), iCost);
 	return iCost;
 }
 
@@ -6771,8 +6767,7 @@ bool CvCity::isCoastal(int iMinWaterSize) const
 bool CvCity::isAddsFreshWater() const {
 	VALIDATE_OBJECT
 
-	int iNumBuildingInfos = GC.getNumBuildingInfos();
-	for (int iI = 0; iI < iNumBuildingInfos; iI++) {
+	for (int iI = 0; iI < GC.getNumBuildingInfos(); iI++) {
 		if (m_pCityBuildings->GetNumBuilding((BuildingTypes)iI) > 0) {
 			if (GC.getBuildingInfo((BuildingTypes)iI)->IsAddsFreshWater()) {
 				return true;
@@ -7670,7 +7665,6 @@ void CvCity::DoJONSCultureLevelIncrease()
 					Localization::String localizedSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_CITY_CULTURE_ACQUIRED_NEW_PLOT");
 					localizedSummary << getNameKey();
 					pNotifications->Add(NOTIFICATION_CITY_TILE, localizedText.toUTF8(), localizedSummary.toUTF8(), getX(), getY(), GetID());
-					// CUSTOMLOG("Added NOTIFICATION_CITY_TILE for %s at (%i, %i)", getName().c_str(), getX(), getY());
 				}
 			} else {
 				// The cheapest plot we can have is outside our working/buying distance, so just acquire it
@@ -9347,59 +9341,47 @@ bool CvCity::IsBlockaded() const
 		return false;
 	}
 	
-#if defined(false)	
-	// TODO - WH - The standard logic says "if there is an enemy ship within two hexes of a port, it is blockaded"
-	// HOWEVER - this includes the situations where
-	// a) an enemy ship on the other side of a two-wide strip of land can blockade a port (ie enemy-land-port-water blockades the port)
-	// b) a port with two non-adjacent exits (ie on a one-wide strip of land) can be blockaded by a non-adjacent enemy (ie enemy-water-port-water blockades the port)
-	// What is needed is a check for every adjacent water plot to the port being blockaded, not a simple check of the port itself
+#if defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
+	if (MOD_GLOBAL_ADJACENT_BLOCKADES) {
+		// The standard logic says "if there is an enemy ship within two hexes of a port, it is blockaded"
+		// HOWEVER - this includes the situations where
+		//   a) an enemy ship on the other side of a two-wide strip of land can blockade a port (ie enemy-land-port-water blockades the port)
+		//   b) a port with two non-adjacent exits (ie on a one-wide strip of land) can be blockaded by a non-adjacent enemy (ie enemy-water-port-water blockades the port)
+		// What is needed is a check for every adjacent water plot to the port being blockaded, not a simple check of the port itself
 
-	for (int iPortLoop = 0; iPortLoop < NUM_DIRECTION_TYPES; ++iPortLoop) {
-		CvPlot* pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iPortLoop));
-		if (pAdjacentPlot && pAdjacentPlot->isWater() && !pAdjacentPlot->getVisibleEnemyDefender(getOwner())) {
-#if defined(MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES)
-			if (MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES) {
-				// Slightly complicated if there is a allied ship in range that is "un-blockading" the adjacent tiles
-				// A ship in port can escape into an adjacent water plot, but can it escape from there to the open sea?
-				for (int iWaterLoop = 0; iWaterLoop < NUM_DIRECTION_TYPES; ++iWaterLoop) {
-					CvPlot* pWaterPlot = plotDirection(pAdjacentPlot->getX(), pAdjacentPlot->getY(), ((DirectionTypes)iWaterLoop));
-					if (pWaterPlot && pWaterPlot->isWater() && pWaterPlot->getNumEnemies(getOwner()) == 0) {
-						// There's a gap in the cordon, so we're outta here!
-						return false;
-					}
-				}
-			} else {
+		for (int iPortLoop = 0; iPortLoop < NUM_DIRECTION_TYPES; ++iPortLoop) {
+			CvPlot* pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iPortLoop));
+			if (pAdjacentPlot && pAdjacentPlot->isWater() && !pAdjacentPlot->isBlockaded(getOwner())) {
 				return false;
 			}
-#else
-			return false;
-#endif
 		}
-	}
 	
-	return true;
-#else
-	int iRange = 2;
-	CvPlot* pLoopPlot = NULL;
+		return true;
+	} else {
+#endif
+		int iRange = 2;
+		CvPlot* pLoopPlot = NULL;
 
-	for(int iDX = -iRange; iDX <= iRange; iDX++)
-	{
-		for(int iDY = -iRange; iDY <= iRange; iDY++)
+		for(int iDX = -iRange; iDX <= iRange; iDX++)
 		{
-			pLoopPlot = plotXYWithRangeCheck(getX(), getY(), iDX, iDY, iRange);
-			if(!pLoopPlot)
+			for(int iDY = -iRange; iDY <= iRange; iDY++)
 			{
-				continue;
-			}
+				pLoopPlot = plotXYWithRangeCheck(getX(), getY(), iDX, iDY, iRange);
+				if(!pLoopPlot)
+				{
+					continue;
+				}
 
-			if(pLoopPlot->isWater() && pLoopPlot->getVisibleEnemyDefender(getOwner()))
-			{
-				return true;
+				if(pLoopPlot->isWater() && pLoopPlot->getVisibleEnemyDefender(getOwner()))
+				{
+					return true;
+				}
 			}
 		}
-	}
 
-	return false;
+		return false;
+#if defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
+	}
 #endif
 }
 
@@ -11549,7 +11531,6 @@ void CvCity::BuyPlot(int iPlotX, int iPlotY)
 	}
 
 	int iCost = GetBuyPlotCost(iPlotX, iPlotY);
-	CUSTOMLOG("Cost of plot at (%i, %i) is %i gold", iPlotX, iPlotY, iCost);
 	CvPlayer& thisPlayer = GET_PLAYER(getOwner());
 	thisPlayer.GetTreasury()->LogExpenditure("", iCost, 1);
 	thisPlayer.GetTreasury()->ChangeGold(-iCost);

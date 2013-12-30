@@ -5534,6 +5534,71 @@ bool CvPlot::IsHomeFrontForPlayer(PlayerTypes ePlayer) const
 	return false;
 }
 
+#if defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
+//	--------------------------------------------------------------------------------
+bool CvPlot::isBlockaded(PlayerTypes ePlayer)
+{
+	if (!isWater()) {
+		return false;
+	}
+
+	// An enemy ship on the plot trumps all
+	if (getVisibleEnemyDefender(ePlayer)) {
+		return true;
+	}
+
+#if defined(MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES)
+	if (MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES) {
+		// An allied ship on the plot secures the plot
+		if (IsActualAlliedUnit(ePlayer)) {
+			return false;
+		}
+	}
+#endif
+
+	// An enemy ship adjacent to the plot blockades it
+	for (int iEnemyLoop = 0; iEnemyLoop < NUM_DIRECTION_TYPES; ++iEnemyLoop) {
+		CvPlot* pEnemyPlot = plotDirection(getX(), getY(), ((DirectionTypes)iEnemyLoop));
+
+		if (pEnemyPlot && (pEnemyPlot->isWater() || pEnemyPlot->isCity()) && pEnemyPlot->IsActualEnemyUnit(ePlayer, true, true)) {
+			return true;
+		}
+	}
+
+#if defined(MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES)
+	if (MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES) {
+		// An allied ship adjacent to the plot secures it
+		for (int iAlliedLoop = 0; iAlliedLoop < NUM_DIRECTION_TYPES; ++iAlliedLoop) {
+			CvPlot* pAlliedPlot = plotDirection(getX(), getY(), ((DirectionTypes)iAlliedLoop));
+
+			if (pAlliedPlot && (pAlliedPlot->isWater() || pAlliedPlot->isCity()) && pAlliedPlot->IsActualAlliedUnit(ePlayer)) {
+				return false;
+			}
+		}
+	}
+#endif
+
+	// An enemy ship 2 tiles away blockades it
+	int iRange = 2;
+	CvPlot* pLoopPlot = NULL;
+
+	for (int iDX = -iRange; iDX <= iRange; iDX++) {
+		for (int iDY = -iRange; iDY <= iRange; iDY++) {
+			pLoopPlot = plotXY(getX(), getY(), iDX, iDY);
+			if (!pLoopPlot || plotDistance(getX(), getY(), pLoopPlot->getX(), pLoopPlot->getY()) != iRange) {
+				continue;
+			}
+
+			if (pLoopPlot->isWater() && pLoopPlot->IsActualEnemyUnit(ePlayer, true, true)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 bool CvPlot::isFlatlands() const
 {
@@ -7332,6 +7397,7 @@ int CvPlot::calculateNatureYield(YieldTypes eYield, TeamTypes eTeam, bool bIgnor
 	ReligionTypes eMajority = NO_RELIGION;
 	BeliefTypes eSecondaryPantheon = NO_BELIEF;
 
+#if !defined(MOD_RELIGION_PLOT_YIELDS)
 	if(isImpassable() || isMountain())
 	{
 		// No Feature, or the Feature isn't a Natural Wonder (which are impassable but allowed to be worked)
@@ -7340,6 +7406,7 @@ int CvPlot::calculateNatureYield(YieldTypes eYield, TeamTypes eTeam, bool bIgnor
 			return 0;
 		}
 	}
+#endif
 
 	const CvYieldInfo& kYield = *GC.getYieldInfo(eYield);
 
@@ -7352,7 +7419,13 @@ int CvPlot::calculateNatureYield(YieldTypes eYield, TeamTypes eTeam, bool bIgnor
 
 	CvAssertMsg(getTerrainType() != NO_TERRAIN, "TerrainType is not assigned a valid value");
 
-	iYield = GC.getTerrainInfo(getTerrainType())->getYield(eYield);
+#if defined(MOD_RELIGION_PLOT_YIELDS)
+	// Impassable terrain and mountains have no base yield
+	if(isImpassable() || isMountain()) {
+		iYield = 0;
+	} else
+#endif
+		iYield = GC.getTerrainInfo(getTerrainType())->getYield(eYield);
 
 	// Extra yield for religion on this terrain
 	if(pWorkingCity != NULL && eMajority != NO_RELIGION)
@@ -7365,6 +7438,15 @@ int CvPlot::calculateNatureYield(YieldTypes eYield, TeamTypes eTeam, bool bIgnor
 			{
 				iReligionChange += GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon)->GetTerrainYieldChange(getTerrainType(), eYield);
 			}
+			
+#if defined(MOD_RELIGION_PLOT_YIELDS)
+			iReligionChange += pReligion->m_Beliefs.GetPlotYieldChange(getPlotType(), eYield);
+			if (eSecondaryPantheon != NO_BELIEF)
+			{
+				iReligionChange += GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon)->GetPlotYieldChange(getPlotType(), eYield);
+			}
+#endif
+
 			iYield += iReligionChange;
 		}
 	}

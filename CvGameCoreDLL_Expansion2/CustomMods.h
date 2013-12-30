@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 34)
+#define MOD_DLL_VERSION_NUMBER ((uint) 35)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -81,6 +81,8 @@
 #define MOD_GLOBAL_CAPTURE_AFTER_ATTACKING          gCustomMods.isGLOBAL_CAPTURE_AFTER_ATTACKING()
 // Remove assembled spaceship parts from conquered capitals
 #define MOD_GLOBAL_NO_CONQUERED_SPACESHIPS          gCustomMods.isGLOBAL_NO_CONQUERED_SPACESHIPS()
+// TODO - WH - MOD_GLOBAL_ADJACENT_BLOCKADES
+// #define MOD_GLOBAL_ADJACENT_BLOCKADES               (true)
 // Adjacent allied ships block blockades by enemy ships 2 or more tiles away
 #define MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES           gCustomMods.isGLOBAL_ALLIES_BLOCK_BLOCKADES()
 // Embarked combat units only blockade adjacent tiles
@@ -101,6 +103,10 @@
 #define MOD_GLOBAL_NUKES_MELT_ICE                   gCustomMods.isGLOBAL_NUKES_MELT_ICE() 
 // Great Works can generate different yields than just culture
 #define MOD_GLOBAL_GREATWORK_YIELDTYPES             gCustomMods.isGLOBAL_GREATWORK_YIELDTYPES() 
+
+// Changes for the City State Diplomacy mod by Gazebo - AFFECTS SAVE GAME DATA FORMAT
+#define MOD_GLOBAL_CSD                              gCustomMods.isGLOBAL_CSD()
+#define MOD_GLOBAL_CSD_RESOLUTIONS                  (MOD_GLOBAL_CSD)
 
 // Permits land units to cross ice - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_TRAITS_CROSSES_ICE                      gCustomMods.isTRAITS_CROSSES_ICE()
@@ -157,6 +163,8 @@
 #define MOD_RELIGION_CONVERSION_MODIFIERS           gCustomMods.isRELIGION_CONVERSION_MODIFIERS()
 // Keeps overflow faith from spawning a Great Prophet if the base spawn chance is 100%
 #define MOD_RELIGION_KEEP_PROPHET_OVERFLOW          gCustomMods.isRELIGION_KEEP_PROPHET_OVERFLOW()
+// Adds support for the Belief_PlotYieldChanges table
+#define MOD_RELIGION_PLOT_YIELDS                    gCustomMods.isRELIGION_PLOT_YIELDS()
 
 // Enables production to be stockpiled
 #define MOD_PROCESS_STOCKPILE                       gCustomMods.isPROCESS_STOCKPILE()
@@ -315,8 +323,10 @@
 #define MOD_API_TRADEROUTES                         gCustomMods.isAPI_TRADEROUTES()
 // Enables the Religion API
 #define MOD_API_RELIGION                            gCustomMods.isAPI_RELIGION()
-// Enabes the Plot Based Damage API (replaces fixed damage from mountains)
+// Enables the Plot Based Damage API (replaces fixed damage from mountains)
 #define MOD_API_PLOT_BASED_DAMAGE                   gCustomMods.isAPI_PLOT_BASED_DAMAGE()
+// Enables the Plot Yield tables
+#define MOD_API_PLOT_YIELDS                         (true)
 // Enables the Extensions API
 #define MOD_API_EXTENSIONS                          gCustomMods.isAPI_EXTENSIONS()
 // Enables the LUA Extensions API
@@ -518,10 +528,10 @@ enum TerraformingEventTypes {
 #define MOD_SERIALIZE
 
 #if defined(MOD_SERIALIZE)
-#define MOD_SERIALIZE_INIT_READ(stream) uint uDllSaveVersion; stream >> uDllSaveVersion
-#define MOD_SERIALIZE_READ(version, stream, member, def) if (uDllSaveVersion >= version) { stream >> member; } else { member = def; }
-#define MOD_SERIALIZE_INIT_WRITE(stream) uint uDllSaveVersion = MOD_DLL_VERSION_NUMBER ; stream << uDllSaveVersion
-#define MOD_SERIALIZE_WRITE(stream, member) CvAssert(uDllSaveVersion == MOD_DLL_VERSION_NUMBER); stream << member
+#define MOD_SERIALIZE_INIT_READ(stream) uint uiDllSaveVersion; stream >> uiDllSaveVersion
+#define MOD_SERIALIZE_READ(version, stream, member, def) if (uiDllSaveVersion >= version) { stream >> member; } else { member = def; }
+#define MOD_SERIALIZE_INIT_WRITE(stream) uint uiDllSaveVersion = MOD_DLL_VERSION_NUMBER; stream << uiDllSaveVersion
+#define MOD_SERIALIZE_WRITE(stream, member) CvAssert(uiDllSaveVersion == MOD_DLL_VERSION_NUMBER); stream << member
 #else
 #define MOD_SERIALIZE_INIT_READ(stream, member) __noop
 #define MOD_SERIALIZE_READ(stream, member) __noop
@@ -592,6 +602,7 @@ public:
 	MOD_OPT_DECL(GLOBAL_PARATROOPS_AA_DAMAGE);
 	MOD_OPT_DECL(GLOBAL_NUKES_MELT_ICE); 
 	MOD_OPT_DECL(GLOBAL_GREATWORK_YIELDTYPES); 
+	MOD_OPT_DECL(GLOBAL_CSD); 
 
 	MOD_OPT_DECL(TRAITS_CROSSES_ICE);
 	MOD_OPT_DECL(TRAITS_CITY_WORKING);
@@ -625,6 +636,7 @@ public:
 	MOD_OPT_DECL(RELIGION_RANDOMISE);
 	MOD_OPT_DECL(RELIGION_CONVERSION_MODIFIERS);
 	MOD_OPT_DECL(RELIGION_KEEP_PROPHET_OVERFLOW);
+	MOD_OPT_DECL(RELIGION_PLOT_YIELDS);
 
 	MOD_OPT_DECL(PROCESS_STOCKPILE);
 

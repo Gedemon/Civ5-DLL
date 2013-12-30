@@ -6776,13 +6776,13 @@ void CvPlayer::AwardFreeBuildings(CvCity* pCity)
 		if(eBuilding != NO_BUILDING)
 		{
 			pCity->GetCityBuildings()->SetNumFreeBuilding(eBuilding, 1);
-#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
 		}
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
 		else
 		{
 			pCity->SetOwedFoodBuilding(true);
-#endif
 		}
+#endif
 
 		ChangeNumCitiesFreeFoodBuilding(-1);
 	}
@@ -21711,13 +21711,13 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 					pLoopCity->clearOrderQueue();
 					pLoopCity->chooseProduction();		// Send a notification to the user that what they were building was given to them, and they need to produce something else.
 				}
-#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
 			}
+#if defined(MOD_BUGFIX_FREE_FOOD_BUILDING)
 			else
 			{
 				pLoopCity->SetOwedFoodBuilding(true);
-#endif
 			}
+#endif
 
 			// Decrement cities left to get free food building (at end of loop we'll set the remainder)
 			iNumCitiesFreeFoodBuilding--;

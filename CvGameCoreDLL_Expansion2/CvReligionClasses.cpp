@@ -5594,6 +5594,15 @@ int CvReligionAI::ScoreBeliefAtPlot(CvBeliefEntry* pEntry, CvPlot* pPlot)
 			iRtnValue += pEntry->GetTerrainYieldChange(eTerrain, iI);
 		}
 
+#if defined(MOD_RELIGION_PLOT_YIELDS)
+		// Plot
+		PlotTypes ePlot = pPlot->getPlotType();
+		if(ePlot != NO_PLOT)
+		{
+			iRtnValue += pEntry->GetPlotYieldChange(ePlot, iI);
+		}
+#endif
+
 		// Feature
 		FeatureTypes eFeature = pPlot->getFeatureType();
 		if(eFeature != NO_FEATURE)

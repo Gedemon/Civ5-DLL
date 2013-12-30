@@ -462,6 +462,10 @@ public:
 		return m_iRiverCrossingCount > 0;
 	}
 
+#if defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
+	bool isBlockaded(PlayerTypes ePlayer);
+#endif
+
 	TerrainTypes getTerrainType() const
 	{
 		return (TerrainTypes)m_eTerrainType;

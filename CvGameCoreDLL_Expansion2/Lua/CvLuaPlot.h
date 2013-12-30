@@ -51,6 +51,10 @@ protected:
 	//! (LUA) CvPlot::IsWater.
 	static int lIsWater(lua_State* L);
 
+#if defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
+	LUAAPIEXTN(IsBlockaded);
+#endif
+
 	//! (LUA) CvPlot::SetFeatureType.
 	static int lSetFeatureType(lua_State* L);
 

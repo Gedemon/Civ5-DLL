@@ -2626,6 +2626,28 @@ CvMultiUnitFormationInfo* CvGlobals::getMultiUnitFormationInfo(int i)
 		return NULL;
 }
 
+#if defined(MOD_API_PLOT_YIELDS)
+int CvGlobals::getNumPlotInfos()
+{
+	return (int)m_paPlotInfo.size();
+}
+
+std::vector<CvPlotInfo*>& CvGlobals::getPlotInfo()
+{
+	return m_paPlotInfo;
+}
+
+CvPlotInfo* CvGlobals::getPlotInfo(PlotTypes ePlotNum)
+{
+	CvAssert(ePlotNum > -1);
+	CvAssert(ePlotNum < GC.getNumPlotInfos());
+	if(ePlotNum > -1 && ePlotNum < (int)m_paPlotInfo.size())
+		return m_paPlotInfo[ePlotNum];
+	else
+		return NULL;
+}
+#endif
+
 int CvGlobals::getNumTerrainInfos()
 {
 	return (int)m_paTerrainInfo.size();
@@ -5949,6 +5971,9 @@ void CvGlobals::deleteInfoArrays()
 	deleteInfoArray(m_paPlayerOptionInfos);
 
 	deleteInfoArray(m_paYieldInfo);
+#if defined(MOD_API_PLOT_YIELDS)
+	deleteInfoArray(m_paPlotInfo);
+#endif
 	deleteInfoArray(m_paTerrainInfo);
 	deleteInfoArray(m_paFeatureInfo);
 	deleteInfoArray(m_paResourceClassInfo);

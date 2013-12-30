@@ -1343,6 +1343,53 @@ CvPlot* CvPlayerAI::FindBestMerchantTargetPlot(CvUnit* pGreatMerchant, bool bOnl
 			continue;
 		}
 
+#if defined(MOD_GLOBAL_CSD)
+		if (MOD_GLOBAL_CSD) {
+			// Putmalk: Don't consider targets that we're friendly with an our influence is pretty high (i.e. at least 50 influence over the Ally threshold)
+			// Content below created by Putmalk - Gazebo
+			if (kPlayer.GetMinorCivAI()->IsAllies(GetID()))
+			{
+				// If our friendship is already 90 influence or higher than the allied threshold, don't send our merchant there
+				if(kPlayer.GetMinorCivAI()->GetEffectiveFriendshipWithMajor(GetID()) >= (kPlayer.GetMinorCivAI()->GetAlliesThreshold() + 50))
+				{
+					continue;
+				}
+			}
+
+			// Putmalk: Don't consider targets that have an ally with another major civ that our influence bonus wouldn't be enough to make some impact
+			PlayerTypes eMajor;
+			bool bHasHighAlly = false;
+			for(int iI = 0; iI < MAX_MAJOR_CIVS; iI++)
+			{
+				eMajor = (PlayerTypes) iI;
+				// don't care about us or teammates
+				if(GET_PLAYER(eMajor).getTeam() != getTeam())
+				{
+					// Only care if they are allies
+					if(kPlayer.GetMinorCivAI()->IsAllies(eMajor))
+					{
+						// If their friendship after a trade mission is greater than the influence we would get from a gold gift of 250, then don't care
+						// i.e. they have 120 influence, we have 40, and a 250 gold gift gives 15
+						// 120 > (30 + 40 + 15)
+						if(kPlayer.GetMinorCivAI()->GetEffectiveFriendshipWithMajor(eMajor) >		// Rival influence
+							(pGreatMerchant->getTradeInfluence(kPlayer.getCapitalCity()->plot()) +	// 30 influence, Venice: 60 influence
+							kPlayer.GetMinorCivAI()->GetEffectiveFriendshipWithMajor(GetID()) +		// Our current influence
+							kPlayer.GetMinorCivAI()->GetFriendshipFromGoldGift(GetID(), GC.getMINOR_GOLD_GIFT_SMALL()) + // What we would get from a 250 gold gift to this player
+							100)) 
+						{
+							// If we got this far no need to evaluate this minor civ anymore
+							bHasHighAlly = true;
+							break;
+						}
+					}
+				}
+			}
+
+			if(bHasHighAlly)
+				continue;
+		}
+#endif
+
 		// Is this a minor we are friendly with?
 		bool bMinorCivApproachIsCorrect = (GetDiplomacyAI()->GetMinorCivApproach(kPlayer.GetID()) != MINOR_CIV_APPROACH_CONQUEST);
 		bool bNotAtWar = !kTeam.isAtWar(kPlayer.getTeam());
@@ -1373,6 +1420,79 @@ CvPlot* CvPlayerAI::FindBestMerchantTargetPlot(CvUnit* pGreatMerchant, bool bOnl
 			}
 		}
 	}
+
+#if defined(MOD_GLOBAL_CSD)
+	if (MOD_GLOBAL_CSD) {
+		// Putmalk: a bit of a hack here, in the best case scenario we don't want this block of code to run
+		// This is essentially repeat code, we really don't want this to run
+		// This will run if the game is 60% done and there are no valid city-states...
+		if(pBestTargetPlot == NULL && (GC.getGame().getGameTurn() > (GC.getGame().getEstimateEndTurn() * 60 / 100 )))
+		{
+			PlayerTypes eMinor;
+			// Loop through all majors
+			for(int iI = 0; iI < MAX_PLAYERS; iI++)
+			{
+				if(!GET_PLAYER((PlayerTypes)iI).isMinorCiv())
+				{
+					continue;
+				}
+
+				eMinor = (PlayerTypes) iI;
+				CvPlayerAI& kPlayer = GET_PLAYER(eMinor);
+
+				CvPlot* pCSPlot = kPlayer.getStartingPlot();
+				if (!pCSPlot)
+				{
+					continue;
+				}
+
+				if (!pCSPlot->isRevealed(getTeam()))
+				{
+					continue;
+				}
+
+				// Putmalk: Don't consider targets that we're friendly with an our influence is pretty high (i.e. at least 400 influence over the Ally threshold)
+				if (kPlayer.GetMinorCivAI()->IsAllies(GetID()))
+				{
+					// If our friendship is already 300 influence or higher than the allied threshold, don't send our merchant there
+					if(kPlayer.GetMinorCivAI()->GetEffectiveFriendshipWithMajor(GetID()) >= (kPlayer.GetMinorCivAI()->GetAlliesThreshold() + 400))
+					{
+						continue;
+					}
+				}
+				// Is this a minor we are friendly with?
+				bool bMinorCivApproachIsCorrect = (GetDiplomacyAI()->GetMinorCivApproach(kPlayer.GetID()) != MINOR_CIV_APPROACH_CONQUEST);
+				bool bNotAtWar = !kTeam.isAtWar(kPlayer.getTeam());
+				bool bNotPlanningAWar = GetDiplomacyAI()->GetWarGoal(kPlayer.GetID()) == NO_WAR_GOAL_TYPE;
+
+				if(bMinorCivApproachIsCorrect && bNotAtWar && bNotPlanningAWar)
+				{
+					// Search all the plots adjacent to this city (since can't enter the minor city plot itself)
+					for(int jJ = 0; jJ < NUM_DIRECTION_TYPES; jJ++)
+					{
+						CvPlot* pAdjacentPlot = plotDirection(pCSPlot->getX(), pCSPlot->getY(), ((DirectionTypes)jJ));
+						if(pAdjacentPlot != NULL)
+						{
+							// Make sure this is still owned by the city state and is revealed to us and isn't a water tile
+							//if(pAdjacentPlot->getOwner() == (PlayerTypes)iI && pAdjacentPlot->isRevealed(getTeam()) && !pAdjacentPlot->isWater())
+							bool bRightOwner = (pAdjacentPlot->getOwner() == (PlayerTypes)iI);
+							bool bIsRevealed = pAdjacentPlot->isRevealed(getTeam());
+							if(bRightOwner && bIsRevealed)
+							{
+								iPathTurns = TurnsToReachTarget(pMerchant, pAdjacentPlot, true /*bReusePaths*/, !bOnlySafePaths/*bIgnoreUnits*/);
+								if(iPathTurns < iBestTurnsToReach)
+								{
+									iBestTurnsToReach = iPathTurns;
+									pBestTargetPlot = pAdjacentPlot;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+#endif
 
 	return pBestTargetPlot;
 }

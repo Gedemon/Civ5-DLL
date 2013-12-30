@@ -36,6 +36,9 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 #endif
 	Method(IsRiver);
 	Method(IsWater);
+#if defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
+	Method(IsBlockaded);
+#endif
 	Method(SetFeatureType);
 	Method(SetTerrainType);
 
@@ -367,6 +370,18 @@ int CvLuaPlot::lIsWater(lua_State* L)
 
 	return 1;
 }
+#if defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
+//------------------------------------------------------------------------------
+int CvLuaPlot::lIsBlockaded(lua_State* L)
+{
+	CvPlot* pkPlot = GetInstance(L);
+	const int playerType = lua_tointeger(L, 2);
+
+	lua_pushboolean(L, pkPlot->isBlockaded((PlayerTypes)playerType));
+
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 int CvLuaPlot::lSetFeatureType(lua_State* L)
 {

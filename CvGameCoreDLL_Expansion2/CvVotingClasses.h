@@ -104,6 +104,10 @@ struct CvResolutionEffects
 	int iOneTimeGold;
 	int iOneTimeGoldPercent;
 	bool bRaiseCityStateInfluenceToNeutral;
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+	bool bRaiseCityStateInfluenceToAlly;
+	bool bRaiseCityStateInfluenceToFriend;
+#endif
 	LeagueProjectTypes eLeagueProjectEnabled;
 	int iGoldPerTurn;
 	int iResourceQuantity;
@@ -1209,6 +1213,10 @@ public:
 	int GetOneTimeGold() const;
 	int GetOneTimeGoldPercent() const;
 	bool IsRaiseCityStateInfluenceToNeutral() const;
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+	bool IsRaiseCityStateInfluenceToAlly() const;
+	bool IsRaiseCityStateInfluenceToFriend() const;
+#endif
 	LeagueProjectTypes GetLeagueProjectEnabled() const;
 	int GetGoldPerTurn() const;
 	int GetResourceQuantity() const;
@@ -1244,6 +1252,10 @@ protected:
 	int m_iOneTimeGold;
 	int m_iOneTimeGoldPercent;
 	bool m_bRaiseCityStateInfluenceToNeutral;
+#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+	bool m_bRaiseCityStateInfluenceToAlly;
+	bool m_bRaiseCityStateInfluenceToFriend;
+#endif
 	LeagueProjectTypes m_eLeagueProjectEnabled;
 	int m_iGoldPerTurn;
 	int m_iResourceQuantity;
