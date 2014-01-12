@@ -451,6 +451,11 @@ void CvPlayerAI::AI_chooseFreeGreatPerson()
 			}
 			else if(eVictoryStrategy == (AIGrandStrategyTypes) GC.getInfoTypeForString("AIGRANDSTRATEGY_UNITED_NATIONS"))
 			{
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+				if (MOD_DIPLOMACY_CITYSTATES)
+					eDesiredGreatPerson = (UnitTypes)GC.getInfoTypeForString("UNIT_GREAT_DIPLOMAT");
+				else
+#endif
 #if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
 				eDesiredGreatPerson = GetSpecificUnitType("UNITCLASS_MERCHANT");
 #else
@@ -1343,10 +1348,9 @@ CvPlot* CvPlayerAI::FindBestMerchantTargetPlot(CvUnit* pGreatMerchant, bool bOnl
 			continue;
 		}
 
-#if defined(MOD_GLOBAL_CSD)
-		if (MOD_GLOBAL_CSD) {
-			// Putmalk: Don't consider targets that we're friendly with an our influence is pretty high (i.e. at least 50 influence over the Ally threshold)
-			// Content below created by Putmalk - Gazebo
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		if (MOD_DIPLOMACY_CITYSTATES) {
+			// Don't consider targets that we're friendly with an our influence is pretty high (i.e. at least 50 influence over the Ally threshold)
 			if (kPlayer.GetMinorCivAI()->IsAllies(GetID()))
 			{
 				// If our friendship is already 90 influence or higher than the allied threshold, don't send our merchant there
@@ -1356,7 +1360,7 @@ CvPlot* CvPlayerAI::FindBestMerchantTargetPlot(CvUnit* pGreatMerchant, bool bOnl
 				}
 			}
 
-			// Putmalk: Don't consider targets that have an ally with another major civ that our influence bonus wouldn't be enough to make some impact
+			// Don't consider targets that have an ally with another major civ that our influence bonus wouldn't be enough to make some impact
 			PlayerTypes eMajor;
 			bool bHasHighAlly = false;
 			for(int iI = 0; iI < MAX_MAJOR_CIVS; iI++)
@@ -1421,9 +1425,9 @@ CvPlot* CvPlayerAI::FindBestMerchantTargetPlot(CvUnit* pGreatMerchant, bool bOnl
 		}
 	}
 
-#if defined(MOD_GLOBAL_CSD)
-	if (MOD_GLOBAL_CSD) {
-		// Putmalk: a bit of a hack here, in the best case scenario we don't want this block of code to run
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) {
+		// A bit of a hack here, in the best case scenario we don't want this block of code to run
 		// This is essentially repeat code, we really don't want this to run
 		// This will run if the game is 60% done and there are no valid city-states...
 		if(pBestTargetPlot == NULL && (GC.getGame().getGameTurn() > (GC.getGame().getEstimateEndTurn() * 60 / 100 )))
@@ -1451,7 +1455,7 @@ CvPlot* CvPlayerAI::FindBestMerchantTargetPlot(CvUnit* pGreatMerchant, bool bOnl
 					continue;
 				}
 
-				// Putmalk: Don't consider targets that we're friendly with an our influence is pretty high (i.e. at least 400 influence over the Ally threshold)
+				// Don't consider targets that we're friendly with an our influence is pretty high (i.e. at least 400 influence over the Ally threshold)
 				if (kPlayer.GetMinorCivAI()->IsAllies(GetID()))
 				{
 					// If our friendship is already 300 influence or higher than the allied threshold, don't send our merchant there

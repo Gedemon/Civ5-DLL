@@ -5992,6 +5992,14 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 								if (!pFreeUnit->jumpToNearestValidPlot())
 									pFreeUnit->kill(false);	// Could not find a valid spot!
 							}							
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+							else if (MOD_DIPLOMACY_CITYSTATES && pkUnitInfo->GetUnitClassType() == GC.getInfoTypeForString("UNITCLASS_GREAT_DIPLOMAT"))
+							{
+								owningPlayer.incrementGreatDiplomatsCreated();
+								if (!pFreeUnit->jumpToNearestValidPlot())
+									pFreeUnit->kill(false);	// Could not find a valid spot!
+							}
+#endif
 							else if (pFreeUnit->IsGreatPerson())
 							{
 								owningPlayer.incrementGreatPeopleCreated();
@@ -6011,8 +6019,8 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 
 				if (eFreeBuildingThisCity != NO_BUILDING)
 				{
-				m_pCityBuildings->SetNumRealBuilding(eFreeBuildingThisCity, 0);
-				m_pCityBuildings->SetNumFreeBuilding(eFreeBuildingThisCity, 1);
+					m_pCityBuildings->SetNumRealBuilding(eFreeBuildingThisCity, 0);
+					m_pCityBuildings->SetNumFreeBuilding(eFreeBuildingThisCity, 1);
 				}
 			}
 
@@ -6317,6 +6325,22 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 			{
 				ChangeTerrainExtraYield(((TerrainTypes)iJ), eYield, (GC.getBuildingInfo(eBuilding)->GetTerrainYieldChange(iJ, eYield) * iChange));
 			}
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+			// Research agreements are not active, therefore this building now increases science yield by 25%
+			if(MOD_DIPLOMACY_CIV4_FEATURES && !GC.getGame().isOption(GAMEOPTION_RESEARCH_AGREEMENTS))
+			{
+				if(pBuildingInfo->GetMedianTechPercentChange() > 0)
+				{
+					if(eYield == YIELD_SCIENCE)
+					{
+						int iChange = pBuildingInfo->GetMedianTechPercentChange(); //default 25
+					
+						changeYieldRateModifier(eYield, iChange);
+					}
+				}
+			}
+#endif
 
 			if(pBuildingInfo->GetEnhancedYieldTech() != NO_TECH)
 			{
@@ -13140,9 +13164,9 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 				}
 
 #if defined(MOD_EVENTS_CITY)
-			if (MOD_EVENTS_CITY) {
-				GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityTrained, getOwner(), GetID(), pUnit->GetID(), true, false);
-			}
+				if (MOD_EVENTS_CITY) {
+					GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityTrained, getOwner(), GetID(), pUnit->GetID(), true, false);
+				}
 #endif
 			}
 		}

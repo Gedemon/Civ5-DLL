@@ -37,6 +37,9 @@ CvUnitEntry::CvUnitEntry(void) :
 	m_bRushBuilding(false),
 	m_iBaseGold(0),
 	m_iNumGoldPerEra(0),
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	m_iNumInfPerEra(0),
+#endif
 	m_bSpreadReligion(false),
 	m_bRemoveHeresy(false),
 	m_iReligionSpreads(0),
@@ -181,6 +184,11 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	m_bRushBuilding= kResults.GetInt("RushBuilding");
 	m_iBaseGold = kResults.GetInt("BaseGold");
 	m_iNumGoldPerEra = kResults.GetInt("NumGoldPerEra");
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) {
+		m_iNumInfPerEra = kResults.GetInt("NumInfPerEra");
+	}
+#endif
 	m_bSpreadReligion = kResults.GetBool("SpreadReligion");
 	m_bRemoveHeresy = kResults.GetBool("RemoveHeresy");
 	m_iReligionSpreads = kResults.GetInt("ReligionSpreads");
@@ -579,6 +587,14 @@ int CvUnitEntry::GetNumGoldPerEra() const
 {
 	return m_iNumGoldPerEra;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+/// Era boost to influence (for great people)
+int CvUnitEntry::GetNumInfPerEra() const
+{
+	return m_iNumInfPerEra;
+}
+#endif
 
 /// Can this Unit Spread Religion to a City?
 bool CvUnitEntry::IsSpreadReligion() const
@@ -1221,6 +1237,15 @@ void CvUnitEntry::DoUpdatePower()
 		}
 #endif
 	}
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	if(MOD_DIPLOMACY_CIV4_FEATURES && GetDomainType() == DOMAIN_AIR)
+	{
+		int iTemp = iPower * 30;
+		iTemp /= 100;
+		iPower += iTemp;
+	}
+#endif
 
 	if(iRangedStrength > iPower)
 	{

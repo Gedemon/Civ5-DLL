@@ -104,7 +104,7 @@ struct CvResolutionEffects
 	int iOneTimeGold;
 	int iOneTimeGoldPercent;
 	bool bRaiseCityStateInfluenceToNeutral;
-#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 	bool bRaiseCityStateInfluenceToAlly;
 	bool bRaiseCityStateInfluenceToFriend;
 #endif
@@ -128,6 +128,10 @@ struct CvResolutionEffects
 	int iScienceyGreatPersonRateMod;
 	int iGreatPersonTileImprovementCulture;
 	int iLandmarkCulture;
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	int iVassalMaintenanceGoldPercent;
+#endif
 };
 
 FDataStream& operator>>(FDataStream&, CvResolutionEffects&);
@@ -1213,7 +1217,7 @@ public:
 	int GetOneTimeGold() const;
 	int GetOneTimeGoldPercent() const;
 	bool IsRaiseCityStateInfluenceToNeutral() const;
-#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 	bool IsRaiseCityStateInfluenceToAlly() const;
 	bool IsRaiseCityStateInfluenceToFriend() const;
 #endif
@@ -1238,6 +1242,10 @@ public:
 	int GetGreatPersonTileImprovementCulture() const;
 	int GetLandmarkCulture() const;
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	int GetVassalMaintenanceGoldPercent() const;
+#endif
+
 protected:
 	ResolutionDecisionTypes m_eVoterDecision;
 	ResolutionDecisionTypes m_eProposerDecision;
@@ -1252,7 +1260,7 @@ protected:
 	int m_iOneTimeGold;
 	int m_iOneTimeGoldPercent;
 	bool m_bRaiseCityStateInfluenceToNeutral;
-#if defined(MOD_GLOBAL_CSD_RESOLUTIONS)
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 	bool m_bRaiseCityStateInfluenceToAlly;
 	bool m_bRaiseCityStateInfluenceToFriend;
 #endif
@@ -1276,6 +1284,10 @@ protected:
 	int m_iScienceyGreatPersonRateMod;
 	int m_iGreatPersonTileImprovementCulture;
 	int m_iLandmarkCulture;
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	int m_iVassalMaintenanceGoldPercent;
+#endif
 
 private:
 	CvResolutionEntry(const CvResolutionEntry&);

@@ -35,19 +35,6 @@ void CvGoodyHuts::DoPlayerReceivedGoody(PlayerTypes ePlayer, GoodyTypes eGoody)
 /// Are we allowed to get this Goody right now?
 bool CvGoodyHuts::IsCanPlayerReceiveGoody(PlayerTypes ePlayer, GoodyTypes eGoody)
 {
-#if defined(MOD_GLOBAL_ANYTIME_GOODY_GOLD)
-	Database::SingleResult kResult;
-	CvGoodyInfo kGoodyInfo;
-	const bool bResult = DB.SelectAt(kResult, "GoodyHuts", eGoody);
-	DEBUG_VARIABLE(bResult);
-	CvAssertMsg(bResult, "Cannot find goody info.");
-	kGoodyInfo.CacheResult(kResult);
-
-	if (kGoodyInfo.getGold() > 0) {
-		return true;
-	}
-#endif
-
 	if (IsHasPlayerReceivedGoodyLately(ePlayer, eGoody))
 	{
 		return false;

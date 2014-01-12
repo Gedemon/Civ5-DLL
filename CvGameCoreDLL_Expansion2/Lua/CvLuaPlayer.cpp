@@ -456,6 +456,9 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetGreatScientistRateModifier);
 	Method(GetGreatMerchantRateModifier);
 	Method(GetGreatEngineerRateModifier);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	Method(GetGreatDiplomatRateModifier);
+#endif
 
 	Method(GetPolicyGreatPeopleRateModifier);
 	Method(GetPolicyGreatWriterRateModifier);
@@ -464,6 +467,9 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetPolicyGreatScientistRateModifier);
 	Method(GetPolicyGreatMerchantRateModifier);
 	Method(GetPolicyGreatEngineerRateModifier);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	Method(GetPolicyGreatDiplomatRateModifier);
+#endif
 
 	Method(GetProductionModifier);
 	Method(GetUnitProductionModifier);
@@ -1017,6 +1023,18 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 
 	Method(GetWarmongerPreviewString);
 	Method(GetLiberationPreviewString);
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	Method(IsVassalageAcceptable);
+	Method(GetVassalGoldMaintenance);
+	Method(GetJONSCulturePerTurnFromVassals);
+	Method(GetHappinessFromVassals);
+	Method(GetScoreFromVassals);
+	Method(GetScienceFromVassalTimes100);
+	Method(GetMilitaryAggressivePosture);
+	Method(MoveRequestTooSoon);
+	Method(GetPlayerMoveTroopsRequestCounter);
+#endif
 
 }
 //------------------------------------------------------------------------------
@@ -5440,6 +5458,15 @@ int CvLuaPlayer::lGetGreatMerchantRateModifier(lua_State* L)
 	return BasicLuaMethod(L, &CvPlayerAI::getGreatMerchantRateModifier);
 }
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+//------------------------------------------------------------------------------
+//int getGreatDiplomatRateModifier();
+int CvLuaPlayer::lGetGreatDiplomatRateModifier(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::getGreatDiplomatRateModifier);
+}
+#endif
+
 //------------------------------------------------------------------------------
 //int getGreatEngineerRateModifier();
 int CvLuaPlayer::lGetGreatEngineerRateModifier(lua_State* L)
@@ -5518,6 +5545,20 @@ int CvLuaPlayer::lGetPolicyGreatMerchantRateModifier(lua_State* L)
 	}
 	return 1;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+//------------------------------------------------------------------------------
+//int GetPolicyGreatDiplomatRateModifier();
+int CvLuaPlayer::lGetPolicyGreatDiplomatRateModifier(lua_State* L)
+{
+	CvPlayer* pkPlayer = GetInstance(L);
+	if(pkPlayer)
+	{
+		lua_pushinteger(L, pkPlayer->GetPlayerPolicies()->GetNumericModifier(POLICYMOD_GREAT_DIPLOMAT_RATE));
+	}
+	return 1;
+}
+#endif
 
 //------------------------------------------------------------------------------
 //int GetPolicyGreatEngineerRateModifier();
@@ -9769,7 +9810,11 @@ int CvLuaPlayer::lGetOpinionTable(lua_State* L)
 		}
 	}
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	if (iVisibleApproach != MAJOR_CIV_APPROACH_FRIENDLY || (MOD_DIPLOMACY_CIV4_FEATURES && GC.getGame().isOption(GAMEOPTION_ADVANCED_DIPLOMACY))) 
+#else
 	if (iVisibleApproach != MAJOR_CIV_APPROACH_FRIENDLY) 
+#endif
 	{
 		// land dispute
 		iValue = pDiploAI->GetLandDisputeLevelScore(eWithPlayer);
@@ -9853,6 +9898,19 @@ int CvLuaPlayer::lGetOpinionTable(lua_State* L)
 
 			aOpinions.push_back(kOpinion);
 		}
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+		if (MOD_DIPLOMACY_CIV4_FEATURES) {
+			iValue = pDiploAI->GetTooManyVassalsScore(eWithPlayer);
+			if (iValue != 0)
+			{
+				Opinion kOpinion;
+				kOpinion.m_iValue = iValue;
+				kOpinion.m_str = Localization::Lookup("TXT_KEY_DIPLO_TOO_MANY_VASSALS");
+				aOpinions.push_back(kOpinion);
+			}
+		}
+#endif
 	}
 
 	if (iVisibleApproach == MAJOR_CIV_APPROACH_AFRAID)
@@ -10256,6 +10314,81 @@ int CvLuaPlayer::lGetOpinionTable(lua_State* L)
 		aOpinions.push_back(kOpinion);
 	}
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	if (MOD_DIPLOMACY_CIV4_FEATURES) {
+		if (GET_TEAM(pDiploAI->GetTeam()).IsVassal(GET_PLAYER(eWithPlayer).getTeam()))
+		{
+			iValue = pDiploAI->GetVassalScore(eWithPlayer);
+			Opinion kOpinion;
+			kOpinion.m_iValue = iValue;
+
+			if (GET_TEAM(pDiploAI->GetTeam()).IsVoluntaryVassal(GET_PLAYER(eWithPlayer).getTeam()))
+			{
+				kOpinion.m_str = Localization::Lookup("TXT_KEY_DIPLO_WE_ARE_VOLUNTARY_VASSAL");
+			}
+			else
+			{
+				kOpinion.m_str = Localization::Lookup("TXT_KEY_DIPLO_WE_ARE_VASSAL");
+			}
+			aOpinions.push_back(kOpinion);
+		}
+
+		if (GET_TEAM(GET_PLAYER(eWithPlayer).getTeam()).IsVassal(pDiploAI->GetTeam()))
+		{
+			iValue = pDiploAI->GetMasterScore(eWithPlayer);
+			Opinion kOpinion;
+			kOpinion.m_iValue = iValue;
+			kOpinion.m_str = Localization::Lookup("TXT_KEY_DIPLO_WE_ARE_MASTER");
+			aOpinions.push_back(kOpinion);
+		}
+
+		iValue = pDiploAI->GetHappyAboutVassalagePeacefullyRevokedScore(eWithPlayer);
+		if (iValue != 0)
+		{
+			Opinion kOpinion;
+			kOpinion.m_iValue = iValue;
+			kOpinion.m_str = Localization::Lookup("TXT_KEY_DIPLO_VASSAL_PEACEFULLY_REVOKED");
+			aOpinions.push_back(kOpinion);
+		}
+
+		iValue = pDiploAI->GetAngryAboutVassalageForcefullyRevokedScore(eWithPlayer);
+		if (iValue != 0)
+		{
+			Opinion kOpinion;
+			kOpinion.m_iValue = iValue;
+			kOpinion.m_str = Localization::Lookup("TXT_KEY_DIPLO_VASSAL_FORCEFULLY_REVOKED");
+			aOpinions.push_back(kOpinion);
+		}
+
+		iValue = pDiploAI->GetVassalProtectScore(eWithPlayer);
+		if (iValue != 0)
+		{
+			Opinion kOpinion;
+			kOpinion.m_iValue = iValue;
+			kOpinion.m_str = Localization::Lookup("TXT_KEY_DIPLO_VASSAL_PROTECT");
+			aOpinions.push_back(kOpinion);
+		}
+
+		iValue = pDiploAI->GetVassalFailedProtectScore(eWithPlayer);
+		if (iValue != 0)
+		{
+			Opinion kOpinion;
+			kOpinion.m_iValue = iValue;
+			kOpinion.m_str = Localization::Lookup("TXT_KEY_DIPLO_VASSAL_FAILED_PROTECT");
+			aOpinions.push_back(kOpinion);
+		}
+
+		iValue = pDiploAI->GetBrokenVassalAgreementScore(eWithPlayer);
+		if (iValue != 0)
+		{
+			Opinion kOpinion;
+			kOpinion.m_iValue = iValue;
+			kOpinion.m_str = Localization::Lookup("TXT_KEY_DIPLO_ATTACKED_VASSAL_ME");
+			aOpinions.push_back(kOpinion);
+		}
+	}
+#endif
+
 	// TRAITOR BEGIN
 	{
 		iValue = 0;
@@ -10561,6 +10694,18 @@ int CvLuaPlayer::lGetOpinionTable(lua_State* L)
 		{
 			strOutput.insert(0, strFullPositiveColor);
 		}
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+		if(MOD_DIPLOMACY_CIV4_FEATURES && GC.getGame().isOption(GAMEOPTION_ADVANCED_DIPLOMACY))
+		{
+			CvString strTemp;
+			// Reverse the value of the opinion so as to not confuse players
+			strTemp.Format(" (%d)", -(aOpinions[ui].m_iValue));
+
+			strOutput += strTemp;
+		}
+#endif
+
 		strOutput += strEndColor;
 
 		lua_pushstring(L, strOutput.c_str());
@@ -11212,3 +11357,78 @@ int CvLuaPlayer::lGetLiberationPreviewString(lua_State* L)
 	lua_pushstring(L, CvDiplomacyAIHelpers::GetLiberationPreviewString(eOriginalOwner));
 	return 1;
 }
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+//-------------------------------------------------------------------------
+int CvLuaPlayer::lGetScoreFromVassals(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::GetScoreFromVassals);
+}
+//-----------------------------------------------------------------------------
+//int GetScienceFromVassalsTimes100();
+int CvLuaPlayer::lGetScienceFromVassalTimes100(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::GetScienceFromVassalTimes100);
+}
+//-------------------------------------------------------------------------------
+//int GetHappinessFromVassals();
+int CvLuaPlayer::lGetHappinessFromVassals(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::GetHappinessFromVassals);
+}
+//------------------------------------------------------------------------------
+//int GetJONSCulturePerTurnFromVassals();
+int CvLuaPlayer::lGetJONSCulturePerTurnFromVassals(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::GetJONSCulturePerTurnFromVassals);
+}
+//-----------------------------------------------------------------------------
+//int GetVassalGoldMaintenance();
+int CvLuaPlayer::lGetVassalGoldMaintenance(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+
+	const int iResult = pkPlayer->GetTreasury()->GetVassalGoldMaintenance();
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+//-----------------------------------------------------------------------------
+int CvLuaPlayer::lIsVassalageAcceptable(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	PlayerTypes eOtherPlayer = (PlayerTypes) lua_tointeger(L, 2);
+
+	const bool bValue = pkPlayer->GetDiplomacyAI()->IsVassalageAcceptable(eOtherPlayer);
+
+	lua_pushboolean(L, bValue);
+
+	return 1;
+}
+// -------------------
+int CvLuaPlayer::lGetMilitaryAggressivePosture(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	PlayerTypes eOtherPlayer = (PlayerTypes) lua_tointeger(L, 2);
+
+	lua_pushinteger(L, pkPlayer->GetDiplomacyAI()->GetMilitaryAggressivePosture(eOtherPlayer));
+	return 1;
+}
+// --------------------
+int CvLuaPlayer::lMoveRequestTooSoon(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	PlayerTypes eOtherPlayer = (PlayerTypes) lua_tointeger(L, 2);
+
+	lua_pushboolean(L, pkPlayer->GetDiplomacyAI()->IsTooSoonForMoveTroopsRequest(eOtherPlayer));
+	return 1;
+}
+
+int CvLuaPlayer::lGetPlayerMoveTroopsRequestCounter(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	PlayerTypes eOtherPlayer = (PlayerTypes) lua_tointeger(L, 2);
+
+	lua_pushinteger(L, pkPlayer->GetDiplomacyAI()->GetPlayerMoveTroopsRequestCounter(eOtherPlayer));
+	return 1;
+}
+#endif

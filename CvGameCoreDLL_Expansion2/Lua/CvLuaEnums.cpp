@@ -585,6 +585,12 @@ int CvLuaEnums::pRegister(lua_State* L)
 
 	RegisterEnum(DIPLO_UI_STATE_STOP_DIGGING);
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	RegisterEnum(DIPLO_UI_STATE_HUMAN_REQUEST);
+	RegisterEnum(DIPLO_UI_STATE_TRADE_AI_MAKES_GENEROUS_OFFER);
+	RegisterEnum(DIPLO_UI_STATE_DISCUSS_AI_REVOKE_VASSALAGE);
+#endif
+
 	RegisterEnum(NUM_DIPLO_UI_STATES);
 	EnumEnd(L);
 
@@ -667,6 +673,13 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(FROM_UI_DIPLO_EVENT_HUMAN_DISCUSSION_STOP_DIGGING);
 	RegisterEnum(FROM_UI_DIPLO_EVENT_STOP_DIGGING);
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	RegisterEnum(FROM_UI_DIPLO_EVENT_HUMAN_DISCUSSION_SHARE_OPINION);
+	RegisterEnum(FROM_UI_DIPLO_EVENT_HUMAN_REQUEST);
+	RegisterEnum(FROM_UI_DIPLO_EVENT_HUMAN_ENDS_VASSALAGE);
+	RegisterEnum(FROM_UI_DIPLO_EVENT_HUMAN_MOVE_TROOPS_RESPONSE);
+#endif
+
 	RegisterEnum(NUM_FROM_UI_DIPLO_EVENTS);
 	EnumEnd(L);
 
@@ -743,6 +756,10 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(TRADE_ITEM_ALLOW_EMBASSY);
 	RegisterEnum(TRADE_ITEM_DECLARATION_OF_FRIENDSHIP);
 	RegisterEnum(TRADE_ITEM_VOTE_COMMITMENT);
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	RegisterEnum(TRADE_ITEM_TECHS);
+	RegisterEnum(TRADE_ITEM_VASSALAGE);
+#endif
 	RegisterEnum(NUM_TRADEABLE_ITEMS);
 	EnumEnd(L);
 
@@ -800,6 +817,18 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(NUM_MAJOR_CIV_APPROACHES);
 	EnumEnd(L);
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	EnumStart(L, "AggressivePostureTypes");
+	RegisterEnum(NO_AGGRESSIVE_POSTURE_TYPE);
+	RegisterEnum(AGGRESSIVE_POSTURE_NONE);
+	RegisterEnum(AGGRESSIVE_POSTURE_LOW);
+	RegisterEnum(AGGRESSIVE_POSTURE_MEDIUM);
+	RegisterEnum(AGGRESSIVE_POSTURE_HIGH);
+	RegisterEnum(AGGRESSIVE_POSTURE_INCREDIBLE);
+	RegisterEnum(NUM_AGGRESSIVE_POSTURE_TYPES);
+	EnumEnd(L);
+#endif
+
 	// MinorCivTraitTypes
 	EnumStart(L, "MinorCivTraitTypes");
 	RegisterEnum(NO_MINOR_CIV_TRAIT_TYPE);
@@ -842,6 +871,12 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(MINOR_CIV_QUEST_DENOUNCE_MAJOR);
 	RegisterEnum(MINOR_CIV_QUEST_SPREAD_RELIGION);
 	RegisterEnum(MINOR_CIV_QUEST_TRADE_ROUTE);
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	RegisterEnum(MINOR_CIV_QUEST_WAR);
+	RegisterEnum(MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER);
+	RegisterEnum(MINOR_CIV_QUEST_FIND_CITY_STATE);
+	RegisterEnum(MINOR_CIV_QUEST_INFLUENCE);
+#endif
 	RegisterEnum(NUM_MINOR_CIV_QUEST_TYPES);
 	EnumEnd(L);
 
@@ -950,6 +985,9 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(RESOLUTION_DECISION_REPEAL);
 	RegisterEnum(RESOLUTION_DECISION_MAJOR_CIV_MEMBER);
 	RegisterEnum(RESOLUTION_DECISION_OTHER_MAJOR_CIV_MEMBER);
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	RegisterEnum(RESOLUTION_DECISION_CITY_CSD);
+#endif
 	RegisterEnum(NUM_RESOLUTION_DECISIONS);
 	EnumEnd(L);
 

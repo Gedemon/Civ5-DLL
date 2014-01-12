@@ -241,6 +241,10 @@ CvMap::CvMap()
 	m_pNoSettling = NULL;
 	m_pResourceForceReveal = NULL;
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	m_pAvoidMovement = NULL;
+#endif
+
 	m_iAIMapHints = 0;
 
 	reset(&defaultMapData);
@@ -273,6 +277,10 @@ void CvMap::InitPlots()
 	m_pNoSettling				= FNEW(bool[MAX_MAJOR_CIVS*iNumPlots], c_eCiv5GameplayDLL, 0);
 	m_pResourceForceReveal		= FNEW(bool[REALLY_MAX_TEAMS*iNumPlots], c_eCiv5GameplayDLL, 0);
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	m_pAvoidMovement			= FNEW(bool[MAX_MAJOR_CIVS*iNumPlots], c_eCiv5GameplayDLL, 0);
+#endif
+
 	memset(m_pYields, 0, NUM_YIELD_TYPES*iNumPlots*sizeof(short));
 	memset(m_pFoundValue, 0, REALLY_MAX_PLAYERS*iNumPlots*sizeof(int));
 	memset(m_pPlayerCityRadiusCount, 0, REALLY_MAX_PLAYERS*iNumPlots*sizeof(char));
@@ -283,6 +291,9 @@ void CvMap::InitPlots()
 	memset(m_pRevealedRouteType, 0,REALLY_MAX_TEAMS*iNumPlots *sizeof(short));
 	memset(m_pNoSettling, 0,MAX_MAJOR_CIVS*iNumPlots *sizeof(bool));
 	memset(m_pResourceForceReveal, 0,REALLY_MAX_TEAMS*iNumPlots *sizeof(bool));
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	memset(m_pAvoidMovement, 0, MAX_MAJOR_CIVS*iNumPlots * sizeof(bool));
+#endif
 
 
 	short* pYields					= m_pYields;
@@ -294,6 +305,9 @@ void CvMap::InitPlots()
 	short* pRevealedRouteType		= m_pRevealedRouteType;
 	bool*  pNoSettling				= m_pNoSettling;
 	bool*  pResourceForceReveal		= m_pResourceForceReveal;
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	bool* pAvoidMovement			= m_pAvoidMovement;
+#endif
 
 	for(int i = 0; i < iNumPlots; i++)
 	{
@@ -308,6 +322,10 @@ void CvMap::InitPlots()
 		m_pMapPlots[i].m_abNoSettling				= pNoSettling;
 
 		m_pMapPlots[i].m_abResourceForceReveal		= pResourceForceReveal;
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+		m_pMapPlots[i].m_abAvoidMovement			= pAvoidMovement;
+#endif
 
 
 		pYields					+= NUM_YIELD_TYPES;

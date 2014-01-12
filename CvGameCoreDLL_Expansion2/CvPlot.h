@@ -743,6 +743,11 @@ public:
 	bool isInvisibleVisible(TeamTypes eTeam, InvisibleTypes eInvisible) const;
 	void changeInvisibleVisibilityCount(TeamTypes eTeam, InvisibleTypes eInvisible, int iChange);
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	bool IsAvoidMovement(PlayerTypes ePlayer) const;
+	void SetAvoidMovement(PlayerTypes ePlayer, bool bNewValue);
+#endif
+
 	int getNumUnits() const;
 	int GetNumCombatUnits();
 	CvUnit* getUnitByIndex(int iIndex) const;
@@ -890,6 +895,10 @@ protected:
 	short /*ImprovementTypes*/ *m_aeRevealedImprovementType;
 	short /*RouteTypes*/ *m_aeRevealedRouteType;
 	bool* m_abNoSettling;
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	bool* m_abAvoidMovement;
+#endif
 
 	bool* m_abResourceForceReveal;
 

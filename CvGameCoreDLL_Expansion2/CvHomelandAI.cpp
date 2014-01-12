@@ -5341,6 +5341,13 @@ CvPlot* CvHomelandAI::FindPatrolTarget(CvUnit* pUnit)
 							iValue += 10000;
 						}
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+						if(MOD_DIPLOMACY_CIV4_FEATURES && pAdjacentPlot->IsAvoidMovement(m_pPlayer->GetID()))
+						{
+							iValue -= 100;
+						}
+#endif
+
 						if(GC.getLogging() && GC.getAILogging()){
 							CvString strLogString;
 							strLogString.Format("Adjacent Patrol Plot Score, %i, %i, %i", iValue, pAdjacentPlot->getX(), pAdjacentPlot->getY());

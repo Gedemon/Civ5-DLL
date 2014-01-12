@@ -143,7 +143,11 @@ public:
 	bool ReadyToMove() const;
 	bool ReadyToAuto() const;
 	bool IsBusy() const;
+#if defined(MOD_BUGFIX_WORKERS_VISIBLE_DANGER) || defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
+	bool SentryAlert(bool bSameDomainOrRanged = false) const;
+#else
 	bool SentryAlert() const;
+#endif
 
 	bool ShowMoves() const;
 	bool CanDoInterfaceMode(InterfaceModeTypes eInterfaceMode, bool bTestVisibility = false);

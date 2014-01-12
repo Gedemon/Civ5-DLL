@@ -64,6 +64,9 @@ public:
 	int GetGreatMusicianRateModifier() const;
 	int GetGreatMerchantRateModifier() const;
 	int GetGreatScientistRateModifier() const;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int GetGreatDiplomatRateModifier() const;
+#endif
 	int GetDomesticGreatGeneralRateModifier() const;
 	int GetExtraHappiness() const;
 	int GetExtraHappinessPerCity() const;
@@ -262,6 +265,9 @@ private:
 	int m_iGreatMusicianRateModifier;
 	int m_iGreatMerchantRateModifier;
 	int m_iGreatScientistRateModifier;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int m_iGreatDiplomatRateModifier;
+#endif
 	int m_iDomesticGreatGeneralRateModifier;
 	int m_iExtraHappiness;
 	int m_iExtraHappinessPerCity;
@@ -529,6 +535,9 @@ enum PolicyModifierType
 	POLICYMOD_GREAT_ARTIST_RATE,
 	POLICYMOD_GREAT_MUSICIAN_RATE,
 	POLICYMOD_GREAT_MERCHANT_RATE,
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	POLICYMOD_GREAT_DIPLOMAT_RATE,
+#endif
 	POLICYMOD_GREAT_SCIENTIST_RATE,
 	POLICYMOD_TOURISM_MOD_COMMON_FOE,
 	POLICYMOD_TOURISM_MOD_LESS_HAPPY,

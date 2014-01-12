@@ -2098,6 +2098,13 @@ PromotionTypes CvUnitPromotions::ChangePromotionAfterCombat(PromotionTypes eInde
 		{
 			if (!pkEntry->ArePostCombatPromotionsExclusive() || !IsInUseByPlayer((PromotionTypes)iI, m_pUnit->getOwner()))
 			{
+#if defined(MOD_EVENTS_UNIT_UPGRADES)
+				if (MOD_EVENTS_UNIT_UPGRADES) {
+					if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CanHavePromotion, m_pUnit->getOwner(), m_pUnit->GetID(), iI) == GAMEEVENTRETURN_FALSE) {
+						continue;
+					}
+				}
+#endif
 				aPossiblePromotions.push_back(iI);
 			}
 		}

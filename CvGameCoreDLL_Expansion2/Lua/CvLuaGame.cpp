@@ -401,6 +401,12 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 	Method(ReloadGameDataDefines);
 	Method(ReloadCustomModOptions);
 #endif
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	Method(GetMinimumVassalTurns);
+	Method(GetNumTurnsBetweenVassals);
+	Method(GetMinimumVoluntaryVassalTurns);
+#endif
 }
 //------------------------------------------------------------------------------
 
@@ -3029,5 +3035,26 @@ int CvLuaGame::lReloadCustomModOptions(lua_State* L)
 {
 	gCustomMods.reloadCache();
 	return 0;
+}
+#endif
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+//------------------------------------------------------------------------------
+int CvLuaGame::lGetMinimumVoluntaryVassalTurns(lua_State* L)
+{
+	lua_pushinteger(L, GC.getGame().getGameSpeedInfo().getMinimumVoluntaryVassalTurns());
+	return 1;
+}
+//------------------------------------------------------------------------------
+int CvLuaGame::lGetMinimumVassalTurns(lua_State* L)
+{
+	lua_pushinteger(L, GC.getGame().getGameSpeedInfo().getMinimumVassalTurns());
+	return 1;
+}
+//------------------------------------------------------------------------------
+int CvLuaGame::lGetNumTurnsBetweenVassals(lua_State* L)
+{
+	lua_pushinteger(L, GC.getGame().getGameSpeedInfo().getNumTurnsBetweenVassals());
+	return 1;
 }
 #endif

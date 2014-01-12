@@ -996,6 +996,14 @@ public:
 	int getLeaguePercent() const;
 	int getNumTurnIncrements() const;
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	int getShareOpinionDuration() const;
+	int getTechCostPerTurnMultiplier() const;
+	int getMinimumVoluntaryVassalTurns() const;
+	int getMinimumVassalTurns() const;
+	int getNumTurnsBetweenVassals() const;
+#endif
+
 	GameTurnInfo& getGameTurnInfo(int iIndex) const;
 	void allocateGameTurnInfos(const int iSize);
 
@@ -1032,6 +1040,14 @@ protected:
 	int m_iPeaceDealDuration;
 	int m_iRelationshipDuration;
 	int m_iLeaguePercent;
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	int m_iShareOpinionDuration;
+	int m_iTechCostPerTurnMultiplier;
+	int m_iMinimumVoluntaryVassalTurns;
+	int m_iMinimumVassalTurns;
+	int m_iNumTurnsBetweenVassals;
+#endif
 
 	int m_iNumTurnIncrements;
 
@@ -2078,6 +2094,10 @@ public:
 	int getTradeRouteProductionBonusTimes100() const;
 	int getLeaguePercent() const;
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	bool getVassalageEnabled() const;
+#endif
+
 	const char* GetCityBombardEffectTag() const;
 	uint GetCityBombardEffectTagHash() const;
 
@@ -2131,6 +2151,10 @@ protected:
 	int m_iTradeRouteFoodBonusTimes100;
 	int m_iTradeRouteProductionBonusTimes100;
 	int m_iLeaguePercent;
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	bool m_bVassalageEnabled;
+#endif
 
 	CvString m_strCityBombardEffectTag;
 	CvString m_strAudioUnitVictoryScript;

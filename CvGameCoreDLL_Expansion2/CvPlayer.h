@@ -632,6 +632,10 @@ public:
 	void incrementGreatArtistsCreated();
 	int getGreatMusiciansCreated() const;
 	void incrementGreatMusiciansCreated();
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int getGreatDiplomatsCreated() const;
+	void incrementGreatDiplomatsCreated();
+#endif
 
 	int getMerchantsFromFaith() const;
 	void incrementMerchantsFromFaith();
@@ -670,6 +674,9 @@ public:
 	int getGreatMerchantRateModifier() const;
 	int getGreatScientistRateModifier() const;
 	int getGreatEngineerRateModifier() const;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int getGreatDiplomatRateModifier() const;
+#endif
 	int getDomesticGreatGeneralRateModifier() const;
 	void changeGreatPeopleRateModFromBldgs(int ichange);
 	void changeGreatGeneralRateModFromBldgs(int ichange);
@@ -1554,6 +1561,22 @@ public:
 
 	bool hasTurnTimerExpired();
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	int GetScoreFromVassals() const;
+	int GetScoreFromVassal(PlayerTypes ePlayer) const;
+
+	int GetJONSCulturePerTurnFromVassals() const;
+
+	int GetHappinessFromVassals() const;
+	int GetHappinessFromVassal(PlayerTypes ePlayer) const;
+
+	int GetScienceFromVassalTimes100() const;
+
+	int GetVassalGoldMaintenanceMod() const;
+	void SetVassalGoldMaintenanceMod(int iValue);
+	void ChangeVassalGoldMaintenanceMod(int iChange);
+#endif
+
 protected:
 	class ConqueredByBoolField
 	{
@@ -1669,6 +1692,9 @@ protected:
 	int m_iGreatWritersCreated;
 	int m_iGreatArtistsCreated;
 	int m_iGreatMusiciansCreated;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int m_iGreatDiplomatsCreated;
+#endif
 	int m_iMerchantsFromFaith;
 	int m_iScientistsFromFaith;
 	int m_iWritersFromFaith;
@@ -1694,6 +1720,9 @@ protected:
 	int m_iGreatArtistRateModifier;
 	int m_iGreatMusicianRateModifier;
 	int m_iGreatMerchantRateModifier;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int m_iGreatDiplomatRateModifier;
+#endif
 	int m_iGreatScientistRateModifier;
 	int m_iGreatScientistBeakerModifier;
 	int m_iGreatEngineerRateModifier;
@@ -1892,6 +1921,10 @@ protected:
 	FAutoVariable<std::vector<int>, CvPlayer> m_paiProjectMaking;
 	FAutoVariable<std::vector<int>, CvPlayer> m_paiHurryCount;
 	FAutoVariable<std::vector<int>, CvPlayer> m_paiHurryModifier;
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	FAutoVariable<int, CvPlayer> m_iVassalGoldMaintenanceMod;
+#endif
 
 	FAutoVariable<std::vector<bool>, CvPlayer> m_pabLoyalMember;
 

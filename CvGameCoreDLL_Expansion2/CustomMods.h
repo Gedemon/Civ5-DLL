@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 35)
+#define MOD_DLL_VERSION_NUMBER ((uint) 38)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -104,9 +104,17 @@
 // Great Works can generate different yields than just culture
 #define MOD_GLOBAL_GREATWORK_YIELDTYPES             gCustomMods.isGLOBAL_GREATWORK_YIELDTYPES() 
 
+// Tech bonuses from other teams require an embassy or spy in their capital and not from just having met them
+#define MOD_DIPLOMACY_TECH_BONUSES                  gCustomMods.isDIPLOMACY_TECH_BONUSES()
 // Changes for the City State Diplomacy mod by Gazebo - AFFECTS SAVE GAME DATA FORMAT
-#define MOD_GLOBAL_CSD                              gCustomMods.isGLOBAL_CSD()
-#define MOD_GLOBAL_CSD_RESOLUTIONS                  (MOD_GLOBAL_CSD)
+#define MOD_DIPLOMACY_CITYSTATES                    gCustomMods.isDIPLOMACY_CITYSTATES()
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+#define MOD_DIPLOMACY_CITYSTATES_QUESTS             (MOD_DIPLOMACY_CITYSTATES && gCustomMods.isDIPLOMACY_CITYSTATES_QUESTS())
+#define MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS        (MOD_DIPLOMACY_CITYSTATES && gCustomMods.isDIPLOMACY_CITYSTATES_RESOLUTIONS())
+#define MOD_DIPLOMACY_CITYSTATES_HURRY              (MOD_DIPLOMACY_CITYSTATES && gCustomMods.isDIPLOMACY_CITYSTATES_HURRY())
+#endif
+// Changes for the Civ4 Diplomacy Features mod by Putmalk - AFFECTS SAVE GAME DATA FORMAT
+#define MOD_DIPLOMACY_CIV4_FEATURES                 gCustomMods.isDIPLOMACY_CIV4_FEATURES()
 
 // Permits land units to cross ice - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_TRAITS_CROSSES_ICE                      gCustomMods.isTRAITS_CROSSES_ICE()
@@ -143,7 +151,8 @@
 #define MOD_BUILDINGS_CITY_WORKING                  gCustomMods.isBUILDINGS_CITY_WORKING()
 
 // Permits wonder resource (ie Marble) trade routes to be established
-// #define MOD_TRADE_WONDER_RESOURCE_ROUTES            gCustomMods.isTRADE_WONDER_RESOURCE_ROUTES() // TODO - WH - Marble trade routes
+// TODO - WH - Marble trade routes
+// #define MOD_TRADE_WONDER_RESOURCE_ROUTES            gCustomMods.isTRADE_WONDER_RESOURCE_ROUTES()
 
 // Restricts worker suggestions to local tiles
 #define MOD_UNITS_LOCAL_WORKERS                     gCustomMods.isUNITS_LOCAL_WORKERS()
@@ -151,9 +160,6 @@
 #define MOD_UNITS_HOVERING_LAND_ONLY_HEAL           gCustomMods.isUNITS_HOVERING_LAND_ONLY_HEAL()
 // Permits hovering units to attack coastal shipping
 #define MOD_UNITS_HOVERING_COASTAL_ATTACKS          gCustomMods.isUNITS_HOVERING_COASTAL_ATTACKS()
-
-// Tech bonuses from other teams require an embassy or spy in their capital and not from just having met them
-#define MOD_DIPLOMACY_TECH_BONUSES                  gCustomMods.isDIPLOMACY_TECH_BONUSES()
 
 // Removes religion preference
 #define MOD_RELIGION_NO_PREFERRENCES                gCustomMods.isRELIGION_NO_PREFERRENCES()
@@ -163,8 +169,10 @@
 #define MOD_RELIGION_CONVERSION_MODIFIERS           gCustomMods.isRELIGION_CONVERSION_MODIFIERS()
 // Keeps overflow faith from spawning a Great Prophet if the base spawn chance is 100%
 #define MOD_RELIGION_KEEP_PROPHET_OVERFLOW          gCustomMods.isRELIGION_KEEP_PROPHET_OVERFLOW()
+#if defined(MOD_API_PLOT_YIELDS)
 // Adds support for the Belief_PlotYieldChanges table
-#define MOD_RELIGION_PLOT_YIELDS                    gCustomMods.isRELIGION_PLOT_YIELDS()
+#define MOD_RELIGION_PLOT_YIELDS                    (gCustomMods.isRELIGION_PLOT_YIELDS() && MOD_API_PLOT_YIELDS)
+#endif
 
 // Enables production to be stockpiled
 #define MOD_PROCESS_STOCKPILE                       gCustomMods.isPROCESS_STOCKPILE()
@@ -326,7 +334,7 @@
 // Enables the Plot Based Damage API (replaces fixed damage from mountains)
 #define MOD_API_PLOT_BASED_DAMAGE                   gCustomMods.isAPI_PLOT_BASED_DAMAGE()
 // Enables the Plot Yield tables
-#define MOD_API_PLOT_YIELDS                         (true)
+#define MOD_API_PLOT_YIELDS                         gCustomMods.isAPI_PLOT_YIELDS()
 // Enables the Extensions API
 #define MOD_API_EXTENSIONS                          gCustomMods.isAPI_EXTENSIONS()
 // Enables the LUA Extensions API
@@ -357,6 +365,8 @@
 #define MOD_BUGFIX_NAVAL_NEAREST_WATER              gCustomMods.isBUGFIX_NAVAL_NEAREST_WATER()
 // Fixes the bug where stacked ranged units may attack out of cities but melee units may not
 #define MOD_BUGFIX_CITY_STACKING                    gCustomMods.isBUGFIX_CITY_STACKING()
+// Fixes the bug in goody hut messages that have parameters
+#define MOD_BUGFIX_GOODY_HUT_MESSAGES               (true)
 // Fixes the bug where Barb Camps ignore the ValidTerrains and ValidFeatures tables
 #define MOD_BUGFIX_BARB_CAMP_TERRAINS               gCustomMods.isBUGFIX_BARB_CAMP_TERRAINS()
 // Fixes the bug where Barb Camps won't spawn units if they are added via pPlot:SetImprovementType()
@@ -530,13 +540,33 @@ enum TerraformingEventTypes {
 #if defined(MOD_SERIALIZE)
 #define MOD_SERIALIZE_INIT_READ(stream) uint uiDllSaveVersion; stream >> uiDllSaveVersion
 #define MOD_SERIALIZE_READ(version, stream, member, def) if (uiDllSaveVersion >= version) { stream >> member; } else { member = def; }
+#define MOD_SERIALIZE_READ_ARRAY(version, stream, member, type, size, def) \
+	if (uiDllSaveVersion >= version) { \
+		ArrayWrapper<type> wrapper(size, member); stream >> wrapper; \
+	} else { \
+		for (int iI = 0; iI < size; iI++) { (member)[iI] = def; } \
+	}
+#define MOD_SERIALIZE_READ_HASH(version, stream, member, type, size, def) \
+	if (uiDllSaveVersion >= version) { \
+		CvInfosSerializationHelper::ReadHashedDataArray(stream, member, size); \
+	} else { \
+		for (int iI = 0; iI < size; iI++) { (member)[iI] = def; } \
+	}
 #define MOD_SERIALIZE_INIT_WRITE(stream) uint uiDllSaveVersion = MOD_DLL_VERSION_NUMBER; stream << uiDllSaveVersion
 #define MOD_SERIALIZE_WRITE(stream, member) CvAssert(uiDllSaveVersion == MOD_DLL_VERSION_NUMBER); stream << member
+#define MOD_SERIALIZE_WRITE_ARRAY(stream, member, type, size) CvAssert(uiDllSaveVersion == MOD_DLL_VERSION_NUMBER); stream << ArrayWrapper<type>(size, member)
+#define MOD_SERIALIZE_WRITE_CONSTARRAY(stream, member, type, size) CvAssert(uiDllSaveVersion == MOD_DLL_VERSION_NUMBER); stream << ArrayWrapperConst<type>(size, member)
+#define MOD_SERIALIZE_WRITE_HASH(stream, member, type, size, obj) CvAssert(uiDllSaveVersion == MOD_DLL_VERSION_NUMBER); CvInfosSerializationHelper::WriteHashedDataArray<obj, type>(stream, member, size)
 #else
 #define MOD_SERIALIZE_INIT_READ(stream, member) __noop
 #define MOD_SERIALIZE_READ(stream, member) __noop
+#define MOD_SERIALIZE_READ_ARRAY(version, stream, member, type, size, def) __noop
+#define MOD_SERIALIZE_READ_HASH(version, stream, member, type, size, def) __noop
 #define MOD_SERIALIZE_INIT_WRITE(stream, member) __noop
 #define MOD_SERIALIZE_WRITE(stream, member) __noop
+#define MOD_SERIALIZE_WRITE_ARRAY(stream, member, type, size) __noop
+#define MOD_SERIALIZE_WRITE_ARRAYCONST(stream, member, type, size) __noop
+#define MOD_SERIALIZE_WRITE_HASH(stream, member, type, size) __noop
 #endif
 
 
@@ -602,7 +632,13 @@ public:
 	MOD_OPT_DECL(GLOBAL_PARATROOPS_AA_DAMAGE);
 	MOD_OPT_DECL(GLOBAL_NUKES_MELT_ICE); 
 	MOD_OPT_DECL(GLOBAL_GREATWORK_YIELDTYPES); 
-	MOD_OPT_DECL(GLOBAL_CSD); 
+	
+	MOD_OPT_DECL(DIPLOMACY_TECH_BONUSES);
+	MOD_OPT_DECL(DIPLOMACY_CITYSTATES); 
+	MOD_OPT_DECL(DIPLOMACY_CITYSTATES_QUESTS); 
+	MOD_OPT_DECL(DIPLOMACY_CITYSTATES_RESOLUTIONS); 
+	MOD_OPT_DECL(DIPLOMACY_CITYSTATES_HURRY); 
+	MOD_OPT_DECL(DIPLOMACY_CIV4_FEATURES); 
 
 	MOD_OPT_DECL(TRAITS_CROSSES_ICE);
 	MOD_OPT_DECL(TRAITS_CITY_WORKING);
@@ -629,8 +665,6 @@ public:
 	MOD_OPT_DECL(UNITS_LOCAL_WORKERS);
 	MOD_OPT_DECL(UNITS_HOVERING_LAND_ONLY_HEAL);
 	MOD_OPT_DECL(UNITS_HOVERING_COASTAL_ATTACKS);
-
-	MOD_OPT_DECL(DIPLOMACY_TECH_BONUSES);
 
 	MOD_OPT_DECL(RELIGION_NO_PREFERRENCES);
 	MOD_OPT_DECL(RELIGION_RANDOMISE);
@@ -681,6 +715,7 @@ public:
 	MOD_OPT_DECL(API_TRADEROUTES);
 	MOD_OPT_DECL(API_RELIGION);
 	MOD_OPT_DECL(API_PLOT_BASED_DAMAGE);
+	MOD_OPT_DECL(API_PLOT_YIELDS);
 	MOD_OPT_DECL(API_EXTENSIONS);
 	MOD_OPT_DECL(API_LUA_EXTENSIONS);
 

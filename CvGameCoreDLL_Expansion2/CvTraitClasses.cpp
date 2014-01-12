@@ -262,7 +262,7 @@ int CvTraitEntry::GetPlotCultureCostModifier() const
 	return m_iPlotCultureCostModifier;
 }
 
-/// Accessor:: increased rate of culture border expansion
+/// Accessor:: culture for kills
 int CvTraitEntry::GetCultureFromKills() const
 {
 	return m_iCultureFromKills;
@@ -2357,6 +2357,11 @@ void CvPlayerTraits::ChooseMayaBoost()
 	}
 	if(eDesiredGreatPerson == NO_UNIT)
 	{
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		if (MOD_DIPLOMACY_CITYSTATES)
+			ePossibleGreatPerson = (UnitTypes)GC.getInfoTypeForString("UNIT_GREAT_DIPLOMAT");
+		else
+#endif
 #if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
 		ePossibleGreatPerson = m_pPlayer->GetSpecificUnitType("UNITCLASS_MERCHANT");
 #else

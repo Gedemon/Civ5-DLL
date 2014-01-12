@@ -318,6 +318,10 @@ void CvPlot::reset(int iX, int iY, bool bConstructorCall)
 		for(int iI = 0; iI < MAX_MAJOR_CIVS; ++iI)
 		{
 			m_abNoSettling[iI] = false;
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+			m_abAvoidMovement[iI] = false;
+#endif
 		}
 	}
 	for(int iI = 0; iI < REALLY_MAX_TEAMS; ++iI)
@@ -5560,7 +5564,11 @@ bool CvPlot::isBlockaded(PlayerTypes ePlayer)
 	for (int iEnemyLoop = 0; iEnemyLoop < NUM_DIRECTION_TYPES; ++iEnemyLoop) {
 		CvPlot* pEnemyPlot = plotDirection(getX(), getY(), ((DirectionTypes)iEnemyLoop));
 
+#if defined(MOD_GLOBAL_SHORT_EMBARKED_BLOCKADES)
 		if (pEnemyPlot && (pEnemyPlot->isWater() || pEnemyPlot->isCity()) && pEnemyPlot->IsActualEnemyUnit(ePlayer, true, true)) {
+#else
+		if (pEnemyPlot && (pEnemyPlot->isWater() || pEnemyPlot->isCity()) && pEnemyPlot->IsActualEnemyUnit(ePlayer)) {
+#endif
 			return true;
 		}
 	}
@@ -5589,7 +5597,11 @@ bool CvPlot::isBlockaded(PlayerTypes ePlayer)
 				continue;
 			}
 
+#if defined(MOD_GLOBAL_SHORT_EMBARKED_BLOCKADES)
 			if (pLoopPlot->isWater() && pLoopPlot->IsActualEnemyUnit(ePlayer, true, true)) {
+#else
+			if (pLoopPlot->isWater() && pLoopPlot->IsActualEnemyUnit(ePlayer)) {
+#endif
 				return true;
 			}
 		}
@@ -6001,6 +6013,7 @@ void CvPlot::setFeatureType(FeatureTypes eNewValue, int iVariety)
 			}
 		}
 
+		// TODO - WH - need to enable and test tile improvement events
 #if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
 		if (MOD_EVENTS_TILE_IMPROVEMENTS) {
 			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TileFeatureChanged, getX(), getY(), getOwner(), eOldFeature, eNewValue);
@@ -7440,10 +7453,12 @@ int CvPlot::calculateNatureYield(YieldTypes eYield, TeamTypes eTeam, bool bIgnor
 			}
 			
 #if defined(MOD_RELIGION_PLOT_YIELDS)
-			iReligionChange += pReligion->m_Beliefs.GetPlotYieldChange(getPlotType(), eYield);
-			if (eSecondaryPantheon != NO_BELIEF)
-			{
-				iReligionChange += GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon)->GetPlotYieldChange(getPlotType(), eYield);
+			if (MOD_RELIGION_PLOT_YIELDS) {
+				iReligionChange += pReligion->m_Beliefs.GetPlotYieldChange(getPlotType(), eYield);
+				if (eSecondaryPantheon != NO_BELIEF)
+				{
+					iReligionChange += GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon)->GetPlotYieldChange(getPlotType(), eYield);
+				}
 			}
 #endif
 
@@ -10070,6 +10085,13 @@ void CvPlot::read(FDataStream& kStream)
 	for(uint i = 0; i < MAX_MAJOR_CIVS; i++)
 		kStream >> m_abNoSettling[i];
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	for(uint i = 0; i < MAX_MAJOR_CIVS; i++)
+	{
+		MOD_SERIALIZE_READ(36, kStream, m_abAvoidMovement[i], false);
+	}
+#endif
+
 	bool hasScriptData = false;
 	kStream >> hasScriptData;
 	if(hasScriptData)
@@ -10228,6 +10250,13 @@ void CvPlot::write(FDataStream& kStream) const
 
 	for(uint i = 0; i < MAX_MAJOR_CIVS; i++)
 		kStream << m_abNoSettling[i];
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	for(uint i = 0; i < MAX_MAJOR_CIVS; i++)
+	{
+		MOD_SERIALIZE_WRITE(kStream, m_abAvoidMovement[i]);
+	}
+#endif
 
 	// char * should have died in 1989...
 	bool hasScriptData = (m_szScriptData != NULL);
@@ -11147,3 +11176,21 @@ void CvPlot::updateImpassable()
 		}
 	}
 }
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+bool CvPlot::IsAvoidMovement(PlayerTypes ePlayer) const
+{
+	CvAssertMsg(ePlayer >= 0, "ePlayer is expected to be greater than or equal to 0");
+	CvAssertMsg(ePlayer < MAX_MAJOR_CIVS, "ePlayer is expected to be less than MAX_MAJOR_CIVS");
+
+	return m_abAvoidMovement[ePlayer];
+}
+
+void CvPlot::SetAvoidMovement(PlayerTypes ePlayer, bool bNewValue)
+{
+	CvAssertMsg(ePlayer >= 0, "ePlayer is expected to be greater than or equal to 0");
+	CvAssertMsg(ePlayer < MAX_MAJOR_CIVS, "ePlayer is expected to be less than MAX_MAJOR_CIVS");
+
+	m_abAvoidMovement[ePlayer] = bNewValue;
+}
+#endif

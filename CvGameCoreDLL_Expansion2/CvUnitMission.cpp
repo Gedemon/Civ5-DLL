@@ -61,7 +61,7 @@ void CvUnitMission::AutoMission(UnitHandle hUnit)
 			// Only change human player's units' behaviour
 			if (GET_PLAYER(hUnit->getOwner()).isHuman() && MOD_BUGFIX_WORKERS_VISIBLE_DANGER) {
 				// Stop only if the worker can actually see the enemy
-				bAbortMission = (bAbortMission && hUnit->SentryAlert());
+				bAbortMission = (bAbortMission && hUnit->SentryAlert(true));
 			} else {
 				// Stop if there is any hint of an enemy
 				bAbortMission = (bAbortMission && GET_PLAYER(hUnit->getOwner()).IsPlotUnderImmediateThreat(*(hUnit->plot())));

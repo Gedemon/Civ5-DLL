@@ -397,6 +397,13 @@ protected:
 	LUAAPIEXTN(ReloadGameDataDefines);
 	LUAAPIEXTN(ReloadCustomModOptions);
 #endif
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	static int lGetMinimumVoluntaryVassalTurns(lua_State* L);
+	static int lGetMinimumVassalTurns(lua_State* L);
+	static int lGetNumTurnsBetweenVassals(lua_State* L);
+	// -------------
+#endif
 };
 
 #endif //CVLUAGAME_H

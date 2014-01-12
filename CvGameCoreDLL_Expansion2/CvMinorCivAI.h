@@ -67,6 +67,12 @@ enum MinorCivQuestTypes
     MINOR_CIV_QUEST_DENOUNCE_MAJOR,
     MINOR_CIV_QUEST_SPREAD_RELIGION,
 	MINOR_CIV_QUEST_TRADE_ROUTE,
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	MINOR_CIV_QUEST_WAR,
+	MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER,
+	MINOR_CIV_QUEST_FIND_CITY_STATE,
+	MINOR_CIV_QUEST_INFLUENCE,
+#endif
 
     NUM_MINOR_CIV_QUEST_TYPES,
 };
@@ -311,8 +317,14 @@ public:
 	CvPlot* GetBestNearbyCampToKill();
 	ResourceTypes GetNearbyResourceForQuest(PlayerTypes ePlayer);
 	BuildingTypes GetBestWonderForQuest(PlayerTypes ePlayer);
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	BuildingTypes GetBestNationalWonderForQuest(PlayerTypes ePlayer);
+#endif
 	UnitTypes GetBestGreatPersonForQuest(PlayerTypes ePlayer);
 	PlayerTypes GetBestCityStateTarget(PlayerTypes eForPlayer);
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	PlayerTypes GetBestCityStateMeetTarget(PlayerTypes eForPlayer);
+#endif
 	PlayerTypes GetMostRecentBullyForQuest() const;
 	bool IsWantsMinorDead(PlayerTypes eMinor);
 	PlayerTypes GetBestPlayerToFind(PlayerTypes ePlayer);
@@ -320,6 +332,9 @@ public:
 	bool IsGoodTimeForGiveGoldQuest();
 	bool IsGoodTimeForPledgeToProtectQuest();
 	bool IsGoodTimeForDenounceMajorQuest();
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	bool IsGoodTimeForWarMajorQuest();
+#endif
 
 	// ******************************
 	// ***** Friendship *****

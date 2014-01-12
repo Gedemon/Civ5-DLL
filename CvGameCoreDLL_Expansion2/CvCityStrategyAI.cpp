@@ -3012,6 +3012,12 @@ bool CityStrategyAIHelpers::IsTestCityStrategy_GoodGPCity(CvCity* pCity)
 					{
 						iMod += pCity->GetPlayer()->getGreatEngineerRateModifier();
 					}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+					else if(MOD_DIPLOMACY_CITYSTATES && (UnitClassTypes)pkSpecialistInfo->getGreatPeopleUnitClass() == GC.getInfoTypeForString("UNITCLASS_GREAT_DIPLOMAT"))
+					{
+						iMod += pCity->GetPlayer()->getGreatDiplomatRateModifier();
+					}
+#endif
 
 					iGPPChange *= (100 + iMod);
 					iGPPChange /= 100;

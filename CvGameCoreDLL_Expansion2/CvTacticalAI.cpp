@@ -5174,6 +5174,13 @@ bool CvTacticalAI::ScoreDeploymentPlots(CvPlot* pTarget, CvArmyAI* pArmy, int iN
 							iScore = 10;
 						}
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+						if(MOD_DIPLOMACY_CIV4_FEATURES && pPlot->IsAvoidMovement(m_pPlayer->GetID()))
+						{
+							iScore -= 100;
+						}
+#endif
+
 						pCell->SetSafeForDeployment(bSafeForDeployment);
 						pCell->SetDeploymentScore(iScore);
 
@@ -5307,6 +5314,13 @@ bool CvTacticalAI::ScoreFormationPlots(CvArmyAI* pArmy, CvPlot* pForwardTarget, 
 						{
 							iScore = 10;
 						}
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+						if(MOD_DIPLOMACY_CIV4_FEATURES && pPlot->IsAvoidMovement(m_pPlayer->GetID()))
+						{
+							iScore -= 100;
+						}
+#endif
 
 						// Safe if closer to rear, or if forward target and COM are the same
 						bool bSafeForDeployment = iPlotDistanceFromCOM < iPlotDistance || pForwardTarget == pCurrentCOM;

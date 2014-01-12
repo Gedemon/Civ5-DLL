@@ -107,7 +107,9 @@ CvBeliefEntry::~CvBeliefEntry()
 	CvDatabaseUtility::SafeDelete2DArray(m_ppaiResourceYieldChange);
 	CvDatabaseUtility::SafeDelete2DArray(m_ppaiTerrainYieldChange);
 #if defined(MOD_RELIGION_PLOT_YIELDS)
-	CvDatabaseUtility::SafeDelete2DArray(m_ppaiPlotYieldChange);
+	if (MOD_RELIGION_PLOT_YIELDS) {
+		CvDatabaseUtility::SafeDelete2DArray(m_ppaiPlotYieldChange);
+	}
 #endif
 }
 
@@ -800,6 +802,7 @@ bool CvBeliefEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 	}
 	
 #if defined(MOD_RELIGION_PLOT_YIELDS)
+	if (MOD_RELIGION_PLOT_YIELDS)
 	//PlotYieldChanges
 	{
 		kUtility.Initialize2DArray(m_ppaiPlotYieldChange, "Plots", "Yields");
@@ -1501,11 +1504,13 @@ int CvReligionBeliefs::GetPlotYieldChange(PlotTypes ePlot, YieldTypes eYieldType
 	CvBeliefXMLEntries* pBeliefs = GC.GetGameBeliefs();
 	int rtnValue = 0;
 
-	for(int i = 0; i < pBeliefs->GetNumBeliefs(); i++)
-	{
-		if(HasBelief((BeliefTypes)i))
+	if (MOD_RELIGION_PLOT_YIELDS) {
+		for(int i = 0; i < pBeliefs->GetNumBeliefs(); i++)
 		{
-			rtnValue += pBeliefs->GetEntry(i)->GetPlotYieldChange(ePlot, eYieldType);
+			if(HasBelief((BeliefTypes)i))
+			{
+				rtnValue += pBeliefs->GetEntry(i)->GetPlotYieldChange(ePlot, eYieldType);
+			}
 		}
 	}
 

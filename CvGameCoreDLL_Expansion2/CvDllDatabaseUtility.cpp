@@ -357,7 +357,9 @@ bool CvDllDatabaseUtility::PrefetchGameData()
 	PrefetchCollection(GC.getResourceClassInfo(), "ResourceClasses");
 	PrefetchCollection(GC.getResourceInfo(), "Resources");
 #if defined(MOD_API_PLOT_YIELDS)
-	PrefetchCollection(GC.getPlotInfo(), "Plots");
+	if (MOD_API_PLOT_YIELDS) {
+		PrefetchCollection(GC.getPlotInfo(), "Plots");
+	}
 #endif
 	PrefetchCollection(GC.getTerrainInfo(), "Terrains");
 	PrefetchCollection(GC.getYieldInfo(), "Yields");
@@ -611,7 +613,9 @@ bool CvDllDatabaseUtility::ValidatePrefetchProcess()
 	ValidateVectorSize(getNumEntityEventInfos);
 	ValidateVectorSize(getNumMultiUnitFormationInfos);
 #if defined(MOD_API_PLOT_YIELDS)
-	ValidateVectorSize(getNumPlotInfos);
+	if (MOD_API_PLOT_YIELDS) {
+		ValidateVectorSize(getNumPlotInfos);
+	}
 #endif
 	ValidateVectorSize(getNumTerrainInfos);
 	ValidateVectorSize(getNumResourceClassInfos);

@@ -122,6 +122,12 @@ int CvMinorCivQuest::GetEndTurn() const
 	{
 		iLength = GC.getMINOR_QUEST_STANDARD_CONTEST_LENGTH();
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	else if(m_eType == MINOR_CIV_QUEST_INFLUENCE)
+	{
+		iLength = GC.getMINOR_QUEST_STANDARD_CONTEST_LENGTH();
+	}
+#endif
 
 	// Other quests are not time-sensitive
 	else
@@ -182,6 +188,11 @@ int CvMinorCivQuest::GetInfluenceReward() const
 	case MINOR_CIV_QUEST_CONSTRUCT_WONDER:
 		iReward = /*40*/ GC.getMINOR_QUEST_FRIENDSHIP_CONSTRUCT_WONDER();
 		break;
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	case MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER:
+		iReward = /*40*/ GC.getMINOR_QUEST_FRIENDSHIP_CONSTRUCT_WONDER();
+		break;
+#endif
 	case MINOR_CIV_QUEST_GREAT_PERSON:
 		iReward = /*40*/ GC.getMINOR_QUEST_FRIENDSHIP_GREAT_PERSON();
 		break;
@@ -225,6 +236,18 @@ int CvMinorCivQuest::GetInfluenceReward() const
 	case MINOR_CIV_QUEST_TRADE_ROUTE:
 		iReward = /*40*/ GC.getMINOR_QUEST_FRIENDSHIP_TRADE_ROUTE();
 		break;
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	case MINOR_CIV_QUEST_WAR:
+		iReward = /*50*/ GC.getMINOR_QUEST_FRIENDSHIP_WAR();
+		break;
+	case MINOR_CIV_QUEST_FIND_CITY_STATE:
+		iReward = /*40*/ GC.getMINOR_QUEST_FRIENDSHIP_FIND_CITY_STATE();
+		break;
+	case MINOR_CIV_QUEST_INFLUENCE:
+		// Reward is indirect; increased gains from gold gifts
+		iReward = /*0*/ GC.getMINOR_QUEST_FRIENDSHIP_INVEST();
+		break;
+#endif
 	default:
 		iReward = 0;
 		break;
@@ -419,6 +442,18 @@ bool CvMinorCivQuest::IsComplete()
 			return true;
 		}
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	else if(m_eType == MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER)
+	{
+		BuildingTypes eNationalWonder = (BuildingTypes) m_iData1;
+
+		// Player built the Wonder?
+		if(pAssignedPlayer->countNumBuildings(eNationalWonder) > 0)
+		{
+			return true;
+		}
+	}
+#endif
 	else if(m_eType == MINOR_CIV_QUEST_GREAT_PERSON)
 	{
 		UnitTypes eUnit = (UnitTypes) m_iData1;
@@ -552,7 +587,37 @@ bool CvMinorCivQuest::IsComplete()
 		if(GC.getGame().GetGameTrade()->IsPlayerConnectedToPlayer(m_eMinor,m_eAssignedPlayer))
 			return true;
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	else if(m_eType == MINOR_CIV_QUEST_WAR)
+	{
+		// Has the player gone to war with that major yet?
+		PlayerTypes eTargetMajor = (PlayerTypes) m_iData1;
+		CvTeam* pTeam = &GET_TEAM(GET_PLAYER(m_eAssignedPlayer).getTeam());
+		TeamTypes eTargetTeam;
+		eTargetTeam = GET_PLAYER(eTargetMajor).getTeam();
 
+		if(pTeam->isAtWar(eTargetTeam))
+		{
+			return true;		
+		}
+	}
+	else if(m_eType == MINOR_CIV_QUEST_FIND_CITY_STATE)
+	{
+		PlayerTypes eTargetMinor = (PlayerTypes) m_iData1;
+		CvTeam* pTeam = &GET_TEAM(GET_PLAYER(m_eAssignedPlayer).getTeam());
+
+		// Player found the target minor?
+		if(pTeam->IsHasFoundPlayersTerritory(eTargetMinor))
+		{
+			return true;
+		}
+	}
+	else if(m_eType == MINOR_CIV_QUEST_INFLUENCE)
+	{
+		if(GetEndTurn() == GC.getGame().getGameTurn())
+			return true;
+	}
+#endif
 	return false;
 }
 
@@ -567,6 +632,10 @@ bool CvMinorCivQuest::IsRevoked()
 			return true;
 		if(m_eType == MINOR_CIV_QUEST_CONSTRUCT_WONDER)
 			return true;
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+		if(m_eType == MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER)
+			return true;
+#endif
 		if(m_eType == MINOR_CIV_QUEST_GREAT_PERSON)
 			return true;
 		if(m_eType == MINOR_CIV_QUEST_FIND_PLAYER)
@@ -587,6 +656,14 @@ bool CvMinorCivQuest::IsRevoked()
 			return true;
 		if(m_eType == MINOR_CIV_QUEST_TRADE_ROUTE)
 			return true;
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+		if(m_eType == MINOR_CIV_QUEST_WAR)
+			return true;
+		if(m_eType == MINOR_CIV_QUEST_FIND_CITY_STATE)
+			return true;
+		if(m_eType == MINOR_CIV_QUEST_INFLUENCE)
+			return true;
+#endif
 	}
 
 	return false;
@@ -655,6 +732,31 @@ bool CvMinorCivQuest::IsExpired()
 			}
 		}
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// CONSTRUCT A NATIONAL WONDER
+	else if(MOD_DIPLOMACY_CITYSTATES_QUESTS && m_eType == MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER)
+	{
+		BuildingTypes eNationalWonder = (BuildingTypes) GetPrimaryData();
+		CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eNationalWonder);
+		CvAssertMsg(pkBuildingInfo, "Building info not expected to be FALSE! Please send Anton your save file and version.");
+		if(!isNationalWonderClass(pkBuildingInfo->GetBuildingClassInfo())) return false;
+
+		for(int iPlayerLoop = 0; iPlayerLoop < MAX_CIV_PLAYERS; iPlayerLoop++)
+		{
+			const PlayerTypes eLoopPlayer = (PlayerTypes) iPlayerLoop;
+			CvPlayer* pLoopPlayer = &GET_PLAYER(eLoopPlayer);
+
+			if(pLoopPlayer)
+			{
+				// Someone built the wonder, and it wasn't us
+				if(m_eAssignedPlayer != eLoopPlayer && pLoopPlayer->countNumBuildings(eNationalWonder) > 0)
+				{
+					return true;
+				}
+			}
+		}
+	}
+#endif
 
 	// Spawn a Great Person
 	else if(m_eType == MINOR_CIV_QUEST_GREAT_PERSON)
@@ -774,6 +876,44 @@ bool CvMinorCivQuest::IsExpired()
 	else if(m_eType == MINOR_CIV_QUEST_TRADE_ROUTE)
 	{
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// War on other Major
+	else if(MOD_DIPLOMACY_CITYSTATES_QUESTS && m_eType == MINOR_CIV_QUEST_WAR)
+	{
+		PlayerTypes eTargetPlayer = (PlayerTypes) GetPrimaryData();
+		CvPlayer* pTargetPlayer = &GET_PLAYER(eTargetPlayer);
+
+		if(pTargetPlayer)
+		{
+			// Someone killed the Major
+			if(!pTargetPlayer->isAlive())
+				return true;
+		}
+	}
+	// FIND ANOTHER CITY STATE
+	else if(MOD_DIPLOMACY_CITYSTATES_QUESTS && m_eType == MINOR_CIV_QUEST_FIND_CITY_STATE)
+	{
+		PlayerTypes eTargetCityState = (PlayerTypes) GetPrimaryData();
+		CvPlayer* pTargetCityState = &GET_PLAYER(eTargetCityState);
+
+		if(pTargetCityState)
+		{
+			CvTeam* pTargetCityStateTeam = &GET_TEAM(pTargetCityState->getTeam());
+			if(pTargetCityStateTeam)
+			{
+				// Someone killed the City State, and it wasn't us
+				if(!pTargetCityState->isAlive() && pTargetCityStateTeam->GetKilledByTeam() != GET_PLAYER(m_eAssignedPlayer).getTeam())
+				{
+					return true;
+				}
+			}
+		}
+	}
+	// Influence
+	else if(MOD_DIPLOMACY_CITYSTATES_QUESTS && m_eType == MINOR_CIV_QUEST_INFLUENCE)
+	{
+	}
+#endif
 
 	return false;
 }
@@ -865,6 +1005,24 @@ void CvMinorCivQuest::DoStartQuest(int iStartTurn)
 		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_CONSTRUCT_WONDER");
 		strSummary << strBuildingName;
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// Construct a National Wonder
+	else if(m_eType == MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER)
+	{
+		BuildingTypes eNationalWonder = pMinor->GetMinorCivAI()->GetBestNationalWonderForQuest(m_eAssignedPlayer);
+
+		FAssertMsg(eNationalWonder != NO_BUILDING, "MINOR CIV AI: For some reason we got NO_BUILDING when starting a quest for a major to find a Wonder. Please send Jon this with your last 5 autosaves and what changelist # you're playing. Bad things are probably going to happen.");
+
+		m_iData1 = eNationalWonder;
+
+		const char* strBuildingName = GC.getBuildingInfo(eNationalWonder)->GetDescriptionKey();
+
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_CONSTRUCT_NATIONAL_WONDER");
+		strMessage << strBuildingName;
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_CONSTRUCT_NATIONAL_WONDER");
+		strSummary << strBuildingName;
+	}
+#endif
 	// Great Person
 	else if(m_eType == MINOR_CIV_QUEST_GREAT_PERSON)
 	{
@@ -1114,9 +1272,65 @@ void CvMinorCivQuest::DoStartQuest(int iStartTurn)
 		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_START_TRADE_ROUTE");
 		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_START_TRADE_ROUTE");
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// War with other Major
+	else if(m_eType == MINOR_CIV_QUEST_WAR)
+	{
+		PlayerTypes eMostRecentBully = pMinor->GetMinorCivAI()->GetMostRecentBullyForQuest();
+
+		CvAssertMsg(eMostRecentBully != NO_PLAYER, "MINOR CIV AI: eMostRecentBully should not be NO_PLAYER when giving a War on Major quest! Please send Anton your save file and version.");
+
+		m_iData1 = eMostRecentBully;
+
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_START_WAR");
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_START_WAR");
+
+		if(eMostRecentBully != NO_PLAYER)
+		{
+			const char* strCivKey = GET_PLAYER(eMostRecentBully).getCivilizationShortDescriptionKey();
+			strMessage << strCivKey;
+			strSummary << strCivKey;
+		}
+		else
+		{
+			const char* strCivKey = "Nobody";
+			strMessage << strCivKey;
+			strSummary << strCivKey;
+		}
+	}
+	// Find a City State
+	else if(m_eType == MINOR_CIV_QUEST_FIND_CITY_STATE)
+	{
+		PlayerTypes eTargetCityState = pMinor->GetMinorCivAI()->GetBestCityStateMeetTarget(m_eAssignedPlayer);
+
+		FAssertMsg(eTargetCityState != NO_PLAYER, "MINOR CIV AI: For some reason we got NO_PLAYER when starting a quest for a major to kill a City State. Please send Jon this with your last 5 autosaves and what changelist # you're playing. Bad things are probably going to happen.");
+
+		m_iData1 = eTargetCityState;
+
+		const char* strTargetNameKey = GET_PLAYER(eTargetCityState).getNameKey();
+
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_FIND_CITY_STATE");
+		strMessage << strTargetNameKey;
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_FIND_CITY_STATE");
+		strSummary << strTargetNameKey;
+	}
+	// Influence
+	else if(m_eType == MINOR_CIV_QUEST_INFLUENCE)
+	{
+
+		int iTurnsRemaining = GetEndTurn() - GC.getGame().getGameTurn();
+		int iBoostPercentage = 25;
+
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_INFLUENCE");
+		strMessage << iTurnsRemaining;
+		strMessage << iBoostPercentage;
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_INFLUENCE");
+	}
+#endif
 
 	strMessage << pMinor->getNameKey();
 	strSummary << pMinor->getNameKey();
+	CUSTOMLOG("DoStartQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
 	pMinor->GetMinorCivAI()->AddQuestNotification(strMessage.toUTF8(), strSummary.toUTF8(), m_eAssignedPlayer, iNotificationX, iNotificationY);
 }
 
@@ -1259,6 +1473,19 @@ bool CvMinorCivQuest::DoFinishQuest()
 		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_COMPLETE_CONSTRUCT_WONDER");
 		strSummary << strBuildingName;
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// CONSTRUCT A NATIONAL WONDER
+	else if(m_eType == MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER)
+	{
+		BuildingTypes eNationalWonder = (BuildingTypes) GetPrimaryData();
+		const char* strBuildingName = GC.getBuildingInfo(eNationalWonder)->GetDescriptionKey();
+
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_COMPLETE_CONSTRUCT_NATIONAL_WONDER");
+		strMessage << strBuildingName;
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_COMPLETE_CONSTRUCT_NATIONAL_WONDER");
+		strSummary << strBuildingName;
+	}
+#endif
 
 	// GREAT PERSON
 	else if(m_eType == MINOR_CIV_QUEST_GREAT_PERSON)
@@ -1414,6 +1641,36 @@ bool CvMinorCivQuest::DoFinishQuest()
 		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_COMPLETE_TRADE_ROUTE");
 		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_COMPLETE_TRADE_ROUTE");
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// War with major
+	if(m_eType == MINOR_CIV_QUEST_WAR)
+	{
+		PlayerTypes eTargetMajor = (PlayerTypes) GetPrimaryData();
+		const char* strCivKey = "Nobody";
+		if(eTargetMajor != NO_PLAYER)
+			strCivKey = GET_PLAYER(eTargetMajor).getCivilizationShortDescriptionKey();
+
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_COMPLETE_WAR");
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_COMPLETE_WAR");
+	}
+	// Find City State
+	else if(m_eType == MINOR_CIV_QUEST_FIND_CITY_STATE)
+	{
+		PlayerTypes eTargetCityState = (PlayerTypes) GetPrimaryData();
+		const char* strTargetNameKey = GET_PLAYER(eTargetCityState).getNameKey();
+
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_COMPLETE_FIND_CITY_STATE");
+		strMessage << strTargetNameKey;
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_COMPLETE_FIND_CITY_STATE");
+		strSummary << strTargetNameKey;
+	}
+	// Influence
+	else if(m_eType == MINOR_CIV_QUEST_INFLUENCE)
+	{
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_COMPLETE_INFLUENCE");
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_COMPLETE_INFLUENCE");
+	}
+#endif
 
 	// Update the UI with the changed data, in case it is open
 	if(m_eAssignedPlayer == GC.getGame().getActivePlayer())
@@ -1441,6 +1698,7 @@ bool CvMinorCivQuest::DoFinishQuest()
 		sMessage = sMessage + "[NEWLINE][NEWLINE]" + statusChangeStrings.first;
 	}
 
+	CUSTOMLOG("DoFinishQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
 	pMinor->GetMinorCivAI()->AddQuestNotification(sMessage, sSummary, m_eAssignedPlayer);
 
 	return true;
@@ -1493,6 +1751,24 @@ bool CvMinorCivQuest::DoCancelQuest()
 			strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_ENDED_CONSTRUCT_WONDER");
 			strSummary << strBuildingName;
 		}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+		// CONSTRUCT A NATIONAL WONDER
+		else if(m_eType == MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER)
+		{
+			BuildingTypes eNationalWonder = (BuildingTypes) GetPrimaryData();
+			CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eNationalWonder);
+			CvAssertMsg(pkBuildingInfo, "Building info not expected to be FALSE! Please send Anton your save file and version.");
+			if(!pkBuildingInfo) 
+				return false;
+
+			const char* strBuildingName = pkBuildingInfo->GetDescriptionKey();
+
+			strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_ENDED_CONSTRUCT_NATIONAL_WONDER");
+			strMessage << strBuildingName;
+			strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_ENDED_CONSTRUCT_NATIONAL_WONDER");
+			strSummary << strBuildingName;
+		}
+#endif
 
 		// KILL ANOTHER CITY STATE
 		else if(m_eType == MINOR_CIV_QUEST_KILL_CITY_STATE)
@@ -1550,6 +1826,7 @@ bool CvMinorCivQuest::DoCancelQuest()
 			sMessage = sMessage + pMinor->GetMinorCivAI()->GetNamesListAsString(veNamesToShow);
 		}
 
+		CUSTOMLOG("DoCancelQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
 		pMinor->GetMinorCivAI()->AddQuestNotification(sMessage, sSummary, m_eAssignedPlayer);
 	}
 
@@ -2755,9 +3032,9 @@ void CvMinorCivAI::DoAddStartingResources(CvPlot* pCityPlot)
 			pCityPlot->setResourceType(NO_RESOURCE, 0, true);
 			if (veUniqueLuxuries.size() > 0)
 			{
-			int iRoll = GC.getGame().getJonRandNum(veUniqueLuxuries.size(), "Rolling for Mercantile city-state special luxury"); // range = [0, size - 1]
-			int iQuantity = GC.getMINOR_CIV_MERCANTILE_RESOURCES_QUANTITY();
-			ResourceTypes eSpecialLuxury = veUniqueLuxuries[iRoll];
+				int iRoll = GC.getGame().getJonRandNum(veUniqueLuxuries.size(), "Rolling for Mercantile city-state special luxury"); // range = [0, size - 1]
+				int iQuantity = GC.getMINOR_CIV_MERCANTILE_RESOURCES_QUANTITY();
+				ResourceTypes eSpecialLuxury = veUniqueLuxuries[iRoll];
 
 				pCityPlot->setResourceType(eSpecialLuxury, iQuantity, true);
 			}
@@ -3690,6 +3967,14 @@ bool CvMinorCivAI::IsEnabledQuest(MinorCivQuestTypes eQuest)
 		if(GC.getQUEST_DISABLED_CONSTRUCT_WONDER() == 1)
 			return false;
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// CONSTRUCT A NATIONAL WONDER
+	else if(eQuest == MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER)
+	{
+		if(!MOD_DIPLOMACY_CITYSTATES_QUESTS || GC.getQUEST_DISABLED_CONSTRUCT_WONDER() == 1)
+			return false;
+	}
+#endif
 	// GREAT PERSON
 	else if(eQuest == MINOR_CIV_QUEST_GREAT_PERSON)
 	{
@@ -3786,6 +4071,26 @@ bool CvMinorCivAI::IsEnabledQuest(MinorCivQuestTypes eQuest)
 		if(GC.getQUEST_DISABLED_TRADE_ROUTE() == 1)
 			return false;
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// War with other major
+	else if(eQuest == MINOR_CIV_QUEST_WAR)
+	{
+		if(!MOD_DIPLOMACY_CITYSTATES_QUESTS || GC.getQUEST_DISABLED_WAR() == 1)
+			return false;
+	}
+	// Find City State
+	else if(eQuest == MINOR_CIV_QUEST_FIND_CITY_STATE)
+	{
+		if(!MOD_DIPLOMACY_CITYSTATES_QUESTS || GC.getQUEST_DISABLED_FIND_CITY_STATE() == 1)
+			return false;
+	}
+	// Invest
+	else if(eQuest == MINOR_CIV_QUEST_INFLUENCE)
+	{
+		if(!MOD_DIPLOMACY_CITYSTATES_QUESTS || GC.getQUEST_DISABLED_INFLUENCE() == 1)
+			return false;
+	}
+#endif
 
 	return true;
 }
@@ -3890,6 +4195,20 @@ bool CvMinorCivAI::IsValidQuestForPlayer(PlayerTypes ePlayer, MinorCivQuestTypes
 		if(eWonder == NO_BUILDING)
 			return false;
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// CONSTRUCT A NATIONAL WONDER
+	else if(eQuest == MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER)
+	{
+		// This player must not have bullied us recently
+		if(IsRecentlyBulliedByMajor(ePlayer))
+			return false;
+
+		BuildingTypes eNationalWonder = GetBestNationalWonderForQuest(ePlayer);
+
+		if(eNationalWonder == NO_BUILDING)
+			return false;
+	}
+#endif
 	// GREAT PERSON
 	else if(eQuest == MINOR_CIV_QUEST_GREAT_PERSON)
 	{
@@ -4086,6 +4405,68 @@ bool CvMinorCivAI::IsValidQuestForPlayer(PlayerTypes ePlayer, MinorCivQuestTypes
 			!GC.getGame().GetGameTrade()->CanCreateTradeRoute(ePlayer,GetPlayer()->GetID(), DOMAIN_SEA))
 			return false;
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// War Major
+	else if(eQuest == MINOR_CIV_QUEST_WAR)
+	{
+		// We don't need help if we've never been bullied
+		if(!IsEverBulliedByAnyMajor())
+			return false;
+
+		// This player must not have bullied us recently
+		if(IsRecentlyBulliedByMajor(ePlayer))
+			return false;
+
+		// Is there a recent bully?
+		if(!IsGoodTimeForWarMajorQuest())
+			return false;
+
+		// Don't ask in always war games
+		if(GC.getGame().isOption(GAMEOPTION_ALWAYS_WAR))
+			return false;
+		
+		PlayerTypes eMostRecentBully = GetMostRecentBullyForQuest();
+
+		if(eMostRecentBully == NO_PLAYER)
+			return false;
+
+		// This player must not be the most recent bully
+		if(eMostRecentBully == ePlayer)
+			return false;
+
+		// This player must not be teammates with the most recent bully (cannot denounce)
+		if(GET_PLAYER(ePlayer).getTeam() == GET_PLAYER(eMostRecentBully).getTeam())
+			return false;
+
+		// This player must have met the most recent bully
+		if(!GET_TEAM(GET_PLAYER(ePlayer).getTeam()).isHasMet(GET_PLAYER(eMostRecentBully).getTeam()))
+			return false;
+
+		// This player must not be at war with the most recent bully (cannot denounce)
+		if(GET_TEAM(GET_PLAYER(ePlayer).getTeam()).isAtWar(GET_PLAYER(eMostRecentBully).getTeam()))
+			return false;
+	}
+	// FIND ANOTHER CITY STATE
+	else if(eQuest == MINOR_CIV_QUEST_FIND_CITY_STATE)
+	{
+		// This player must not have bullied us recently
+		if(IsRecentlyBulliedByMajor(ePlayer))
+			return false;
+
+		PlayerTypes eTargetCityState = GetBestCityStateMeetTarget(ePlayer);
+
+		if(eTargetCityState == NO_PLAYER)
+			return false;
+	}
+	// Influence
+	else if(eQuest == MINOR_CIV_QUEST_INFLUENCE)
+	{
+		// This player must not have bullied us recently
+		if(IsRecentlyBulliedByMajor(ePlayer))
+			return false;
+	}
+#endif
+
 	return true;
 }
 
@@ -4156,6 +4537,15 @@ bool CvMinorCivAI::IsValidQuestCopyForPlayer(PlayerTypes ePlayer, CvMinorCivQues
 		if(IsRecentlyBulliedByMajor(ePlayer))
 			return false;
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// Influence
+	else if(eQuestType == MINOR_CIV_QUEST_INFLUENCE)
+	{
+		// This player must not have bullied us recently
+		if(IsRecentlyBulliedByMajor(ePlayer))
+			return false;
+	}
+#endif
 	// Personal quests - This should not be done, just create a new quest from scratch!!
 	else
 	{
@@ -4183,6 +4573,11 @@ bool CvMinorCivAI::IsGlobalQuest(MinorCivQuestTypes eQuest) const
 
 	if(eQuest == MINOR_CIV_QUEST_INVEST)
 		return true;
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	if(eQuest == MINOR_CIV_QUEST_INFLUENCE)
+		return true;
+#endif
 
 	return false;
 }
@@ -4215,6 +4610,12 @@ int CvMinorCivAI::GetMinPlayersNeededForQuest(MinorCivQuestTypes eQuest) const
 	{
 		iPlayersNeeded = 2; //antonjs: todo: XML
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	else if(eQuest == MINOR_CIV_QUEST_INFLUENCE)
+	{
+		iPlayersNeeded = 2;
+	}
+#endif
 
 	int iMajorsEverAlive = GC.getGame().countMajorCivsEverAlive();
 	iPlayersNeeded = min(iPlayersNeeded, iMajorsEverAlive);
@@ -4452,6 +4853,71 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 		}
 	}
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// War with Major
+	else if(eQuest == MINOR_CIV_QUEST_WAR)
+	{
+		if(eTrait == MINOR_CIV_TRAIT_MILITARISTIC) //How dare they bully us!
+		{
+			iCount *= 500; //xml
+			iCount /= 100;
+		}
+		else if(eTrait == MINOR_CIV_PERSONALITY_HOSTILE) //Arrrgh!
+		{
+			iCount *= 400; //xml
+			iCount /= 100;
+		}
+		else if(eTrait == MINOR_CIV_TRAIT_CULTURED) //Help!!
+		{
+			iCount *= 350; //xml
+			iCount /= 100;
+		}
+		else if(eTrait == MINOR_CIV_TRAIT_MERCANTILE) //Oh no!!
+		{
+			iCount *= 300; //xml
+			iCount /= 100;
+		}
+		else
+		{
+			iCount *= 250; //xml
+			iCount /= 100;
+		}
+	}
+	// CONSTRUCT A NATIONAL WONDER
+	else if(eQuest == MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER)
+	{
+		if(eTrait == MINOR_CIV_TRAIT_CULTURED)						// Cultured
+		{
+			iCount *= 250;
+			iCount /= 100;
+		}
+		else
+		{
+			iCount *= 125;
+			iCount /= 100;
+		}
+	}
+	// FIND ANOTHER MINOR
+	else if(eQuest == MINOR_CIV_QUEST_FIND_CITY_STATE)
+	{
+		if(eTrait == MINOR_CIV_TRAIT_MARITIME)						// Maritime
+		{
+			iCount *= /*300*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_MARITIME_FIND_PLAYER();
+			iCount /= 100;
+		}
+		else if(eTrait == MINOR_CIV_TRAIT_MERCANTILE)
+		{
+			iCount *= /*200*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_MERCANTILE_FIND_PLAYER();
+			iCount /= 100;
+		}
+		else
+		{
+			iCount *= 150;
+			iCount /= 100;
+		}
+	}
+#endif
+
 	// ******************
 	// Global Quests
 	// ******************
@@ -4511,6 +4977,27 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 			iCount /= 100;
 		}
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	// Influence
+	else if(eQuest == MINOR_CIV_QUEST_INFLUENCE)
+	{
+		if(eTrait == MINOR_CIV_PERSONALITY_FRIENDLY)
+		{
+			iCount *= 300;
+			iCount /= 100;
+		}
+		else if(eTrait == MINOR_CIV_PERSONALITY_HOSTILE)
+		{
+			iCount *= 50;
+			iCount /= 100;
+		}
+		else
+		{
+			iCount *= 150;
+			iCount /= 100;
+		}
+	}
+#endif
 
 	return iCount / 10;
 }
@@ -5188,6 +5675,86 @@ BuildingTypes CvMinorCivAI::GetBestWonderForQuest(PlayerTypes ePlayer)
 	return eBestWonder;
 }
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+/// Best national wonder for a Quest given to ePlayer?
+BuildingTypes CvMinorCivAI::GetBestNationalWonderForQuest(PlayerTypes ePlayer)
+{
+	BuildingTypes eBestNationalWonder;
+
+	FStaticVector<BuildingTypes, 10, true, c_eCiv5GameplayDLL, 0> veValidBuildings; // 50 wonders should be overkill
+
+	int iWorldPlayerLoop;
+	PlayerTypes eWorldPlayer;
+	CvCity* pLoopCity;
+	int iCityLoop;
+	int iWonderProgress;
+	int iCompletionThreshold = /*25*/ GC.getMINOR_CIV_QUEST_WONDER_COMPLETION_THRESHOLD();
+	bool bFoundWonderTooFarAlong;
+
+	// Loop through all Buildings and see if they're useful
+	for(int iBuildingLoop = 0; iBuildingLoop < GC.getNumBuildingInfos(); iBuildingLoop++)
+	{
+		const BuildingTypes eBuilding = static_cast<BuildingTypes>(iBuildingLoop);
+		CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eBuilding);
+
+		//Skip if NULL
+		if(pkBuildingInfo == NULL)
+			continue;
+
+		bFoundWonderTooFarAlong = false;
+
+		// Must be a wonder
+		if(!isNationalWonderClass(pkBuildingInfo->GetBuildingClassInfo()))
+		{
+			continue;
+		}
+
+		// Must be able to build it
+		if(!GET_PLAYER(ePlayer).canConstruct(eBuilding))
+		{
+			continue;
+		}
+
+		// Someone CAN be building this wonder right now, but they can't be more than a certain % of the way done (25% by default)
+		for(iWorldPlayerLoop = 0; iWorldPlayerLoop < MAX_MAJOR_CIVS; iWorldPlayerLoop++)
+		{
+			eWorldPlayer = (PlayerTypes) iWorldPlayerLoop;
+
+			for(pLoopCity = GET_PLAYER(eWorldPlayer).firstCity(&iCityLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(eWorldPlayer).nextCity(&iCityLoop))
+			{
+				iWonderProgress = pLoopCity->GetCityBuildings()->GetBuildingProduction(eBuilding);
+
+				if(iWonderProgress * 100 / pLoopCity->getProductionNeeded(eBuilding) >= iCompletionThreshold)
+				{
+					bFoundWonderTooFarAlong = true;
+					break;
+				}
+			}
+			if(bFoundWonderTooFarAlong)
+			{
+				break;
+			}
+		}
+		if(bFoundWonderTooFarAlong)
+		{
+			continue;
+		}
+
+		veValidBuildings.push_back(eBuilding);
+	}
+
+	// Didn't find any valid Wonders
+	if(veValidBuildings.size() == 0)
+	{
+		return NO_BUILDING;
+	}
+
+	int iRandIndex = GC.getGame().getJonRandNum(veValidBuildings.size(), "Finding random Wonder for Minor to give out a quest to construct.");
+	eBestNationalWonder = veValidBuildings[iRandIndex];
+
+	return eBestNationalWonder;
+}
+#endif
 
 /// Find a Great Person that a Minor would want a major to spawn
 UnitTypes CvMinorCivAI::GetBestGreatPersonForQuest(PlayerTypes ePlayer)
@@ -5474,6 +6041,77 @@ bool CvMinorCivAI::IsGoodTimeForNaturalWonderQuest(PlayerTypes ePlayer)
 	return true;
 }
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+/// Any distant City States that this City State would want to meet?
+/// NOTE: This makes a random choice, and is not guaranteed to return the same target if called multiple times.
+/// It will, however, return NO_PLAYER reliably if there are no valid targets for eForPlayer.
+PlayerTypes CvMinorCivAI::GetBestCityStateMeetTarget(PlayerTypes eForPlayer)
+{
+	CvAssertMsg(eForPlayer >= 0, "eForPlayer is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eForPlayer < MAX_MAJOR_CIVS, "eForPlayer is expected to be within maximum bounds (invalid Index)");
+
+	PlayerTypes eBestCityStateTarget = NO_PLAYER;
+
+	PlayerProximityTypes eClosestProximity = PLAYER_PROXIMITY_CLOSE;
+
+	// First, loop through the Minors in the game to what the closest proximity is to any of the players
+	int iTargetLoop;
+	PlayerTypes eTarget;
+	for(iTargetLoop = MAX_MAJOR_CIVS; iTargetLoop < MAX_CIV_PLAYERS; iTargetLoop++)
+	{
+		eTarget = (PlayerTypes) iTargetLoop;
+
+		if(!GET_PLAYER(eTarget).isAlive())
+			continue;
+
+		if(GetPlayer()->getTeam() == GET_PLAYER(eTarget).getTeam())
+			continue;
+
+		if(GetPlayer()->GetProximityToPlayer(eTarget) <= eClosestProximity)
+		{
+			eClosestProximity = GetPlayer()->GetProximityToPlayer(eTarget);
+		}
+	}
+
+	// Found nobody, or only people too close
+	if(eClosestProximity == PLAYER_PROXIMITY_NEIGHBORS)
+	{
+		return NO_PLAYER;
+	}
+
+	FStaticVector<PlayerTypes, MAX_CIV_PLAYERS, true, c_eCiv5GameplayDLL, 0> veValidTargets;
+
+	// Now loop through and come up with a list of valid players based on the proximity we found out earlier
+	for(iTargetLoop = MAX_MAJOR_CIVS; iTargetLoop < MAX_CIV_PLAYERS; iTargetLoop++)
+	{
+		eTarget = (PlayerTypes) iTargetLoop;
+
+		if(!GET_PLAYER(eTarget).isAlive())
+			continue;
+
+		if(GetPlayer()->getTeam() == GET_PLAYER(eTarget).getTeam())
+			continue;
+
+		if(GET_TEAM(GET_PLAYER(eForPlayer).getTeam()).isHasMet(GET_PLAYER(eTarget).getTeam()))
+			continue;
+
+		if(GetPlayer()->GetProximityToPlayer(eTarget) == eClosestProximity)
+		{
+			veValidTargets.push_back(eTarget);
+		}
+	}
+
+	// Didn't find any valid Target players
+	if(veValidTargets.size() == 0)
+		return NO_PLAYER;
+
+	int iRandIndex = GC.getGame().getJonRandNum(veValidTargets.size(), "Finding random City State Target for Minor to give out a quest to kill.");
+	eBestCityStateTarget = veValidTargets[iRandIndex];
+
+	return eBestCityStateTarget;
+}
+#endif
+
 /// The minor civ has been bullied recently and could use some help?
 bool CvMinorCivAI::IsGoodTimeForGiveGoldQuest()
 {
@@ -5506,6 +6144,19 @@ bool CvMinorCivAI::IsGoodTimeForDenounceMajorQuest()
 
 	return false;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+/// The minor civ has been bullied recently and could use some help?
+bool CvMinorCivAI::IsGoodTimeForWarMajorQuest()
+{
+	if(IsRecentlyBulliedByAnyMajor())
+	{
+		return true;
+	}
+
+	return false;
+}
+#endif
 
 
 // ******************************

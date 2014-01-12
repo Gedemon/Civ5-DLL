@@ -109,6 +109,10 @@ public:
 	double AverageIncome(int iTurns);
 	void CvTreasury::LogExpenditure(CvString strExpenditure, int iAmount, int iColumn);
 
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	int GetVassalGoldMaintenance() const;
+#endif
+
 protected:
 	CvPlayer* m_pPlayer;
 	int m_iGold;

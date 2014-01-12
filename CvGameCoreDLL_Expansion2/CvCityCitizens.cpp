@@ -1851,7 +1851,11 @@ bool CvCityCitizens::IsPlotBlockaded(CvPlot* pPlot) const
 #endif
 					{
 						// Enemy boat within range to blockade our plot?
+#if defined(MOD_GLOBAL_SHORT_EMBARKED_BLOCKADES)
 						if(pNearbyPlot->IsActualEnemyUnit(ePlayer, true, true))
+#else
+						if(pNearbyPlot->IsActualEnemyUnit(ePlayer))
+#endif
 						{
 #if defined(MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES)
 							if (MOD_GLOBAL_ALLIES_BLOCK_BLOCKADES && iPlotDistance > 1) {
@@ -2055,6 +2059,12 @@ void CvCityCitizens::DoSpecialists()
 					{
 						iMod += GetPlayer()->getGreatEngineerRateModifier();
 					}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+					else if(MOD_DIPLOMACY_CITYSTATES && (UnitClassTypes)pkSpecialistInfo->getGreatPeopleUnitClass() == GC.getInfoTypeForString("UNITCLASS_GREAT_DIPLOMAT"))
+					{
+						iMod += GetPlayer()->getGreatDiplomatRateModifier();
+					}
+#endif
 
 					// Apply mod
 					iGPPChange *= (100 + iMod);
@@ -2482,6 +2492,12 @@ int CvCityCitizens::GetSpecialistUpgradeThreshold(UnitClassTypes eUnitClass)
 	{
 		iNumCreated = GET_PLAYER(GetCity()->getOwner()).getGreatMusiciansCreated();
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	else if (MOD_DIPLOMACY_CITYSTATES && eUnitClass == GC.getInfoTypeForString("UNITCLASS_GREAT_DIPLOMAT", true))
+	{
+		iNumCreated = GET_PLAYER(GetCity()->getOwner()).getGreatDiplomatsCreated();
+	}
+#endif
 	else
 	{
 		iNumCreated = GET_PLAYER(GetCity()->getOwner()).getGreatPeopleCreated();
@@ -2551,6 +2567,12 @@ void CvCityCitizens::DoSpawnGreatPerson(UnitTypes eUnit, bool bIncrementCount, b
 		{
 			kPlayer.incrementGreatMusiciansCreated();
 		}		
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		else if (MOD_DIPLOMACY_CITYSTATES && newUnit->getUnitInfo().GetUnitClassType() == GC.getInfoTypeForString("UNITCLASS_GREAT_DIPLOMAT"))
+		{
+			kPlayer.incrementGreatDiplomatsCreated();
+		}
+#endif
 		else
 		{
 			kPlayer.incrementGreatPeopleCreated();

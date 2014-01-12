@@ -442,6 +442,9 @@ protected:
 	static int lGetGreatScientistRateModifier(lua_State* L);
 	static int lGetGreatMerchantRateModifier(lua_State* L);
 	static int lGetGreatEngineerRateModifier(lua_State* L);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	static int lGetGreatDiplomatRateModifier(lua_State* L);
+#endif
 
 	static int lGetPolicyGreatPeopleRateModifier(lua_State* L);
 	static int lGetPolicyGreatWriterRateModifier(lua_State* L);
@@ -450,6 +453,9 @@ protected:
 	static int lGetPolicyGreatScientistRateModifier(lua_State* L);
 	static int lGetPolicyGreatMerchantRateModifier(lua_State* L);
 	static int lGetPolicyGreatEngineerRateModifier(lua_State* L);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	static int lGetPolicyGreatDiplomatRateModifier(lua_State* L);
+#endif
 
 	static int lGetProductionModifier(lua_State* L);
 	static int lGetUnitProductionModifier(lua_State* L);
@@ -1026,6 +1032,18 @@ protected:
 	// Warmongering
 	static int lGetWarmongerPreviewString(lua_State* L);
 	static int lGetLiberationPreviewString(lua_State* L);
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	static int lGetVassalGoldMaintenance(lua_State* L);
+	static int lIsVassalageAcceptable(lua_State* L);
+	static int lGetJONSCulturePerTurnFromVassals(lua_State* L);
+	static int lGetHappinessFromVassals(lua_State* L);
+	static int lGetScoreFromVassals(lua_State* L);
+	static int lGetScienceFromVassalTimes100(lua_State* L);
+	static int lGetMilitaryAggressivePosture(lua_State* L);
+	static int lMoveRequestTooSoon(lua_State* L);
+	static int lGetPlayerMoveTroopsRequestCounter(lua_State* L);
+#endif
 };
 
 #endif //CVLUAPLAYER_H

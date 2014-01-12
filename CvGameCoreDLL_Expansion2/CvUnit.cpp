@@ -1381,6 +1381,37 @@ void CvUnit::kill(bool bDelay, PlayerTypes ePlayer /*= NO_PLAYER*/)
 			GET_PLAYER(getOwner()).GetDiplomacyAI()->ChangeWarValueLost(ePlayer, iValue);
 			// Bad guy's viewpoint
 			GET_PLAYER(ePlayer).GetDiplomacyAI()->ChangeOtherPlayerWarValueLost(getOwner(), ePlayer, iValue);
+		
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+			if (MOD_DIPLOMACY_CIV4_FEATURES) {
+				CvCity* pLoopCity;
+				int iCityLoop;
+				bool bNearLoserCity = false;
+				PlayerTypes eLoopPlayer;
+
+				// Loop through loser's cities.
+				for(pLoopCity = GET_PLAYER(getOwner()).firstCity(&iCityLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(getOwner()).nextCity(&iCityLoop))
+				{
+					if(plotDistance(plot()->getX(), plot()->getY(), pLoopCity->getX(), pLoopCity->getY()) <= GC.getVASSALAGE_FAILED_PROTECT_CITY_DISTANCE())
+					{
+						bNearLoserCity = true;
+						break;
+					}
+				}
+
+				for(int iPlayerLoop = 0; iPlayerLoop < MAX_PLAYERS; iPlayerLoop++)
+				{
+					eLoopPlayer = (PlayerTypes) iPlayerLoop;
+
+					// Is loser's team the vassal of ePlayer?
+					if(GET_TEAM(GET_PLAYER(getOwner()).getTeam()).IsVassal(GET_PLAYER(eLoopPlayer).getTeam()) && bNearLoserCity)
+					{
+						// Master's failed protect score goes up for Vassal
+						GET_PLAYER(getOwner()).GetDiplomacyAI()->ChangeVassalFailedProtectValue(ePlayer, iValue);
+					}
+				}
+			}
+#endif
 		}
 
 		if(NO_UNIT != getLeaderUnitType())
@@ -1753,7 +1784,7 @@ void CvUnit::doTurn()
 #if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
 	if (MOD_BUGFIX_UNITS_AWAKE_IN_DANGER) {
 		// Healing units will awaken if they can see an enemy unit
-		bHealCheck = bHealCheck || ((eActivityType == ACTIVITY_HEAL) && SentryAlert());
+		bHealCheck = bHealCheck || ((eActivityType == ACTIVITY_HEAL) && SentryAlert(true));
 	}
 #endif
 	bool bSentryCheck = (eActivityType == ACTIVITY_SENTRY) && SentryAlert();
@@ -8243,6 +8274,11 @@ int CvUnit::getTradeInfluence(const CvPlot* pPlot) const
 		if (eMinor != NO_PLAYER)
 		{
 			iInf = /*30*/ GC.getMINOR_FRIENDSHIP_FROM_TRADE_MISSION();
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+			if (MOD_DIPLOMACY_CITYSTATES) {
+				iInf += (m_pUnitInfo->GetNumInfPerEra() * GET_TEAM(getTeam()).GetCurrentEra());
+			}
+#endif
 			int iInfTimes100 = iInf * (100 + GetTradeMissionInfluenceModifier());
 			iInf = iInfTimes100 / 100;
 		}
@@ -8302,6 +8338,19 @@ bool CvUnit::trade()
 	PlayerTypes eMinor = pPlot->getOwner();
 	CvAssertMsg(eMinor != NO_PLAYER, "Performing a trade mission and not in city state territory. This is bad. Please send Jon this with your last 5 autosaves and what changelist # you're playing.");
 	int iFriendship = getTradeInfluence(pPlot);
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	if (MOD_DIPLOMACY_CITYSTATES_QUESTS) {
+		//Added Influence Quest Bonus
+		if(GET_PLAYER(eMinor).GetMinorCivAI()->IsActiveQuestForPlayer(getOwner(), MINOR_CIV_QUEST_INFLUENCE))
+		{	
+			int iBoostPercentage = 25;
+			iFriendship *= 100 + iBoostPercentage;
+			iFriendship /= 100;
+		}
+	}
+#endif
+
 	GET_PLAYER(eMinor).GetMinorCivAI()->ChangeFriendshipWithMajor(getOwner(), iFriendship);
 
 	if(getOwner() == GC.getGame().getActivePlayer())
@@ -15336,6 +15385,12 @@ void CvUnit::changeExperience(int iChange, int iMax, bool bFromCombat, bool bInB
 					{
 						setHasPromotion(eNewPromotion, true);
 
+#if defined(MOD_EVENTS_UNIT_UPGRADES)
+						if (MOD_EVENTS_UNIT_UPGRADES) {
+							GAMEEVENTINVOKE_HOOK(GAMEEVENT_UnitPromoted, getOwner(), GetID(), eNewPromotion);
+						}
+#endif
+
 						CvPromotionEntry* pkNewPromotionInfo = GC.getPromotionInfo(eNewPromotion);
 						Localization::String localizedText = Localization::Lookup(pkNewPromotionInfo->GetDescriptionKey());
 						float fDelay = GC.getPOST_COMBAT_TEXT_DELAY() * 2;
@@ -19922,7 +19977,11 @@ bool CvUnit::IsBusy() const
 }
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_BUGFIX_WORKERS_VISIBLE_DANGER) || defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
+bool CvUnit::SentryAlert(bool bSameDomainOrRanged) const
+#else
 bool CvUnit::SentryAlert() const
+#endif
 {
 	VALIDATE_OBJECT
 	int iRange = visibilityRange();
@@ -19947,7 +20006,16 @@ bool CvUnit::SentryAlert() const
 							pEnemyUnit = pPlot->getVisibleEnemyDefender(getOwner());
 							if(pEnemyUnit)
 							{
-								return true;
+#if defined(MOD_BUGFIX_WORKERS_VISIBLE_DANGER) || defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
+								if (bSameDomainOrRanged)
+								{
+									if (pEnemyUnit->isRanged() || pEnemyUnit->getDomainType() == getDomainType()) {
+										return true;
+									}
+								}
+								else
+#endif
+									return true;
 							}
 						}
 					}
