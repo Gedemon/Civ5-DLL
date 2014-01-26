@@ -533,6 +533,10 @@ protected:
 	static int lIsLargerCivThan(lua_State* L);
 
 	static int lIsRangedSupportFire(lua_State* L);
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(AddMessage);
+#endif
 };
 
 

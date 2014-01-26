@@ -300,6 +300,10 @@ bool IsTestStrategy_CitiesNeedNavalGrowth(EconomicAIStrategyTypes eStrategy, CvP
 bool IsTestStrategy_CitiesNeedNavalTileImprovement(EconomicAIStrategyTypes eStrategy, CvPlayer* pPlayer);
 bool IsTestStrategy_FoundCity(EconomicAIStrategyTypes eStrategy, CvPlayer* pPlayer);
 bool IsTestStrategy_TradeWithCityState(EconomicAIStrategyTypes eStrategy, CvPlayer* pPlayer);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+bool IsTestStrategy_InfluenceCityState(EconomicAIStrategyTypes eStrategy, CvPlayer* pPlayer);
+bool IsTestStrategy_InfluenceMessengerCityState(EconomicAIStrategyTypes eStrategy, CvPlayer* pPlayer);
+#endif
 bool IsTestStrategy_ConcertTour(EconomicAIStrategyTypes eStrategy, CvPlayer* pPlayer);
 bool IsTestStrategy_NeedImprovement(CvPlayer* pPlayer, YieldTypes eYield);
 bool IsTestStrategy_OneOrFewerCoastalCities(CvPlayer* pPlayer);

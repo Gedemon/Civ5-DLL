@@ -400,6 +400,11 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 #if defined(MOD_API_LUA_EXTENSIONS)
 	Method(ReloadGameDataDefines);
 	Method(ReloadCustomModOptions);
+	Method(SpewTestEvents);
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(AddMessage);
 #endif
 
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
@@ -2183,7 +2188,7 @@ int CvLuaGame::lIsInSomeReligion(lua_State* L)
 int CvLuaGame::lGetAvailablePantheonBeliefs(lua_State* L)
 {
 #if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
-	PlayerTypes ePlayer = (PlayerTypes)luaL_optint(L, 1, NO_PLAYER);
+	PlayerTypes ePlayer = (PlayerTypes)luaL_optint(L, 1, GC.getGame().getActivePlayer());
 #endif
 
 	lua_createtable(L, 0, 0);
@@ -3035,6 +3040,62 @@ int CvLuaGame::lReloadCustomModOptions(lua_State* L)
 {
 	gCustomMods.reloadCache();
 	return 0;
+}
+//------------------------------------------------------------------------------
+int CvLuaGame::lSpewTestEvents(lua_State* L)
+{
+	const int iLimit = luaL_optint(L, 1, 1000);
+
+	const ULONGLONG startTick = GetTickCount64();
+
+	for (int i = 0; i < iLimit; ++i) {
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if (pkScriptSystem) {
+			CvLuaArgsHandle args;
+			args->Push(-1);
+			args->Push(-1);
+			args->Push(-1);
+			args->Push(-1);
+
+			bool bResult;
+			LuaSupport::CallHook(pkScriptSystem, "TestEvent", args.get(), bResult);
+		}
+	}
+
+	const ULONGLONG endTick = GetTickCount64();
+
+	lua_pushinteger(L, ((int) (endTick - startTick) / 1000));
+	lua_pushinteger(L, ((int) (endTick - startTick) % 1000));
+	return 2;
+}
+#endif
+
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaGame::lAddMessage(lua_State* L)
+{
+	uint uiResult = 0;
+
+	const char* szString = lua_tostring(L, 1);
+
+	const PlayerTypes ePlayer = (PlayerTypes) luaL_optinteger(L, 2, NO_PLAYER);
+	const bool bForce = luaL_optbool(L, 3, false);
+	const int iLength = luaL_optinteger(L, 4, -1);
+	const char* pszSound = lua_tostring(L, 5);
+	const InterfaceMessageTypes eType = (InterfaceMessageTypes) luaL_optinteger(L, 6, MESSAGE_TYPE_INFO);
+	const char* pszIcon = lua_tostring(L, 7);
+	const ColorTypes eFlashColor = (ColorTypes) luaL_optinteger(L, 8, NO_COLOR);
+	const int iFlashX = luaL_optinteger(L, 9, -1);
+	const int iFlashY = luaL_optinteger(L, 10, -1);
+	const bool bShowOffScreenArrows = luaL_optbool(L, 11, false);
+	const bool bShowOnScreenArrows = luaL_optbool(L, 12, false);
+
+	uiResult = DLLUI->AddMessage(0, ePlayer, bForce, iLength, szString, pszSound, eType, pszIcon, eFlashColor, iFlashX, iFlashY, bShowOffScreenArrows, bShowOnScreenArrows);
+
+	lua_pushinteger(L, (int) uiResult);
+
+	return 1;
 }
 #endif
 

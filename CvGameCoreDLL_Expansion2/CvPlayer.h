@@ -525,6 +525,11 @@ public:
 #endif
 
 	int GetExtraLeagueVotes() const;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int GetImprovementLeagueVotes() const;
+	void ChangeImprovementLeagueVotes(int iChange);
+#endif
+
 	void ChangeExtraLeagueVotes(int iChange);
 
 	int GetWoundedUnitDamageMod() const;
@@ -1675,6 +1680,9 @@ protected:
 	int m_iConversionModifier;
 #endif
 	int m_iExtraLeagueVotes;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int m_iImprovementLeagueVotes;
+#endif
 	FAutoVariable<int, CvPlayer> m_iAdvancedStartPoints;
 	FAutoVariable<int, CvPlayer> m_iAttackBonusTurns;
 	int m_iCultureBonusTurns;

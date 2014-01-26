@@ -73,6 +73,9 @@ public:
 	int GetPillageGold() const;
 	int GetResourceExtractionMod() const;
 	int GetLuxuryCopiesSiphonedFromMinor() const;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int GetCityStateExtraVote() const;
+#endif
 	int GetImprovementPillage() const;
 	void SetImprovementPillage(int i);
 	int GetImprovementUpgrade() const;
@@ -195,6 +198,9 @@ protected:
 	int m_iPillageGold;
 	int m_iResourceExtractionMod;
 	int m_iLuxuryCopiesSiphonedFromMinor;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int m_iImprovementLeagueVotes;
+#endif
 	int m_iImprovementPillage;
 	int m_iImprovementUpgrade;
 	int m_iRequiresXAdjacentLand;

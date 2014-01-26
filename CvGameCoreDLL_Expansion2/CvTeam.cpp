@@ -1193,6 +1193,17 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyP
 							// Forget any of that liberation crud!
 							int iNumCitiesLiberated = kDefendingPlayer.GetDiplomacyAI()->GetNumCitiesLiberated(eAttackingPlayer);
 							kDefendingPlayer.GetDiplomacyAI()->ChangeNumCitiesLiberated(eAttackingPlayer, -iNumCitiesLiberated);
+
+#if defined(MOD_DIPLOMACY_AUTO_DENOUNCE)
+							if (MOD_DIPLOMACY_AUTO_DENOUNCE && kAttackingPlayer.isHuman() && !kDefendingPlayer.isHuman())
+							{
+								CvDiplomacyAI* pDiplomacy = kAttackingPlayer.GetDiplomacyAI();
+
+								if (!pDiplomacy->IsDenouncedPlayer(eDefendingPlayer)) {
+									pDiplomacy->DoDenouncePlayer(eDefendingPlayer);
+								}
+							}
+#endif
 						}
 					}
 				}
@@ -6196,6 +6207,9 @@ void CvTeam::testCircumnavigated()
 		}
 	}
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	GC.getGame().SetPlayerThatCircumnavigated(GC.getGame().getActivePlayer());
+#endif
 	kGame.makeCircumnavigated();
 
 	int iActivePlayerID = GC.getGame().getActivePlayer();

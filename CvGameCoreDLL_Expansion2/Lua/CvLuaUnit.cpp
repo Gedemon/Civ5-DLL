@@ -524,6 +524,10 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(IsLargerCivThan);
 
 	Method(IsRangedSupportFire);
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(AddMessage);
+#endif
 }
 //------------------------------------------------------------------------------
 const char* CvLuaUnit::GetTypeName()
@@ -682,7 +686,11 @@ int CvLuaUnit::lCanMoveOrAttackInto(lua_State* L)
 	bool bResult = false;
 	if(pkPlot)
 	{
+#if defined(MOD_BUGFIX_MINOR)
+		bResult = pkUnit->canMoveOrAttackInto(*pkPlot, bMoveFlags);
+#else
 		pkUnit->canMoveOrAttackInto(*pkPlot, bMoveFlags);
+#endif
 	}
 
 	lua_pushboolean(L, bResult);
@@ -4852,3 +4860,32 @@ int CvLuaUnit::lIsRangedSupportFire(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaUnit::lAddMessage(lua_State* L)
+{
+	uint uiResult = 0;
+
+	CvUnit* pUnit = GetInstance(L);
+	const char* szString = lua_tostring(L, 2);
+
+	const PlayerTypes ePlayer = (PlayerTypes) luaL_optinteger(L, 3, NO_PLAYER);
+	const bool bForce = luaL_optbool(L, 4, false);
+	const int iLength = luaL_optinteger(L, 5, -1);
+	const char* pszSound = lua_tostring(L, 6);
+	const InterfaceMessageTypes eType = (InterfaceMessageTypes) luaL_optinteger(L, 7, MESSAGE_TYPE_INFO);
+	const char* pszIcon = lua_tostring(L, 8);
+	const ColorTypes eFlashColor = (ColorTypes) luaL_optinteger(L, 9, NO_COLOR);
+	const int iFlashX = luaL_optinteger(L, 10, -1);
+	const int iFlashY = luaL_optinteger(L, 11, -1);
+	const bool bShowOffScreenArrows = luaL_optbool(L, 12, false);
+	const bool bShowOnScreenArrows = luaL_optbool(L, 13, false);
+
+	uiResult = DLLUI->AddUnitMessage(0, pUnit->GetIDInfo(), ePlayer, bForce, iLength, szString, pszSound, eType, pszIcon, eFlashColor, iFlashX, iFlashY, bShowOffScreenArrows, bShowOnScreenArrows);
+
+	lua_pushinteger(L, (int) uiResult);
+
+	return 1;
+}
+#endif

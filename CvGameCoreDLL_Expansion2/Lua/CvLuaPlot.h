@@ -119,6 +119,9 @@ protected:
 	static int lIsBarbarian(lua_State* L);
 	static int lIsRevealedBarbarian(lua_State* L);
 	static int lHasBarbarianCamp(lua_State* L);
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	static int lHasDig(lua_State* L);
+#endif
 	static int lIsVisible(lua_State* L);
 	static int lIsActiveVisible(lua_State* L);
 	static int lIsVisibleToWatchingHuman(lua_State* L);
@@ -309,5 +312,10 @@ protected:
 
 	static int lGetCityPurchaseID(lua_State* L);
 	static int lSetCityPurchaseID(lua_State* L);
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(AddMessage);
+	LUAAPIEXTN(AddPopupMessage);
+#endif
 };
 #endif

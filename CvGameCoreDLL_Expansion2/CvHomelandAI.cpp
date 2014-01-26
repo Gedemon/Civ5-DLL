@@ -373,6 +373,11 @@ void CvHomelandAI::EstablishHomelandPriorities()
 		case AI_HOMELAND_MOVE_ENGINEER_HURRY:
 			iPriority = GC.getAI_HOMELAND_MOVE_PRIORITY_ENGINEER_HURRY();
 			break;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		case AI_HOMELAND_MOVE_DIPLOMAT_EMBASSY:
+			iPriority = GC.getAI_HOMELAND_MOVE_PRIORITY_ENGINEER_HURRY();
+			break;
+#endif
 		case AI_HOMELAND_MOVE_GENERAL_GARRISON:
 			iPriority = GC.getAI_HOMELAND_MOVE_PRIORITY_GENERAL_GARRISON();
 			break;
@@ -487,6 +492,12 @@ void CvHomelandAI::EstablishHomelandPriorities()
 			case AI_HOMELAND_MOVE_TRADE_UNIT:
 				iPriority += iFlavorGold;
 				break;
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+			case AI_HOMELAND_MOVE_DIPLOMAT_EMBASSY:
+				iPriority += iFlavorCulture;
+				break;
+#endif
 			}
 
 			// Store off this move and priority
@@ -516,6 +527,9 @@ void CvHomelandAI::FindHomelandTargets()
 	m_TargetedHomelandRoads.clear();
 	m_TargetedAncientRuins.clear();
 	m_TargetedAntiquitySites.clear();
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	m_TargetedCityStates.clear();
+#endif
 
 	TeamTypes eTeam = m_pPlayer->getTeam();
 
@@ -592,6 +606,29 @@ void CvHomelandAI::FindHomelandTargets()
 				newTarget.SetAuxData(pLoopPlot);
 				m_TargetedAncientRuins.push_back(newTarget);
 			}
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+			// ... city-state?
+			else if(MOD_DIPLOMACY_CITYSTATES && !pLoopPlot->isWater() && !pLoopPlot->isImpassable() && (!pLoopPlot->isUnit() || pLoopPlot->getNumDefenders(m_pPlayer->GetID()) > 0))
+			{
+				PlayerTypes eMinor;
+				for(int iMinorLoop = MAX_MAJOR_CIVS; iMinorLoop < MAX_CIV_PLAYERS; iMinorLoop++)
+				{
+					eMinor = (PlayerTypes) iMinorLoop;
+					if (pLoopPlot->getOwner() == eMinor)
+					{
+						if(!pLoopPlot->HasSpecialImprovement() && !pLoopPlot->isCity())
+						{
+									newTarget.SetTargetType(AI_HOMELAND_TARGET_CITY_STATE);
+									newTarget.SetTargetX(pLoopPlot->getX());
+									newTarget.SetTargetY(pLoopPlot->getY());
+									newTarget.SetAuxData(pLoopPlot);
+									m_TargetedCityStates.push_back(newTarget);
+						}
+					}
+				}	
+			}
+#endif
 
 			// ... antiquity site?
 			else if((pLoopPlot->getResourceType(eTeam) == GC.getARTIFACT_RESOURCE() || pLoopPlot->getResourceType(eTeam) == GC.getHIDDEN_ARTIFACT_RESOURCE()) && 
@@ -757,6 +794,11 @@ void CvHomelandAI::AssignHomelandMoves()
 		case AI_HOMELAND_MOVE_MERCHANT_TRADE:
 			PlotMerchantMoves();
 			break;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		case AI_HOMELAND_MOVE_DIPLOMAT_EMBASSY:
+			if (MOD_DIPLOMACY_CITYSTATES) PlotDiplomatMoves();
+			break;
+#endif
 		case AI_HOMELAND_MOVE_GENERAL_GARRISON:
 			PlotGeneralMoves();
 			break;
@@ -1821,6 +1863,34 @@ void CvHomelandAI::PlotEngineerMoves()
 	}
 }
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+/// Find moves for great diplomats
+void CvHomelandAI::PlotDiplomatMoves()
+{
+	ClearCurrentMoveUnits();
+
+	// Loop through all recruited units
+	for(list<int>::iterator it = m_CurrentTurnUnits.begin(); it != m_CurrentTurnUnits.end(); ++it)
+	{
+		UnitHandle pUnit = m_pPlayer->getUnit(*it);
+		if(pUnit)
+		{
+			if(pUnit->AI_getUnitAIType() == UNITAI_DIPLOMAT)
+			{
+				CvHomelandUnit unit;
+				unit.SetID(pUnit->GetID());
+				m_CurrentMoveUnits.push_back(unit);
+			}
+		}
+	}
+
+	if(m_CurrentMoveUnits.size() > 0)
+	{
+		ExecuteDiplomatMoves();
+	}
+}
+#endif
+
 /// Find moves for great merchants
 void CvHomelandAI::PlotMerchantMoves()
 {
@@ -2757,7 +2827,7 @@ void CvHomelandAI::ExecuteWorkerMoves()
 #if defined(MOD_AI_SECONDARY_WORKERS)
 				if(MoveCivilianToSafety(pUnit.pointer(), false, bSecondary))
 #else
-				if(MoveCivilianToSafety(pUnit.pointer(), false))
+				if(MoveCivilianToSafety(pUnit.pointer()))
 #endif
 				{
 					if(GC.getLogging() && GC.GetBuilderAILogging())
@@ -3747,6 +3817,78 @@ void CvHomelandAI::ExecuteEngineerMoves()
 		}
 	}
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+void CvHomelandAI::ExecuteDiplomatMoves()
+{
+	FStaticVector< CvHomelandUnit, 64, true, c_eCiv5GameplayDLL >::iterator it;
+	for(it = m_CurrentMoveUnits.begin(); it != m_CurrentMoveUnits.end(); ++it)
+	{
+		UnitHandle pUnit = m_pPlayer->getUnit(it->GetID());
+		if(!pUnit)
+		{
+			continue;
+		}
+		GreatPeopleDirectiveTypes eDirective = pUnit->GetGreatPeopleDirective();
+		switch(eDirective)
+		{
+		case GREAT_PEOPLE_DIRECTIVE_CONSTRUCT_IMPROVEMENT:
+		{
+			int iTargetTurns;
+			CvPlot* pTarget = GET_PLAYER(m_pPlayer->GetID()).ChooseDiplomatTargetPlot(pUnit, &iTargetTurns);
+			if(pTarget)
+			{
+				if(pUnit->plot() == pTarget)
+				{
+					BuildTypes eBuild = (BuildTypes)GC.getInfoTypeForString("BUILD_EMBASSY");
+					pUnit->PushMission(CvTypes::getMISSION_BUILD(), eBuild, -1, 0, (pUnit->GetLengthMissionQueue() > 0), false, MISSIONAI_BUILD, pTarget);
+					if(GC.getLogging() && GC.getAILogging())
+					{
+						CvString strLogString;
+					strLogString.Format("Great Diplomat creating Embassy at, X: %d, Y: %d", pTarget->getX(), pTarget->getY());
+					LogHomelandMessage(strLogString);
+					}
+				}
+				else if(iTargetTurns < 1)
+				{
+					pUnit->PushMission(CvTypes::getMISSION_MOVE_TO(), pTarget->getX(), pTarget->getY());
+					if(GC.getLogging() && GC.getAILogging())
+					{
+						CvString strLogString;
+						strLogString.Format("Great Diplomat moving to city-state at, X: %d, Y: %d", pTarget->getX(), pTarget->getY());
+						LogHomelandMessage(strLogString);
+					}
+					else
+					{
+						CvAssertMsg(false, "Internal error with Missionary AI move, contact Ed.");
+					}
+				}
+				else
+				{
+					m_CurrentBestMoveHighPriorityUnit = NULL;
+					m_CurrentBestMoveUnit = m_pPlayer->getUnit(it->GetID());
+					ExecuteMoveToTarget(pTarget);
+
+					if(GC.getLogging() && GC.getAILogging())
+					{
+						CvString strLogString;
+						strLogString.Format("Moving to plot adjacent to conversion city, X: %d, Y: %d, Currently at, X: %d, Y: %d", pTarget->getX(), pTarget->getY(), pUnit->getX(), pUnit->getY());
+						LogHomelandMessage(strLogString);
+					}
+				}
+			}
+		}
+		break;
+		case GREAT_PEOPLE_DIRECTIVE_USE_POWER:
+			//Handled by economic AI
+		break;
+		case NO_GREAT_PEOPLE_DIRECTIVE_TYPE:
+			MoveCivilianToSafety(pUnit.pointer());
+		break;
+		}
+	}
+}
+#endif
 
 void CvHomelandAI::ExecuteMerchantMoves()
 {

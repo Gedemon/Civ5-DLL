@@ -514,6 +514,10 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(GetNumForcedWorkingPlots);
 
 	Method(GetReligionCityRangeStrikeModifier);
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(AddMessage);
+#endif
 }
 //------------------------------------------------------------------------------
 void CvLuaCity::HandleMissingInstance(lua_State* L)
@@ -4188,3 +4192,31 @@ int CvLuaCity::lGetReligionCityRangeStrikeModifier(lua_State* L)
 	return 1;
 }
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaCity::lAddMessage(lua_State* L)
+{
+	uint uiResult = 0;
+
+	CvCity* pCity = GetInstance(L);
+	const char* szString = lua_tostring(L, 2);
+	const PlayerTypes ePlayer = (PlayerTypes) lua_tointeger(L, 3);
+
+	const bool bForce = luaL_optbool(L, 4, false);
+	const int iLength = luaL_optinteger(L, 5, -1);
+	const char* pszSound = lua_tostring(L, 6);
+	const InterfaceMessageTypes eType = (InterfaceMessageTypes) luaL_optinteger(L, 7, MESSAGE_TYPE_INFO);
+	const char* pszIcon = lua_tostring(L, 8);
+	const ColorTypes eFlashColor = (ColorTypes) luaL_optinteger(L, 9, NO_COLOR);
+	const int iFlashX = luaL_optinteger(L, 10, -1);
+	const int iFlashY = luaL_optinteger(L, 11, -1);
+	const bool bShowOffScreenArrows = luaL_optbool(L, 12, false);
+	const bool bShowOnScreenArrows = luaL_optbool(L, 13, false);
+
+	uiResult = DLLUI->AddCityMessage(0, pCity->GetIDInfo(), ePlayer, bForce, iLength, szString, pszSound, eType, pszIcon, eFlashColor, iFlashX, iFlashY, bShowOffScreenArrows, bShowOnScreenArrows);
+
+	lua_pushinteger(L, (int) uiResult);
+
+	return 1;
+}
+#endif

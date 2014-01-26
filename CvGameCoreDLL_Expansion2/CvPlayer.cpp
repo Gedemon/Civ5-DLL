@@ -164,6 +164,9 @@ CvPlayer::CvPlayer() :
 	, m_iConversionModifier(0)
 #endif
 	, m_iExtraLeagueVotes(0)
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	, m_iImprovementLeagueVotes(0)
+#endif
 	, m_iSpecialPolicyBuildingHappiness("CvPlayer::m_iSpecialPolicyBuildingHappiness", m_syncArchive)
 	, m_iWoundedUnitDamageMod("CvPlayer::m_iWoundedUnitDamageMod", m_syncArchive)
 	, m_iUnitUpgradeCostMod("CvPlayer::m_iUnitUpgradeCostMod", m_syncArchive)
@@ -784,6 +787,9 @@ void CvPlayer::uninit()
 	m_iConversionModifier = 0;
 #endif
 	m_iExtraLeagueVotes = 0;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	m_iImprovementLeagueVotes = 0;
+#endif
 	m_iSpecialPolicyBuildingHappiness = 0;
 	m_iWoundedUnitDamageMod = 0;
 	m_iUnitUpgradeCostMod = 0;
@@ -3520,6 +3526,10 @@ void CvPlayer::disbandUnit(bool)
 						case UNITAI_SCIENTIST:
 						case UNITAI_GENERAL:
 						case UNITAI_MERCHANT:
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+						case UNITAI_DIPLOMAT:
+						case UNITAI_MESSENGER:
+#endif
 						case UNITAI_ENGINEER:
 						case UNITAI_SPACESHIP_PART:
 						case UNITAI_TREASURE:
@@ -4685,7 +4695,11 @@ void CvPlayer::DoUnitReset()
 
 		// Finally (now that healing is done), restore movement points
 		pLoopUnit->setMoves(pLoopUnit->maxMoves());
+#if defined(MOD_PROMOTIONS_FLAGSHIP)
+		if(pLoopUnit->IsGreatGeneral() || (MOD_PROMOTIONS_FLAGSHIP && pLoopUnit->IsGreatAdmiral()))
+#else
 		if(pLoopUnit->IsGreatGeneral())
+#endif
 		{
 			pLoopUnit->setMoves(pLoopUnit->GetGreatGeneralStackMovement());
 		}
@@ -12258,6 +12272,27 @@ int CvPlayer::GetExtraLeagueVotes() const
 	return m_iExtraLeagueVotes;
 }
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+//	--------------------------------------------------------------------------------
+/// Extra league votes
+int CvPlayer::GetImprovementLeagueVotes() const
+{
+	return m_iImprovementLeagueVotes;
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes
+void CvPlayer::ChangeImprovementLeagueVotes(int iChange)
+{
+	m_iImprovementLeagueVotes += iChange;
+	CvAssert(m_iImprovementLeagueVotes >= 0);
+	if (m_iImprovementLeagueVotes < 0)
+	{
+		m_iImprovementLeagueVotes = 0;
+	}
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 /// Extra league votes
 void CvPlayer::ChangeExtraLeagueVotes(int iChange)
@@ -16013,6 +16048,12 @@ void CvPlayer::setNavalCombatExperience(int iExperience)
 										{
 											CUSTOMLOG("Create Great Admiral at (%d, %d) from unit %s", pFromUnit->plot()->getX(), pFromUnit->plot()->getY(), pFromUnit->getName().GetCString());
 											createGreatAdmiral(eUnit, pFromUnit->plot()->getX(), pFromUnit->plot()->getY());
+
+#if defined(MOD_PROMOTIONS_FLAGSHIP)
+											if (MOD_PROMOTIONS_FLAGSHIP) {
+												pFromUnit->setHasPromotion((PromotionTypes)GC.getPROMOTION_FLAGSHIP(), true);
+											}
+#endif
 										}
 										else
 										{
@@ -16228,6 +16269,13 @@ void CvPlayer::setAlive(bool bNewValue, bool bNotify)
 						// cancel any research agreements
 						GET_TEAM(getTeam()).CancelResearchAgreement(eTheirTeam);
 						GET_TEAM(eTheirTeam).CancelResearchAgreement(getTeam());
+
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+						if (MOD_DIPLOMACY_CIV4_FEATURES) {
+							GET_TEAM(getTeam()).DoEndVassal(eTheirTeam, true, true);
+							GET_TEAM(eTheirTeam).DoEndVassal(getTeam(), true, true);
+						}
+#endif
 					}
 				}
 			}
@@ -22558,6 +22606,9 @@ void CvPlayer::Read(FDataStream& kStream)
 	{
 		m_iExtraLeagueVotes = 0;
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	MOD_SERIALIZE_READ(39, kStream, m_iImprovementLeagueVotes, 0);
+#endif
 	kStream >> m_iSpecialPolicyBuildingHappiness;
 	kStream >> m_iWoundedUnitDamageMod;
 	kStream >> m_iUnitUpgradeCostMod;
@@ -23122,6 +23173,9 @@ void CvPlayer::Write(FDataStream& kStream) const
 	MOD_SERIALIZE_WRITE(kStream, m_iConversionModifier);
 #endif
 	kStream << m_iExtraLeagueVotes;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	MOD_SERIALIZE_WRITE(kStream, m_iImprovementLeagueVotes);
+#endif
 	kStream << m_iSpecialPolicyBuildingHappiness;
 	kStream << m_iWoundedUnitDamageMod;
 	kStream << m_iUnitUpgradeCostMod;
@@ -25481,6 +25535,9 @@ void CvPlayer::doArmySize()
 		        (UnitAITypes)iI == UNITAI_SCIENTIST || (UnitAITypes)iI == UNITAI_MERCHANT || (UnitAITypes)iI == UNITAI_WORKER_SEA ||
 		        (UnitAITypes)iI == UNITAI_SPACESHIP_PART || (UnitAITypes)iI == UNITAI_TREASURE || (UnitAITypes)iI == UNITAI_PROPHET ||
 		        (UnitAITypes)iI == UNITAI_MISSIONARY || (UnitAITypes)iI == UNITAI_INQUISITOR || (UnitAITypes)iI == UNITAI_ADMIRAL ||
+#if defined(MOD_DIPLOMACY_CITYSTATES) 
+				(MOD_DIPLOMACY_CITYSTATES && ((UnitAITypes)iI == UNITAI_DIPLOMAT || (UnitAITypes)iI == UNITAI_MESSENGER)) ||
+#endif
 				(UnitAITypes)iI == UNITAI_WRITER || (UnitAITypes)iI == UNITAI_MUSICIAN)
 		{
 			continue;

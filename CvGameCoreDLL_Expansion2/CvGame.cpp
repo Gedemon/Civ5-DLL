@@ -1042,6 +1042,9 @@ void CvGame::uninit()
 	m_eBestGreatPeoplePlayer = NO_PLAYER;
 	m_eReligionTech = NO_TECH;
 	m_eIndustrialRoute = NO_ROUTE;
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	m_ePlayerThatCircumnavigated = NO_PLAYER;
+#endif
 
 	m_strScriptData = "";
 	m_iEarliestBarbarianReleaseTurn = 0;
@@ -7876,6 +7879,18 @@ UnitTypes CvGame::GetRandomSpawnUnitType(PlayerTypes ePlayer, bool bIncludeUUs, 
 			if(pkUnitInfo->GetDomainType() != DOMAIN_LAND)
 				continue;
 
+#if defined(MOD_BUGFIX_NO_HOVERING_REBELS)
+			// Must NOT be a hovering unit
+			for(int iI = 0; iI < GC.getNumPromotionInfos(); iI++)
+			{
+				if(pkUnitInfo->GetFreePromotions(iI))
+				{
+					if(GC.getPromotionInfo((PromotionTypes) iI)->IsHoveringUnit())
+						continue;
+				}
+			}
+#endif
+
 			// Must be able to train this thing
 			if(!GET_PLAYER(ePlayer).canTrain(eLoopUnit, false, false, false, /*bIgnoreUniqueUnitStatus*/ true))
 				continue;
@@ -9501,6 +9516,10 @@ void CvGame::Read(FDataStream& kStream)
 	kStream >> m_eReligionTech;
 	kStream >> m_eIndustrialRoute;
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	MOD_SERIALIZE_READ(39, kStream, m_ePlayerThatCircumnavigated, NO_PLAYER);
+#endif
+
 	kStream >> m_strScriptData;
 
 	ArrayWrapper<int> wrapm_aiEndTurnMessagesReceived(MAX_PLAYERS, m_aiEndTurnMessagesReceived);
@@ -9734,6 +9753,10 @@ void CvGame::Write(FDataStream& kStream) const
 	kStream << m_eBestGreatPeoplePlayer;
 	kStream << m_eReligionTech;
 	kStream << m_eIndustrialRoute;
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	MOD_SERIALIZE_WRITE(kStream, m_ePlayerThatCircumnavigated);
+#endif
 
 	kStream << m_strScriptData;
 
@@ -10202,6 +10225,21 @@ void CvGame::DoUpdateIndustrialRoute()
 
 	m_eIndustrialRoute = eIndustrialRoute;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+
+//	--------------------------------------------------------------------------------
+PlayerTypes CvGame::GetPlayerThatCircumnavigated() const
+{
+	return (PlayerTypes) m_ePlayerThatCircumnavigated;
+}
+
+//	--------------------------------------------------------------------------------
+void CvGame::SetPlayerThatCircumnavigated(PlayerTypes eNewValue)
+{
+	m_ePlayerThatCircumnavigated = eNewValue;
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 CvSiteEvaluatorForSettler* CvGame::GetSettlerSiteEvaluator()
@@ -11874,4 +11912,3 @@ void CvGame::SetLastTurnAICivsProcessed()
 		m_lastTurnAICivsProcessed = getGameTurn();
 	}
 }
-

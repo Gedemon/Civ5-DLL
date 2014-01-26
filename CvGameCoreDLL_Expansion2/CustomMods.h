@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 38)
+#define MOD_DLL_VERSION_NUMBER ((uint) 39)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -73,12 +73,18 @@
 #define MOD_GLOBAL_CS_LIBERATE_AFTER_BUYOUT         gCustomMods.isGLOBAL_CS_LIBERATE_AFTER_BUYOUT()
 // City States give different gifts depending on their type (cultural, religious, maritime, etc)
 #define MOD_GLOBAL_CS_GIFTS                         gCustomMods.isGLOBAL_CS_GIFTS()
+// City States allied to a major behave as an overseas territory of that major
+#define MOD_GLOBAL_CS_OVERSEAS_TERRITORY            gCustomMods.isGLOBAL_CS_OVERSEAS_TERRITORY()
+// City States at war with each other but allied to the same major will declare peace
+#define MOD_GLOBAL_CS_NO_ALLIED_SKIRMISHES          gCustomMods.isGLOBAL_CS_NO_ALLIED_SKIRMISHES()
 // Mercantile City States acquired via a Merchant of Venice do not lose their unique resources
 #define MOD_GLOBAL_VENICE_KEEPS_RESOURCES           gCustomMods.isGLOBAL_VENICE_KEEPS_RESOURCES()
 // Units attacking from cities, forts or citadels will not follow-up if they kill the defender
 #define MOD_GLOBAL_NO_FOLLOWUP_FROM_CITIES          gCustomMods.isGLOBAL_NO_FOLLOWUP_FROM_CITIES()
 // Units that can move after attacking can also capture civilian units (eg workers in empty barbarian camps)
 #define MOD_GLOBAL_CAPTURE_AFTER_ATTACKING          gCustomMods.isGLOBAL_CAPTURE_AFTER_ATTACKING()
+// Trade routes can't be plundered on ocean tiles - too much sea to hide in, too many directions to escape in
+#define MOD_GLOBAL_NO_OCEAN_PLUNDERING              gCustomMods.isGLOBAL_NO_OCEAN_PLUNDERING()
 // Remove assembled spaceship parts from conquered capitals
 #define MOD_GLOBAL_NO_CONQUERED_SPACESHIPS          gCustomMods.isGLOBAL_NO_CONQUERED_SPACESHIPS()
 // TODO - WH - MOD_GLOBAL_ADJACENT_BLOCKADES
@@ -106,6 +112,8 @@
 
 // Tech bonuses from other teams require an embassy or spy in their capital and not from just having met them
 #define MOD_DIPLOMACY_TECH_BONUSES                  gCustomMods.isDIPLOMACY_TECH_BONUSES()
+// Human players will auto-denounce AI players before going to war with them
+#define MOD_DIPLOMACY_AUTO_DENOUNCE                 gCustomMods.isDIPLOMACY_AUTO_DENOUNCE()
 // Changes for the City State Diplomacy mod by Gazebo - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_DIPLOMACY_CITYSTATES                    gCustomMods.isDIPLOMACY_CITYSTATES()
 #if defined(MOD_DIPLOMACY_CITYSTATES)
@@ -139,6 +147,8 @@
 #define MOD_PROMOTIONS_HALF_MOVE                    gCustomMods.isPROMOTIONS_HALF_MOVE()
 // Permits Deep Water (Ocean) embarkation for hovering units - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_PROMOTIONS_DEEP_WATER_EMBARKATION       gCustomMods.isPROMOTIONS_DEEP_WATER_EMBARKATION()
+// Permits naval units to transfer their moves to Great Admirals (like land units can to Great Generals)
+#define MOD_PROMOTIONS_FLAGSHIP                     gCustomMods.isPROMOTIONS_FLAGSHIP()
 
 // Permit the focus (gold/production/culture) of puppet cities to be set (but not what is being built or how specialists are allocated)
 #define MOD_UI_CITY_PRODUCTION                      gCustomMods.isUI_CITY_PRODUCTION()
@@ -388,6 +398,8 @@
 // Fixes the bug where units can upgrade even without any pre-req project being available
 #define MOD_BUGFIX_UNIT_PREREQ_PROJECT              gCustomMods.isBUGFIX_UNIT_PREREQ_PROJECT()
 // Fixes a bug in the pathfinder code for hovering units at the seaside!
+#define MOD_BUGFIX_NO_HOVERING_REBELS               gCustomMods.isBUGFIX_NO_HOVERING_REBELS()
+// Fixes a bug in the pathfinder code for hovering units at the seaside!
 #define MOD_BUGFIX_HOVERING_PATHFINDER              gCustomMods.isBUGFIX_HOVERING_PATHFINDER()
 // Fixes a bug in the pathfinder code for embarking
 #define MOD_BUGFIX_EMBARKING_PATHFINDER             gCustomMods.isBUGFIX_EMBARKING_PATHFINDER()
@@ -618,9 +630,12 @@ public:
 	MOD_OPT_DECL(GLOBAL_CS_RAZE_RARELY);
 	MOD_OPT_DECL(GLOBAL_CS_LIBERATE_AFTER_BUYOUT);
 	MOD_OPT_DECL(GLOBAL_CS_GIFTS);
+	MOD_OPT_DECL(GLOBAL_CS_OVERSEAS_TERRITORY);
+	MOD_OPT_DECL(GLOBAL_CS_NO_ALLIED_SKIRMISHES);
 	MOD_OPT_DECL(GLOBAL_VENICE_KEEPS_RESOURCES);
 	MOD_OPT_DECL(GLOBAL_NO_FOLLOWUP_FROM_CITIES);
 	MOD_OPT_DECL(GLOBAL_CAPTURE_AFTER_ATTACKING);
+	MOD_OPT_DECL(GLOBAL_NO_OCEAN_PLUNDERING);
 	MOD_OPT_DECL(GLOBAL_NO_CONQUERED_SPACESHIPS);
 	MOD_OPT_DECL(GLOBAL_ALLIES_BLOCK_BLOCKADES);
 	MOD_OPT_DECL(GLOBAL_SHORT_EMBARKED_BLOCKADES);
@@ -634,6 +649,7 @@ public:
 	MOD_OPT_DECL(GLOBAL_GREATWORK_YIELDTYPES); 
 	
 	MOD_OPT_DECL(DIPLOMACY_TECH_BONUSES);
+	MOD_OPT_DECL(DIPLOMACY_AUTO_DENOUNCE);
 	MOD_OPT_DECL(DIPLOMACY_CITYSTATES); 
 	MOD_OPT_DECL(DIPLOMACY_CITYSTATES_QUESTS); 
 	MOD_OPT_DECL(DIPLOMACY_CITYSTATES_RESOLUTIONS); 
@@ -653,6 +669,7 @@ public:
 	MOD_OPT_DECL(PROMOTIONS_CROSS_ICE);
 	MOD_OPT_DECL(PROMOTIONS_HALF_MOVE);
 	MOD_OPT_DECL(PROMOTIONS_DEEP_WATER_EMBARKATION);
+	MOD_OPT_DECL(PROMOTIONS_FLAGSHIP);
 
 	MOD_OPT_DECL(UI_CITY_PRODUCTION);
 	MOD_OPT_DECL(UI_CITY_EXPANSION);
@@ -739,6 +756,7 @@ public:
 	MOD_OPT_DECL(BUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY);
 	MOD_OPT_DECL(BUGFIX_UNIT_POWER_NAVAL_CONSISTENCY);
 	MOD_OPT_DECL(BUGFIX_UNIT_PREREQ_PROJECT);
+	MOD_OPT_DECL(BUGFIX_NO_HOVERING_REBELS);
 	MOD_OPT_DECL(BUGFIX_HOVERING_PATHFINDER);
 	MOD_OPT_DECL(BUGFIX_EMBARKING_PATHFINDER);
 

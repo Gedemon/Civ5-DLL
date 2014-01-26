@@ -576,6 +576,11 @@ public:
 	int GetNumArchaeologySites() const;
 	int GetNumHiddenArchaeologySites() const;
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	PlayerTypes GetPlayerThatCircumnavigated() const;
+	void SetPlayerThatCircumnavigated(PlayerTypes eNewValue);
+#endif
+
 public:
 
 	//Function to determine city size from city population
@@ -663,6 +668,10 @@ protected:
 	TechTypes m_eReligionTech;
 	RouteTypes m_eIndustrialRoute;
 	bool m_bArchaeologyTriggered;
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	char /*PlayerTypes*/ m_ePlayerThatCircumnavigated;
+#endif
 
 	CvString m_strScriptData;
 

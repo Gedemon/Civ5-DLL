@@ -100,6 +100,9 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(IsBarbarian);
 	Method(IsRevealedBarbarian);
 	Method(HasBarbarianCamp);
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	Method(HasDig);
+#endif
 	Method(IsVisible);
 	Method(IsActiveVisible);
 	Method(IsVisibleToWatchingHuman);
@@ -290,6 +293,11 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 
 	Method(GetCityPurchaseID);
 	Method(SetCityPurchaseID);
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(AddMessage);
+	Method(AddPopupMessage);
+#endif
 }
 //------------------------------------------------------------------------------
 void CvLuaPlot::HandleMissingInstance(lua_State* L)
@@ -724,6 +732,15 @@ int CvLuaPlot::lHasBarbarianCamp(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlot::HasBarbarianCamp);
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+//------------------------------------------------------------------------------
+int CvLuaPlot::lHasDig(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::HasDig);
+}
+#endif
+
 //------------------------------------------------------------------------------
 //bool isVisible(TeamTypes eTeam, bool bDebug);
 int CvLuaPlot::lIsVisible(lua_State* L)
@@ -1933,3 +1950,44 @@ int CvLuaPlot::lSetCityPurchaseID(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlot::SetCityPurchaseID);
 }
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaPlot::lAddMessage(lua_State* L)
+{
+	uint uiResult = 0;
+
+	CvPlot* pPlot = GetInstance(L);
+	const char* szString = lua_tostring(L, 2);
+
+	const PlayerTypes ePlayer = (PlayerTypes) luaL_optinteger(L, 3, NO_PLAYER);
+	const bool bForce = luaL_optbool(L, 4, false);
+	const int iLength = luaL_optinteger(L, 5, -1);
+	const char* pszSound = lua_tostring(L, 6);
+	const InterfaceMessageTypes eType = (InterfaceMessageTypes) luaL_optinteger(L, 7, MESSAGE_TYPE_INFO);
+	const char* pszIcon = lua_tostring(L, 8);
+	const ColorTypes eFlashColor = (ColorTypes) luaL_optinteger(L, 9, NO_COLOR);
+	const int iFlashX = luaL_optinteger(L, 10, -1);
+	const int iFlashY = luaL_optinteger(L, 11, -1);
+	const bool bShowOffScreenArrows = luaL_optbool(L, 12, false);
+	const bool bShowOnScreenArrows = luaL_optbool(L, 13, false);
+
+	uiResult = DLLUI->AddPlotMessage(0, pPlot->GetPlotIndex(), ePlayer, bForce, iLength, szString, pszSound, eType, pszIcon, eFlashColor, iFlashX, iFlashY, bShowOffScreenArrows, bShowOnScreenArrows);
+
+	lua_pushinteger(L, (int) uiResult);
+
+	return 1;
+}
+//------------------------------------------------------------------------------
+int CvLuaPlot::lAddPopupMessage(lua_State* L)
+{
+	CvPlot* pPlot = GetInstance(L);
+	const char* szString = lua_tostring(L, 2);
+
+	const float fDelay = (float) luaL_optnumber(L, 3, 0.0);
+
+	DLLUI->AddPopupText(pPlot->getX(), pPlot->getY(), szString, fDelay);
+
+	return 0;
+}
+#endif

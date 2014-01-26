@@ -254,6 +254,9 @@ void CvPlot::reset(int iX, int iY, bool bConstructorCall)
 	m_ePlayerResponsibleForImprovement = NO_PLAYER;
 	m_ePlayerResponsibleForRoute = NO_PLAYER;
 	m_ePlayerThatClearedBarbCampHere = NO_PLAYER;
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	m_ePlayerThatClearedDigHere = NO_PLAYER;
+#endif
 	m_eRouteType = NO_ROUTE;
 #if defined(MOD_GLOBAL_STACKING_RULES)
 	m_eUnitIncrement = 0;
@@ -3317,6 +3320,14 @@ bool CvPlot::HasBarbarianCamp()
 	return (getImprovementType() == GC.getBARBARIAN_CAMP_IMPROVEMENT());
 }
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+//	--------------------------------------------------------------------------------
+bool CvPlot::HasDig()
+{
+	return (getResourceType() == GC.getARTIFACT_RESOURCE());
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 bool CvPlot::isActiveVisible(bool bDebug) const
 {
@@ -3966,7 +3977,7 @@ bool CvPlot::IsActualEnemyUnit(PlayerTypes ePlayer, bool bCombatUnitsOnly) const
 #endif
 						return true;
 #if defined(MOD_GLOBAL_SHORT_EMBARKED_BLOCKADES)
-				}
+					}
 #endif
 				}
 			}
@@ -5158,7 +5169,19 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 							}
 						}
 					}
-
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+					// Embassy extra vote in WC mod
+					if(MOD_DIPLOMACY_CITYSTATES && pImprovementInfo != NULL && pImprovementInfo->GetCityStateExtraVote() > 0)
+					{
+						if (GetPlayerThatBuiltImprovement() != NO_PLAYER)
+						{
+							if (GET_PLAYER(eOldOwner).isMinorCiv())
+							{
+								GET_PLAYER(GetPlayerThatBuiltImprovement()).ChangeImprovementLeagueVotes(pImprovementInfo->GetCityStateExtraVote() * -1);
+							}
+						}
+					}
+#endif
 					// Maintenance change!
 					if(MustPayMaintenanceHere(getOwner()))
 					{
@@ -5331,6 +5354,31 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 					}
 				}
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+				// Embassy is here (somehow- city-state conquest/reconquest, perhaps?
+				if(MOD_DIPLOMACY_CITYSTATES && getImprovementType() != NO_IMPROVEMENT)
+				{
+					GET_PLAYER(eNewValue).changeImprovementCount(getImprovementType(), 1);
+
+					// Add siphoned resources
+					CvImprovementEntry* pImprovementInfo = GC.getImprovementInfo(getImprovementType());
+					if (pImprovementInfo != NULL && pImprovementInfo->GetCityStateExtraVote() > 0)
+					{
+						if (GetPlayerThatBuiltImprovement() != NO_PLAYER)
+						{
+							if (GET_PLAYER(eNewValue).isMinorCiv())
+							{
+								GET_PLAYER(GetPlayerThatBuiltImprovement()).ChangeImprovementLeagueVotes(pImprovementInfo->GetCityStateExtraVote());
+							}
+						}
+					}
+						// Maintenance change!
+					if(MustPayMaintenanceHere(eNewValue))
+					{
+						GET_PLAYER(eNewValue).GetTreasury()->ChangeBaseImprovementGoldMaintenance(GC.getImprovementInfo(getImprovementType())->GetGoldMaintenance());
+					}
+				}
+#endif
 				// Route is here
 				if(getRouteType() != NO_ROUTE && !isCity())
 				{
@@ -6389,6 +6437,16 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 						owningPlayer.changeNumResourceUsed((ResourceTypes) iResourceLoop, -oldImprovementEntry.GetResourceQuantityRequirement(iResourceLoop));
 					}
 				}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+				// Embassy extra vote in WC mod
+				if(MOD_DIPLOMACY_CITYSTATES && oldImprovementEntry.GetCityStateExtraVote() > 0 && eBuilder != NO_PLAYER)
+				{
+					if (owningPlayer.isMinorCiv())
+					{
+						GET_PLAYER(eBuilder).ChangeImprovementLeagueVotes(oldImprovementEntry.GetCityStateExtraVote() * -1);
+					}
+				}
+#endif
 			}
 
 			// Someone had built something here in an unowned plot, remove effects of the old improvement
@@ -6544,6 +6602,19 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 						}
 					}
 				}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+				// Embassy extra vote in WC mod
+				if(MOD_DIPLOMACY_CITYSTATES && newImprovementEntry.GetCityStateExtraVote() > 0 && eBuilder != NO_PLAYER)
+				{
+					if (owningPlayer.isMinorCiv())
+					{
+						if (owningPlayer.getGreatPersonImprovementCount() <= 1)
+						{
+							GET_PLAYER(eBuilder).ChangeImprovementLeagueVotes(newImprovementEntry.GetCityStateExtraVote());
+						}
+					}
+				}
+#endif
 			}
 		}
 
@@ -7027,6 +7098,20 @@ void CvPlot::SetPlayerThatClearedBarbCampHere(PlayerTypes eNewValue)
 	m_ePlayerThatClearedBarbCampHere = eNewValue;
 }
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+//	--------------------------------------------------------------------------------
+PlayerTypes CvPlot::GetPlayerThatClearedDigHere() const
+{
+	return (PlayerTypes) m_ePlayerThatClearedDigHere;
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlot::SetPlayerThatClearedDigHere(PlayerTypes eNewValue)
+{
+	m_ePlayerThatClearedDigHere = eNewValue;
+}
+
+#endif
 
 //	--------------------------------------------------------------------------------
 CvCity* CvPlot::GetResourceLinkedCity() const
@@ -10012,6 +10097,9 @@ void CvPlot::read(FDataStream& kStream)
 	kStream >> m_ePlayerResponsibleForImprovement;
 	kStream >> m_ePlayerResponsibleForRoute;
 	kStream >> m_ePlayerThatClearedBarbCampHere;
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	MOD_SERIALIZE_READ(39, kStream, m_ePlayerThatClearedDigHere, NO_PLAYER);
+#endif
 	kStream >> m_eRouteType;
 #if defined(MOD_GLOBAL_STACKING_RULES)
 	MOD_SERIALIZE_READ(30, kStream, m_eUnitIncrement, 0);
@@ -10191,6 +10279,9 @@ void CvPlot::write(FDataStream& kStream) const
 	kStream << m_ePlayerResponsibleForImprovement;
 	kStream << m_ePlayerResponsibleForRoute;
 	kStream << m_ePlayerThatClearedBarbCampHere;
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	MOD_SERIALIZE_WRITE(kStream, m_ePlayerThatClearedDigHere);
+#endif
 	kStream << m_eRouteType;
 #if defined(MOD_GLOBAL_STACKING_RULES)
 	MOD_SERIALIZE_WRITE(kStream, m_eUnitIncrement);

@@ -3491,6 +3491,14 @@ int CvLeague::CalculateStartingVotesForMember(PlayerTypes ePlayer, bool bForceUp
 		int iWonderVotes = GET_PLAYER(ePlayer).GetExtraLeagueVotes();
 		iVotes += iWonderVotes;
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		// Improvements
+		int iImprovementVotes = GET_PLAYER(ePlayer).GetImprovementLeagueVotes();
+		if (MOD_DIPLOMACY_CITYSTATES) {
+			iVotes += iImprovementVotes;
+		}
+#endif
+
 		// World Religion
 		int iWorldReligionVotes = GetExtraVotesForFollowingReligion(ePlayer);
 		iVotes += iWorldReligionVotes;
@@ -3541,6 +3549,15 @@ int CvLeague::CalculateStartingVotesForMember(PlayerTypes ePlayer, bool bForceUp
 				sTemp << iWonderVotes;
 				pMember->sVoteSources += sTemp.toUTF8();
 			}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+			if (MOD_DIPLOMACY_CITYSTATES && iImprovementVotes > 0)
+			{
+				Localization::String sTemp = Localization::Lookup("TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_IMPROVEMENT_VOTES");
+				sTemp << iImprovementVotes;
+				pMember->sVoteSources += sTemp.toUTF8();
+			}
+#endif
+
 			if (iWorldReligionVotes > 0)
 			{
 				Localization::String sTemp = Localization::Lookup("TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_WORLD_RELIGION_VOTES");
@@ -10814,8 +10831,10 @@ bool CvResolutionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtil
 	m_iOneTimeGoldPercent				= kResults.GetInt("OneTimeGoldPercent");
 	m_bRaiseCityStateInfluenceToNeutral	= kResults.GetBool("RaiseCityStateInfluenceToNeutral");
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
-	m_bRaiseCityStateInfluenceToAlly	= kResults.GetBool("RaiseCityStateInfluenceToAlly");
-	m_bRaiseCityStateInfluenceToFriend	= kResults.GetBool("RaiseCityStateInfluenceToFriend");
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS) {
+		m_bRaiseCityStateInfluenceToAlly	= kResults.GetBool("RaiseCityStateInfluenceToAlly");
+		m_bRaiseCityStateInfluenceToFriend	= kResults.GetBool("RaiseCityStateInfluenceToFriend");
+	}
 #endif
 	m_eLeagueProjectEnabled				= (LeagueProjectTypes) GC.getInfoTypeForString(kResults.GetText("LeagueProjectEnabled"), true);
 	m_iGoldPerTurn						= kResults.GetInt("GoldPerTurn");

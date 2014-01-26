@@ -2129,6 +2129,9 @@ void CvPlayerCulture::DoArchaeologyChoice (ArchaeologyChoiceType eChoice)
 				if (eLandmarkImprovement != NO_IMPROVEMENT)
 				{
 					pPlot->setImprovementType(eLandmarkImprovement, m_pPlayer->GetID());
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+					pPlot->SetPlayerThatClearedDigHere(m_pPlayer->GetID());
+#endif
 					pUnit->kill(true);
 
 					if (pPlot->getOwner() != NO_PLAYER)
@@ -2161,6 +2164,9 @@ void CvPlayerCulture::DoArchaeologyChoice (ArchaeologyChoiceType eChoice)
 				int iGWindex = 	pCulture->CreateGreatWork(eGreatArtifact, eClass, pPlot->GetArchaeologicalRecord().m_ePlayer1, pPlot->GetArchaeologicalRecord().m_eEra, "");
 				pHousingCity->GetCityBuildings()->SetBuildingGreatWork(eBuildingToHouse, iSlot, iGWindex);
 				pPlot->setImprovementType(NO_IMPROVEMENT);
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+				pPlot->SetPlayerThatClearedDigHere(m_pPlayer->GetID());
+#endif
 				pUnit->kill(true);
 			}
 			break;
@@ -2174,6 +2180,9 @@ void CvPlayerCulture::DoArchaeologyChoice (ArchaeologyChoiceType eChoice)
 				int iGWindex = 	pCulture->CreateGreatWork(eGreatArtifact, eClass, pPlot->GetArchaeologicalRecord().m_ePlayer2, pPlot->GetArchaeologicalRecord().m_eEra, "");
 				pHousingCity->GetCityBuildings()->SetBuildingGreatWork(eBuildingToHouse, iSlot, iGWindex);
 				pPlot->setImprovementType(NO_IMPROVEMENT);
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+				pPlot->SetPlayerThatClearedDigHere(m_pPlayer->GetID());
+#endif
 				pUnit->kill(true);
 			}
 			break;
@@ -2188,6 +2197,9 @@ void CvPlayerCulture::DoArchaeologyChoice (ArchaeologyChoiceType eChoice)
 				int iGWindex = 	pCulture->CreateGreatWork(eGreatArtifact, (GreatWorkClass)GC.getInfoTypeForString("GREAT_WORK_LITERATURE"), pPlot->GetArchaeologicalRecord().m_ePlayer1, pPlot->GetArchaeologicalRecord().m_eEra, "");
 				pHousingCity->GetCityBuildings()->SetBuildingGreatWork(eBuildingToHouse, iSlot, iGWindex);
 				pPlot->setImprovementType(NO_IMPROVEMENT);
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+				pPlot->SetPlayerThatClearedDigHere(m_pPlayer->GetID());
+#endif
 				pUnit->kill(true);
 			}
 			break;
@@ -2209,6 +2221,9 @@ void CvPlayerCulture::DoArchaeologyChoice (ArchaeologyChoiceType eChoice)
 				m_pPlayer->changeJONSCulture(iValue);
 
 				pPlot->setImprovementType(NO_IMPROVEMENT);
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+				pPlot->SetPlayerThatClearedDigHere(m_pPlayer->GetID());
+#endif
 				pUnit->kill(true);
 			}
 			break;

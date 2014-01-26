@@ -127,6 +127,10 @@ int CvMinorCivQuest::GetEndTurn() const
 	{
 		iLength = GC.getMINOR_QUEST_STANDARD_CONTEST_LENGTH();
 	}
+	else if(m_eType == MINOR_CIV_QUEST_CONTEST_TOURISM)
+	{
+		iLength = GC.getMINOR_QUEST_STANDARD_CONTEST_LENGTH();
+	}
 #endif
 
 	// Other quests are not time-sensitive
@@ -247,6 +251,15 @@ int CvMinorCivQuest::GetInfluenceReward() const
 		// Reward is indirect; increased gains from gold gifts
 		iReward = /*0*/ GC.getMINOR_QUEST_FRIENDSHIP_INVEST();
 		break;
+	case MINOR_CIV_QUEST_CONTEST_TOURISM:
+		iReward = /*40*/ GC.getMINOR_QUEST_FRIENDSHIP_TOURISM();
+		break;
+	case MINOR_CIV_QUEST_ARCHAEOLOGY:
+		iReward = /*50*/ GC.getMINOR_QUEST_FRIENDSHIP_ARCHAEOLOGY();
+		break;
+	case MINOR_CIV_QUEST_CIRCUMNAVIGATION:
+		iReward = /*80*/ GC.getMINOR_QUEST_FRIENDSHIP_CIRCUMNAVIGATION();
+		break;
 #endif
 	default:
 		iReward = 0;
@@ -291,6 +304,12 @@ int CvMinorCivQuest::GetContestValueForPlayer(PlayerTypes ePlayer)
 		int iEndTechs = GET_TEAM(GET_PLAYER(ePlayer).getTeam()).GetTeamTechs()->GetNumTechsKnown();
 		iValue = iEndTechs - iStartTechs;
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	else if(eType == MINOR_CIV_QUEST_CONTEST_TOURISM)
+	{
+		iValue = GET_PLAYER(ePlayer).getCapitalCity()->GetCityCulture()->GetBaseTourism();
+	}
+#endif
 
 	return iValue;
 }
@@ -302,6 +321,9 @@ int CvMinorCivQuest::GetContestValueForLeader()
 
 	if(eType == MINOR_CIV_QUEST_CONTEST_CULTURE ||
 	        eType == MINOR_CIV_QUEST_CONTEST_FAITH ||
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+		eType == MINOR_CIV_QUEST_CONTEST_TOURISM ||
+#endif
 	        eType == MINOR_CIV_QUEST_CONTEST_TECHS)
 	{
 		// What is the largest value a participant has for this contest?
@@ -329,6 +351,9 @@ CivsList CvMinorCivQuest::GetContestLeaders()
 
 	if(eType == MINOR_CIV_QUEST_CONTEST_CULTURE ||
 	        eType == MINOR_CIV_QUEST_CONTEST_FAITH ||
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+			eType == MINOR_CIV_QUEST_CONTEST_TOURISM ||
+#endif
 	        eType == MINOR_CIV_QUEST_CONTEST_TECHS)
 	{
 		for(int iPlayerLoop = 0; iPlayerLoop < MAX_MAJOR_CIVS; iPlayerLoop++)
@@ -363,6 +388,9 @@ bool CvMinorCivQuest::IsContestLeader(PlayerTypes ePlayer)
 
 	if(eType == MINOR_CIV_QUEST_CONTEST_CULTURE ||
 	        eType == MINOR_CIV_QUEST_CONTEST_FAITH ||
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+		eType == MINOR_CIV_QUEST_CONTEST_TOURISM ||
+#endif
 	        eType == MINOR_CIV_QUEST_CONTEST_TECHS)
 	{
 		CivsList veTiedForLead = GetContestLeaders();
@@ -617,6 +645,40 @@ bool CvMinorCivQuest::IsComplete()
 		if(GetEndTurn() == GC.getGame().getGameTurn())
 			return true;
 	}
+	else if(m_eType == MINOR_CIV_QUEST_CONTEST_TOURISM)
+	{
+		//Time to see who has the most Tourism
+		if(GetEndTurn() == GC.getGame().getGameTurn())
+		if(IsContestLeader(GetPlayerAssignedTo()))
+			return true;
+	}
+	else if(m_eType == MINOR_CIV_QUEST_ARCHAEOLOGY)
+	{
+		int iX = m_iData1;
+		int iY = m_iData2;
+		CvPlot* pPlot = GC.getMap().plot(iX, iY);
+
+		if(pPlot)
+		{
+			// No longer a dig here?
+			if(pPlot->getResourceType() != GC.getARTIFACT_RESOURCE())
+			{
+				// Did this guy clear it?
+				if(pPlot->GetPlayerThatClearedDigHere() == m_eAssignedPlayer)
+				{
+					return true;
+				}
+			}
+		}
+	}
+	else if(m_eType == MINOR_CIV_QUEST_CIRCUMNAVIGATION)
+	{
+		// Player circumnavigated the world?
+		if(GC.getGame().GetPlayerThatCircumnavigated() == m_eAssignedPlayer)
+		{
+			return true;
+		}
+	}
 #endif
 	return false;
 }
@@ -750,6 +812,26 @@ bool CvMinorCivQuest::IsExpired()
 			{
 				// Someone built the wonder, and it wasn't us
 				if(m_eAssignedPlayer != eLoopPlayer && pLoopPlayer->countNumBuildings(eNationalWonder) > 0)
+				{
+					return true;
+				}
+			}
+		}
+	}
+	// City-state wanted us to dig
+	else if(MOD_DIPLOMACY_CITYSTATES_QUESTS && m_eType == MINOR_CIV_QUEST_ARCHAEOLOGY)
+	{
+		int iX = GetPrimaryData();
+		int iY = GetSecondaryData();
+		CvPlot* pPlot = GC.getMap().plot(iX, iY);
+
+		if(pPlot)
+		{
+			// Dig that was here is gone
+			if(!pPlot->HasDig())
+			{
+				// Someone dug it, and it wasn't us
+				if(pPlot->GetPlayerThatClearedDigHere() != NO_PLAYER && pPlot->GetPlayerThatClearedDigHere() != m_eAssignedPlayer)
 				{
 					return true;
 				}
@@ -912,6 +994,23 @@ bool CvMinorCivQuest::IsExpired()
 	// Influence
 	else if(MOD_DIPLOMACY_CITYSTATES_QUESTS && m_eType == MINOR_CIV_QUEST_INFLUENCE)
 	{
+		if(GC.getGame().getGameTurn() == GetEndTurn() && !IsComplete())
+			return true;
+	}
+	// Tourism
+	else if(MOD_DIPLOMACY_CITYSTATES_QUESTS && m_eType == MINOR_CIV_QUEST_CONTEST_TOURISM)
+	{
+		if(GC.getGame().getGameTurn() == GetEndTurn() && !IsComplete())
+			return true;
+	}
+	// Circumnavigation
+	else if(MOD_DIPLOMACY_CITYSTATES_QUESTS && m_eType == MINOR_CIV_QUEST_CIRCUMNAVIGATION)
+	{
+		// Another player circumnavigated the world?
+		if((GC.getGame().GetPlayerThatCircumnavigated() != NO_PLAYER) && (GC.getGame().GetPlayerThatCircumnavigated() != m_eAssignedPlayer))
+		{
+			return true;
+		}
 	}
 #endif
 
@@ -1330,7 +1429,7 @@ void CvMinorCivQuest::DoStartQuest(int iStartTurn)
 
 	strMessage << pMinor->getNameKey();
 	strSummary << pMinor->getNameKey();
-	CUSTOMLOG("DoStartQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
+	// CUSTOMLOG("DoStartQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
 	pMinor->GetMinorCivAI()->AddQuestNotification(strMessage.toUTF8(), strSummary.toUTF8(), m_eAssignedPlayer, iNotificationX, iNotificationY);
 }
 
@@ -1393,6 +1492,44 @@ void CvMinorCivQuest::DoStartQuestUsingExistingData(CvMinorCivQuest* pExistingQu
 	{
 		DoStartQuest(pExistingQuest->GetStartTurn());
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	else if(m_eType == MINOR_CIV_QUEST_ARCHAEOLOGY)
+	{
+		m_iStartTurn = pExistingQuest->GetStartTurn();
+
+		int iDigX = pExistingQuest->GetPrimaryData();
+		int iDigY = pExistingQuest->GetSecondaryData();
+
+		CvPlot* pPlot = GC.getMap().plot(iDigX, iDigY);
+
+		if(!pPlot)
+		{
+			CvAssertMsg(false, "We're starting a quest to find an archaeology dig using an existing quest's data, but the data is bad. Please send Anton your save file and version.");
+			return;
+		}
+		if(pPlot->getResourceType() != GC.getARTIFACT_RESOURCE())
+		{
+			CvAssertMsg(false, "We're starting a quest to find an archaeology dig using an existing quest's data, but there's no camp there anymore. Please send Anton your save file and version.");
+			return;
+		}
+
+		m_iData1 = iDigX;
+		m_iData2 = iDigY;
+
+		pPlot->setRevealed(pAssignedPlayer->getTeam(), true);
+		pPlot->SetResourceForceReveal(pAssignedPlayer->getTeam(), pPlot->getResourceType());
+
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_ARCHAEOLOGY");
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_ARCHAEOLOGY");
+		iNotificationX = pPlot->getX();
+		iNotificationY = pPlot->getY();
+
+		strMessage << pMinor->getNameKey();
+		strSummary << pMinor->getNameKey();
+		pMinor->GetMinorCivAI()->AddQuestNotification(strMessage.toUTF8(), strSummary.toUTF8(), m_eAssignedPlayer, iNotificationX, iNotificationY);
+	} 
+#endif
+
 
 	// Personal quests - Should not be started from an existing quest's data!!
 	else
@@ -1670,6 +1807,24 @@ bool CvMinorCivQuest::DoFinishQuest()
 		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_COMPLETE_INFLUENCE");
 		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_COMPLETE_INFLUENCE");
 	}
+	// Tourism
+	else if(m_eType == MINOR_CIV_QUEST_CONTEST_TOURISM)
+	{
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_COMPLETE_TOURISM");
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_COMPLETE_TOURISM");
+	}
+	// Archaeology
+	else if(m_eType == MINOR_CIV_QUEST_ARCHAEOLOGY)
+	{
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_COMPLETE_ARCHAEOLOGY");
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_COMPLETE_ARCHAEOLOGY");
+	}
+	// Circumnaviation
+	else if(m_eType == MINOR_CIV_QUEST_CIRCUMNAVIGATION)
+	{
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_COMPLETE_CIRCUMNAVIGATION");
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_COMPLETE_CIRCUMNAVIGATION");
+	}
 #endif
 
 	// Update the UI with the changed data, in case it is open
@@ -1698,7 +1853,7 @@ bool CvMinorCivQuest::DoFinishQuest()
 		sMessage = sMessage + "[NEWLINE][NEWLINE]" + statusChangeStrings.first;
 	}
 
-	CUSTOMLOG("DoFinishQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
+	// CUSTOMLOG("DoFinishQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
 	pMinor->GetMinorCivAI()->AddQuestNotification(sMessage, sSummary, m_eAssignedPlayer);
 
 	return true;
@@ -1768,6 +1923,25 @@ bool CvMinorCivQuest::DoCancelQuest()
 			strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_ENDED_CONSTRUCT_NATIONAL_WONDER");
 			strSummary << strBuildingName;
 		}
+		// TOURISM CONTEST
+		else if(m_eType == MINOR_CIV_QUEST_CONTEST_TOURISM)
+		{
+			strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_ENDED_CONTEST_TOURISM");
+			strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_ENDED_CONTEST_TOURISM");
+			veNamesToShow = GetContestLeaders();
+		}
+		// City-state wanted us to dig
+		if(m_eType == MINOR_CIV_QUEST_ARCHAEOLOGY)
+		{
+			strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_ENDED_ARCHAEOLOGY");
+			strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_ENDED_ARCHAEOLOGY");
+		}
+		// City-state wanted us to circumnavigate
+		else if(m_eType == MINOR_CIV_QUEST_CIRCUMNAVIGATION)
+		{
+			strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_ENDED_CIRCUMNAVIGATION");
+			strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_ENDED_CIRCUMNAVIGATION");
+		}
 #endif
 
 		// KILL ANOTHER CITY STATE
@@ -1826,7 +2000,7 @@ bool CvMinorCivQuest::DoCancelQuest()
 			sMessage = sMessage + pMinor->GetMinorCivAI()->GetNamesListAsString(veNamesToShow);
 		}
 
-		CUSTOMLOG("DoCancelQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
+		// CUSTOMLOG("DoCancelQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
 		pMinor->GetMinorCivAI()->AddQuestNotification(sMessage, sSummary, m_eAssignedPlayer);
 	}
 
@@ -2829,64 +3003,57 @@ void CvMinorCivAI::DoTestEndWarsVSMinors(PlayerTypes eOldAlly, PlayerTypes eNewA
 }
 
 #if defined(MOD_GLOBAL_CS_NO_ALLIED_SKIRMISHES)
-// TODO - WH - clear any skirmishes between minors allied with the same major
 /// Are we at war with a minor also allied to our new BFF?
 void CvMinorCivAI::DoTestEndSkirmishes(PlayerTypes eNewAlly)
 {
-	if(!GetPlayer()->isAlive())
-		return;
-
-	PlayerTypes eOtherMinor;
-	int iOtherMinorLoop;
-	PlayerTypes eOtherAlly;
-	bool bForcedWar;
-
-	TeamTypes eLoopTeam;
-	for(int iTeamLoop = 0; iTeamLoop < MAX_CIV_TEAMS; iTeamLoop++)
+	if(eNewAlly != NO_PLAYER)
 	{
-		eLoopTeam = (TeamTypes) iTeamLoop;
+		if(!GetPlayer()->isAlive())
+			return;
 
-		// Another Minor
-		if(!GET_TEAM(eLoopTeam).isMinorCiv())
-			continue;
-
-		// They're not alive!
-		if(!GET_TEAM(eLoopTeam).isAlive())
-			continue;
-
-		// At war with them
-		if(!GET_TEAM(GetPlayer()->getTeam()).isAtWar(eLoopTeam))
-			continue;
-
-		if(IsPermanentWar(eLoopTeam))
-			continue;
-
-		if(eNewAlly != NO_PLAYER)
+		for(int iTeamLoop = 0; iTeamLoop < MAX_CIV_TEAMS; iTeamLoop++)
 		{
+			TeamTypes eLoopTeam = (TeamTypes) iTeamLoop;
+
+			// Another Minor
+			if(!GET_TEAM(eLoopTeam).isMinorCiv())
+				continue;
+
+			// They're not alive!
+			if(!GET_TEAM(eLoopTeam).isAlive())
+				continue;
+
+			// At war with them
+			if(!GET_TEAM(GetPlayer()->getTeam()).isAtWar(eLoopTeam))
+				continue;
+
+			if(IsPermanentWar(eLoopTeam))
+				continue;
+
 			// New ally IS at war (how???)
 			if(GET_TEAM(GET_PLAYER(eNewAlly).getTeam()).isAtWar(eLoopTeam))
 				continue;
-		}
 
-		for(iOtherMinorLoop = 0; iOtherMinorLoop < MAX_CIV_TEAMS; iOtherMinorLoop++)
-		{
-			eOtherMinor = (PlayerTypes) iOtherMinorLoop;
-
-			// Other minor is on this team
-			if(GET_PLAYER(eOtherMinor).getTeam() == eLoopTeam)
+			for(int iOtherMinorLoop = MAX_MAJOR_CIVS; iOtherMinorLoop < MAX_CIV_PLAYERS; iOtherMinorLoop++)
 			{
-				eOtherAlly = GET_PLAYER(eOtherMinor).GetMinorCivAI()->GetAlly();
-				if(eOtherAlly == eNewAlly)
+				PlayerTypes eOtherMinor = (PlayerTypes) iOtherMinorLoop;
+				CvPlayer& kOtherMinor = GET_PLAYER(eOtherMinor);
+
+				// Other minor is on this team
+				if(kOtherMinor.isAlive() && kOtherMinor.getTeam() == eLoopTeam)
 				{
-					// We are at war with our new ally's ally!
+					if(kOtherMinor.GetMinorCivAI()->GetAlly() == eNewAlly)
+					{
+						// We are at war with our new ally's ally!
+						CUSTOMLOG("CS %i is at war with CS %i but they share the same ally %i - making peace", GetPlayer()->GetID(), iOtherMinorLoop, ((int) eNewAlly));
 #if defined(MOD_EVENTS_WAR_AND_PEACE)
-					GET_TEAM(GetPlayer()->getTeam()).makePeace(eLoopTeam, true, false, GetPlayer()->GetID());
+						GET_TEAM(GetPlayer()->getTeam()).makePeace(eLoopTeam, true, false, GetPlayer()->GetID());
 #else
-					GET_TEAM(GetPlayer()->getTeam()).makePeace(eLoopTeam);
+						GET_TEAM(GetPlayer()->getTeam()).makePeace(eLoopTeam);
 #endif
+					}
 				}
 			}
-
 		}
 	}
 }
@@ -4090,6 +4257,24 @@ bool CvMinorCivAI::IsEnabledQuest(MinorCivQuestTypes eQuest)
 		if(!MOD_DIPLOMACY_CITYSTATES_QUESTS || GC.getQUEST_DISABLED_INFLUENCE() == 1)
 			return false;
 	}
+	// Tourism
+	else if(eQuest == MINOR_CIV_QUEST_CONTEST_TOURISM)
+	{
+		if(!MOD_DIPLOMACY_CITYSTATES_QUESTS || GC.getQUEST_DISABLED_TOURISM() == 1)
+			return false;
+	}
+	// Archaeology
+	else if(eQuest == MINOR_CIV_QUEST_ARCHAEOLOGY)
+	{
+		if(!MOD_DIPLOMACY_CITYSTATES_QUESTS || GC.getQUEST_DISABLED_ARCHAEOLOGY() == 1)
+			return false;
+	}
+	// Circumnavigation
+	else if(eQuest == MINOR_CIV_QUEST_CIRCUMNAVIGATION)
+	{
+		if(!MOD_DIPLOMACY_CITYSTATES_QUESTS || GC.getQUEST_DISABLED_CIRCUMNAVIGATION() == 1)
+			return false;
+	}
 #endif
 
 	return true;
@@ -4545,6 +4730,25 @@ bool CvMinorCivAI::IsValidQuestCopyForPlayer(PlayerTypes ePlayer, CvMinorCivQues
 		if(IsRecentlyBulliedByMajor(ePlayer))
 			return false;
 	}
+	// Tourism
+	else if(eQuestType == MINOR_CIV_QUEST_CONTEST_TOURISM)
+	{
+	}
+	// Archaeology- is the dig in the existing quest still around?
+	else if(eQuestType == MINOR_CIV_QUEST_ARCHAEOLOGY)
+	{
+		int iDigX = pQuest->GetPrimaryData();
+		int iDigY = pQuest->GetSecondaryData();
+	
+		CvPlot* pPlot = GC.getMap().plot(iDigX, iDigY);
+		if(!pPlot)
+			return false;
+		if(pPlot->getResourceType() != GC.getARTIFACT_RESOURCE())
+			return false;
+	}
+	else if(eQuestType == MINOR_CIV_QUEST_CIRCUMNAVIGATION)
+	{
+	}
 #endif
 	// Personal quests - This should not be done, just create a new quest from scratch!!
 	else
@@ -4576,6 +4780,15 @@ bool CvMinorCivAI::IsGlobalQuest(MinorCivQuestTypes eQuest) const
 
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
 	if(eQuest == MINOR_CIV_QUEST_INFLUENCE)
+		return true;
+
+	if(eQuest == MINOR_CIV_QUEST_CONTEST_TOURISM)
+		return true;
+
+	if(eQuest == MINOR_CIV_QUEST_ARCHAEOLOGY)
+		return true;
+
+	if(eQuest == MINOR_CIV_QUEST_CIRCUMNAVIGATION)
 		return true;
 #endif
 
@@ -4614,6 +4827,10 @@ int CvMinorCivAI::GetMinPlayersNeededForQuest(MinorCivQuestTypes eQuest) const
 	else if(eQuest == MINOR_CIV_QUEST_INFLUENCE)
 	{
 		iPlayersNeeded = 2;
+	}
+	else if(eQuest == MINOR_CIV_QUEST_CONTEST_TOURISM)
+	{
+		iPlayersNeeded = 3;
 	}
 #endif
 
@@ -4859,27 +5076,22 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 	{
 		if(eTrait == MINOR_CIV_TRAIT_MILITARISTIC) //How dare they bully us!
 		{
-			iCount *= 500; //xml
+			iCount *= 800; //xml
 			iCount /= 100;
 		}
-		else if(eTrait == MINOR_CIV_PERSONALITY_HOSTILE) //Arrrgh!
+		if(ePersonality == MINOR_CIV_PERSONALITY_HOSTILE) //Arrrgh!
+		{
+			iCount *= 600; //xml
+			iCount /= 100;
+		}
+		if(eTrait == MINOR_CIV_TRAIT_CULTURED) //Help!!
 		{
 			iCount *= 400; //xml
 			iCount /= 100;
 		}
-		else if(eTrait == MINOR_CIV_TRAIT_CULTURED) //Help!!
-		{
-			iCount *= 350; //xml
-			iCount /= 100;
-		}
-		else if(eTrait == MINOR_CIV_TRAIT_MERCANTILE) //Oh no!!
-		{
-			iCount *= 300; //xml
-			iCount /= 100;
-		}
 		else
 		{
-			iCount *= 250; //xml
+			iCount *= 200; //xml
 			iCount /= 100;
 		}
 	}
@@ -4888,12 +5100,12 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 	{
 		if(eTrait == MINOR_CIV_TRAIT_CULTURED)						// Cultured
 		{
-			iCount *= 250;
+			iCount *= 350;
 			iCount /= 100;
 		}
 		else
 		{
-			iCount *= 125;
+			iCount *= 50;
 			iCount /= 100;
 		}
 	}
@@ -4902,17 +5114,43 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 	{
 		if(eTrait == MINOR_CIV_TRAIT_MARITIME)						// Maritime
 		{
-			iCount *= /*300*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_MARITIME_FIND_PLAYER();
+			iCount *= 175;
 			iCount /= 100;
 		}
-		else if(eTrait == MINOR_CIV_TRAIT_MERCANTILE)
+		if(eTrait == MINOR_CIV_TRAIT_MERCANTILE)
 		{
-			iCount *= /*200*/ GC.getMINOR_CIV_QUEST_WEIGHT_MULTIPLIER_MERCANTILE_FIND_PLAYER();
+			iCount *= 75;
+			iCount /= 100;
+		}
+	}
+	else if(eQuest == MINOR_CIV_QUEST_ARCHAEOLOGY)
+	{
+		if(eTrait == MINOR_CIV_TRAIT_MILITARISTIC) //Recover the spoils of ancient war!
+		{
+			iCount *= 200;
+			iCount /= 100;
+		}
+		if(eTrait == MINOR_CIV_TRAIT_RELIGIOUS) //Religious relics, you say?
+		{
+			iCount *= 150;
 			iCount /= 100;
 		}
 		else
 		{
-			iCount *= 150;
+			iCount *= 50;
+			iCount /= 100;
+		}
+	}
+	else if(eQuest == MINOR_CIV_QUEST_CIRCUMNAVIGATION)
+	{
+		if(eTrait == MINOR_CIV_TRAIT_MARITIME)	//We are the masters of the sea!					
+		{
+			iCount *= 250;
+			iCount /= 100;
+		}
+		else
+		{
+			iCount *= 25;
 			iCount /= 100;
 		}
 	}
@@ -4981,19 +5219,23 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 	// Influence
 	else if(eQuest == MINOR_CIV_QUEST_INFLUENCE)
 	{
-		if(eTrait == MINOR_CIV_PERSONALITY_FRIENDLY)
+		if(ePersonality == MINOR_CIV_PERSONALITY_HOSTILE) //Leave us alone!
 		{
-			iCount *= 300;
+			iCount += 50; //antonjs: todo: XML
 			iCount /= 100;
 		}
-		else if(eTrait == MINOR_CIV_PERSONALITY_HOSTILE)
+	}
+	// Tourism
+	else if(eQuest == MINOR_CIV_QUEST_CONTEST_TOURISM)
+	{
+		if(eTrait == MINOR_CIV_TRAIT_MERCANTILE)
 		{
-			iCount *= 50;
+			iCount *= 200; //antonjs: todo: XML
 			iCount /= 100;
 		}
 		else
 		{
-			iCount *= 150;
+			iCount *= 50; //antonjs: todo: XML
 			iCount /= 100;
 		}
 	}
@@ -5514,6 +5756,64 @@ CvPlot* CvMinorCivAI::GetBestNearbyCampToKill()
 
 	return pBestPlot;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+/// Any Camps near us?
+/// NOTE: This should pick a camp deterministically, given the current implementation of distributing global quests
+CvPlot* CvMinorCivAI::GetBestNearbyDig()
+{
+	CvCity* pCapital = GetPlayer()->getCapitalCity();
+
+	// Minor must have Capital
+	if(pCapital == NULL)
+	{
+		return NULL;
+	}
+
+	CvWeightedVector<int, 64, true> viPlotIndexes; // 64 camps in 12 hex radius should be enough
+
+	int iRange = 20;
+
+	CvPlot* pLoopPlot;
+
+	// Loop in all plots in range
+	int iDX, iDY;
+	for(iDX = -(iRange); iDX <= iRange; iDX++)
+	{
+		for(iDY = -(iRange); iDY <= iRange; iDY++)
+		{
+			pLoopPlot = plotXY(pCapital->getX(), pCapital->getY(), iDX, iDY);
+
+			if(pLoopPlot != NULL)
+			{
+				int iDistance = plotDistance(pCapital->getX(), pCapital->getY(), pLoopPlot->getX(), pLoopPlot->getY());
+
+				if(iDistance <= iRange)
+				{
+					// Dig site here?
+					if(pLoopPlot->getResourceType() == GC.getARTIFACT_RESOURCE())
+					{
+						int iWeight = 1 + (iRange - iDistance); // Closer digs have higher weight
+						viPlotIndexes.push_back(pLoopPlot->GetPlotIndex(), iWeight);
+					}
+				}
+			}
+		}
+	}
+
+	// Didn't find any nearby
+	if(viPlotIndexes.size() == 0)
+	{
+		return NULL;
+	}
+
+	// Choose the best plot
+	viPlotIndexes.SortItems();
+	CvPlot* pBestPlot = GC.getMap().plotByIndex(viPlotIndexes.GetElement(0));
+
+	return pBestPlot;
+}
+#endif
 
 /// Find a Resource that a Minor would want a major to connect
 ResourceTypes CvMinorCivAI::GetNearbyResourceForQuest(PlayerTypes ePlayer)
@@ -6717,7 +7017,9 @@ void CvMinorCivAI::SetAlly(PlayerTypes eNewAlly)
 
 	DoTestEndWarsVSMinors(eOldAlly, eNewAlly);
 #if defined(MOD_GLOBAL_CS_NO_ALLIED_SKIRMISHES)
-	DoTestEndSkirmishes(eNewAlly);
+	if (MOD_GLOBAL_CS_NO_ALLIED_SKIRMISHES) {
+		DoTestEndSkirmishes(eNewAlly);
+	}
 #endif
 
 	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();

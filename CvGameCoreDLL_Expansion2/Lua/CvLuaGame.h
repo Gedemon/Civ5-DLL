@@ -396,6 +396,11 @@ protected:
 #if defined(MOD_API_LUA_EXTENSIONS)
 	LUAAPIEXTN(ReloadGameDataDefines);
 	LUAAPIEXTN(ReloadCustomModOptions);
+	LUAAPIEXTN(SpewTestEvents);
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(AddMessage);
 #endif
 
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)

@@ -1221,6 +1221,14 @@ void getUnitAIString(CvString& strString, UnitAITypes eUnitAI)
 	case UNITAI_GENERAL:
 		strString = "general";
 		break;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	case UNITAI_DIPLOMAT:
+		strString = "diplomat";
+		break;
+	case UNITAI_MESSENGER:
+		strString = "messenger";
+		break;
+#endif
 	case UNITAI_MERCHANT:
 		strString = "merchant";
 		break;

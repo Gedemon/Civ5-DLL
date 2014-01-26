@@ -87,6 +87,9 @@ CvImprovementEntry::CvImprovementEntry(void):
 	m_iPillageGold(0),
 	m_iResourceExtractionMod(0),
 	m_iLuxuryCopiesSiphonedFromMinor(0),
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	m_iImprovementLeagueVotes(0),
+#endif
 	m_iImprovementPillage(NO_IMPROVEMENT),
 	m_iImprovementUpgrade(NO_IMPROVEMENT),
 	m_bHillsMakesValid(false),
@@ -258,6 +261,11 @@ bool CvImprovementEntry::CacheResults(Database::Results& kResults, CvDatabaseUti
 	m_bSpecificCivRequired = kResults.GetBool("SpecificCivRequired");
 	m_iResourceExtractionMod = kResults.GetInt("ResourceExtractionMod");
 	m_iLuxuryCopiesSiphonedFromMinor = kResults.GetInt("LuxuryCopiesSiphonedFromMinor");
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) {
+		m_iImprovementLeagueVotes = kResults.GetInt("ImprovementLeagueVotes");
+	}
+#endif
 
 	const char* szCivilizationType = kResults.GetText("CivilizationType");
 	m_eRequiredCivilization = (CivilizationTypes)GC.getInfoTypeForString(szCivilizationType, true);
@@ -614,6 +622,14 @@ int CvImprovementEntry::GetLuxuryCopiesSiphonedFromMinor() const
 {
 	return m_iLuxuryCopiesSiphonedFromMinor;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+/// Does this improvement grant an extra World Congress vote?
+int CvImprovementEntry::GetCityStateExtraVote() const
+{
+	return m_iImprovementLeagueVotes;
+}
+#endif
 
 /// Returns the type of improvement that results from this improvement being pillaged
 int CvImprovementEntry::GetImprovementPillage() const

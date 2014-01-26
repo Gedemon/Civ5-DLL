@@ -2238,6 +2238,10 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 	CvTeam& kMyTeam = GET_TEAM(eMyTeam);
 	CvTeam& kTheirTeam = GET_TEAM(eTeam);
 
+#if defined(MOD_GLOBAL_CS_OVERSEAS_TERRITORY)
+	CvTeam* pTheirTeam = &kTheirTeam;
+#endif
+
 	if(kMyTeam.isFriendlyTerritory(eTeam))
 	{
 		return true;
@@ -2270,29 +2274,52 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 				return false;
 			}
 
-			// The remaining checks are only for AI major vs. AI Minor, humans can always enter a minor's territory.
-			if (isHuman())
-				return true;
-
+#if defined(MOD_GLOBAL_CS_OVERSEAS_TERRITORY)
 			CvMinorCivAI* pMinorAI = GET_PLAYER(kTheirTeam.getLeaderID()).GetMinorCivAI();
+			PlayerTypes eMinorAlly = pMinorAI->GetAlly();
 
-			// Is this an excluded unit that doesn't cause anger?
-			bool bAngerFreeUnit = IsAngerFreeUnit();
-			// Player can earn Open Borders with enough Friendship
-			bool bHasOpenBorders = pMinorAI->IsPlayerHasOpenBorders(getOwner());
-			// If already intruding on this minor, okay to do it some more
-			bool bIntruding = pMinorAI->IsMajorIntruding(getOwner());
+			// If the minor is allied, treat the plot as being owned by their ally
+			if (MOD_GLOBAL_CS_OVERSEAS_TERRITORY && eMinorAlly != NO_PLAYER) {
+				if (eMinorAlly == getOwner()) {
+					return true;
+				}
 
-			if(bAngerFreeUnit || bHasOpenBorders || bIntruding)
-			{
-				return true;
+				pTheirTeam = &GET_TEAM(GET_PLAYER(eMinorAlly).getTeam());
+				CUSTOMLOG("  - switching their team to %i", ((int) pTheirTeam->GetID()));
+			} else {
+#endif
+				// The remaining checks are only for AI major vs. AI Minor, humans can always enter a minor's territory.
+				if (isHuman())
+					return true;
+
+#if !defined(MOD_GLOBAL_CS_OVERSEAS_TERRITORY)
+				CvMinorCivAI* pMinorAI = GET_PLAYER(kTheirTeam.getLeaderID()).GetMinorCivAI();
+#endif
+
+				// Is this an excluded unit that doesn't cause anger?
+				bool bAngerFreeUnit = IsAngerFreeUnit();
+				// Player can earn Open Borders with enough Friendship
+				bool bHasOpenBorders = pMinorAI->IsPlayerHasOpenBorders(getOwner());
+				// If already intruding on this minor, okay to do it some more
+				bool bIntruding = pMinorAI->IsMajorIntruding(getOwner());
+
+				if(bAngerFreeUnit || bHasOpenBorders || bIntruding)
+				{
+					return true;
+				}
+#if defined(MOD_GLOBAL_CS_OVERSEAS_TERRITORY)
 			}
+#endif
 		}
 	}
 
 	if(!bIgnoreRightOfPassage)
 	{
+#if defined(MOD_GLOBAL_CS_OVERSEAS_TERRITORY)
+		if(pTheirTeam->IsAllowsOpenBordersToTeam(eMyTeam))
+#else
 		if(kTheirTeam.IsAllowsOpenBordersToTeam(eMyTeam))
+#endif
 		{
 			return true;
 		}
@@ -6294,6 +6321,13 @@ bool CvUnit::canPlunderTradeRoute(const CvPlot* pPlot, bool bOnlyTestVisibility)
 	{
 		return false;
 	}
+	
+#if defined(MOD_GLOBAL_NO_OCEAN_PLUNDERING)
+	if (MOD_GLOBAL_NO_OCEAN_PLUNDERING && !pPlot->isShallowWater())
+	{
+		return false;
+	}
+#endif
 
 	if (GET_PLAYER(m_eOwner).GetTrade()->ContainsOpposingPlayerTradeUnit(pPlot))
 	{
@@ -6863,6 +6897,24 @@ bool CvUnit::canPillage(const CvPlot* pPlot) const
 				}
 			}
 		}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		// Special case: Embassy can be in a city-state's lands, don't allow pillaging unless at war with its owner
+		if(MOD_DIPLOMACY_CITYSTATES && pImprovementInfo->GetCityStateExtraVote() > 0)
+		{
+			PlayerTypes eOwner = pPlot->getOwner();
+			PlayerTypes eBuilder = pPlot->GetPlayerThatBuiltImprovement();
+			if (eOwner != NO_PLAYER && GET_PLAYER(eOwner).isMinorCiv())
+			{
+				if (eBuilder != NO_PLAYER && GET_PLAYER(eBuilder).isAlive())
+				{
+					if (!atWar(getTeam(), GET_PLAYER(eBuilder).getTeam()))
+					{
+						return false;
+					}
+				}
+			}
+		}
+#endif
 	}
 
 	// Either nothing to pillage or everything is pillaged to its max
@@ -10361,7 +10413,11 @@ int CvUnit::baseMoves(DomainTypes eIntoDomain /* = NO_DOMAIN */) const
 int CvUnit::maxMoves() const
 {
 	VALIDATE_OBJECT
+#if defined(MOD_PROMOTIONS_FLAGSHIP)
+	if(IsGreatGeneral() || (MOD_PROMOTIONS_FLAGSHIP && IsGreatAdmiral()))
+#else
 	if(IsGreatGeneral())
+#endif
 	{
 		return GetGreatGeneralStackMovement();
 	}
@@ -16826,7 +16882,11 @@ int CvUnit::GetGreatGeneralStackMovement() const
 						// Same domain
 						if(pLoopUnit->getDomainType() == getDomainType())
 						{
+#if defined(MOD_PROMOTIONS_FLAGSHIP)
+							iRtnValue = std::max(iRtnValue, pLoopUnit->maxMoves());
+#else
 							iRtnValue = pLoopUnit->maxMoves();
+#endif
 							break;
 						}
 					}
@@ -20090,6 +20150,10 @@ bool CvUnit::IsDeclareWar() const
 		case UNITAI_SCIENTIST:
 		case UNITAI_GENERAL:
 		case UNITAI_MERCHANT:
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		case UNITAI_DIPLOMAT:
+		case UNITAI_MESSENGER:
+#endif
 		case UNITAI_ENGINEER:
 		case UNITAI_ICBM:
 		case UNITAI_WORKER_SEA:

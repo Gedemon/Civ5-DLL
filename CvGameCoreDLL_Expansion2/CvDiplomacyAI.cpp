@@ -26169,6 +26169,15 @@ void CvDiplomacyAI::LogMinorCivQuestType(CvString& strString, MinorCivQuestTypes
 	case MINOR_CIV_QUEST_INFLUENCE:
 		strTemp.Format("Influence");
 		break;
+	case MINOR_CIV_QUEST_CONTEST_TOURISM:
+		strTemp.Format("Contest Tourism");
+		break;
+	case MINOR_CIV_QUEST_ARCHAEOLOGY:
+		strTemp.Format("Archaeology");
+		break;
+	case MINOR_CIV_QUEST_CIRCUMNAVIGATION:
+		strTemp.Format("Circumnavigation");
+		break;
 #endif
 	default:
 		strTemp.Format("XXX");

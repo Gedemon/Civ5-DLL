@@ -659,6 +659,12 @@ void CvEconomicAI::DoTurn()
 					bStrategyShouldBeActive = EconomicAIHelpers::IsTestStrategy_FoundCity(eStrategy, m_pPlayer);
 				else if(strStrategyName == "ECONOMICAISTRATEGY_TRADE_WITH_CITY_STATE")
 					bStrategyShouldBeActive = EconomicAIHelpers::IsTestStrategy_TradeWithCityState(eStrategy, m_pPlayer);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+				else if(MOD_DIPLOMACY_CITYSTATES && strStrategyName == "ECONOMICAISTRATEGY_INFLUENCE_CITY_STATE")
+					bStrategyShouldBeActive = EconomicAIHelpers::IsTestStrategy_InfluenceCityState(eStrategy, m_pPlayer);
+				else if(MOD_DIPLOMACY_CITYSTATES && strStrategyName == "ECONOMICAISTRATEGY_INFLUENCE_MESSENGER_CITY_STATE")
+					bStrategyShouldBeActive = EconomicAIHelpers::IsTestStrategy_InfluenceMessengerCityState(eStrategy, m_pPlayer);
+#endif
 				else if(strStrategyName == "ECONOMICAISTRATEGY_NEED_IMPROVEMENT_FOOD")
 					bStrategyShouldBeActive = EconomicAIHelpers::IsTestStrategy_NeedImprovement(m_pPlayer, YIELD_FOOD);
 				else if(strStrategyName == "ECONOMICAISTRATEGY_NEED_IMPROVEMENT_PRODUCTION")
@@ -1725,195 +1731,16 @@ void CvEconomicAI::LogCityMonitor()
 
 // PRIVATE METHODS
 
-#if defined(MOD_DIPLOMACY_CITYSTATES_HURRY)
-/// See if we want to purchase anything with gold
-bool DoHurryUnit(AdvisorTypes eAdvisor, const char* sType, CvPlayer* pPlayer, CvCity* pCity)
-{
-	for(int iUnitLoop = 0; iUnitLoop < GC.GetGameUnits()->GetNumUnits(); iUnitLoop++)
-	{
-		UnitTypes eUnit = (UnitTypes)iUnitLoop;
-
-		if(GC.getGame().GetAdvisorRecommender()->IsUnitRecommended(eUnit, eAdvisor))
-		{
-			if(pCity->IsCanPurchase(/*bTestPurchaseCost*/ true, /*bTestTrainable*/ true, eUnit, NO_BUILDING, NO_PROJECT, YIELD_GOLD))
-			{
-				if(pCity->isProductionUnit())
-				{
-					CvUnitEntry* pkUnitEntry = GC.getUnitInfo(pCity->getProductionUnit());
-					CvUnitEntry* pkUnitInfo = GC.GetGameUnits()->GetEntry(eUnit);
-
-					if(pkUnitEntry->GetUnitClassType() != pkUnitInfo->GetUnitClassType())
-					{
-						int iGoldCost = pCity->GetPurchaseCost(eUnit);
-						if(pPlayer->GetEconomicAI()->CanWithdrawMoneyForPurchase(PURCHASE_TYPE_UNIT, iGoldCost))
-						{	
-							//Log it
-							CvString strLogString;
-							strLogString.Format("CSD - Buying %s unit: %s, Cost: %d, Balance (before buy): %d", sType,
-							pkUnitInfo->GetDescription(), iGoldCost, pPlayer->GetTreasury()->GetGold());
-							pPlayer->GetHomelandAI()->LogHomelandMessage(strLogString);
-
-							//take the money...
-							pPlayer->GetTreasury()->ChangeGold(-iGoldCost);
-
-							//and train it!
-							int iResult = pCity->CreateUnit(eUnit);
-							CvAssertMsg(iResult != FFreeList::INVALID_INDEX, "Unable to create unit");
-							if (iResult != FFreeList::INVALID_INDEX)
-							{
-								CvUnit* pUnit = pPlayer->getUnit(iResult);
-								if (!pUnit->getUnitInfo().CanMoveAfterPurchase())
-								{
-									pUnit->setMoves(0);
-								}
-
-#if defined(MOD_EVENTS_CITY)
-								if (MOD_EVENTS_CITY) {
-									GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityTrained, pCity->getOwner(), pCity->GetID(), pUnit->GetID(), true, false);
-								}
-#endif
-							}
-
-							pCity->CleanUpQueue();
-
-							return true;
-						}
-					}
-				}
-        else if(pCity->isProductionBuilding())
-				{
-					int iGoldCost = pCity->GetPurchaseCost(eUnit);
-					if(pPlayer->GetEconomicAI()->CanWithdrawMoneyForPurchase(PURCHASE_TYPE_UNIT, iGoldCost))
-					{	
-						//Log it
-						CvUnitEntry* pkUnitInfo = GC.GetGameUnits()->GetEntry(eUnit);
-						CvString strLogString;
-						strLogString.Format("CSD - Buying %s unit: %s, Cost: %d, Balance (before buy): %d", sType,
-						pkUnitInfo->GetDescription(), iGoldCost, pPlayer->GetTreasury()->GetGold());
-						pPlayer->GetHomelandAI()->LogHomelandMessage(strLogString);
-
-						//take the money...
-						pPlayer->GetTreasury()->ChangeGold(-iGoldCost);
-
-						//and train it!
-						int iResult = pCity->CreateUnit(eUnit);
-						CvAssertMsg(iResult != FFreeList::INVALID_INDEX, "Unable to create unit");
-						if (iResult != FFreeList::INVALID_INDEX)
-						{
-							CvUnit* pUnit = pPlayer->getUnit(iResult);
-							if (!pUnit->getUnitInfo().CanMoveAfterPurchase())
-							{
-								pUnit->setMoves(0);
-							}
-
-#if defined(MOD_EVENTS_CITY)
-							if (MOD_EVENTS_CITY) {
-								GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityTrained, pCity->getOwner(), pCity->GetID(), pUnit->GetID(), true, false);
-							}
-#endif
-						}
-
-						pCity->CleanUpQueue();
-
-						return true;
-					}
-				}
-			}
-		}
-	}
-	
-	return false;
-}
-
-bool DoHurryBuilding(AdvisorTypes eAdvisor, const char* sType, CvPlayer* pPlayer, CvCity* pCity)
-{
-	for(int iBuildingLoop = 0; iBuildingLoop < GC.GetGameBuildings()->GetNumBuildings(); iBuildingLoop++)
-	{
-		BuildingTypes eBuilding = (BuildingTypes)iBuildingLoop;
-
-		if(GC.getGame().GetAdvisorRecommender()->IsBuildingRecommended(eBuilding, eAdvisor))
-		{
-			if(pCity->IsCanPurchase(/*bTestPurchaseCost*/ true, /*bTestTrainable*/ true, NO_UNIT, eBuilding, NO_PROJECT, YIELD_GOLD))
-			{
-				if(pCity->isProductionBuilding())
-				{
-					CvBuildingEntry* pkBuildingEntry = GC.getBuildingInfo(pCity->getProductionBuilding());
-					CvBuildingEntry* pkBuildingInfo = GC.GetGameBuildings()->GetEntry(eBuilding);
-
-					if(pkBuildingEntry->GetBuildingClassType() != pkBuildingInfo->GetBuildingClassType())
-					{
-						int iGoldCost = pCity->GetPurchaseCost(eBuilding);
-						if(pPlayer->GetEconomicAI()->CanWithdrawMoneyForPurchase(PURCHASE_TYPE_BUILDING, iGoldCost))
-						{
-							//Log it
-							CvString strLogString;
-							strLogString.Format("CSD - Buying %s building: %s, Cost: %d, Balance (before buy): %d", sType,
-							pkBuildingInfo->GetDescription(), iGoldCost, pPlayer->GetTreasury()->GetGold());
-							pPlayer->GetHomelandAI()->LogHomelandMessage(strLogString);
-		
-							//take the money...
-							pPlayer->GetTreasury()->ChangeGold(-iGoldCost);
-	
-							//and build it!
-							pCity->CreateBuilding(eBuilding);
-
-#if defined(MOD_EVENTS_CITY)
-							if (MOD_EVENTS_CITY) {
-								GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityConstructed, pCity->getOwner(), pCity->GetID(), eBuilding, true, false);
-							}
-#endif
-
-							pCity->CleanUpQueue();
-
-							return true;
-						}
-					}
-				}
-        else if(pCity->isProductionUnit())
-				{
-					int iGoldCost = pCity->GetPurchaseCost(eBuilding);
-					if(pPlayer->GetEconomicAI()->CanWithdrawMoneyForPurchase(PURCHASE_TYPE_BUILDING, iGoldCost))
-					{
-						CvBuildingEntry* pkBuildingInfo = GC.GetGameBuildings()->GetEntry(eBuilding);
-						//Log it
-						CvString strLogString;
-						strLogString.Format("CSD - Buying %s building: %s, Cost: %d, Balance (before buy): %d", sType,
-						pkBuildingInfo->GetDescription(), iGoldCost, pPlayer->GetTreasury()->GetGold());
-						pPlayer->GetHomelandAI()->LogHomelandMessage(strLogString);
-		
-						//take the money...
-						pPlayer->GetTreasury()->ChangeGold(-iGoldCost);
-	
-						//and build it!
-						pCity->CreateBuilding(eBuilding);
-
-#if defined(MOD_EVENTS_CITY)
-						if (MOD_EVENTS_CITY) {
-							GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityConstructed, pCity->getOwner(), pCity->GetID(), eBuilding, true, false);
-						}
-#endif
-
-						pCity->CleanUpQueue();
-
-						return true;
-					}
-				}
-			}
-		}
-	}
-	
-	return false;
-}
-#endif
-
 void CvEconomicAI::DoHurry()
 {
 	int iLoop = 0;
 
 #if defined(MOD_DIPLOMACY_CITYSTATES_HURRY)
+	CvCityBuildable selection;
+
   if (MOD_DIPLOMACY_CITYSTATES_HURRY) {
 	//Let's give the AI a treasury cushion ...
-  int iTreasuryBuffer = /*400*/ GC.getAI_GOLD_TREASURY_BUFFER();
+	int iTreasuryBuffer = /*400*/ GC.getAI_GOLD_TREASURY_BUFFER();
 	// ... modified by gamespeed
 	iTreasuryBuffer *= GC.getGame().getGameSpeedInfo().getGoldPercent();
 	iTreasuryBuffer /= 100;
@@ -1923,40 +1750,195 @@ void CvEconomicAI::DoHurry()
 
 	CvTreasury* pTreasury = m_pPlayer->GetTreasury();
 
-	if(pTreasury->GetGold() > iTreasuryBuffer && pTreasury->AverageIncome(iInterval) >= 1)
+	//Are we in debt? Doesn't matter if we are super rich!
+	if((pTreasury->GetGold() > iTreasuryBuffer && pTreasury->AverageIncome(iInterval) >= 1) || (pTreasury->GetGold() > iTreasuryBuffer + 2000))
 	{
 
 		// Look at each of our cities
 		for(CvCity* pLoopCity = m_pPlayer->firstCity(&iLoop); pLoopCity != NULL; pLoopCity = m_pPlayer->nextCity(&iLoop))
 		{
 			// Are we out of cash?
-			if (pTreasury->GetGold() < iTreasuryBuffer) {
+			if (pTreasury->GetGold() < iTreasuryBuffer) 
+			{
 				return;
 			}
 
 			//Is the city threatened? Always be able to hurry things in the capital.
 			if(pLoopCity != m_pPlayer->GetMilitaryAI()->GetMostThreatenedCity() || pLoopCity->isCapital())
 			{
-				//BUILDINGS
-				if (DoHurryBuilding(ADVISOR_ECONOMIC, "economic", m_pPlayer, pLoopCity) || DoHurryBuilding(ADVISOR_SCIENCE, "science", m_pPlayer, pLoopCity) ||
-				    DoHurryBuilding(ADVISOR_FOREIGN, "foreign", m_pPlayer, pLoopCity) || DoHurryBuilding(ADVISOR_MILITARY, "military", m_pPlayer, pLoopCity)) {
-					// We constructed the building as a side effect of DoHurryBuilding()
-				} else {
-					//UNITS
-					//Are we over our supply cap? If so, don't buy any units!
-					int iPaidUnits = m_pPlayer->GetNumUnitsOutOfSupply();
-					if(iPaidUnits <= 0)
+				if(!pLoopCity->IsPuppet() || m_pPlayer->GetPlayerTraits()->IsNoAnnexing())
+				{
+					CvCityBuildable selection = (pLoopCity->GetCityStrategyAI()->ChooseHurry());
+						//BUILDINGS
+					switch(selection.m_eBuildableType)
 					{
-						if (DoHurryUnit(ADVISOR_MILITARY, "military", m_pPlayer, pLoopCity) || DoHurryUnit(ADVISOR_ECONOMIC, "economic", m_pPlayer, pLoopCity) ||
-						    DoHurryUnit(ADVISOR_SCIENCE, "science", m_pPlayer, pLoopCity) || DoHurryUnit(ADVISOR_FOREIGN, "foreign", m_pPlayer, pLoopCity)) {
-							// We trained the unit as a side effect of DoHurryUnit()
+					case CITY_BUILDABLE_UNIT:
+					case CITY_BUILDABLE_UNIT_FOR_ARMY:
+					{
+						int iPaidUnits = m_pPlayer->GetNumUnitsOutOfSupply();
+							if(iPaidUnits <= 0)
+							{
+								UnitTypes eUnitType = (UnitTypes) selection.m_iIndex;
+								CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eUnitType);
+								if(pkUnitInfo)
+								{
+									if(pLoopCity->IsCanPurchase(/*bTestPurchaseCost*/ true, /*bTestTrainable*/ true, eUnitType, NO_BUILDING, NO_PROJECT, YIELD_GOLD))
+									{
+										if(pLoopCity->isProductionUnit())
+										{
+											CvUnitEntry* pkUnitEntry = GC.getUnitInfo(pLoopCity->getProductionUnit());
+											CvUnitEntry* pkUnitInfo = GC.GetGameUnits()->GetEntry(eUnitType);
+
+											if(pkUnitEntry->GetUnitClassType() != pkUnitInfo->GetUnitClassType())
+											{
+												int iGoldCost = pLoopCity->GetPurchaseCost(eUnitType);
+												if(m_pPlayer->GetEconomicAI()->CanWithdrawMoneyForPurchase(PURCHASE_TYPE_UNIT, iGoldCost))
+												{	
+													//Log it
+													CvString strLogString;
+													strLogString.Format("CSD - Buying unit: %s, Cost: %d, Balance (before buy): %d",
+													pkUnitInfo->GetDescription(), iGoldCost, m_pPlayer->GetTreasury()->GetGold());
+													m_pPlayer->GetHomelandAI()->LogHomelandMessage(strLogString);
+
+													//take the money...
+													m_pPlayer->GetTreasury()->ChangeGold(-iGoldCost);
+
+													//and train it!
+													UnitAITypes eUnitAI = (UnitAITypes) pkUnitInfo->GetDefaultUnitAIType();
+													int iResult = pLoopCity->CreateUnit(eUnitType, eUnitAI, false);
+													CvAssertMsg(iResult != FFreeList::INVALID_INDEX, "Unable to create unit");
+													if (iResult != FFreeList::INVALID_INDEX)
+													{
+														CvUnit* pUnit = m_pPlayer->getUnit(iResult);
+														if (!pUnit->getUnitInfo().CanMoveAfterPurchase())
+														{
+															pUnit->setMoves(0);
+														}
+
+#if defined(MOD_EVENTS_CITY)
+														if (MOD_EVENTS_CITY) {
+															GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityTrained, pLoopCity->getOwner(), pLoopCity->GetID(), pUnit->GetID(), true, false);
+														}
+#endif
+													}
+
+													pLoopCity->CleanUpQueue();
+												}
+											}
+										}
+									}
+								}
+							}
+					}
+					break;
+
+					case CITY_BUILDABLE_BUILDING:
+					{
+						BuildingTypes eBuildingType = (BuildingTypes) selection.m_iIndex;
+						if(pLoopCity->IsCanPurchase(/*bTestPurchaseCost*/ true, /*bTestTrainable*/ true, NO_UNIT, eBuildingType, NO_PROJECT, YIELD_GOLD))
+						{
+							if(pLoopCity->isProductionBuilding())
+							{
+								CvBuildingEntry* pkBuildingEntry = GC.getBuildingInfo(pLoopCity->getProductionBuilding());
+								CvBuildingEntry* pkBuildingInfo = GC.GetGameBuildings()->GetEntry(eBuildingType);
+
+								if(pkBuildingEntry->GetBuildingClassType() != pkBuildingInfo->GetBuildingClassType())
+								{
+									int iGoldCost = pLoopCity->GetPurchaseCost(eBuildingType);
+									if(m_pPlayer->GetEconomicAI()->CanWithdrawMoneyForPurchase(PURCHASE_TYPE_BUILDING, iGoldCost))
+									{
+										//Log it
+										CvString strLogString;
+										strLogString.Format("CSD - Buying building: %s, Cost: %d, Balance (before buy): %d",
+										pkBuildingInfo->GetDescription(), iGoldCost, m_pPlayer->GetTreasury()->GetGold());
+										m_pPlayer->GetHomelandAI()->LogHomelandMessage(strLogString);
+					
+										//take the money...
+										m_pPlayer->GetTreasury()->ChangeGold(-iGoldCost);
+				
+										//and build it!
+										pLoopCity->CreateBuilding(eBuildingType);
+										
+#if defined(MOD_EVENTS_CITY)
+										if (MOD_EVENTS_CITY) {
+											GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityConstructed, pLoopCity->getOwner(), pLoopCity->GetID(), eBuildingType, true, false);
+										}
+#endif
+
+										pLoopCity->CleanUpQueue();
+									}
+								}
+							}
 						}
+					}
+					break;
+
+					case CITY_BUILDABLE_UNIT_FOR_OPERATION:
+					{
+						int iPaidUnits = m_pPlayer->GetNumUnitsOutOfSupply();
+							if(iPaidUnits <= 0)
+							{
+								UnitTypes eUnitType = (UnitTypes) selection.m_iIndex;
+								CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eUnitType);
+								if(pkUnitInfo)
+								{
+									if(pLoopCity->IsCanPurchase(/*bTestPurchaseCost*/ true, /*bTestTrainable*/ true, eUnitType, NO_BUILDING, NO_PROJECT, YIELD_GOLD))
+									{
+										if(pLoopCity->isProductionUnit())
+										{
+											CvUnitEntry* pkUnitEntry = GC.getUnitInfo(pLoopCity->getProductionUnit());
+											CvUnitEntry* pkUnitInfo = GC.GetGameUnits()->GetEntry(eUnitType);
+
+											if(pkUnitEntry->GetUnitClassType() != pkUnitInfo->GetUnitClassType())
+											{
+												int iGoldCost = pLoopCity->GetPurchaseCost(eUnitType);
+												if(m_pPlayer->GetEconomicAI()->CanWithdrawMoneyForPurchase(PURCHASE_TYPE_UNIT, iGoldCost))
+												{	
+													//Log it
+													CvString strLogString;
+													strLogString.Format("CSD - Buying unit for operation: %s, Cost: %d, Balance (before buy): %d",
+													pkUnitInfo->GetDescription(), iGoldCost, m_pPlayer->GetTreasury()->GetGold());
+													m_pPlayer->GetHomelandAI()->LogHomelandMessage(strLogString);
+
+													//take the money...
+													m_pPlayer->GetTreasury()->ChangeGold(-iGoldCost);
+
+													//and train it!
+													UnitAITypes eUnitAI = (UnitAITypes) pkUnitInfo->GetDefaultUnitAIType();
+													int iResult = pLoopCity->CreateUnit(eUnitType, eUnitAI, true);
+													CvAssertMsg(iResult != FFreeList::INVALID_INDEX, "Unable to create unit");
+													if (iResult != FFreeList::INVALID_INDEX)
+													{
+														CvUnit* pUnit = m_pPlayer->getUnit(iResult);
+														if (!pUnit->getUnitInfo().CanMoveAfterPurchase())
+														{
+															pUnit->setMoves(0);
+														}
+
+#if defined(MOD_EVENTS_CITY)
+														if (MOD_EVENTS_CITY) {
+															GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityTrained, pLoopCity->getOwner(), pLoopCity->GetID(), pUnit->GetID(), true, false);
+														}
+#endif
+													}
+													
+													m_pPlayer->GetMilitaryAI()->ResetNumberOfTimesOpsBuildSkippedOver();
+													pLoopCity->CleanUpQueue();
+												}
+											}
+										}
+									}
+								}
+							}
+					}
+					break;
 					}
 				}
 			}
 		}
 	}
-  } else {
+  }
+else {
 #endif
 	OrderData* pOrder = 0;
 
@@ -3722,6 +3704,96 @@ bool EconomicAIHelpers::IsTestStrategy_TradeWithCityState(EconomicAIStrategyType
 
 	return false;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+/// "Influence City State" Player Strategy: If there is a diplomat who isn't in an operation?  If so, find him a city state
+bool EconomicAIHelpers::IsTestStrategy_InfluenceCityState(EconomicAIStrategyTypes eStrategy, CvPlayer* pPlayer)
+{
+	int iUnitLoop;
+	CvUnit* pLoopUnit;
+	int iLooseDiplomat = 0;
+	int iStrategyWeight = 0;
+
+	// Never run this strategy for a human player
+	if(!pPlayer->isHuman())
+	{
+		// Look at map for loose merchants
+		for(pLoopUnit = pPlayer->firstUnit(&iUnitLoop); pLoopUnit != NULL; pLoopUnit = pPlayer->nextUnit(&iUnitLoop))
+		{
+			if(pLoopUnit != NULL)
+			{
+				if(pLoopUnit->AI_getUnitAIType() == UNITAI_DIPLOMAT && pLoopUnit->GetGreatPeopleDirective() != GREAT_PEOPLE_DIRECTIVE_CONSTRUCT_IMPROVEMENT)
+				{
+					if(pLoopUnit->getArmyID() == FFreeList::INVALID_INDEX)
+					{
+						iLooseDiplomat++;
+					}
+				}
+			}
+		}
+
+		CvEconomicAIStrategyXMLEntry* pStrategy = pPlayer->GetEconomicAI()->GetEconomicAIStrategies()->GetEntry(eStrategy);
+		iStrategyWeight = iLooseDiplomat * 10;   // Just one diplomat will trigger this
+		int iWeightThresholdModifier = GetWeightThresholdModifier(eStrategy, pPlayer);
+		int iWeightThreshold = pStrategy->GetWeightThreshold() + iWeightThresholdModifier;
+
+		if(iStrategyWeight >= iWeightThreshold)
+		{
+			// Launch an operation.
+			pPlayer->addAIOperation(AI_OPERATION_DIPLOMAT_DELEGATION);
+
+			// Set this strategy active
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/// "Influence City State" Player Strategy: If there is a messenger who isn't in an operation?  If so, find him a city state
+bool EconomicAIHelpers::IsTestStrategy_InfluenceMessengerCityState(EconomicAIStrategyTypes eStrategy, CvPlayer* pPlayer)
+{
+	int iUnitLoop;
+	CvUnit* pLoopUnit;
+	int iLooseMessenger = 0;
+	int iStrategyWeight = 0;
+
+	// Never run this strategy for a human player
+	if(!pPlayer->isHuman())
+	{
+		// Look at map for loose messenger
+		for(pLoopUnit = pPlayer->firstUnit(&iUnitLoop); pLoopUnit != NULL; pLoopUnit = pPlayer->nextUnit(&iUnitLoop))
+		{
+			if(pLoopUnit != NULL)
+			{
+				if(pLoopUnit->AI_getUnitAIType() == UNITAI_MESSENGER)
+				{
+					if(pLoopUnit->getArmyID() == FFreeList::INVALID_INDEX)
+					{
+						iLooseMessenger++;
+					}
+				}
+			}
+		}
+
+		CvEconomicAIStrategyXMLEntry* pStrategy = pPlayer->GetEconomicAI()->GetEconomicAIStrategies()->GetEntry(eStrategy);
+		iStrategyWeight = iLooseMessenger * 10;   // Just one Messenger will trigger this
+		int iWeightThresholdModifier = GetWeightThresholdModifier(eStrategy, pPlayer);
+		int iWeightThreshold = pStrategy->GetWeightThreshold() + iWeightThresholdModifier;
+
+		if(iStrategyWeight >= iWeightThreshold)
+		{
+			// Launch an operation.
+			pPlayer->addAIOperation(AI_OPERATION_MESSENGER_DELEGATION);
+
+			// Set this strategy active
+			return true;
+		}
+	}
+
+	return false;
+}
+#endif
 
 /// "Concert Tour" Player Strategy: If there is a musician who isn't in an operation?  If so, find him a major civ to target
 bool EconomicAIHelpers::IsTestStrategy_ConcertTour(EconomicAIStrategyTypes eStrategy, CvPlayer* pPlayer)

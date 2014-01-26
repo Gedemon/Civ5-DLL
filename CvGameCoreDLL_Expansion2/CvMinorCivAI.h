@@ -72,6 +72,9 @@ enum MinorCivQuestTypes
 	MINOR_CIV_QUEST_CONSTRUCT_NATIONAL_WONDER,
 	MINOR_CIV_QUEST_FIND_CITY_STATE,
 	MINOR_CIV_QUEST_INFLUENCE,
+	MINOR_CIV_QUEST_CONTEST_TOURISM,
+	MINOR_CIV_QUEST_ARCHAEOLOGY,
+	MINOR_CIV_QUEST_CIRCUMNAVIGATION,
 #endif
 
     NUM_MINOR_CIV_QUEST_TYPES,
@@ -206,6 +209,9 @@ public:
 	void DoFirstContactWithMajor(TeamTypes eTeam, bool bSuppressMessages);
 
 	void DoTestEndWarsVSMinors(PlayerTypes eOldAlly, PlayerTypes eNewAlly);
+#if defined(MOD_GLOBAL_CS_NO_ALLIED_SKIRMISHES)
+	void DoTestEndSkirmishes(PlayerTypes eNewAlly);
+#endif
 
 	void DoTurnStatus();
 	MinorCivStatusTypes GetStatus() const;
@@ -315,6 +321,9 @@ public:
 	bool IsRouteConnectionEstablished(PlayerTypes eMajor) const;
 	void SetRouteConnectionEstablished(PlayerTypes eMajor, bool bValue);
 	CvPlot* GetBestNearbyCampToKill();
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	CvPlot* GetBestNearbyDig();
+#endif
 	ResourceTypes GetNearbyResourceForQuest(PlayerTypes ePlayer);
 	BuildingTypes GetBestWonderForQuest(PlayerTypes ePlayer);
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
