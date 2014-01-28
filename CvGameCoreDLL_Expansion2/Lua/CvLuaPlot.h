@@ -303,6 +303,9 @@ protected:
 
 	static int lIsBuildRemovesFeature(lua_State* L);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(AddArchaeologicalRecord);
+#endif
 	static int lGetArchaeologyArtifactType(lua_State* L);
 	static int lGetArchaeologyArtifactEra(lua_State* L);
 	static int lGetArchaeologyArtifactPlayer1(lua_State* L);

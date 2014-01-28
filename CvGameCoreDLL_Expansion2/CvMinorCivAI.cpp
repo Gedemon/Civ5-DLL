@@ -1425,11 +1425,50 @@ void CvMinorCivQuest::DoStartQuest(int iStartTurn)
 		strMessage << iBoostPercentage;
 		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_INFLUENCE");
 	}
+	// Tourism
+	else if(m_eType == MINOR_CIV_QUEST_CONTEST_TOURISM)
+	{
+		int iValue = pAssignedPlayer->getCapitalCity()->GetCityCulture()->GetBaseTourism();
+		m_iData1 = iValue;
+
+		int iTurnsRemaining = GetEndTurn() - GC.getGame().getGameTurn();
+		int iTurnsDuration = GetEndTurn() - GetStartTurn();
+
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_TOURISM");
+		strMessage << iTurnsRemaining;
+		strMessage << iTurnsDuration;
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_TOURISM");
+	}
+	// Archaeology
+	else if(m_eType == MINOR_CIV_QUEST_ARCHAEOLOGY)
+	{
+		CvPlot* pPlot = pMinor->GetMinorCivAI()->GetBestNearbyDig();
+
+		FAssertMsg(pPlot != NULL, "MINOR CIV AI: Somehow we're starting a quest to dig but we can't find one nearby.");
+
+		m_iData1 = pPlot->getX();
+		m_iData2 = pPlot->getY();
+
+		pPlot->setRevealed(pAssignedPlayer->getTeam(), true);
+		pPlot->setRevealedImprovementType(pAssignedPlayer->getTeam(), pPlot->getImprovementType());
+
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_ARCHAEOLOGY");
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_ARCHAEOLOGY");
+
+		iNotificationX = pPlot->getX();
+		iNotificationY = pPlot->getY();
+
+	}
+	// CIRCUMNAVIGATION
+	else if(m_eType == MINOR_CIV_QUEST_CIRCUMNAVIGATION)
+	{
+		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_CIRCUMNAVIGATION");
+		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_CIRCUMNAVIGATION");
+	}
 #endif
 
 	strMessage << pMinor->getNameKey();
 	strSummary << pMinor->getNameKey();
-	// CUSTOMLOG("DoStartQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
 	pMinor->GetMinorCivAI()->AddQuestNotification(strMessage.toUTF8(), strSummary.toUTF8(), m_eAssignedPlayer, iNotificationX, iNotificationY);
 }
 
@@ -1853,7 +1892,6 @@ bool CvMinorCivQuest::DoFinishQuest()
 		sMessage = sMessage + "[NEWLINE][NEWLINE]" + statusChangeStrings.first;
 	}
 
-	// CUSTOMLOG("DoFinishQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
 	pMinor->GetMinorCivAI()->AddQuestNotification(sMessage, sSummary, m_eAssignedPlayer);
 
 	return true;
@@ -2000,7 +2038,6 @@ bool CvMinorCivQuest::DoCancelQuest()
 			sMessage = sMessage + pMinor->GetMinorCivAI()->GetNamesListAsString(veNamesToShow);
 		}
 
-		// CUSTOMLOG("DoCancelQuest(turn=%i, quest=%i, player=%i)", m_iStartTurn, m_eType, m_eAssignedPlayer);
 		pMinor->GetMinorCivAI()->AddQuestNotification(sMessage, sSummary, m_eAssignedPlayer);
 	}
 
@@ -2346,6 +2383,14 @@ MinorCivPersonalityTypes CvMinorCivAI::GetPersonality() const
 	return m_ePersonality;
 }
 
+#if defined(MOD_API_EXTENSIONS)
+/// Set a Personality for this minor
+void CvMinorCivAI::SetPersonality(MinorCivPersonalityTypes ePersonality)
+{
+	m_ePersonality = ePersonality;
+}
+#endif
+
 /// Picks a random Personality for this minor
 void CvMinorCivAI::DoPickPersonality()
 {
@@ -2373,7 +2418,11 @@ void CvMinorCivAI::DoPickPersonality()
 	int* pFlavors = pFlavorManager->GetAllPersonalityFlavors();
 
 	MinorCivPersonalityTypes eRandPersonality = (MinorCivPersonalityTypes) GC.getGame().getJonRandNum(NUM_MINOR_CIV_PERSONALITY_TYPES, "Minor Civ AI: Picking Personality for this Game (should happen only once per player)");
+#if defined(MOD_API_EXTENSIONS)
+	SetPersonality(eRandPersonality);
+#else
 	m_ePersonality = eRandPersonality;
+#endif
 
 	switch(eRandPersonality)
 	{
@@ -4649,6 +4698,52 @@ bool CvMinorCivAI::IsValidQuestForPlayer(PlayerTypes ePlayer, MinorCivQuestTypes
 		// This player must not have bullied us recently
 		if(IsRecentlyBulliedByMajor(ePlayer))
 			return false;
+	}
+	// Tourism Contest
+	else if(eQuest == MINOR_CIV_QUEST_CONTEST_TOURISM)
+	{
+		//Don't create this quest until a player has entered the Renaissance
+		EraTypes eAssumeEra = NO_ERA;
+		EraTypes eCurrentEra = eAssumeEra;
+		if(eCurrentEra == NO_ERA)
+			eCurrentEra = GET_TEAM(GET_PLAYER(ePlayer).getTeam()).GetCurrentEra();
+			
+			EraTypes eRenaissance = (EraTypes) GC.getInfoTypeForString("ERA_RENAISSANCE", true);
+
+		// Renaissance era or Later
+		if(eCurrentEra < eRenaissance)
+		{
+		return false;
+		}
+	}
+	// Archaeology
+	else if(eQuest == MINOR_CIV_QUEST_ARCHAEOLOGY)
+	{
+		// Any nearby camps?
+		if(GetBestNearbyDig() == NULL)
+			return false;
+	}
+	// Circumnavigation
+	else if(eQuest == MINOR_CIV_QUEST_CIRCUMNAVIGATION)
+	{
+		if(GC.getGame().isCircumnavigated())
+		{
+		return false;
+		}
+
+		//Don't create this quest until a player has entered the Renaissance
+		EraTypes eAssumeEra = NO_ERA;
+		EraTypes eCurrentEra = eAssumeEra;
+		if(eCurrentEra == NO_ERA)
+			eCurrentEra = GET_TEAM(GET_PLAYER(ePlayer).getTeam()).GetCurrentEra();
+			
+			EraTypes eRenaissance = (EraTypes) GC.getInfoTypeForString("ERA_RENAISSANCE", true);
+
+		// Renaissance era or Later
+		if(eCurrentEra < eRenaissance)
+		{
+		return false;
+		}
 	}
 #endif
 

@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 40)
+#define MOD_DLL_VERSION_NUMBER ((uint) 41)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -44,6 +44,24 @@
 
 // Comment these lines out to remove the associated code from the DLL,
 // Alternatively, set the associated entries in the CustomModOptions table to disable(0) or enable(1) at load-time
+
+// Enables the Espionage API - AFFECTS SAVE GAME DATA FORMAT
+#define MOD_API_ESPIONAGE                           gCustomMods.isAPI_ESPIONAGE()
+// Enables the Trade Routes API - AFFECTS SAVE GAME DATA FORMAT
+#define MOD_API_TRADEROUTES                         gCustomMods.isAPI_TRADEROUTES()
+// Enables the Religion API
+#define MOD_API_RELIGION                            gCustomMods.isAPI_RELIGION()
+// Enables the Plot Based Damage API (replaces fixed damage from mountains)
+#define MOD_API_PLOT_BASED_DAMAGE                   gCustomMods.isAPI_PLOT_BASED_DAMAGE()
+// Enables the Plot Yield tables
+#define MOD_API_PLOT_YIELDS                         gCustomMods.isAPI_PLOT_YIELDS()
+// Enables the Extensions API
+#define MOD_API_EXTENSIONS                          gCustomMods.isAPI_EXTENSIONS()
+// Enables the LUA Extensions API
+#define MOD_API_LUA_EXTENSIONS                      gCustomMods.isAPI_LUA_EXTENSIONS()
+
+// Push various hard-coded values controlling the AI out into XML
+#define MOD_CONFIG_AI_IN_XML                        gCustomMods.isCONFIG_AI_IN_XML()
 
 // Changes the stacking limits based on what the tile is (city, fort, plain, etc) - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_GLOBAL_STACKING_RULES                   gCustomMods.isGLOBAL_STACKING_RULES()
@@ -334,24 +352,6 @@
 #define MOD_EVENTS_RED_COMBAT_ABORT                 (MOD_EVENTS_RED_COMBAT && gCustomMods.isEVENTS_RED_COMBAT_ABORT())
 #define MOD_EVENTS_RED_COMBAT_RESULT                (MOD_EVENTS_RED_COMBAT && gCustomMods.isEVENTS_RED_COMBAT_RESULT())
 #define MOD_EVENTS_RED_COMBAT_ENDED                 (MOD_EVENTS_RED_COMBAT && gCustomMods.isEVENTS_RED_COMBAT_ENDED())
-
-// Enables the Espionage API - AFFECTS SAVE GAME DATA FORMAT
-#define MOD_API_ESPIONAGE                           gCustomMods.isAPI_ESPIONAGE()
-// Enables the Trade Routes API - AFFECTS SAVE GAME DATA FORMAT
-#define MOD_API_TRADEROUTES                         gCustomMods.isAPI_TRADEROUTES()
-// Enables the Religion API
-#define MOD_API_RELIGION                            gCustomMods.isAPI_RELIGION()
-// Enables the Plot Based Damage API (replaces fixed damage from mountains)
-#define MOD_API_PLOT_BASED_DAMAGE                   gCustomMods.isAPI_PLOT_BASED_DAMAGE()
-// Enables the Plot Yield tables
-#define MOD_API_PLOT_YIELDS                         gCustomMods.isAPI_PLOT_YIELDS()
-// Enables the Extensions API
-#define MOD_API_EXTENSIONS                          gCustomMods.isAPI_EXTENSIONS()
-// Enables the LUA Extensions API
-#define MOD_API_LUA_EXTENSIONS                      gCustomMods.isAPI_LUA_EXTENSIONS()
-
-// Push various hard-coded values controlling the AI out into XML
-#define MOD_CONFIG_AI_IN_XML                        gCustomMods.isCONFIG_AI_IN_XML()
 
 // Minor bug fixes (missing catch-all else clauses, etc)
 #define MOD_BUGFIX_MINOR 							(true)

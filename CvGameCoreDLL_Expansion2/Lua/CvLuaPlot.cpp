@@ -284,6 +284,9 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 
 	Method(IsBuildRemovesFeature);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(AddArchaeologicalRecord);
+#endif
 	Method(GetArchaeologyArtifactType);
 	Method(GetArchaeologyArtifactEra);
 	Method(GetArchaeologyArtifactPlayer1);
@@ -1884,6 +1887,21 @@ int CvLuaPlot::lIsBuildRemovesFeature(lua_State* L)
 	lua_pushboolean(L, bFeatureRemoved);
 	return 1;
 }
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaPlot::lAddArchaeologicalRecord(lua_State* L)
+{
+	CvPlot* pPlot = GetInstance(L);
+	GreatWorkArtifactClass eType = CvLuaArgs::toValue<GreatWorkArtifactClass>(L, 2);
+	EraTypes eEra = CvLuaArgs::toValue<EraTypes>(L, 3);
+	PlayerTypes ePlayer1 = CvLuaArgs::toValue<PlayerTypes>(L, 4);
+	PlayerTypes ePlayer2 = (PlayerTypes) luaL_optinteger(L, 3, NO_PLAYER);
+	
+	pPlot->AddArchaeologicalRecord(eType, eEra, ePlayer1, ePlayer2);
+	return 0;
+}
+#endif
 
 //------------------------------------------------------------------------------
 int CvLuaPlot::lGetArchaeologyArtifactType(lua_State* L)

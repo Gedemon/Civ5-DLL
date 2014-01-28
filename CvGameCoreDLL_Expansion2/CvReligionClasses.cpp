@@ -391,6 +391,8 @@ void CvGameReligions::DoPlayerTurn(CvPlayer& kPlayer)
 		kPlayer.ChangeFaith(iFaithPerTurn);
 	}
 
+	// TODO - WH - send a "can buy with faith" notification at every boundary, not just the first
+	
 	// If just now can afford missionary, add a notification
 	bool bCanNowAffordFaithPurchase = kPlayer.GetReligions()->CanAffordFaithPurchase();
 	if (kPlayer.GetFaithPurchaseType() == NO_AUTOMATIC_FAITH_PURCHASE && !bCouldAtStartAffordFaithPurchase && bCanNowAffordFaithPurchase)

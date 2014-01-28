@@ -556,6 +556,9 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetMinorCivType);
 	Method(GetMinorCivTrait);
 	Method(GetPersonality);
+#if defined(MOD_API_EXTENSIONS)
+	Method(SetPersonality);
+#endif
 	Method(IsMinorCivHasUniqueUnit);
 	Method(GetMinorCivUniqueUnit);
 	Method(SetMinorCivUniqueUnit);
@@ -6045,6 +6048,17 @@ int CvLuaPlayer::lGetPersonality(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
+#if defined(MOD_API_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaPlayer::lSetPersonality(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const int iPersonality = lua_tointeger(L, 2);
+
+	pkPlayer->GetMinorCivAI()->SetPersonality((MinorCivPersonalityTypes) iPersonality);
+	return 0;
+}
+#endif
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lIsMinorCivHasUniqueUnit(lua_State* L)
 {

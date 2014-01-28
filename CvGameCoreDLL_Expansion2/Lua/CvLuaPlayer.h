@@ -544,6 +544,9 @@ protected:
 	static int lGetMinorCivType(lua_State* L);
 	static int lGetMinorCivTrait(lua_State* L);
 	static int lGetPersonality(lua_State* L);
+#if defined(MOD_API_EXTENSIONS)
+	LUAAPIEXTN(SetPersonality);
+#endif
 	static int lIsMinorCivHasUniqueUnit(lua_State* L);
 	static int lGetMinorCivUniqueUnit(lua_State* L);
 	static int lSetMinorCivUniqueUnit(lua_State* L);

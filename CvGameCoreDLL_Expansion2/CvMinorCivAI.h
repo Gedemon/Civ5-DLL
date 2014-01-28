@@ -189,6 +189,9 @@ public:
 	MinorCivTypes GetMinorCivType() const;
 
 	MinorCivPersonalityTypes GetPersonality() const;
+#if defined(MOD_API_EXTENSIONS)
+	void SetPersonality(MinorCivPersonalityTypes ePersonality);
+#endif
 	void DoPickPersonality();
 
 	MinorCivTraitTypes GetTrait() const;
