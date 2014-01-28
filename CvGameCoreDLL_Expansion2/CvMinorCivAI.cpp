@@ -322,7 +322,7 @@ int CvMinorCivQuest::GetContestValueForLeader()
 	if(eType == MINOR_CIV_QUEST_CONTEST_CULTURE ||
 	        eType == MINOR_CIV_QUEST_CONTEST_FAITH ||
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
-		eType == MINOR_CIV_QUEST_CONTEST_TOURISM ||
+	        (MOD_DIPLOMACY_CITYSTATES_QUESTS && eType == MINOR_CIV_QUEST_CONTEST_TOURISM) ||
 #endif
 	        eType == MINOR_CIV_QUEST_CONTEST_TECHS)
 	{
@@ -352,7 +352,7 @@ CivsList CvMinorCivQuest::GetContestLeaders()
 	if(eType == MINOR_CIV_QUEST_CONTEST_CULTURE ||
 	        eType == MINOR_CIV_QUEST_CONTEST_FAITH ||
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
-			eType == MINOR_CIV_QUEST_CONTEST_TOURISM ||
+			(MOD_DIPLOMACY_CITYSTATES_QUESTS && eType == MINOR_CIV_QUEST_CONTEST_TOURISM) ||
 #endif
 	        eType == MINOR_CIV_QUEST_CONTEST_TECHS)
 	{
@@ -389,7 +389,7 @@ bool CvMinorCivQuest::IsContestLeader(PlayerTypes ePlayer)
 	if(eType == MINOR_CIV_QUEST_CONTEST_CULTURE ||
 	        eType == MINOR_CIV_QUEST_CONTEST_FAITH ||
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
-		eType == MINOR_CIV_QUEST_CONTEST_TOURISM ||
+			(MOD_DIPLOMACY_CITYSTATES_QUESTS && eType == MINOR_CIV_QUEST_CONTEST_TOURISM) ||
 #endif
 	        eType == MINOR_CIV_QUEST_CONTEST_TECHS)
 	{
@@ -1819,7 +1819,7 @@ bool CvMinorCivQuest::DoFinishQuest()
 		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_COMPLETE_ARCHAEOLOGY");
 		strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_COMPLETE_ARCHAEOLOGY");
 	}
-	// Circumnaviation
+	// Circumnavigation
 	else if(m_eType == MINOR_CIV_QUEST_CIRCUMNAVIGATION)
 	{
 		strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_COMPLETE_CIRCUMNAVIGATION");

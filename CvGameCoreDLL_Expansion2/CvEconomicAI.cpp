@@ -1736,8 +1736,6 @@ void CvEconomicAI::DoHurry()
 	int iLoop = 0;
 
 #if defined(MOD_DIPLOMACY_CITYSTATES_HURRY)
-	CvCityBuildable selection;
-
   if (MOD_DIPLOMACY_CITYSTATES_HURRY) {
 	//Let's give the AI a treasury cushion ...
 	int iTreasuryBuffer = /*400*/ GC.getAI_GOLD_TREASURY_BUFFER();
@@ -1938,7 +1936,8 @@ void CvEconomicAI::DoHurry()
 		}
 	}
   }
-else {
+  else
+  {
 #endif
 	OrderData* pOrder = 0;
 
