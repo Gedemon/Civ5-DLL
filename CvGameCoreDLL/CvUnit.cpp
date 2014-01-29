@@ -13855,8 +13855,9 @@ bool CvUnit::canAcquirePromotionAny() const
 	VALIDATE_OBJECT
 
 	// Can't promote a unit that has attacked
-	if (isOutOfAttacks())
-		return false;
+	// RED : yes we can
+	//if (isOutOfAttacks())
+	//	return false;
 
 	int iI;
 

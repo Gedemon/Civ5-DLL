@@ -832,6 +832,109 @@ CvMilitaryTarget CvMilitaryAI::FindBestAttackTarget(AIOperationTypes eAIOperatio
 		}
 	}
 
+	// RED <<<<<
+	// Didn't find anything, try from allied cities
+	if (weightedTargetList.size() == 0)
+	{
+		PlayerTypes eAlliedPlayer;
+		for(int iAlliedPlayerLoop = 0; iAlliedPlayerLoop < MAX_MAJOR_CIVS; iAlliedPlayerLoop++)
+		{
+			eAlliedPlayer = (PlayerTypes) iAlliedPlayerLoop;
+			if ( GET_PLAYER(eAlliedPlayer).getTeam() == m_pPlayer->getTeam() && !GET_PLAYER(eAlliedPlayer).GetID() == m_pPlayer->GetID() )
+			{
+				for (pFriendlyCity = GET_PLAYER(eAlliedPlayer).firstCity(&iFriendlyLoop); pFriendlyCity != NULL; pFriendlyCity = GET_PLAYER(eAlliedPlayer).nextCity(&iFriendlyLoop))
+				{
+					CvTacticalDominanceZone *pZone;
+					CvTacticalAnalysisMap *pTactMap = GC.getGame().GetTacticalAnalysisMap();
+					if (pTactMap)
+					{
+						// Our power near muster point
+						pZone = pTactMap->GetZoneByCity(pFriendlyCity, false /* Land */);
+						if (pZone)
+						{
+							if( pZone->GetFriendlyStrength() > 250) // how to determine that value ?
+							{
+								for (pEnemyCity = GET_PLAYER(eEnemy).firstCity(&iEnemyLoop); pEnemyCity != NULL; pEnemyCity = GET_PLAYER(eEnemy).nextCity(&iEnemyLoop))
+								{
+									if (pEnemyCity->plot()->isRevealed(m_pPlayer->getTeam()))
+									{
+										CvMilitaryTarget target;
+										int iWeight;
+										target.m_pMusterCity = pFriendlyCity;
+										target.m_pTargetCity = pEnemyCity;
+										ShouldAttackBySea(eEnemy, target);
+
+										if (target.m_iPathLength > 0)
+										{
+											iWeight = ScoreTarget(target);
+											weightedTargetList.push_back(target, iWeight);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Didn't find anything, try from Minor civs allied cities
+	if (weightedTargetList.size() == 0)
+	{
+		// Loop through all (known) Minors
+		CvPlayer* pMinor;
+		CvMinorCivAI* pMinorCivAI;
+
+		PlayerTypes eMinor;
+
+		for(int iMinorLoop = MAX_MAJOR_CIVS; iMinorLoop < MAX_CIV_PLAYERS; iMinorLoop++)
+		{
+			eMinor = (PlayerTypes) iMinorLoop;
+			pMinor = &GET_PLAYER(eMinor);
+			pMinorCivAI = pMinor->GetMinorCivAI();
+
+			if ( pMinorCivAI->IsPlayerHasOpenBorders(m_pPlayer->GetID())  )
+			{
+				for (pFriendlyCity = pMinor->firstCity(&iFriendlyLoop); pFriendlyCity != NULL; pFriendlyCity = pMinor->nextCity(&iFriendlyLoop))
+				{
+					CvTacticalDominanceZone *pZone;
+					CvTacticalAnalysisMap *pTactMap = GC.getGame().GetTacticalAnalysisMap();
+					if (pTactMap)
+					{
+						// Our power near muster point
+						pZone = pTactMap->GetZoneByCity(pFriendlyCity, false /* Land */);
+						if (pZone)
+						{
+							if( pZone->GetFriendlyStrength() > 250) // how to determine that value ?
+							{
+								for (pEnemyCity = GET_PLAYER(eEnemy).firstCity(&iEnemyLoop); pEnemyCity != NULL; pEnemyCity = GET_PLAYER(eEnemy).nextCity(&iEnemyLoop))
+								{
+									if (pEnemyCity->plot()->isRevealed(m_pPlayer->getTeam()))
+									{
+										CvMilitaryTarget target;
+										int iWeight;
+										target.m_pMusterCity = pFriendlyCity;
+										target.m_pTargetCity = pEnemyCity;
+										ShouldAttackBySea(eEnemy, target);
+
+										if (target.m_iPathLength > 0)
+										{
+											iWeight = ScoreTarget(target);
+											weightedTargetList.push_back(target, iWeight);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// RED >>>>>
+
 	// Didn't find anything, abort
 	if (weightedTargetList.size() == 0)
 	{
@@ -862,12 +965,16 @@ void CvMilitaryAI::ShouldAttackBySea (PlayerTypes eEnemy, CvMilitaryTarget &targ
 {
 	CvAStarNode *pPathfinderNode;
 	int iPathLength = 0;
-	int iPlotDistance = plotDistance(target.m_pMusterCity->getX(), target.m_pMusterCity->getY(), target.m_pTargetCity->getX(), target.m_pTargetCity->getY());
+	// RED: remove variable not used 
+	//int iPlotDistance = plotDistance(target.m_pMusterCity->getX(), target.m_pMusterCity->getY(), target.m_pTargetCity->getX(), target.m_pTargetCity->getY());
 
 	// Can embark
 	if (GET_TEAM(m_pPlayer->getTeam()).canEmbark())
 	{
 		// On different landmasses?
+		/* RED <<<<< Never try an attack by sea... BUT...
+		// Very Important Todo : use Lua (Team) to set canEmbark to true when AI units are allowed to embark... 
+
 		if (target.m_pMusterCity->getArea() != target.m_pTargetCity->getArea())
 		{
 			target.m_bAttackBySea = true;
@@ -895,7 +1002,8 @@ void CvMilitaryAI::ShouldAttackBySea (PlayerTypes eEnemy, CvMilitaryTarget &targ
 				return;
 			}
 		}
-	}
+		// RED >>>>> */
+	} 
 
 	// Can't embark yet
 	else
@@ -960,21 +1068,37 @@ int CvMilitaryAI::ScoreTarget(CvMilitaryTarget &target)
 	// Take into account distance to target (and use higher multipliers for land paths)
 	if (!target.m_bAttackBySea)
 	{
-		if (target.m_iPathLength < 10)
+		// RED <<<<<
+		// Much higher value on close target (keep a frontline !)
+		if (target.m_iPathLength < 5)
 		{
-			uliRtnValue *= 16;
+			uliRtnValue *= 16000;
+		}
+		else if (target.m_iPathLength < 8)
+		{
+			uliRtnValue *= 8000;
+		}
+		else if (target.m_iPathLength < 10)
+		{
+			uliRtnValue *= 4000;
+		}
+		else if (target.m_iPathLength < 12) 
+		// RED >>>>>
+		//if (target.m_iPathLength < 10) // RED
+		{
+			uliRtnValue *= 400; // RED (was 16)
 		}
 		else if (target.m_iPathLength < 15)
 		{
-			uliRtnValue *= 8;
+			uliRtnValue *= 40; // RED (was 8)
 		}
 		else if (target.m_iPathLength < 20)
 		{
-			uliRtnValue *= 4;
+			uliRtnValue *= 4; // RED (was 4)
 		}
 		else
 		{
-			uliRtnValue *= 2;
+			uliRtnValue *= 1; // RED (was 2)
 		}
 	}
 	else
@@ -1009,9 +1133,11 @@ int CvMilitaryAI::ScoreTarget(CvMilitaryTarget &target)
 		pZone = pTactMap->GetZoneByCity(target.m_pMusterCity, false /* Land */);
 		if (pZone)
 		{
-			iFriendlyStrength = pZone->GetFriendlyStrength();
+			// RED
+			//iFriendlyStrength = pZone->GetFriendlyStrength();
+			iFriendlyStrength = pZone->GetFriendlyStrength() / 25; 
 		}
-		iFriendlyStrength = max (1, iFriendlyStrength);
+		iFriendlyStrength = max (1, iFriendlyStrength); 
 		uliRtnValue *= iFriendlyStrength;
 
 		// Their power near target
@@ -1019,9 +1145,11 @@ int CvMilitaryAI::ScoreTarget(CvMilitaryTarget &target)
 		pZone = pTactMap->GetZoneByCity(target.m_pTargetCity, false /* Land */);
 		if (pZone)
 		{
-			iEnemyStrength = pZone->GetEnemyStrength();
+			// RED
+			//iEnemyStrength = pZone->GetEnemyStrength();
+			iEnemyStrength = pZone->GetEnemyStrength() / 25;
 		}
-		iEnemyStrength = max (1000, iEnemyStrength);
+		iEnemyStrength = max (1, iEnemyStrength); // RED (was 1000 ???)
 		uliRtnValue /= iEnemyStrength;
 
 	}
@@ -1033,7 +1161,9 @@ int CvMilitaryAI::ScoreTarget(CvMilitaryTarget &target)
 	}
 
 	// Defense value of target
-	int iTargetStrengthMultipler = (5000 - target.m_pTargetCity->getStrengthValue()) / 100;
+	// RED
+	//int iTargetStrengthMultipler = (5000 - target.m_pTargetCity->getStrengthValue()) / 100;
+	int iTargetStrengthMultipler = (5000 - target.m_pTargetCity->getStrengthValue()) / 2000;
 	iTargetStrengthMultipler = max (1, iTargetStrengthMultipler);
 	uliRtnValue *= iTargetStrengthMultipler;
 

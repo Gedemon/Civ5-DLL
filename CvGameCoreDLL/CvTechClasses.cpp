@@ -1419,7 +1419,7 @@ void CvPlayerTechs::AddFlavorAsStrategies(int iPropagatePercent)
 	for (int iFlavor = 0; iFlavor < GC.getNumFlavorTypes(); iFlavor++)
 	{
 		int iFlavorValue = GetLatestFlavorValue((FlavorTypes) iFlavor);
-		if (iFlavorValue > iBiggestFlavor)
+		if (iFlavorValue > iBiggestFlavor && iFlavorValue != 0) // RED add check to prevent divide by 0...
 		{
 			iBiggestFlavor = iFlavorValue;
 		}
