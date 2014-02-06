@@ -6187,11 +6187,12 @@ bool CvUnit::canRebaseAt(const CvPlot* pPlot, int iX, int iY) const
 			// RED >>>>>
 		}
 
-		int iUnitsThere = pToPlot->countNumAirUnits(getTeam());
-		if (iUnitsThere >= pToPlot->getPlotCity()->GetMaxAirUnits())
-		{
-			return false;
-		}
+		//int iUnitsThere = pToPlot->countNumAirUnits(getTeam());
+		//if (iUnitsThere >= pToPlot->getPlotCity()->GetMaxAirUnits())
+		//{
+		//	return false;
+		//}
+
 		// RED <<<<<
 		// Allow air units to rebase in friendly cities.
 		if(GC.getGame().isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") )
