@@ -263,7 +263,7 @@ CvUnit::CvUnit() :
 	, m_strName("")
 	, m_eGreatWork(NO_GREAT_WORK)
 	, m_iTourismBlastStrength(0)
-	, m_bBestDefender("CvUnit::m_bBestDefender", m_syncArchive) // RED
+	, m_bBestDefender(false) // RED
 	, m_bPromotionReady("CvUnit::m_bPromotionReady", m_syncArchive)
 	, m_bDeathDelay("CvUnit::m_bDeathDelay", m_syncArchive)
 	, m_bCombatFocus("CvUnit::m_bCombatFocus", m_syncArchive)
@@ -1845,11 +1845,11 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 				iOldAttackerStrength = pAttacker->GetMaxAttackStrength(pAttacker->plot(), pDefender->plot(), pDefender);
 			}
 
-			int iAttackerDamageInflicted = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
-			int iOldAttackerDamageInflicted = pAttacker->getCombatDamage(iOldAttackerStrength, iOldDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+			int iAttackerDamageInflicted = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+			int iOldAttackerDamageInflicted = pAttacker->getCombatDamage(iOldAttackerStrength, iOldDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
 
-			int iDefenderDamageInflicted = getCombatDamage(iDefenderStrength, iAttackerStrength, getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
-			int iOldDefenderDamageInflicted = pDefender->getCombatDamage(iOldDefenderStrength, iOldAttackerStrength, pDefender->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+			int iDefenderDamageInflicted = getCombatDamage(iDefenderStrength, iAttackerStrength, getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+			int iOldDefenderDamageInflicted = pDefender->getCombatDamage(iOldDefenderStrength, iOldAttackerStrength, pDefender->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
 
 			if (pAttacker->getDomainType() == DOMAIN_AIR && getDomainType() != DOMAIN_AIR)
 			{
@@ -17605,6 +17605,8 @@ void CvUnit::read(FDataStream& kStream)
 		m_iNumGoodyHutsPopped = 0;
 	}
 
+	kStream >> m_bBestDefender; // RED
+
 	kStream >> m_bIgnoreDangerWakeup;
 
 	kStream >> m_iEmbarkedAllWaterCount;
@@ -17773,6 +17775,7 @@ void CvUnit::write(FDataStream& kStream) const
 	kStream << m_iNumGoodyHutsPopped;
 
 	// slewis - move to autovariable when saves are broken
+	kStream << m_bBestDefender; // RED
 	kStream << m_bIgnoreDangerWakeup;
 	kStream << m_iEmbarkedAllWaterCount;
 	kStream << m_iEmbarkExtraVisibility;

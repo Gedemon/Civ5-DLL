@@ -1400,7 +1400,7 @@ protected:
 	int m_iCanHeavyCharge;
 	int m_iNumExoticGoods;
 
-	FAutoVariable<bool, CvUnit> m_bBestDefender; // RED
+	bool m_bBestDefender; // RED
 	FAutoVariable<bool, CvUnit> m_bPromotionReady;
 	FAutoVariable<bool, CvUnit> m_bDeathDelay;
 	FAutoVariable<bool, CvUnit> m_bCombatFocus;
