@@ -1845,11 +1845,11 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 				iOldAttackerStrength = pAttacker->GetMaxAttackStrength(pAttacker->plot(), pDefender->plot(), pDefender);
 			}
 
-			int iAttackerDamageInflicted = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
-			int iOldAttackerDamageInflicted = pAttacker->getCombatDamage(iOldAttackerStrength, iOldDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+			int iAttackerDamageInflicted = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+			int iOldAttackerDamageInflicted = pAttacker->getCombatDamage(iOldAttackerStrength, iOldDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
 
-			int iDefenderDamageInflicted = getCombatDamage(iDefenderStrength, iAttackerStrength, getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
-			int iOldDefenderDamageInflicted = pDefender->getCombatDamage(iOldDefenderStrength, iOldAttackerStrength, pDefender->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+			int iDefenderDamageInflicted = getCombatDamage(iDefenderStrength, iAttackerStrength, getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+			int iOldDefenderDamageInflicted = pDefender->getCombatDamage(iOldDefenderStrength, iOldAttackerStrength, pDefender->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
 
 			if (pAttacker->getDomainType() == DOMAIN_AIR && getDomainType() != DOMAIN_AIR)
 			{
