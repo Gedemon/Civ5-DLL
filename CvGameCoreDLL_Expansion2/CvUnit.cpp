@@ -263,7 +263,7 @@ CvUnit::CvUnit() :
 	, m_strName("")
 	, m_eGreatWork(NO_GREAT_WORK)
 	, m_iTourismBlastStrength(0)
-	, m_bBestDefender("CvUnit::m_bBestDefender", m_syncArchive) // RED
+	, m_bBestDefender(false) // RED
 	, m_bPromotionReady("CvUnit::m_bPromotionReady", m_syncArchive)
 	, m_bDeathDelay("CvUnit::m_bDeathDelay", m_syncArchive)
 	, m_bCombatFocus("CvUnit::m_bCombatFocus", m_syncArchive)
@@ -17546,6 +17546,8 @@ void CvUnit::read(FDataStream& kStream)
 		m_iNumGoodyHutsPopped = 0;
 	}
 
+	kStream >> m_bBestDefender; // RED
+
 	kStream >> m_bIgnoreDangerWakeup;
 
 	kStream >> m_iEmbarkedAllWaterCount;
@@ -17714,6 +17716,7 @@ void CvUnit::write(FDataStream& kStream) const
 	kStream << m_iNumGoodyHutsPopped;
 
 	// slewis - move to autovariable when saves are broken
+	kStream << m_bBestDefender; // RED
 	kStream << m_bIgnoreDangerWakeup;
 	kStream << m_iEmbarkedAllWaterCount;
 	kStream << m_iEmbarkExtraVisibility;
