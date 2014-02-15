@@ -60,6 +60,8 @@
 #include "CvInfosSerializationHelper.h"
 #include "CvCityManager.h"
 
+#include "atlbase.h"
+
 // Public Functions...
 // must be included after all other headers
 #include "LintFree.h"
@@ -11650,3 +11652,60 @@ void CvGame::SetLastTurnAICivsProcessed()
 	}
 }
 
+// RED <<<<<
+bool CvGame::WriteMPMP(const char* szDataBase)
+{
+	// Logging
+	FILogFile* pLog;
+	CvString strTemp;
+	CvString strOutBuf;
+	pLog = LOGFILEMGR.GetLog("MPMPMaker.log", FILogFile::kDontTimeStamp);
+	pLog->Msg("WriteMPMP");
+	pLog->Msg("--------------------------------------------------------------------------------");
+
+	// Do not allow NULL entries
+	if(szDataBase == NULL || strlen(szDataBase) == 0)
+	{
+		pLog->Msg("szDataBase in NULL, exiting");
+		pLog->Msg("--------------------------------------------------------------------------------");
+		return false;
+	}
+
+	// Get Mods folder
+	/*char my_documents[MAX_PATH];
+	HRESULT result = SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, my_documents);
+	*/
+
+	char *sMyDocumentsPath;
+	DWORD dwValData = 0;
+	CRegKey regKey;
+	if(regKey.Open(HKEY_CURRENT_USER,"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders") != ERROR_SUCCESS)
+	{
+		printf("Opening Registry Key for retrieving path of My Documents directory failed\n");
+		return false;
+	}
+	else
+	{
+		regKey.QueryValue(NULL,"Personal",&dwValData);
+		sMyDocumentsPath = (char *)malloc(dwValData);
+		if(regKey.QueryValue(sMyDocumentsPath,"Personal",&dwValData) != ERROR_SUCCESS)
+		{
+			printf("Querying Registry key for retrieving path of My Documents directory failed \n");
+			return false;
+		}
+	}
+
+
+    strTemp = userprofile;
+	strOutBuf = "Path to \"My Documents\" folder :" + strTemp;
+	pLog->Msg(strTemp);
+
+	CreateDirectory("assets\\DLC\\MP_MODSPACK", NULL);
+
+	ofstream outFile("assets\\DLC\\MP_MODSPACK\\database.xml");
+	outFile << szDataBase << endl;
+	outFile.close();
+
+	return true;
+}
+// RED >>>>>

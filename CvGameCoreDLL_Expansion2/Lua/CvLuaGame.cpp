@@ -379,6 +379,8 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 
 	Method(GetNumArchaeologySites);
 	Method(GetNumHiddenArchaeologySites);
+	
+	Method(WriteMPMP); // RED
 }
 //------------------------------------------------------------------------------
 
@@ -2783,4 +2785,11 @@ int CvLuaGame::lGetNumHiddenArchaeologySites(lua_State* L)
 {
 	lua_pushinteger(L, GC.getGame().GetNumHiddenArchaeologySites());
 	return 1;
+}
+//------------------------------------------------------------------------------
+// RED <<<<<
+int CvLuaGame::lWriteMPMP(lua_State* L)
+{
+	const char* szDataBase = lua_tostring(L, 1);
+	return GC.getGame().WriteMPMP(szDataBase);
 }

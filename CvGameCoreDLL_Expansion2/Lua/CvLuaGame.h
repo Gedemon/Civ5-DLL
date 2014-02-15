@@ -375,6 +375,8 @@ protected:
 
 	static int lGetNumArchaeologySites(lua_State *L);
 	static int lGetNumHiddenArchaeologySites(lua_State *L);
+	
+	static int lWriteMPMP(lua_State *L); // RED
 };
 
 #endif //CVLUAGAME_H
