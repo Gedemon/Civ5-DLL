@@ -565,7 +565,10 @@ public:
 	int GetNumArchaeologySites() const;
 	int GetNumHiddenArchaeologySites() const;
 
-	bool WriteMPMP(const char* szDataBase); // RED
+	// RED <<<<<
+	bool WriteMPMP(const char* szDataBase);
+	bool CopyModDataToMPMP(const char* szModFolder);
+	//RED >>>>>
 
 public:
 

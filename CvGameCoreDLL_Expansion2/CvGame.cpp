@@ -60,7 +60,7 @@
 #include "CvInfosSerializationHelper.h"
 #include "CvCityManager.h"
 
-#include "atlbase.h"
+//#include "atlbase.h"
 
 // Public Functions...
 // must be included after all other headers
@@ -11666,46 +11666,68 @@ bool CvGame::WriteMPMP(const char* szDataBase)
 	// Do not allow NULL entries
 	if(szDataBase == NULL || strlen(szDataBase) == 0)
 	{
-		pLog->Msg("szDataBase in NULL, exiting");
+		pLog->Msg("szDataBase is NULL, aborting");
 		pLog->Msg("--------------------------------------------------------------------------------");
 		return false;
 	}
 
-	// Get Mods folder
-	/*char my_documents[MAX_PATH];
-	HRESULT result = SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, my_documents);
-	*/
-
-	char *sMyDocumentsPath;
-	DWORD dwValData = 0;
-	CRegKey regKey;
-	if(regKey.Open(HKEY_CURRENT_USER,"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders") != ERROR_SUCCESS)
-	{
-		printf("Opening Registry Key for retrieving path of My Documents directory failed\n");
-		return false;
-	}
-	else
-	{
-		regKey.QueryValue(NULL,"Personal",&dwValData);
-		sMyDocumentsPath = (char *)malloc(dwValData);
-		if(regKey.QueryValue(sMyDocumentsPath,"Personal",&dwValData) != ERROR_SUCCESS)
-		{
-			printf("Querying Registry key for retrieving path of My Documents directory failed \n");
-			return false;
-		}
-	}
-
-
-    strTemp = userprofile;
-	strOutBuf = "Path to \"My Documents\" folder :" + strTemp;
-	pLog->Msg(strTemp);
-
 	CreateDirectory("assets\\DLC\\MP_MODSPACK", NULL);
 
-	ofstream outFile("assets\\DLC\\MP_MODSPACK\\database.xml");
+	std::ofstream outFile;
+	outFile.open("assets\\DLC\\MP_MODSPACK\\database.xml", std::ofstream::out | std::ofstream::app);
 	outFile << szDataBase << endl;
 	outFile.close();
+	
+	pLog->Msg("Database XML File updated...");
+	pLog->Msg("--------------------------------------------------------------------------------");
+	return true;
+}
 
+bool CvGame::CopyModDataToMPMP(const char* szModFolder)
+{
+	// Logging
+	FILogFile* pLog;
+	CvString strTemp;
+	CvString strOutBuf;
+	pLog = LOGFILEMGR.GetLog("MPMPMaker.log", FILogFile::kDontTimeStamp);
+	strTemp = szModFolder;
+	strOutBuf = "Copy Mod's Data To MPMP Folder for " + strTemp ;
+	pLog->Msg(strOutBuf);
+	pLog->Msg("--------------------------------------------------------------------------------");
+
+	// Get Mods folder	
+	CvString strModsPath;
+	CvString strINIPath; //
+	DWORD dwType = REG_SZ;
+    HKEY hKey = 0;
+	char strPath[1024];
+	DWORD strPath_length = 1024;
+	const char* subkey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";	
+	RegOpenKey(HKEY_CURRENT_USER,subkey,&hKey);
+	RegQueryValueEx(hKey, "Personal", NULL, &dwType, (LPBYTE)&strPath, &strPath_length);
+
+    strTemp = strPath;
+	strOutBuf = "Path to \"My Documents\" folder :" + strTemp;
+	pLog->Msg(strOutBuf);
+	
+	strModsPath = strTemp + "\\my games\\Sid Meier's Civilization 5\\MODS\\";
+	strTemp = szModFolder;	
+	strModsPath += strTemp;
+
+	strOutBuf = "Path to the mod's folder :" + strModsPath;
+	pLog->Msg(strOutBuf);
+
+	// Check if the folder exist
+	DWORD ftyp = GetFileAttributesA(strModsPath.c_str());
+	if (ftyp == INVALID_FILE_ATTRIBUTES)
+	{
+		pLog->Msg("Mod's path does not exist, aborting...");
+		pLog->Msg("--------------------------------------------------------------------------------");
+		return false;
+	}
+	
+	pLog->Msg("Mod's Data copied...");
+	pLog->Msg("--------------------------------------------------------------------------------");
 	return true;
 }
 // RED >>>>>

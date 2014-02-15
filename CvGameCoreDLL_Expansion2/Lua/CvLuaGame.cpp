@@ -380,7 +380,10 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 	Method(GetNumArchaeologySites);
 	Method(GetNumHiddenArchaeologySites);
 	
-	Method(WriteMPMP); // RED
+	// RED <<<<<
+	Method(WriteMPMP); 
+	Method(CopyModDataToMPMP);
+	// RED >>>>>
 }
 //------------------------------------------------------------------------------
 
@@ -2793,3 +2796,10 @@ int CvLuaGame::lWriteMPMP(lua_State* L)
 	const char* szDataBase = lua_tostring(L, 1);
 	return GC.getGame().WriteMPMP(szDataBase);
 }
+//------------------------------------------------------------------------------
+int CvLuaGame::lCopyModDataToMPMP(lua_State* L)
+{
+	const char* szModFolder = lua_tostring(L, 1);
+	return GC.getGame().CopyModDataToMPMP(szModFolder);
+}
+// RED >>>>>
