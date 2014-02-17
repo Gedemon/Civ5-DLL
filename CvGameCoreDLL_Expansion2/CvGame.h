@@ -566,8 +566,14 @@ public:
 	int GetNumHiddenArchaeologySites() const;
 
 	// RED <<<<<
-	bool WriteMPMP(const char* szDataBase);
+	bool DeleteMPMP();
+	bool CreateMPMP();
+	bool WriteMPMP(const char* szFileName, const char* szDataBase, bool bInitialize);
 	bool CopyModDataToMPMP(const char* szModFolder);
+	int  DeleteDirectory(const std::string &refcstrRootDirectory, bool bDeleteSubdirectories);
+	int  OverrideGamePlayFiles(const std::string &refcstrRootDirectory);
+	int  CopyModFiles(const std::string &strModDirectory, const std::string &strDLCDirectory);
+	bool AddUIAddinToMPMP(const char* szUIFileName, const char* szAddinFileName);
 	//RED >>>>>
 
 public:

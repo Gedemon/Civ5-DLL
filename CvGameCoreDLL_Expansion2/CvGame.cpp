@@ -11653,15 +11653,128 @@ void CvGame::SetLastTurnAICivsProcessed()
 }
 
 // RED <<<<<
-bool CvGame::WriteMPMP(const char* szDataBase)
+//
+// to do to desinstall : create a second small DLC that replace one of the mods menu, and... and.. and... ***** ! can't remember what I planned, time to sleep...
+// wait ! not for desinstall but future installation or handle something... damn ! I'll remember. I hope...
+
+bool CvGame::DeleteMPMP()
 {
 	// Logging
 	FILogFile* pLog;
 	CvString strTemp;
 	CvString strOutBuf;
 	pLog = LOGFILEMGR.GetLog("MPMPMaker.log", FILogFile::kDontTimeStamp);
-	pLog->Msg("WriteMPMP");
+	pLog->Msg("Delete MPMP...");
+
+	// Delete the previous MP Modspack DLC folder
+	int iRC = 0;
+	iRC = DeleteDirectory("assets\\DLC\\MP_MODSPACK", true);
+	if (iRC)
+	{
+		strTemp.Format("DeleteDirectory failed with Error %d", iRC);
+		pLog->Msg(strTemp);
+		pLog->Msg("--------------------------------------------------------------------------------");
+		return false;
+	}
+	pLog->Msg("MPMP Folder deleted...");
 	pLog->Msg("--------------------------------------------------------------------------------");
+	return true;
+}
+
+bool CvGame::CreateMPMP()
+{
+	// Logging
+	FILogFile* pLog;
+	CvString strTemp;
+	CvString strOutBuf;
+	pLog = LOGFILEMGR.GetLog("MPMPMaker.log", FILogFile::kDontTimeStamp);
+	pLog->Msg("Create MPMP Folder...");
+
+	// Create the MP Modspack DLC folder
+	CreateDirectory("assets\\DLC\\MP_MODSPACK", NULL);
+		
+	// Create the MPModsPack.Civ5Pkg (to do: copy the file from the mods folder)
+	pLog->Msg("Create MPModsPack.Civ5Pkg...");
+	ofstream civ5Pkg("assets\\DLC\\MP_MODSPACK\\MPModsPack.Civ5Pkg");
+	civ5Pkg << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << endl;
+	civ5Pkg << "<Civ5Package>" << endl;
+	civ5Pkg << "  <GUID>{b5932ae4-0f4f-498f-9333-e2d31b20e095}</GUID>" << endl;
+	civ5Pkg << "	<SteamApp>235580</SteamApp>" << endl;
+	civ5Pkg << "  <Version>1</Version>" << endl;
+	civ5Pkg << "  <Priority>300</Priority>" << endl;
+	civ5Pkg << "  <Key>bf6d34a0074b7ad4b1d1716475f7f7fe</Key>" << endl;
+	civ5Pkg << "  <PTags>" << endl;
+	civ5Pkg << "	<Tag>Version</Tag>" << endl;
+	civ5Pkg << "  </PTags>" << endl;
+	civ5Pkg << "  <Name>" << endl;
+	civ5Pkg << "	<Value language=\"en_US\">MP ModsPack</Value>" << endl;
+	civ5Pkg << "  </Name>" << endl;
+	civ5Pkg << "  <Description>" << endl;
+	civ5Pkg << "	<Value language=\"en_US\">Multiplayer Modspack</Value>" << endl;
+	civ5Pkg << "  </Description>" << endl;
+	civ5Pkg << "  <UISkin name=\"Expansion2Primary\" set=\"Expansion2\" platform=\"Common\">" << endl;
+	civ5Pkg << "	<GameplaySkin>" << endl;
+	civ5Pkg << "		<Directory>UI</Directory>" << endl;
+	civ5Pkg << "		<Directory>Mods</Directory>" << endl;
+	civ5Pkg << "	</GameplaySkin>" << endl;
+	civ5Pkg << "  </UISkin>	" << endl;
+	civ5Pkg << "</Civ5Package>" << endl;		
+	civ5Pkg.close();
+		
+	// Create subdirs
+	pLog->Msg("Create Subdirs...");
+	CreateDirectory("assets\\DLC\\MP_MODSPACK\\UI", NULL);
+	CreateDirectory("assets\\DLC\\MP_MODSPACK\\Override", NULL);
+	CreateDirectory("assets\\DLC\\MP_MODSPACK\\Mods", NULL);
+
+	// Copy files from the base game for UIAddins
+	pLog->Msg("Copy UI files from base game...");
+	CopyFile("Assets\\DLC\\Expansion2\\UI\\InGame\\InGame.lua","assets\\DLC\\MP_MODSPACK\\UI\\InGame.lua", false);
+	CopyFile("Assets\\DLC\\Expansion2\\UI\\InGame\\CityView\\CityView.lua","assets\\DLC\\MP_MODSPACK\\UI\\CityView.lua", false);
+	CopyFile("Assets\\DLC\\Expansion2\\UI\\InGame\\LeaderHead\\LeaderHeadRoot.lua","assets\\DLC\\MP_MODSPACK\\UI\\LeaderHeadRoot.lua", false);
+
+
+
+
+	// TEST THIS BUILD *****************************************
+
+
+
+	// Create empty gameplay files (the Database changes are handled by one big file
+	/* scratch that, game crashes, must do a per file override...
+	pLog->Msg("Create empty gameplay files from:");
+	pLog->Msg(" - Base Game...");
+	OverrideGamePlayFiles("Assets\\Gameplay");
+	pLog->Msg(" - DLC 01-08 and Deluxe...");
+	OverrideGamePlayFiles("Assets\\DLC\\DLC_01\\Gameplay");
+	OverrideGamePlayFiles("Assets\\DLC\\DLC_02\\Gameplay");
+	OverrideGamePlayFiles("Assets\\DLC\\DLC_03\\Gameplay");
+	OverrideGamePlayFiles("Assets\\DLC\\DLC_04\\Gameplay");
+	OverrideGamePlayFiles("Assets\\DLC\\DLC_05\\Gameplay");
+	OverrideGamePlayFiles("Assets\\DLC\\DLC_06\\Gameplay");
+	OverrideGamePlayFiles("Assets\\DLC\\DLC_07\\Gameplay");
+	OverrideGamePlayFiles("Assets\\DLC\\DLC_Deluxe\\Gameplay");
+	pLog->Msg(" - Expansion 1...");
+	OverrideGamePlayFiles("Assets\\DLC\\Expansion\\Gameplay");
+	pLog->Msg(" - Expension 2...");
+	OverrideGamePlayFiles("Assets\\DLC\\Expansion2\\Gameplay");
+	//*/
+
+	pLog->Msg("Base Folder created...");
+	pLog->Msg("--------------------------------------------------------------------------------");
+	return true;
+}
+
+
+
+bool CvGame::WriteMPMP(const char* szFileName, const char* szDataBase, bool bInitialize)
+{
+	// Logging
+	FILogFile* pLog;
+	CvString strTemp;
+	CvString strOutBuf;
+	pLog = LOGFILEMGR.GetLog("MPMPMaker.log", FILogFile::kDontTimeStamp);
+	pLog->Msg("Write Data in file...");
 
 	// Do not allow NULL entries
 	if(szDataBase == NULL || strlen(szDataBase) == 0)
@@ -11670,15 +11783,21 @@ bool CvGame::WriteMPMP(const char* szDataBase)
 		pLog->Msg("--------------------------------------------------------------------------------");
 		return false;
 	}
+	
 
-	CreateDirectory("assets\\DLC\\MP_MODSPACK", NULL);
+	CvString fileName = szFileName;
+	CvString filePath = "assets\\DLC\\MP_MODSPACK\\Override\\" + fileName;
 
-	std::ofstream outFile;
-	outFile.open("assets\\DLC\\MP_MODSPACK\\database.xml", std::ofstream::out | std::ofstream::app);
+	ofstream outFile;
+	if (bInitialize)
+		outFile.open(filePath, ofstream::trunc);
+	else
+		outFile.open(filePath, ofstream::out | ofstream::app);
+
 	outFile << szDataBase << endl;
 	outFile.close();
 	
-	pLog->Msg("Database XML File updated...");
+	pLog->Msg("File updated...");
 	pLog->Msg("--------------------------------------------------------------------------------");
 	return true;
 }
@@ -11693,7 +11812,6 @@ bool CvGame::CopyModDataToMPMP(const char* szModFolder)
 	strTemp = szModFolder;
 	strOutBuf = "Copy Mod's Data To MPMP Folder for " + strTemp ;
 	pLog->Msg(strOutBuf);
-	pLog->Msg("--------------------------------------------------------------------------------");
 
 	// Get Mods folder	
 	CvString strModsPath;
@@ -11725,8 +11843,237 @@ bool CvGame::CopyModDataToMPMP(const char* szModFolder)
 		pLog->Msg("--------------------------------------------------------------------------------");
 		return false;
 	}
+
+	// Create new folder in MP Modspack	
+	strTemp = szModFolder;
+	CvString strDLCPath = "assets\\DLC\\MP_MODSPACK\\Mods\\" + strTemp;
+	CreateDirectory(strDLCPath, NULL);
 	
+	// Copy the Mod's files in the new folder	
+	int iRC = 0;
+	iRC = CopyModFiles(strModsPath, strDLCPath);
+	if (iRC)
+	{
+		strTemp.Format("Copying mod failed with Error %d", iRC);
+		pLog->Msg(strTemp);
+		pLog->Msg("--------------------------------------------------------------------------------");
+		return false;
+	}
+
+
 	pLog->Msg("Mod's Data copied...");
+	pLog->Msg("--------------------------------------------------------------------------------");
+	return true;
+}
+
+
+// Code from http://forums.codeguru.com/showthread.php?239271-Windows-SDK-File-System-How-to-delete-a-directory-and-subdirectories
+int CvGame::DeleteDirectory(const std::string &refcstrRootDirectory, bool bDeleteSubdirectories = true)
+{
+  bool            bSubdirectory = false;       // Flag, indicating whether
+                                               // subdirectories have been found
+  HANDLE          hFile;                       // Handle to directory
+  std::string     strFilePath;                 // Filepath
+  std::string     strPattern;                  // Pattern
+  WIN32_FIND_DATA FileInformation;             // File information
+
+
+  strPattern = refcstrRootDirectory + "\\*.*";
+  hFile = ::FindFirstFile(strPattern.c_str(), &FileInformation);
+  if(hFile != INVALID_HANDLE_VALUE)
+  {
+    do
+    {
+      if(FileInformation.cFileName[0] != '.')
+      {
+        strFilePath.erase();
+        strFilePath = refcstrRootDirectory + "\\" + FileInformation.cFileName;
+
+        if(FileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        {
+          if(bDeleteSubdirectories)
+          {
+            // Delete subdirectory
+            int iRC = DeleteDirectory(strFilePath, bDeleteSubdirectories);
+            if(iRC)
+              return iRC;
+          }
+          else
+            bSubdirectory = true;
+        }
+        else
+        {
+          // Set file attributes
+          if(::SetFileAttributes(strFilePath.c_str(),
+                                 FILE_ATTRIBUTE_NORMAL) == FALSE)
+            return ::GetLastError();
+
+          // Delete file
+          if(::DeleteFile(strFilePath.c_str()) == FALSE)
+            return ::GetLastError();
+        }
+      }
+    } while(::FindNextFile(hFile, &FileInformation) == TRUE);
+
+    // Close handle
+    ::FindClose(hFile);
+
+    DWORD dwError = ::GetLastError();
+    if(dwError != ERROR_NO_MORE_FILES)
+      return dwError;
+    else
+    {
+      if(!bSubdirectory)
+      {
+        // Set directory attributes
+        if(::SetFileAttributes(refcstrRootDirectory.c_str(),
+                               FILE_ATTRIBUTE_NORMAL) == FALSE)
+          return ::GetLastError();
+
+        // Delete directory
+        if(::RemoveDirectory(refcstrRootDirectory.c_str()) == FALSE)
+          return ::GetLastError();
+      }
+    }
+  }
+
+  return 0;
+}
+
+// And copied here to recursively get all gameplay files from the game folder
+int CvGame::OverrideGamePlayFiles(const std::string &refcstrRootDirectory)
+{
+	HANDLE          hFile;                       // Handle to directory
+	std::string     strFilePath;                 // Filepath
+	CvString		strNewFilePath;              // Filepath
+	CvString		strBuffer;					 // Buffer
+	std::string     strPattern;                  // Pattern
+	WIN32_FIND_DATA FileInformation;             // File information
+
+	strPattern = refcstrRootDirectory + "\\*.*";
+	hFile = ::FindFirstFile(strPattern.c_str(), &FileInformation);
+	if(hFile != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+		  if(FileInformation.cFileName[0] != '.')
+		  {
+			strFilePath.erase();
+			strFilePath = refcstrRootDirectory + "\\" + FileInformation.cFileName;
+
+			if(FileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			{
+				// Found subdirectory
+				int iRC = OverrideGamePlayFiles(strFilePath);
+				if(iRC)
+					return iRC;
+			}
+			else
+			{
+				// Create an empty file with the same name
+				strBuffer = FileInformation.cFileName;
+				std::size_t found_1 = strBuffer.find(".xml");
+				std::size_t found_2 = strBuffer.find(".XML");
+				if (found_1 != string::npos || found_2 != string::npos) // We want only XML files
+				{
+					strNewFilePath = "assets\\DLC\\MP_MODSPACK\\Override\\" + strBuffer;
+					ofstream outFile;
+					outFile.open(strNewFilePath, ofstream::trunc);
+					//outFile << " " << endl;
+					outFile.close();
+				}
+			}
+		  }
+		} while(::FindNextFile(hFile, &FileInformation) == TRUE);
+
+		// Close handle
+		::FindClose(hFile);
+	}
+	return 0;
+}
+
+// And copied here again to recursively copy all files from a mod's folder
+int CvGame::CopyModFiles(const std::string &strModDirectory, const std::string &strDLCDirectory)
+{
+	HANDLE          hFile;                       // Handle to directory
+	CvString	    strFilePath;                 // Filepath
+	CvString		strNewFilePath;              // Filepath
+	CvString		strBuffer;					 // Buffer
+	std::string     strPattern;                  // Pattern
+	WIN32_FIND_DATA FileInformation;             // File information
+
+	strPattern = strModDirectory + "\\*.*";
+	hFile = ::FindFirstFile(strPattern.c_str(), &FileInformation);
+	if(hFile != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+		  if(FileInformation.cFileName[0] != '.')
+		  {
+			strFilePath.erase();
+			strFilePath = strModDirectory + "\\" + FileInformation.cFileName;
+
+			if(FileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			{
+				// Found subdirectory
+				int iRC = CopyModFiles(strFilePath,strDLCDirectory); // do we want to create subdirs ? if yes, this need attention.
+				if(iRC)
+					return iRC;
+			}
+			else
+			{
+				// Copy the file
+				strNewFilePath = strDLCDirectory + "\\" + FileInformation.cFileName;
+				CopyFile(strFilePath, strNewFilePath, false); // todo: handle errors
+			}
+		  }
+		} while(::FindNextFile(hFile, &FileInformation) == TRUE);
+
+		// Close handle
+		::FindClose(hFile);
+	}
+	return 0;
+}
+
+bool CvGame::AddUIAddinToMPMP(const char* szUIFileName, const char* szAddinFileName)
+{
+	// Logging
+	FILogFile* pLog;
+	CvString strTemp;
+	CvString strOutBuf;
+	pLog = LOGFILEMGR.GetLog("MPMPMaker.log", FILogFile::kDontTimeStamp);
+	pLog->Msg("Add UIAddin...");
+
+	// Do not allow NULL entries
+	if(szUIFileName == NULL || strlen(szUIFileName) == 0 || szAddinFileName == NULL || strlen(szAddinFileName) == 0 )
+	{
+		pLog->Msg("One or both FileName(s) are NULL, aborting");
+		pLog->Msg("--------------------------------------------------------------------------------");
+		return false;
+	}
+	
+
+	CvString strUIfileName = szUIFileName;
+	CvString strUIfilePath = "assets\\DLC\\MP_MODSPACK\\UI\\" + strUIfileName;
+
+	// Check if the file exist
+	DWORD ftyp = GetFileAttributesA(strUIfilePath.c_str());
+	if (ftyp == INVALID_FILE_ATTRIBUTES)
+	{
+		pLog->Msg("UI file does not exist, aborting...");
+		pLog->Msg("--------------------------------------------------------------------------------");
+		return false;
+	}
+	
+	CvString strAddinFileName = szAddinFileName;
+	CvString strInclude = "ContextPtr:LoadNewContext(\"" + strAddinFileName + "\")";
+
+	ofstream outFile;
+	outFile.open(strUIfilePath, ofstream::out | ofstream::app);
+	outFile << strInclude << endl;
+	outFile.close();
+	
+	pLog->Msg("File updated...");
 	pLog->Msg("--------------------------------------------------------------------------------");
 	return true;
 }

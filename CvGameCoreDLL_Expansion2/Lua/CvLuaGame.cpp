@@ -381,8 +381,11 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 	Method(GetNumHiddenArchaeologySites);
 	
 	// RED <<<<<
+	Method(DeleteMPMP); 
+	Method(CreateMPMP); 
 	Method(WriteMPMP); 
 	Method(CopyModDataToMPMP);
+	Method(AddUIAddinToMPMP);
 	// RED >>>>>
 }
 //------------------------------------------------------------------------------
@@ -2791,15 +2794,33 @@ int CvLuaGame::lGetNumHiddenArchaeologySites(lua_State* L)
 }
 //------------------------------------------------------------------------------
 // RED <<<<<
+int CvLuaGame::lDeleteMPMP(lua_State* L)
+{
+	return GC.getGame().DeleteMPMP();
+}
+//------------------------------------------------------------------------------
+int CvLuaGame::lCreateMPMP(lua_State* L)
+{
+	return GC.getGame().CreateMPMP();
+}
+//------------------------------------------------------------------------------
 int CvLuaGame::lWriteMPMP(lua_State* L)
 {
-	const char* szDataBase = lua_tostring(L, 1);
-	return GC.getGame().WriteMPMP(szDataBase);
+	const char* szFileName = lua_tostring(L, 1);
+	const char* szDataBase = lua_tostring(L, 2);
+	bool bInitialize = lua_toboolean(L, 3);
+	return GC.getGame().WriteMPMP(szFileName, szDataBase, bInitialize);
 }
 //------------------------------------------------------------------------------
 int CvLuaGame::lCopyModDataToMPMP(lua_State* L)
 {
 	const char* szModFolder = lua_tostring(L, 1);
 	return GC.getGame().CopyModDataToMPMP(szModFolder);
+}//------------------------------------------------------------------------------
+int CvLuaGame::lAddUIAddinToMPMP(lua_State* L)
+{
+	const char* szUIFileName = lua_tostring(L, 1);
+	const char* szAddinFileName = lua_tostring(L, 2);
+	return GC.getGame().AddUIAddinToMPMP(szUIFileName, szAddinFileName);
 }
 // RED >>>>>
