@@ -11654,8 +11654,8 @@ void CvGame::SetLastTurnAICivsProcessed()
 
 // RED <<<<<
 //
-// to do to desinstall : create a second small DLC that replace one of the mods menu, and... and.. and... ***** ! can't remember what I planned, time to sleep...
-// wait ! not for desinstall but future installation or handle something... damn ! I'll remember. I hope...
+// create a MPModspack folder in assets/DLC to copy (and format) activated mods
+//		
 
 bool CvGame::DeleteMPMP()
 {
@@ -11733,15 +11733,9 @@ bool CvGame::CreateMPMP()
 	CopyFile("Assets\\DLC\\Expansion2\\UI\\InGame\\CityView\\CityView.lua","assets\\DLC\\MP_MODSPACK\\UI\\CityView.lua", false);
 	CopyFile("Assets\\DLC\\Expansion2\\UI\\InGame\\LeaderHead\\LeaderHeadRoot.lua","assets\\DLC\\MP_MODSPACK\\UI\\LeaderHeadRoot.lua", false);
 
-
-
-
-	// TEST THIS BUILD *****************************************
-
-
-
-	// Create empty gameplay files (the Database changes are handled by one big file
-	/* scratch that, game crashes, must do a per file override...
+	// Create empty gameplay files for the base game and DLC (the Database changes will be handled in the override of the base game's files)
+	// This way we keep the database.log clean.
+	//* 
 	pLog->Msg("Create empty gameplay files from:");
 	pLog->Msg(" - Base Game...");
 	OverrideGamePlayFiles("Assets\\Gameplay");
