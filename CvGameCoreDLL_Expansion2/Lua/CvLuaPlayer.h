@@ -755,6 +755,10 @@ protected:
 	static int lGetBuyPlotCost(lua_State* L);
 	static int lGetPlotDanger(lua_State* L);
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	LUAAPIEXTN(GetBuyPlotDistance);
+	LUAAPIEXTN(GetWorkPlotDistance);
+#endif
 #if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
 	LUAAPIEXTN(GetCityWorkingChange);
 	LUAAPIEXTN(ChangeCityWorkingChange);
@@ -1035,6 +1039,10 @@ protected:
 	// Warmongering
 	static int lGetWarmongerPreviewString(lua_State* L);
 	static int lGetLiberationPreviewString(lua_State* L);
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(AddMessage);
+#endif
 
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	static int lGetVassalGoldMaintenance(lua_State* L);

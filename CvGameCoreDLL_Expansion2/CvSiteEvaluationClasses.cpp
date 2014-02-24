@@ -371,7 +371,7 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 							iStrategicValue = 0;
 
 #if defined(MOD_GLOBAL_CITY_WORKING)
-							if (iDistance > 0 && iDistance <= pPlayer->getBuyPlotDistance())
+							if (iDistance > 0 && iDistance <= pPlayer->getWorkPlotDistance())
 #else	
 							if (iDistance > 0 && iDistance <= NUM_CITY_RINGS)
 #endif
@@ -427,7 +427,7 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 
 							// if this tile is a NW boost the value just so that we force the AI to claim them (if we can work it)
 #if defined(MOD_GLOBAL_CITY_WORKING)
-							if (pLoopPlot->IsNaturalWonder() && iDistance > 0 && iDistance <= pPlayer->getBuyPlotDistance())
+							if (pLoopPlot->IsNaturalWonder() && iDistance > 0 && iDistance <= pPlayer->getWorkPlotDistance())
 #else	
 							if (pLoopPlot->IsNaturalWonder() && iDistance > 0 && iDistance <= NUM_CITY_RINGS)
 #endif
@@ -466,7 +466,7 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 							else if (ePlotFeature == FEATURE_JUNGLE)
 							{
 #if defined(MOD_GLOBAL_CITY_WORKING)
-								if (iDistance <= pPlayer->getBuyPlotDistance())
+								if (iDistance <= pPlayer->getWorkPlotDistance())
 #else	
 								if (iDistance <= NUM_CITY_RINGS)
 #endif
@@ -477,7 +477,7 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 							else if (ePlotFeature == FEATURE_MARSH || ePlotFeature == FEATURE_FLOOD_PLAINS)
 							{
 #if defined(MOD_GLOBAL_CITY_WORKING)
-								if (iDistance <= pPlayer->getBuyPlotDistance())
+								if (iDistance <= pPlayer->getWorkPlotDistance())
 #else	
 								if (iDistance <= NUM_CITY_RINGS)
 #endif
@@ -497,7 +497,7 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 							if (pLoopPlot->getTerrainType() == TERRAIN_DESERT)
 							{
 #if defined(MOD_GLOBAL_CITY_WORKING)
-								if (iDistance <= pPlayer->getBuyPlotDistance())
+								if (iDistance <= pPlayer->getWorkPlotDistance())
 #else	
 								if (iDistance <= NUM_CITY_RINGS)
 #endif
@@ -514,7 +514,7 @@ int CvCitySiteEvaluator::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, YieldT
 								if (pLoopPlot->isHills())
 								{
 #if defined(MOD_GLOBAL_CITY_WORKING)
-								if (iDistance <= pPlayer->getBuyPlotDistance())
+								if (iDistance <= pPlayer->getWorkPlotDistance())
 #else	
 								if (iDistance <= NUM_CITY_RINGS)
 #endif
@@ -1207,8 +1207,8 @@ int CvSiteEvaluatorForStart::PlotFoundValue(CvPlot* pPlot, CvPlayer* pPlayer, Yi
 			int iDistance = plotDistance(pPlot->getX(), pPlot->getY(), pLoopPlot->getX(), pLoopPlot->getY());
 #if defined(MOD_GLOBAL_CITY_WORKING)
 			if (pPlayer != NULL) {
-				CvAssert(iDistance <= pPlayer->getBuyPlotDistance());
-				if(iDistance > pPlayer->getBuyPlotDistance()) continue;
+				CvAssert(iDistance <= pPlayer->getWorkPlotDistance());
+				if(iDistance > pPlayer->getWorkPlotDistance()) continue;
 			} else {
 				CvAssert(iDistance <= AVG_CITY_RADIUS);
 				if(iDistance > AVG_CITY_RADIUS) continue;

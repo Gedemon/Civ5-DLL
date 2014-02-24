@@ -2285,7 +2285,6 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 				}
 
 				pTheirTeam = &GET_TEAM(GET_PLAYER(eMinorAlly).getTeam());
-				CUSTOMLOG("  - switching their team to %i", ((int) pTheirTeam->GetID()));
 			} else {
 #endif
 				// The remaining checks are only for AI major vs. AI Minor, humans can always enter a minor's territory.
@@ -7947,9 +7946,9 @@ int CvUnit::GetConversionStrength() const
 			iReligiousStrength /= 100;
 		}
 	}
-#endif
-
 	// CUSTOMLOG("Unit conversion str: %i", iReligiousStrength);
+
+#endif
 	return iReligiousStrength;
 }
 
@@ -8396,7 +8395,7 @@ bool CvUnit::trade()
 		//Added Influence Quest Bonus
 		if(GET_PLAYER(eMinor).GetMinorCivAI()->IsActiveQuestForPlayer(getOwner(), MINOR_CIV_QUEST_INFLUENCE))
 		{	
-			int iBoostPercentage = 25;
+			int iBoostPercentage = 15;
 			iFriendship *= 100 + iBoostPercentage;
 			iFriendship /= 100;
 		}
@@ -9249,6 +9248,7 @@ bool CvUnit::canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestVisible,
 	VALIDATE_OBJECT
 	CvAssertMsg(eBuild < GC.getNumBuildInfos() && eBuild >= 0, "Index out of bounds");
 
+
 	if(!(m_pUnitInfo->GetBuilds(eBuild)))
 	{
 		return false;
@@ -9843,7 +9843,7 @@ bool CvUnit::CanUpgradeRightNow(bool bOnlyTestVisible) const
 
 	// Tech requirement
 	TechTypes ePrereqTech = (TechTypes) pUpgradeUnitInfo->GetPrereqAndTech();
-	
+
 	if(ePrereqTech != NO_TECH && !GET_TEAM(getTeam()).GetTeamTechs()->HasTech(ePrereqTech))
 		return false;
 

@@ -20,7 +20,7 @@
 #define MAX_CITY_PLOTS										((6 * (1+MAX_CITY_RADIUS) * MAX_CITY_RADIUS / 2) + 1)
 #define AVG_CITY_PLOTS										(37)
 
-// #define CITY_PLOTS_RADIUS(iPlayer)							((iPlayer != NO_PLAYER) ? GET_PLAYER(iPlayer).getBuyPlotDistance() : GC.getMAXIMUM_BUY_PLOT_DISTANCE())
+// #define CITY_PLOTS_RADIUS(iPlayer)							((iPlayer != NO_PLAYER) ? GET_PLAYER(iPlayer).getBuyWorkDistance() : GC.getMAXIMUM_WORK_PLOT_DISTANCE())
 // #define NUM_CITY_PLOTS(iPlayer)								((6 * (1+CITY_PLOTS_RADIUS(iPlayer)) * CITY_PLOTS_RADIUS(iPlayer) / 2) + 1)
 #else
 #define CITY_PLOTS_RADIUS									(3)

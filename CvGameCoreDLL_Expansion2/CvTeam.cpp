@@ -1250,7 +1250,7 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyP
 #endif
 	}
 
-	// Cancel Trade Deals
+	// Cancel Trade Deals, RAs, diplomats
 	if(!isBarbarian())
 	{
 		GC.getGame().GetGameDeals()->DoCancelDealsBetweenTeams(GetID(), eTeam);
@@ -5289,7 +5289,7 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 	CvString strBuffer;
 	UnitTypes eFreeUnit;
 	bool bFirstResource;
-
+	
 	if(eIndex == NO_TECH)
 	{
 		return;
@@ -5958,13 +5958,13 @@ void CvTeam::setHasTech(TechTypes eIndex, bool bNewValue, PlayerTypes ePlayer, b
 				DLLUI->setDirty(ResearchButtons_DIRTY_BIT, true);
 			}
 
-				if(eIndex != NO_TECH && bNewValue)
-				{
-					bool bDontShowRewardPopup = DLLUI->IsOptionNoRewardPopups();
+			if(eIndex != NO_TECH && bNewValue)
+			{
+				bool bDontShowRewardPopup = DLLUI->IsOptionNoRewardPopups();
 
-					// Notification in MP games
-					if(bDontShowRewardPopup || GC.getGame().isNetworkMultiPlayer())	// KWG: Candidate for !GC.getGame().isOption(GAMEOPTION_SIMULTANEOUS_TURNS)
-					{
+				// Notification in MP games
+				if(bDontShowRewardPopup || GC.getGame().isNetworkMultiPlayer())
+				{
 					Localization::String localizedText = Localization::Lookup("TXT_KEY_MISC_YOU_DISCOVERED_TECH");
 					localizedText << pkTechInfo->GetTextKey();
 					AddNotification(NOTIFICATION_TECH_AWARD, localizedText.toUTF8(), localizedText.toUTF8(), -1, -1, 0, (int) eIndex);
@@ -6207,9 +6207,6 @@ void CvTeam::testCircumnavigated()
 		}
 	}
 
-#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
-	GC.getGame().SetPlayerThatCircumnavigated(GC.getGame().getActivePlayer());
-#endif
 	kGame.makeCircumnavigated();
 
 	int iActivePlayerID = GC.getGame().getActivePlayer();
@@ -6225,15 +6222,19 @@ void CvTeam::testCircumnavigated()
 			CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iI);
 			if(kPlayer.isAlive())
 			{
-#if !defined(NO_ACHIEVEMENTS)
 				if(eTeamID == kPlayer.getTeam())
 				{
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+					GC.getGame().SetTeamThatCircumnavigated(eTeamID);
+#endif
+
+#if !defined(NO_ACHIEVEMENTS)
 					if(!kGame.isGameMultiPlayer() && kPlayer.isHuman())
 					{
 						gDLL->UnlockAchievement(ACHIEVEMENT_ROUND_WORLD);
 					}
-				}
 #endif
+				}
 
 				if(iActivePlayerID == iI)
 				{

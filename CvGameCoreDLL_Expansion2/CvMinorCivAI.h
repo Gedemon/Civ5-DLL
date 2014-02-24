@@ -75,6 +75,7 @@ enum MinorCivQuestTypes
 	MINOR_CIV_QUEST_CONTEST_TOURISM,
 	MINOR_CIV_QUEST_ARCHAEOLOGY,
 	MINOR_CIV_QUEST_CIRCUMNAVIGATION,
+	MINOR_CIV_QUEST_LIBERATION,
 #endif
 
     NUM_MINOR_CIV_QUEST_TYPES,
@@ -335,6 +336,7 @@ public:
 	UnitTypes GetBestGreatPersonForQuest(PlayerTypes ePlayer);
 	PlayerTypes GetBestCityStateTarget(PlayerTypes eForPlayer);
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	PlayerTypes GetBestCityStateLiberate(PlayerTypes eForPlayer);
 	PlayerTypes GetBestCityStateMeetTarget(PlayerTypes eForPlayer);
 #endif
 	PlayerTypes GetMostRecentBullyForQuest() const;

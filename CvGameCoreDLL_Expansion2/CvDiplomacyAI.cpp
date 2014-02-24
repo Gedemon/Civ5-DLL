@@ -2314,7 +2314,6 @@ void CvDiplomacyAI::DoCounters()
 					GET_PLAYER(eLoopPlayer).GetDiplomacyAI()->SetDoFCounter(GetPlayer()->GetID(), -1);
 					GET_PLAYER(eLoopPlayer).GetDiplomacyAI()->SetFriendDenouncedUs(GetPlayer()->GetID(), false);
 
-					// We may even do co-op wars in the future
 					for(iThirdPlayerLoop = 0; iThirdPlayerLoop < MAX_MAJOR_CIVS; iThirdPlayerLoop++){
 						eThirdPlayer = (PlayerTypes) iThirdPlayerLoop;
 
@@ -2976,6 +2975,37 @@ MajorCivApproachTypes CvDiplomacyAI::GetBestApproachTowardsMajorCiv(PlayerTypes 
 		if(IsGoingForWorldConquest())
 			viApproachWeights[MAJOR_CIV_APPROACH_WAR] += /*5*/ GC.getAPPROACH_WAR_CONQUEST_GRAND_STRATEGY();
 	}
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) {
+		//If we were given a quest to go to war with this player, that should influence our decision. Plus, it probably means he's a total jerk.
+		for(int iMinorLoop = MAX_MAJOR_CIVS; iMinorLoop < MAX_CIV_PLAYERS; iMinorLoop++)
+		{
+			PlayerTypes eMinor = (PlayerTypes) iMinorLoop;
+			CvPlayer* pMinor = &GET_PLAYER(eMinor);
+			CvMinorCivAI* pMinorCivAI = pMinor->GetMinorCivAI();
+			TeamTypes eConquerorTeam = GET_TEAM(pMinor->getTeam()).GetKilledByTeam();
+
+			if(pMinorCivAI->IsActiveQuestForPlayer(eMyPlayer, MINOR_CIV_QUEST_WAR))
+			{
+				if(pMinorCivAI->GetQuestData1(eMyPlayer, MINOR_CIV_QUEST_WAR) == ePlayer)
+				{
+					viApproachWeights[MAJOR_CIV_APPROACH_WAR] += /*2*/ GC.getAPPROACH_WAR_MINOR_QUEST_WAR();
+				}
+			}
+			if(pMinorCivAI->IsActiveQuestForPlayer(eMyPlayer, MINOR_CIV_QUEST_LIBERATION))
+			{
+				if(pMinorCivAI->GetQuestData1(eMyPlayer, MINOR_CIV_QUEST_LIBERATION) == eMinor)
+				{
+					if(eConquerorTeam == eTeam)
+					{
+						viApproachWeights[MAJOR_CIV_APPROACH_WAR] += /*2*/ GC.getAPPROACH_WAR_MINOR_QUEST_WAR();
+					}
+				}
+			}
+		}
+	}
+#endif
 
 	////////////////////////////////////
 	// PERSONALITY
@@ -5213,7 +5243,7 @@ bool CvDiplomacyAI::IsWantsOpenBordersWithPlayer(PlayerTypes ePlayer)
 	CvAssertMsg(ePlayer >= 0, "DIPLOMACY_AI: Invalid Player Index.  Please send Jon this with your last 5 autosaves and what changelist # you're playing.");
 	CvAssertMsg(ePlayer < MAX_MAJOR_CIVS, "DIPLOMACY_AI: Invalid Player Index.  Please send Jon this with your last 5 autosaves and what changelist # you're playing.");
 
-	// May want to make this logic more sophisticated eventually.  This will do for now
+	// If going for culture win always want open borders against civs we need influence on
 	AIGrandStrategyTypes eCultureStrategy = (AIGrandStrategyTypes) GC.getInfoTypeForString("AIGRANDSTRATEGY_CULTURE");
 	if (eCultureStrategy != NO_AIGRANDSTRATEGY && m_pPlayer->GetGrandStrategyAI()->GetActiveGrandStrategy() == eCultureStrategy && m_pPlayer->GetCulture()->GetTourism() > 0 )
 	{
@@ -7478,11 +7508,11 @@ void CvDiplomacyAI::DoUpdateWarmongerThreats()
 			// Now do the final assessment
 			if(iThreatValue >= /*200*/ GC.getWARMONGER_THREAT_CRITICAL_THRESHOLD())
 				eThreatType = THREAT_CRITICAL;
-			else if(iThreatValue >= /*150*/ GC.getWARMONGER_THREAT_SEVERE_THRESHOLD())
+			else if(iThreatValue >= /*100*/ GC.getWARMONGER_THREAT_SEVERE_THRESHOLD())
 				eThreatType = THREAT_SEVERE;
-			else if(iThreatValue >= /*100*/ GC.getWARMONGER_THREAT_MAJOR_THRESHOLD())
+			else if(iThreatValue >= /*50*/ GC.getWARMONGER_THREAT_MAJOR_THRESHOLD())
 				eThreatType = THREAT_MAJOR;
-			else if(iThreatValue >= /*50*/ GC.getWARMONGER_THREAT_MINOR_THRESHOLD())
+			else if(iThreatValue >= /*20*/ GC.getWARMONGER_THREAT_MINOR_THRESHOLD())
 				eThreatType = THREAT_MINOR;
 
 			// Also test % of players killed (in case we're on a map with very few players or something)
@@ -9133,35 +9163,35 @@ void CvDiplomacyAI::DoUpdateWarDamageLevel()
 	iCurrentValue = 0;
 
 	int iTypicalPower = m_pPlayer->GetMilitaryAI()->GetPowerOfStrongestBuildableUnit(DOMAIN_LAND);
-				// City value
-				for(pLoopCity = GetPlayer()->firstCity(&iValueLoop); pLoopCity != NULL; pLoopCity = GetPlayer()->nextCity(&iValueLoop))
-				{
-					iCurrentValue += (pLoopCity->getPopulation() * /*150*/ GC.getWAR_DAMAGE_LEVEL_INVOLVED_CITY_POP_MULTIPLIER());
-					if (pLoopCity->IsOriginalCapital()) // anybody's
-					{
-						iCurrentValue *= 3;
-						iCurrentValue /= 2;
-					}
-				}
+	// City value
+	for(pLoopCity = GetPlayer()->firstCity(&iValueLoop); pLoopCity != NULL; pLoopCity = GetPlayer()->nextCity(&iValueLoop))
+	{
+		iCurrentValue += (pLoopCity->getPopulation() * /*150*/ GC.getWAR_DAMAGE_LEVEL_INVOLVED_CITY_POP_MULTIPLIER());
+		if (pLoopCity->IsOriginalCapital()) // anybody's
+		{
+			iCurrentValue *= 3;
+			iCurrentValue /= 2;
+		}
+	}
 
-				// Unit value
-				for(pLoopUnit = GetPlayer()->firstUnit(&iValueLoop); pLoopUnit != NULL; pLoopUnit = GetPlayer()->nextUnit(&iValueLoop))
-				{
-					CvUnitEntry* pkUnitInfo = GC.getUnitInfo(pLoopUnit->getUnitType());
-					if(pkUnitInfo)
-					{
-						int iUnitValue = pkUnitInfo->GetPower();
-						if(iTypicalPower > 0)
-						{
-							iUnitValue = iUnitValue* /*100*/ GC.getDEFAULT_WAR_VALUE_FOR_UNIT() / iTypicalPower;
-						}
-						else
-						{
-							iUnitValue = /*100*/ GC.getDEFAULT_WAR_VALUE_FOR_UNIT();
-						}
-						iCurrentValue += iUnitValue;
-					}
-				}
+	// Unit value
+	for(pLoopUnit = GetPlayer()->firstUnit(&iValueLoop); pLoopUnit != NULL; pLoopUnit = GetPlayer()->nextUnit(&iValueLoop))
+	{
+		CvUnitEntry* pkUnitInfo = GC.getUnitInfo(pLoopUnit->getUnitType());
+		if(pkUnitInfo)
+		{
+			int iUnitValue = pkUnitInfo->GetPower();
+			if(iTypicalPower > 0)
+			{
+				iUnitValue = iUnitValue* /*100*/ GC.getDEFAULT_WAR_VALUE_FOR_UNIT() / iTypicalPower;
+			}
+			else
+			{
+				iUnitValue = /*100*/ GC.getDEFAULT_WAR_VALUE_FOR_UNIT();
+			}
+			iCurrentValue += iUnitValue;
+		}
+	}
 
 	// Loop through all (known) Players
 	for(int iPlayerLoop = 0; iPlayerLoop < MAX_CIV_PLAYERS; iPlayerLoop++)
@@ -10436,6 +10466,10 @@ void CvDiplomacyAI::ChangeOtherPlayerWarmongerAmount(PlayerTypes ePlayer, int iC
 int CvDiplomacyAI::GetOtherPlayerWarmongerScore(PlayerTypes ePlayer)
 {
 	int iReturnValue = GetOtherPlayerWarmongerAmount(ePlayer);
+
+	// Value at this point is from 250 (DOW) to upwards of 2000 (after capturing several cities)
+	// Want final value to be about 1/20th that (Jon wanted max Opinion hit to be 100)
+	// Average WarmongerHate is 5, so divide by 100 to get to 1/20th.
 	iReturnValue *= GetWarmongerHate();
 	iReturnValue /= 100;
 	return iReturnValue;
@@ -26177,6 +26211,9 @@ void CvDiplomacyAI::LogMinorCivQuestType(CvString& strString, MinorCivQuestTypes
 		break;
 	case MINOR_CIV_QUEST_CIRCUMNAVIGATION:
 		strTemp.Format("Circumnavigation");
+		break;
+	case MINOR_CIV_QUEST_LIBERATION:
+		strTemp.Format("Liberation");
 		break;
 #endif
 	default:

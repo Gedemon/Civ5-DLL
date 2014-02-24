@@ -382,7 +382,11 @@ void CvGameReligions::SpreadReligionToOneCity(CvCity* pCity)
 void CvGameReligions::DoPlayerTurn(CvPlayer& kPlayer)
 {
 	AI_PERF_FORMAT("AI-perf.csv", ("CvGameReligions::DoPlayerTurn, Turn %03d, %s", GC.getGame().getElapsedGameTurns(), kPlayer.getCivilizationShortDescription()) );
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+	int iFaithAtStart = kPlayer.GetFaith();
+#else
 	bool bCouldAtStartAffordFaithPurchase = kPlayer.GetReligions()->CanAffordFaithPurchase();
+#endif
 	const PlayerTypes ePlayer = kPlayer.GetID();
 
 	int iFaithPerTurn = kPlayer.GetTotalFaithPerTurn();
@@ -391,11 +395,26 @@ void CvGameReligions::DoPlayerTurn(CvPlayer& kPlayer)
 		kPlayer.ChangeFaith(iFaithPerTurn);
 	}
 
-	// TODO - WH - send a "can buy with faith" notification at every boundary, not just the first
-	
 	// If just now can afford missionary, add a notification
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+	bool bSendFaithPurchaseNotification = (kPlayer.GetFaithPurchaseType() == NO_AUTOMATIC_FAITH_PURCHASE);
+
+	if (bSendFaithPurchaseNotification) {
+		if (MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY) {
+			bSendFaithPurchaseNotification = kPlayer.GetReligions()->CanAffordNextPurchase();
+		} else {
+			bool bCouldAtStartAffordFaithPurchase = kPlayer.GetReligions()->CanAffordFaithPurchase(iFaithAtStart);
+			bool bCanNowAffordFaithPurchase = kPlayer.GetReligions()->CanAffordFaithPurchase(kPlayer.GetFaith());
+
+			bSendFaithPurchaseNotification = !bCouldAtStartAffordFaithPurchase && bCanNowAffordFaithPurchase;
+		}
+	}
+
+	if (bSendFaithPurchaseNotification)
+#else
 	bool bCanNowAffordFaithPurchase = kPlayer.GetReligions()->CanAffordFaithPurchase();
 	if (kPlayer.GetFaithPurchaseType() == NO_AUTOMATIC_FAITH_PURCHASE && !bCouldAtStartAffordFaithPurchase && bCanNowAffordFaithPurchase)
+#endif
 	{
 		CvNotifications* pNotifications = kPlayer.GetNotifications();
 		if(pNotifications)
@@ -403,6 +422,10 @@ void CvGameReligions::DoPlayerTurn(CvPlayer& kPlayer)
 			CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_ENOUGH_FAITH_FOR_MISSIONARY");
 			CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_ENOUGH_FAITH_FOR_MISSIONARY");
 			pNotifications->Add(NOTIFICATION_CAN_BUILD_MISSIONARY, strBuffer, strSummary, -1, -1, -1);
+
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+			kPlayer.GetReligions()->SetFaithAtLastNotify(kPlayer.GetFaith());
+#endif
 		}
 	}
 
@@ -2460,6 +2483,9 @@ FDataStream& operator<<(FDataStream& saveTo, const CvGameReligions& readFrom)
 /// Constructor
 CvPlayerReligions::CvPlayerReligions(void):
 	m_pPlayer(NULL),
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+	m_iFaithAtLastNotify(0),
+#endif
 	m_iNumProphetsSpawned(0),
 	m_bFoundingReligion(false)
 {
@@ -2490,6 +2516,9 @@ void CvPlayerReligions::Reset()
 {
 	m_bFoundingReligion = false;
 	m_iNumProphetsSpawned = 0;
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+	m_iFaithAtLastNotify = 0;
+#endif
 }
 
 /// Serialization read
@@ -2501,6 +2530,9 @@ void CvPlayerReligions::Read(FDataStream& kStream)
 	MOD_SERIALIZE_INIT_READ(kStream);
 	kStream >> m_iNumProphetsSpawned;
 	kStream >> m_bFoundingReligion;
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+	MOD_SERIALIZE_READ(42, kStream, m_iFaithAtLastNotify, 0);
+#endif
 }
 
 /// Serialization write
@@ -2512,6 +2544,9 @@ void CvPlayerReligions::Write(FDataStream& kStream)
 	MOD_SERIALIZE_INIT_WRITE(kStream);
 	kStream << m_iNumProphetsSpawned;
 	kStream << m_bFoundingReligion;
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+	MOD_SERIALIZE_WRITE(kStream, m_iFaithAtLastNotify);
+#endif
 }
 
 /// How many prophets have we spawned
@@ -2591,7 +2626,11 @@ ReligionTypes CvPlayerReligions::GetReligionCreatedByPlayer() const
 }
 
 /// Does this player have enough faith to buy a religious unit or building?
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+bool CvPlayerReligions::CanAffordFaithPurchase(int iMinimumFaith) const
+#else
 bool CvPlayerReligions::CanAffordFaithPurchase() const
+#endif
 {
 	int iFaith = m_pPlayer->GetFaith();
 	CvCity* pCapital = m_pPlayer->getCapitalCity();
@@ -2606,7 +2645,11 @@ bool CvPlayerReligions::CanAffordFaithPurchase() const
 				if (m_pPlayer->IsCanPurchaseAnyCity(false, false, eUnit, NO_BUILDING, YIELD_FAITH))
 				{
 					int iCost = pCapital->GetFaithPurchaseCost(eUnit, true);
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+					if(iCost != 0 && iFaith > iCost && iCost > iMinimumFaith)
+#else
 					if(iCost != 0 && iFaith > iCost)
+#endif
 					{
 						return true;
 					}
@@ -2622,7 +2665,11 @@ bool CvPlayerReligions::CanAffordFaithPurchase() const
 				if (m_pPlayer->IsCanPurchaseAnyCity(false, false, NO_UNIT, eBuilding, YIELD_FAITH))
 				{
 					int iCost = pCapital->GetFaithPurchaseCost(eBuilding);
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+					if(iCost != 0 && iFaith > iCost && iCost > iMinimumFaith)
+#else
 					if(iCost != 0 && iFaith > iCost)
+#endif
 					{
 						return true;
 					}
@@ -2633,6 +2680,25 @@ bool CvPlayerReligions::CanAffordFaithPurchase() const
 
 	return false;
 }
+
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+bool CvPlayerReligions::CanAffordNextPurchase()
+{
+	int iPlayerFaith = m_pPlayer->GetFaith();
+
+	if (iPlayerFaith < m_iFaithAtLastNotify) {
+		// We've spent faith, so reduce the threshold we're checking at
+		m_iFaithAtLastNotify = iPlayerFaith;
+	}
+
+	return CanAffordFaithPurchase(m_iFaithAtLastNotify);
+}
+
+void CvPlayerReligions::SetFaithAtLastNotify(int iFaith)
+{
+	m_iFaithAtLastNotify = iFaith;
+}
+#endif
 
 /// Does this player have a city following a religion?
 bool CvPlayerReligions::HasReligiousCity() const

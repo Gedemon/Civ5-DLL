@@ -220,6 +220,17 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(SetRouteType);
 	Method(IsRoutePillaged);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(GetPlayerThatBuiltImprovement);
+	Method(SetPlayerThatBuiltImprovement);
+	Method(GetPlayerResponsibleForImprovement);
+	Method(SetPlayerResponsibleForImprovement);
+	Method(GetPlayerResponsibleForRoute);
+	Method(SetPlayerResponsibleForRoute);
+	Method(GetPlayerThatClearedBarbCampHere);
+	Method(SetPlayerThatClearedBarbCampHere);
+#endif
+
 	Method(GetPlotCity);
 	Method(GetWorkingCity);
 	Method(GetWorkingCityOverride);
@@ -1427,6 +1438,48 @@ int CvLuaPlot::lIsRoutePillaged(lua_State* L)
 	lua_pushboolean(L, pkPlot->IsRoutePillaged());
 	return 1;
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaPlot::lGetPlayerThatBuiltImprovement(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::GetPlayerThatBuiltImprovement);
+}
+//------------------------------------------------------------------------------
+int CvLuaPlot::lSetPlayerThatBuiltImprovement(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::SetPlayerThatBuiltImprovement);
+}
+//------------------------------------------------------------------------------
+int CvLuaPlot::lGetPlayerResponsibleForImprovement(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::GetPlayerResponsibleForImprovement);
+}
+//------------------------------------------------------------------------------
+int CvLuaPlot::lSetPlayerResponsibleForImprovement(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::SetPlayerResponsibleForImprovement);
+}
+//------------------------------------------------------------------------------
+int CvLuaPlot::lGetPlayerResponsibleForRoute(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::GetPlayerResponsibleForRoute);
+}
+//------------------------------------------------------------------------------
+int CvLuaPlot::lSetPlayerResponsibleForRoute(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::SetPlayerResponsibleForRoute);
+}
+//------------------------------------------------------------------------------
+int CvLuaPlot::lGetPlayerThatClearedBarbCampHere(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::GetPlayerThatClearedBarbCampHere);
+}
+//------------------------------------------------------------------------------
+int CvLuaPlot::lSetPlayerThatClearedBarbCampHere(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::SetPlayerThatClearedBarbCampHere);
+}
+#endif
 //------------------------------------------------------------------------------
 //CyCity* getPlotCity();
 int CvLuaPlot::lGetPlotCity(lua_State* L)
@@ -1973,39 +2026,22 @@ int CvLuaPlot::lSetCityPurchaseID(lua_State* L)
 //------------------------------------------------------------------------------
 int CvLuaPlot::lAddMessage(lua_State* L)
 {
-	uint uiResult = 0;
-
 	CvPlot* pPlot = GetInstance(L);
-	const char* szString = lua_tostring(L, 2);
+	const char* szMessage = lua_tostring(L, 2);
+	const PlayerTypes ePlayer = (PlayerTypes) luaL_optinteger(L, 3, GC.getGame().getActivePlayer());
 
-	const PlayerTypes ePlayer = (PlayerTypes) luaL_optinteger(L, 3, NO_PLAYER);
-	const bool bForce = luaL_optbool(L, 4, false);
-	const int iLength = luaL_optinteger(L, 5, -1);
-	const char* pszSound = lua_tostring(L, 6);
-	const InterfaceMessageTypes eType = (InterfaceMessageTypes) luaL_optinteger(L, 7, MESSAGE_TYPE_INFO);
-	const char* pszIcon = lua_tostring(L, 8);
-	const ColorTypes eFlashColor = (ColorTypes) luaL_optinteger(L, 9, NO_COLOR);
-	const int iFlashX = luaL_optinteger(L, 10, -1);
-	const int iFlashY = luaL_optinteger(L, 11, -1);
-	const bool bShowOffScreenArrows = luaL_optbool(L, 12, false);
-	const bool bShowOnScreenArrows = luaL_optbool(L, 13, false);
-
-	uiResult = DLLUI->AddPlotMessage(0, pPlot->GetPlotIndex(), ePlayer, bForce, iLength, szString, pszSound, eType, pszIcon, eFlashColor, iFlashX, iFlashY, bShowOffScreenArrows, bShowOnScreenArrows);
-
-	lua_pushinteger(L, (int) uiResult);
-
-	return 1;
+	SHOW_PLOT_MESSAGE(pPlot, ePlayer, szMessage);
+	return 0;
 }
 //------------------------------------------------------------------------------
 int CvLuaPlot::lAddPopupMessage(lua_State* L)
 {
 	CvPlot* pPlot = GetInstance(L);
-	const char* szString = lua_tostring(L, 2);
-
+	const char* szMessage = lua_tostring(L, 2);
 	const float fDelay = (float) luaL_optnumber(L, 3, 0.0);
+	const PlayerTypes ePlayer = (PlayerTypes) luaL_optinteger(L, 4, GC.getGame().getActivePlayer());
 
-	DLLUI->AddPopupText(pPlot->getX(), pPlot->getY(), szString, fDelay);
-
+	SHOW_PLOT_POPUP(pPlot, ePlayer, szMessage, fDelay);
 	return 0;
 }
 #endif

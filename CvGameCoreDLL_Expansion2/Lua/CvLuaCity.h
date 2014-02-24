@@ -303,6 +303,10 @@ protected:
 
 	static int lGetLocalResourceWonderProductionMod(lua_State* L);
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	LUAAPIEXTN(GetBuyPlotDistance);
+	LUAAPIEXTN(GetWorkPlotDistance);
+#endif
 #if defined(MOD_BUILDINGS_CITY_WORKING)
 	LUAAPIEXTN(GetCityWorkingChange);
 	LUAAPIEXTN(ChangeCityWorkingChange);

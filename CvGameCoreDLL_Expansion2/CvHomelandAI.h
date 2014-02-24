@@ -23,9 +23,6 @@ enum AIHomelandTargetType
     AI_HOMELAND_TARGET_HOME_ROAD,
     AI_HOMELAND_TARGET_ANCIENT_RUIN,
 	AI_HOMELAND_TARGET_ANTIQUITY_SITE,
-#if defined(MOD_DIPLOMACY_CITYSTATES)
-	AI_HOMELAND_TARGET_CITY_STATE,
-#endif
 };
 
 // Object stored in the list of move priorities (m_MovePriorityList)
@@ -259,6 +256,7 @@ private:
 	void PlotMerchantMoves();
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	void PlotDiplomatMoves();
+	void PlotMessengerMoves();
 #endif
 	void PlotProphetMoves();
 	void PlotAdmiralMoves();
@@ -294,6 +292,7 @@ private:
 	void ExecuteGeneralMoves();
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	void ExecuteDiplomatMoves();
+	void ExecuteMessengerMoves();
 #endif
 	void ExecuteMerchantMoves();
 	void ExecuteProphetMoves();
@@ -362,9 +361,7 @@ private:
 	std::vector<CvHomelandTarget> m_TargetedHomelandRoads;
 	std::vector<CvHomelandTarget> m_TargetedAncientRuins;
 	std::vector<CvHomelandTarget> m_TargetedAntiquitySites;
-#if defined(MOD_DIPLOMACY_CITYSTATES)
-	std::vector<CvHomelandTarget> m_TargetedCityStates;
-#endif
+
 	// Targeting ranges (pulled in from GlobalAIDefines.XML)
 	int m_iRandomRange;
 	int m_iDefensiveMoveTurns;

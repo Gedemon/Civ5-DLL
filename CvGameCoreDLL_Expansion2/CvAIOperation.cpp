@@ -286,8 +286,6 @@ CvAIOperation* CvAIOperation::CreateOperation(AIOperationTypes eAIOperationType,
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	case AI_OPERATION_DIPLOMAT_DELEGATION:
 		return FNEW(CvAIOperationDiplomatDelegation(), c_eCiv5GameplayDLL, 0);
-	case AI_OPERATION_MESSENGER_DELEGATION:
-		return FNEW(CvAIOperationMessengerDelegation(), c_eCiv5GameplayDLL, 0);
 #endif
 	case AI_OPERATION_CONCERT_TOUR:
 		return FNEW(CvAIOperationConcertTour(), c_eCiv5GameplayDLL, 0);
@@ -3620,7 +3618,6 @@ bool CvAIOperationDiplomatDelegation::ArmyInPosition(CvArmyAI* pArmy)
 	bool bStateChanged = false;
 	CvUnit* pDiplomat = 0, *pEscort = 0;
 	CvString strMsg;
-	m_bEscorted = false;
 
 	switch(m_eCurrentState)
 	{
@@ -3628,55 +3625,8 @@ bool CvAIOperationDiplomatDelegation::ArmyInPosition(CvArmyAI* pArmy)
 		// If not we'll fall through and just stay in this state.
 	case AI_OPERATION_STATE_GATHERING_FORCES:
 
-		// No escort, can just let base class handle it
-		if(!m_bEscorted)
-		{
-			return CvAIOperation::ArmyInPosition(pArmy);
-		}
-
-		// More complex if we are waiting for an escort
-		else
-		{
-			iUnitID = pArmy->GetFirstUnitID();
-			if(iUnitID != -1)
-			{
-				pDiplomat = GET_PLAYER(m_eOwner).getUnit(iUnitID);
-			}
-			iUnitID = pArmy->GetNextUnitID();
-			if(iUnitID != -1)
-			{
-				pEscort = GET_PLAYER(m_eOwner).getUnit(iUnitID);
-			}
-			else
-			{
-				// Escort died while gathering forces.  Abort (and return TRUE since state changed)
-				m_eCurrentState = AI_OPERATION_STATE_ABORTED;
-				m_eAbortReason = AI_ABORT_ESCORT_DIED;
-				return true;
-			}
-			if(pDiplomat != NULL && pEscort != NULL && pDiplomat->plot() == pEscort->plot())
-			{
-				// let's see if the target still makes sense (this is modified from RetargetCivilian)
-				CvPlot* pBetterTarget = FindBestTarget(pDiplomat, true);
-
-				// No targets at all!  Abort
-				if(pBetterTarget == NULL)
-				{
-					m_eCurrentState = AI_OPERATION_STATE_ABORTED;
-					m_eAbortReason = AI_ABORT_NO_TARGET;
-					return false;
-				}
-				// If we have a target
-				else
-				{
-					SetTargetPlot(pBetterTarget);
-					pArmy->SetGoalPlot(pBetterTarget);
-				}
-				return CvAIOperation::ArmyInPosition(pArmy);
-			}
-		}
+		return CvAIOperation::ArmyInPosition(pArmy);
 		break;
-
 	case AI_OPERATION_STATE_MOVING_TO_TARGET:
 	case AI_OPERATION_STATE_AT_TARGET:
 
@@ -3696,9 +3646,10 @@ bool CvAIOperationDiplomatDelegation::ArmyInPosition(CvArmyAI* pArmy)
 			if(pDiplomat->plot() == GetTargetPlot() && pDiplomat->canMove() && pDiplomat->canTrade(pDiplomat->plot()))
 			{
 				pDiplomat->PushMission(CvTypes::getMISSION_TRADE());
+
 				if(GC.getLogging() && GC.getAILogging())
 				{
-					strMsg.Format("Great Diplomat finishing diplomatic mission, At X=%d, At Y=%d", pDiplomat->plot()->getX(), pDiplomat->plot()->getY());
+					strMsg.Format("Great Diplomat finishing Diplomatic Mission at %s", pDiplomat->plot()->GetAdjacentCity()->getName().c_str());
 					LogOperationSpecialMessage(strMsg);
 				}
 
@@ -3739,168 +3690,17 @@ bool CvAIOperationDiplomatDelegation::ArmyInPosition(CvArmyAI* pArmy)
 	return bStateChanged;
 }
 
-/// Find the plot where we want to settler
-CvPlot* CvAIOperationDiplomatDelegation::FindBestTarget(CvUnit* pUnit, bool)
+/// Find the plot where we want to influence
+CvPlot* CvAIOperationDiplomatDelegation::FindBestTarget(CvUnit* pUnit, bool bOnlySafePaths)
 {
 	CvAssertMsg(pUnit, "pUnit cannot be null");
 	if(!pUnit)
 	{
 		return NULL;
 	}
-
-	return GET_PLAYER(pUnit->getOwner()).ChooseMessengerTargetPlot(pUnit);
-}
-////////////////////////////////////////////////////////////////////////////////
-// CvAIOperationMessengerDelegation
-////////////////////////////////////////////////////////////////////////////////
-
-/// Constructor
-CvAIOperationMessengerDelegation::CvAIOperationMessengerDelegation()
-{
-	m_eCivilianType = UNITAI_MESSENGER;
-}
-
-/// Destructor
-CvAIOperationMessengerDelegation::~CvAIOperationMessengerDelegation()
-{
-}
-
-/// If at target, cash in; if at muster point, merge Messenger and escort and move out
-bool CvAIOperationMessengerDelegation::ArmyInPosition(CvArmyAI* pArmy)
-{
-	int iUnitID = 0;
-	bool bStateChanged = false;
-	CvUnit* pGreatDiplomat = 0, *pEscort = 0;
-	CvString strMsg;
-	m_bEscorted = false;
-
-	switch(m_eCurrentState)
-	{
-		// If we were gathering forces, we have to insist that any escort is in the same plot as the Messenger.
-		// If not we'll fall through and just stay in this state.
-	case AI_OPERATION_STATE_GATHERING_FORCES:
-
-		// No escort, can just let base class handle it
-		if(!m_bEscorted)
-		{
-			return CvAIOperation::ArmyInPosition(pArmy);
-		}
-
-		// More complex if we are waiting for an escort
-		else
-		{
-			iUnitID = pArmy->GetFirstUnitID();
-			if(iUnitID != -1)
-			{
-				pGreatDiplomat = GET_PLAYER(m_eOwner).getUnit(iUnitID);
-			}
-			iUnitID = pArmy->GetNextUnitID();
-			if(iUnitID != -1)
-			{
-				pEscort = GET_PLAYER(m_eOwner).getUnit(iUnitID);
-			}
-			else
-			{
-				// Escort died while gathering forces.  Abort (and return TRUE since state changed)
-				m_eCurrentState = AI_OPERATION_STATE_ABORTED;
-				m_eAbortReason = AI_ABORT_ESCORT_DIED;
-				return true;
-			}
-			if(pGreatDiplomat != NULL && pEscort != NULL && pGreatDiplomat->plot() == pEscort->plot())
-			{
-				// let's see if the target still makes sense (this is modified from RetargetCivilian)
-				CvPlot* pBetterTarget = FindBestTarget(pGreatDiplomat, true);
-
-				// No targets at all!  Abort
-				if(pBetterTarget == NULL)
-				{
-					m_eCurrentState = AI_OPERATION_STATE_ABORTED;
-					m_eAbortReason = AI_ABORT_NO_TARGET;
-					return false;
-				}
-				// If we have a target
-				else
-				{
-					SetTargetPlot(pBetterTarget);
-					pArmy->SetGoalPlot(pBetterTarget);
-				}
-				return CvAIOperation::ArmyInPosition(pArmy);
-			}
-		}
-		break;
-
-	case AI_OPERATION_STATE_MOVING_TO_TARGET:
-	case AI_OPERATION_STATE_AT_TARGET:
-
-		// Call base class version and see if it thinks we're done
-		bStateChanged = CvAIOperation::ArmyInPosition(pArmy);
-
-		// Now get the Messenger
-		iUnitID = pArmy->GetFirstUnitID();
-		if(iUnitID != -1)
-		{
-			pGreatDiplomat = GET_PLAYER(m_eOwner).getUnit(iUnitID);
-		}
-
-		if(pGreatDiplomat != NULL)
-		{
-			// If the Messenger made it, we don't care about the entire army
-			if(pGreatDiplomat->plot() == GetTargetPlot() && pGreatDiplomat->canMove() && pGreatDiplomat->canTrade(pGreatDiplomat->plot()))
-			{
-				pGreatDiplomat->PushMission(CvTypes::getMISSION_TRADE());
-				if(GC.getLogging() && GC.getAILogging())
-				{
-					strMsg.Format("Messenger finishing Diplomatic mission, At X=%d, At Y=%d", pGreatDiplomat->plot()->getX(), pGreatDiplomat->plot()->getY());
-					LogOperationSpecialMessage(strMsg);
-				}
-
-				m_eCurrentState = AI_OPERATION_STATE_SUCCESSFUL_FINISH;
-			}
-
-			// Does it look like we should be done?
-			else if(pGreatDiplomat->plot() == GetTargetPlot())
-			{
-				// We're at our target but can no longer trade, city state was probably conquered
-				if(!pGreatDiplomat->canTrade(pGreatDiplomat->plot()))
-				{
-					if(GC.getLogging() && GC.getAILogging())
-					{
-						strMsg.Format("At target but can no longer do diplomacy here. Target was (X=%d Y=%d)", GetTargetPlot()->getX(), GetTargetPlot()->getY());
-						LogOperationSpecialMessage(strMsg);
-					}
-					RetargetCivilian(pGreatDiplomat, pArmy);
-					pGreatDiplomat->finishMoves();
-					iUnitID = pArmy->GetNextUnitID();
-					if(iUnitID != -1)
-					{
-						pEscort = GET_PLAYER(m_eOwner).getUnit(iUnitID);
-						pEscort->finishMoves();
-					}
-				}
-			}
-		}
-		break;
-
-		// In all other cases use base class version
-	case AI_OPERATION_STATE_ABORTED:
-	case AI_OPERATION_STATE_RECRUITING_UNITS:
-		return CvAIOperation::ArmyInPosition(pArmy);
-		break;
-	};
-
-	return bStateChanged;
-}
-
-/// Find the plot where we want to settler
-CvPlot* CvAIOperationMessengerDelegation::FindBestTarget(CvUnit* pUnit, bool)
-{
-	CvAssertMsg(pUnit, "pUnit cannot be null");
-	if(!pUnit)
-	{
-		return NULL;
-	}
-
-	return GET_PLAYER(pUnit->getOwner()).ChooseMessengerTargetPlot(pUnit);
+	int iTargetTurns;
+	bOnlySafePaths= true;
+	return GET_PLAYER(pUnit->getOwner()).ChooseMessengerTargetPlot(pUnit, &iTargetTurns);
 }
 #endif
 

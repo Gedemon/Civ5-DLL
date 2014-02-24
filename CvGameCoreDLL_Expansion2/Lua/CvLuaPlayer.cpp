@@ -768,6 +768,10 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetBuyPlotCost);
 	Method(GetPlotDanger);
 
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	Method(GetBuyPlotDistance);
+	Method(GetWorkPlotDistance);
+#endif
 #if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
 	Method(GetCityWorkingChange);
 	Method(ChangeCityWorkingChange);
@@ -1026,6 +1030,10 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 
 	Method(GetWarmongerPreviewString);
 	Method(GetLiberationPreviewString);
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(AddMessage);
+#endif
 
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	Method(IsVassalageAcceptable);
@@ -7607,6 +7615,20 @@ int CvLuaPlayer::lGetPlotDanger(lua_State* L)
 	lua_pushinteger(L, pkPlayer->GetPlotDanger(*pkPlot));
 	return 1;
 }
+#if defined(MOD_GLOBAL_CITY_WORKING)
+//------------------------------------------------------------------------------
+//int getBuyPlotDistance();
+int CvLuaPlayer::lGetBuyPlotDistance(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::getBuyPlotDistance);
+}
+//------------------------------------------------------------------------------
+//int getWorkPlotDistance();
+int CvLuaPlayer::lGetWorkPlotDistance(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::getWorkPlotDistance);
+}
+#endif
 #if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
 //------------------------------------------------------------------------------
 //int getCityWorkingChange();
@@ -7614,7 +7636,6 @@ int CvLuaPlayer::lGetCityWorkingChange(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlayerAI::GetCityWorkingChange);
 }
-
 //------------------------------------------------------------------------------
 //void changeCityWorkingChange(int iChange);
 int CvLuaPlayer::lChangeCityWorkingChange(lua_State* L)
@@ -11371,6 +11392,15 @@ int CvLuaPlayer::lGetLiberationPreviewString(lua_State* L)
 	lua_pushstring(L, CvDiplomacyAIHelpers::GetLiberationPreviewString(eOriginalOwner));
 	return 1;
 }
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaPlayer::lAddMessage(lua_State* L)
+{
+	SHOW_PLAYER_MESSAGE(GetInstance(L), lua_tostring(L, 2));
+	return 0;
+}
+#endif
 
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
 //-------------------------------------------------------------------------

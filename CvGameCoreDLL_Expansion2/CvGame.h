@@ -577,8 +577,8 @@ public:
 	int GetNumHiddenArchaeologySites() const;
 
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
-	PlayerTypes GetPlayerThatCircumnavigated() const;
-	void SetPlayerThatCircumnavigated(PlayerTypes eNewValue);
+	TeamTypes GetTeamThatCircumnavigated() const;
+	void SetTeamThatCircumnavigated(TeamTypes eNewValue);
 #endif
 
 public:
@@ -670,7 +670,7 @@ protected:
 	bool m_bArchaeologyTriggered;
 
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
-	char /*PlayerTypes*/ m_ePlayerThatCircumnavigated;
+	char /*TeamTypes*/ m_eTeamThatCircumnavigated;
 #endif
 
 	CvString m_strScriptData;

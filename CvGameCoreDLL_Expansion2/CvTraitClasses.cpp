@@ -2359,13 +2359,17 @@ void CvPlayerTraits::ChooseMayaBoost()
 	{
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 		if (MOD_DIPLOMACY_CITYSTATES)
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+			ePossibleGreatPerson = m_pPlayer->GetSpecificUnitType("UNITCLASS_GREAT_DIPLOMAT");
+#else
 			ePossibleGreatPerson = (UnitTypes)GC.getInfoTypeForString("UNIT_GREAT_DIPLOMAT");
+#endif
 		else
 #endif
 #if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
-		ePossibleGreatPerson = m_pPlayer->GetSpecificUnitType("UNITCLASS_MERCHANT");
+			ePossibleGreatPerson = m_pPlayer->GetSpecificUnitType("UNITCLASS_MERCHANT");
 #else
-		ePossibleGreatPerson = (UnitTypes)GC.getInfoTypeForString("UNIT_MERCHANT");
+			ePossibleGreatPerson = (UnitTypes)GC.getInfoTypeForString("UNIT_MERCHANT");
 #endif
 		if(GetUnitBaktun(ePossibleGreatPerson) == 0)
 		{

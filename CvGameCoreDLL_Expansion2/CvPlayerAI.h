@@ -90,7 +90,7 @@ public:
 	//And for messengers
 	CvCity* FindBestMessengerTargetCity(UnitHandle pUnit);
 	int ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit);
-	CvPlot* ChooseMessengerTargetPlot(UnitHandle pUnit);
+	CvPlot* ChooseMessengerTargetPlot(UnitHandle pUnit, int* piTurns = NULL);
 #endif
 	CvPlot* FindBestArtistTargetPlot(CvUnit* pGreatArtist, int& iScore);
 	CvPlot* FindBestMusicianTargetPlot(CvUnit* pGreatMerchant, bool bOnlySafePaths);

@@ -77,7 +77,11 @@ namespace LeagueHelpers
 	const int AI_CHOOSE_PROPOSAL_FROM_TOP = 6;
 
 	//antonjs: todo: xml
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	const int PROPOSERS_PER_SESSION = 3;
+#else
 	const int PROPOSERS_PER_SESSION = 2;
+#endif
 	const int NUM_LEADERS_FOR_EXTRA_VOTES = 2;
 	const int PROJECT_PROGRESS_PERCENT_WARNING = 33;
 }

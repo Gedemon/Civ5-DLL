@@ -2165,7 +2165,7 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 	}
 
 #if defined(MOD_GLOBAL_CITY_WORKING)
-	int iOldCityRings = pOldCity->getBuyPlotDistance();
+	int iOldCityRings = pOldCity->getWorkPlotDistance();
 #endif
 
 #if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
@@ -2173,7 +2173,7 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 #else
 	pOldCity->PreKill();
 #endif
-	
+
 	{
 		auto_ptr<ICvCity1> pkDllOldCity(new CvDllCity(pOldCity));
 		gDLL->GameplayCityCaptured(pkDllOldCity.get(), GetID());
@@ -2620,7 +2620,7 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 	GC.getGame().DoTestConquestVictory();
 
 #if defined(MOD_GLOBAL_CITY_WORKING)
-	GC.getMap().updateWorkingCity(pCityPlot,pNewCity->getBuyPlotDistance()*2);
+	GC.getMap().updateWorkingCity(pCityPlot,pNewCity->getWorkPlotDistance()*2);
 #else	
 	GC.getMap().updateWorkingCity(pCityPlot,NUM_CITY_RINGS*2);
 #endif
@@ -2691,6 +2691,17 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 					}
 				}
 			}
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+			if (MOD_DIPLOMACY_CITYSTATES) {
+				//Let's give the Embassies of the defeated player to the new player
+				if(GET_PLAYER(eOldOwner).GetImprovementLeagueVotes() > 0)
+				{
+					int iEmbassyVotes = GET_PLAYER(eOldOwner).GetImprovementLeagueVotes();
+					ChangeImprovementLeagueVotes(iEmbassyVotes);
+				}
+			}
+#endif
 		}
 	}
 	// If not, old owner should look at city specializations
@@ -2760,6 +2771,21 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 				}
 			}
 
+#if defined(MOD_BUGFIX_VENICE_PUPPETS_CAPITAL)
+			// Venice MUST liberate their own capital
+			if (GetPlayerTraits()->IsNoAnnexing() && pNewCity->getX() == GetOriginalCapitalX() && pNewCity->getY() == GetOriginalCapitalY())
+			{
+				if (iCaptureGold > 0 || iCaptureCulture > 0 || iCaptureGreatWorks > 0) {
+					if (iCaptureCulture == 0 && iCaptureGreatWorks == 0) {
+						strBuffer = GetLocalizedText("TXT_KEY_POPUP_GOLD_CITY_CAPTURE", iCaptureGold, pNewCity->getNameKey());
+					} else {
+						strBuffer = GetLocalizedText("TXT_KEY_POPUP_GOLD_AND_CULTURE_CITY_CAPTURE", iCaptureGold, iCaptureCulture, iCaptureGreatWorks, pNewCity->getNameKey());
+					}
+					GC.GetEngineUserInterface()->AddCityMessage(0, pNewCity->GetIDInfo(), GetID(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+				}
+			}
+			else
+#endif
 			// AI decides what to do with a City
 			if(!isHuman())
 			{
@@ -3097,10 +3123,20 @@ bool CvPlayer::isCityNameValid(CvString& szName, bool bTestDestroyed) const
 
 #if defined(MOD_GLOBAL_CITY_WORKING)
 //	--------------------------------------------------------------------------------
-/// How far out this player may buy/work plots
+/// How far out this player may buy plots
 int CvPlayer::getBuyPlotDistance() const
 {
 	int iDistance = GC.getMAXIMUM_BUY_PLOT_DISTANCE();
+	
+	iDistance = std::min(MAX_CITY_RADIUS, std::max(getWorkPlotDistance(), iDistance));
+	return iDistance;
+}
+
+//	--------------------------------------------------------------------------------
+/// How far out this player may work plots
+int CvPlayer::getWorkPlotDistance() const
+{
+	int iDistance = GC.getMAXIMUM_WORK_PLOT_DISTANCE();
 	
 #if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING)
 	// Change distance based on traits, policies, wonders, etc
@@ -3119,7 +3155,7 @@ int CvPlayer::getBuyPlotDistance() const
 /// How many plots a generic city may work
 int CvPlayer::GetNumWorkablePlots() const
 {
-	return ((6 * (1+getBuyPlotDistance()) * getBuyPlotDistance() / 2) + 1);
+	return ((6 * (1+getWorkPlotDistance()) * getWorkPlotDistance() / 2) + 1);
 }
 #endif
 
@@ -3353,6 +3389,18 @@ void CvPlayer::DoLiberatePlayer(PlayerTypes ePlayer, int iOldCityID)
 			}
 		}
 	}
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) {
+		//Let's give the Embassies of the defeated player back to the liberated player
+		if(GET_PLAYER(ePlayer).GetImprovementLeagueVotes() > 0)
+		{
+			CvPlayer* eConqueringPlayer = &GET_PLAYER(GET_TEAM(eConquerorTeam).getLeaderID());
+			int iEmbassyVotes = GET_PLAYER(ePlayer).GetImprovementLeagueVotes();
+			eConqueringPlayer->ChangeImprovementLeagueVotes(-iEmbassyVotes);
+		}
+	}
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -5830,7 +5878,6 @@ bool CvPlayer::canReceiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit) 
 	}
 #endif
 
-	
 	if(!CvGoodyHuts::IsCanPlayerReceiveGoody(GetID(), eGoody))
 	{
 		return false;
@@ -10896,8 +10943,8 @@ void CvPlayer::DoUprising()
 				CvAssert(pUnit);
 				if (pUnit)
 				{
-				if (!pUnit->jumpToNearestValidPlotWithinRange(5))
-					pUnit->kill(false);		// Could not find a spot!
+					if (!pUnit->jumpToNearestValidPlotWithinRange(5))
+						pUnit->kill(false);		// Could not find a spot!
 				}
 			}
 			while(iNumRebels > 0);
@@ -13014,6 +13061,7 @@ void CvPlayer::incrementGreatMusiciansCreated()
 {
 	m_iGreatMusiciansCreated++;
 }
+
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 //	--------------------------------------------------------------------------------
 int CvPlayer::getGreatDiplomatsCreated() const
@@ -17972,8 +18020,8 @@ void CvPlayer::DoCivilianReturnLogic(bool bReturn, PlayerTypes eToPlayer, int iU
 		CvAssert(pNewUnit != NULL);
 		if (pNewUnit)
 		{
-		if (!pNewUnit->jumpToNearestValidPlot())
-			pNewUnit->kill(false);	// Could not find a spot!
+			if (!pNewUnit->jumpToNearestValidPlot())
+				pNewUnit->kill(false);	// Could not find a spot!
 		}
 
 		// Returned to a city-state
@@ -22500,6 +22548,30 @@ CvNotifications* CvPlayer::GetNotifications() const
 {
 	return m_pNotifications;
 }
+
+#if defined(MOD_API_EXTENSIONS)
+//	--------------------------------------------------------------------------------
+int CvPlayer::AddNotification(NotificationTypes eNotificationType, const char* sMessage, const char* sSummary, int iGameDataIndex, int iExtraGameData)
+{
+  return AddNotification(eNotificationType, sMessage, sSummary, NULL, iGameDataIndex, iExtraGameData);
+}
+
+int CvPlayer::AddNotification(NotificationTypes eNotificationType, const char* sMessage, const char* sSummary, CvPlot* pPlot, int iGameDataIndex, int iExtraGameData)
+{
+  int iNotification = -1;
+  
+  CvNotifications* pNotifications = GetNotifications();
+
+  if (pNotifications) {
+    const int iPlotX = pPlot ? pPlot->getX() : -1;
+    const int iPlotY = pPlot ? pPlot->getY() : -1;
+	
+    iNotification = pNotifications->Add(eNotificationType, sMessage, sSummary, iPlotX, iPlotY, iGameDataIndex, iExtraGameData);
+  }
+  
+  return iNotification;
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 CvTreasury* CvPlayer::GetTreasury() const

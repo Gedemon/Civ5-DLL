@@ -377,6 +377,9 @@ void CvHomelandAI::EstablishHomelandPriorities()
 		case AI_HOMELAND_MOVE_DIPLOMAT_EMBASSY:
 			iPriority = GC.getAI_HOMELAND_MOVE_PRIORITY_ENGINEER_HURRY();
 			break;
+		case AI_HOMELAND_MOVE_MESSENGER:
+			iPriority = GC.getAI_HOMELAND_MOVE_PRIORITY_ENGINEER_HURRY();
+			break;
 #endif
 		case AI_HOMELAND_MOVE_GENERAL_GARRISON:
 			iPriority = GC.getAI_HOMELAND_MOVE_PRIORITY_GENERAL_GARRISON();
@@ -497,6 +500,9 @@ void CvHomelandAI::EstablishHomelandPriorities()
 			case AI_HOMELAND_MOVE_DIPLOMAT_EMBASSY:
 				iPriority += iFlavorCulture;
 				break;
+			case AI_HOMELAND_MOVE_MESSENGER:
+				iPriority += iFlavorCulture;
+				break;
 #endif
 			}
 
@@ -527,9 +533,6 @@ void CvHomelandAI::FindHomelandTargets()
 	m_TargetedHomelandRoads.clear();
 	m_TargetedAncientRuins.clear();
 	m_TargetedAntiquitySites.clear();
-#if defined(MOD_DIPLOMACY_CITYSTATES)
-	m_TargetedCityStates.clear();
-#endif
 
 	TeamTypes eTeam = m_pPlayer->getTeam();
 
@@ -606,29 +609,6 @@ void CvHomelandAI::FindHomelandTargets()
 				newTarget.SetAuxData(pLoopPlot);
 				m_TargetedAncientRuins.push_back(newTarget);
 			}
-
-#if defined(MOD_DIPLOMACY_CITYSTATES)
-			// ... city-state?
-			else if(MOD_DIPLOMACY_CITYSTATES && !pLoopPlot->isWater() && !pLoopPlot->isImpassable() && (!pLoopPlot->isUnit() || pLoopPlot->getNumDefenders(m_pPlayer->GetID()) > 0))
-			{
-				PlayerTypes eMinor;
-				for(int iMinorLoop = MAX_MAJOR_CIVS; iMinorLoop < MAX_CIV_PLAYERS; iMinorLoop++)
-				{
-					eMinor = (PlayerTypes) iMinorLoop;
-					if (pLoopPlot->getOwner() == eMinor)
-					{
-						if(!pLoopPlot->HasSpecialImprovement() && !pLoopPlot->isCity())
-						{
-									newTarget.SetTargetType(AI_HOMELAND_TARGET_CITY_STATE);
-									newTarget.SetTargetX(pLoopPlot->getX());
-									newTarget.SetTargetY(pLoopPlot->getY());
-									newTarget.SetAuxData(pLoopPlot);
-									m_TargetedCityStates.push_back(newTarget);
-						}
-					}
-				}	
-			}
-#endif
 
 			// ... antiquity site?
 			else if((pLoopPlot->getResourceType(eTeam) == GC.getARTIFACT_RESOURCE() || pLoopPlot->getResourceType(eTeam) == GC.getHIDDEN_ARTIFACT_RESOURCE()) && 
@@ -797,6 +777,9 @@ void CvHomelandAI::AssignHomelandMoves()
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 		case AI_HOMELAND_MOVE_DIPLOMAT_EMBASSY:
 			if (MOD_DIPLOMACY_CITYSTATES) PlotDiplomatMoves();
+			break;
+		case AI_HOMELAND_MOVE_MESSENGER:
+			if (MOD_DIPLOMACY_CITYSTATES) PlotMessengerMoves();
 			break;
 #endif
 		case AI_HOMELAND_MOVE_GENERAL_GARRISON:
@@ -1887,6 +1870,32 @@ void CvHomelandAI::PlotDiplomatMoves()
 	if(m_CurrentMoveUnits.size() > 0)
 	{
 		ExecuteDiplomatMoves();
+	}
+}
+
+/// Find moves for messengers
+void CvHomelandAI::PlotMessengerMoves()
+{
+	ClearCurrentMoveUnits();
+
+	// Loop through all recruited units
+	for(list<int>::iterator it = m_CurrentTurnUnits.begin(); it != m_CurrentTurnUnits.end(); ++it)
+	{
+		UnitHandle pUnit = m_pPlayer->getUnit(*it);
+		if(pUnit)
+		{
+			if(pUnit->AI_getUnitAIType() == UNITAI_MESSENGER)
+			{
+				CvHomelandUnit unit;
+				unit.SetID(pUnit->GetID());
+				m_CurrentMoveUnits.push_back(unit);
+			}
+		}
+	}
+
+	if(m_CurrentMoveUnits.size() > 0)
+	{
+		ExecuteMessengerMoves();
 	}
 }
 #endif
@@ -3830,37 +3839,41 @@ void CvHomelandAI::ExecuteDiplomatMoves()
 			continue;
 		}
 		GreatPeopleDirectiveTypes eDirective = pUnit->GetGreatPeopleDirective();
+
 		switch(eDirective)
 		{
 		case GREAT_PEOPLE_DIRECTIVE_CONSTRUCT_IMPROVEMENT:
 		{
 			int iTargetTurns;
 			CvPlot* pTarget = GET_PLAYER(m_pPlayer->GetID()).ChooseDiplomatTargetPlot(pUnit, &iTargetTurns);
+			BuildTypes eBuild = (BuildTypes)GC.getInfoTypeForString("BUILD_EMBASSY");
 			if(pTarget)
 			{
 				if(pUnit->plot() == pTarget)
 				{
-					BuildTypes eBuild = (BuildTypes)GC.getInfoTypeForString("BUILD_EMBASSY");
 					pUnit->PushMission(CvTypes::getMISSION_BUILD(), eBuild, -1, 0, (pUnit->GetLengthMissionQueue() > 0), false, MISSIONAI_BUILD, pTarget);
+
 					if(GC.getLogging() && GC.getAILogging())
 					{
 						CvString strLogString;
-					strLogString.Format("Great Diplomat creating Embassy at, X: %d, Y: %d", pTarget->getX(), pTarget->getY());
+						strLogString.Format("Great Diplomat creating Embassy at %s", pUnit->plot()->GetAdjacentCity()->getName().c_str());
 					LogHomelandMessage(strLogString);
 					}
 				}
 				else if(iTargetTurns < 1)
 				{
 					pUnit->PushMission(CvTypes::getMISSION_MOVE_TO(), pTarget->getX(), pTarget->getY());
-					if(GC.getLogging() && GC.getAILogging())
+
+					if(pUnit->plot() == pTarget && pUnit->canMove())
 					{
-						CvString strLogString;
-						strLogString.Format("Great Diplomat moving to city-state at, X: %d, Y: %d", pTarget->getX(), pTarget->getY());
-						LogHomelandMessage(strLogString);
-					}
-					else
-					{
-						CvAssertMsg(false, "Internal error with Missionary AI move, contact Ed.");
+						pUnit->PushMission(CvTypes::getMISSION_BUILD(), eBuild, -1, 0, (pUnit->GetLengthMissionQueue() > 0), false, MISSIONAI_BUILD, pTarget);
+
+						if(GC.getLogging() && GC.getAILogging())
+						{
+							CvString strLogString;
+							strLogString.Format("Great Diplomat moving to create Embassy at %s", pUnit->plot()->GetAdjacentCity()->getName().c_str());
+							LogHomelandMessage(strLogString);
+						}
 					}
 				}
 				else
@@ -3872,7 +3885,7 @@ void CvHomelandAI::ExecuteDiplomatMoves()
 					if(GC.getLogging() && GC.getAILogging())
 					{
 						CvString strLogString;
-						strLogString.Format("Moving to plot adjacent to conversion city, X: %d, Y: %d, Currently at, X: %d, Y: %d", pTarget->getX(), pTarget->getY(), pUnit->getX(), pUnit->getY());
+						strLogString.Format("Great Diplomat moving to city-state, currently at X: %d, Y: %d", pUnit->plot()->getX(), pUnit->plot()->getY());
 						LogHomelandMessage(strLogString);
 					}
 				}
@@ -3883,8 +3896,85 @@ void CvHomelandAI::ExecuteDiplomatMoves()
 			//Handled by economic AI
 		break;
 		case NO_GREAT_PEOPLE_DIRECTIVE_TYPE:
-			MoveCivilianToSafety(pUnit.pointer());
+		MoveCivilianToSafety(pUnit.pointer());
+		if(GC.getLogging() && GC.getAILogging())
+		{
+			CvString strLogString;
+			strLogString.Format("Moving Great Diplomat to safety.");
+			LogHomelandMessage(strLogString);
+		}
 		break;
+		}
+	}
+}
+
+void CvHomelandAI::ExecuteMessengerMoves()
+{
+	FStaticVector< CvHomelandUnit, 64, true, c_eCiv5GameplayDLL >::iterator it;
+	for(it = m_CurrentMoveUnits.begin(); it != m_CurrentMoveUnits.end(); ++it)
+	{
+		UnitHandle pUnit = m_pPlayer->getUnit(it->GetID());
+		if(!pUnit)
+		{
+			continue;
+		}
+		
+		//Do trade mission
+		int iTargetTurns;
+		CvPlot* pTarget = GET_PLAYER(m_pPlayer->GetID()).ChooseMessengerTargetPlot(pUnit, &iTargetTurns);
+		if(pTarget)
+		{
+			if(pUnit->plot() == pTarget && pUnit->canMove() && pUnit->canTrade(pUnit->plot()))
+			{
+				pUnit->PushMission(CvTypes::getMISSION_TRADE());
+
+				if(GC.getLogging() && GC.getAILogging())
+				{
+					CvString strLogString;
+					strLogString.Format("Diplomatic Unit finishing Diplomatic Mission at %s", pUnit->plot()->GetAdjacentCity()->getName().c_str());
+					LogHomelandMessage(strLogString);
+				}
+			}
+			else if(iTargetTurns < 1)
+			{
+				pUnit->PushMission(CvTypes::getMISSION_MOVE_TO(), pTarget->getX(), pTarget->getY());
+				
+				if(pUnit->plot() == pTarget && pUnit->canMove())
+				{
+					pUnit->PushMission(CvTypes::getMISSION_TRADE());
+					
+					if(GC.getLogging() && GC.getAILogging())
+					{
+						CvString strLogString;
+						strLogString.Format("Diplomatic Unit moving to finish Diplomatic Mission at %s", pUnit->plot()->GetAdjacentCity()->getName().c_str());
+						LogHomelandMessage(strLogString);
+					}
+				}
+			}
+			else
+			{
+				m_CurrentBestMoveHighPriorityUnit = NULL;
+				m_CurrentBestMoveUnit = m_pPlayer->getUnit(it->GetID());
+				ExecuteMoveToTarget(pTarget);
+
+				if(GC.getLogging() && GC.getAILogging())
+				{
+					CvString strLogString;
+					strLogString.Format("Diplomatic Unit moving to city-state, currently at X: %d, Y: %d", pUnit->plot()->getX(), pUnit->plot()->getY());
+					LogHomelandMessage(strLogString);
+				}
+			}
+		}
+		//Dangerous?
+		else
+		{
+			MoveCivilianToSafety(pUnit.pointer());
+			if(GC.getLogging() && GC.getAILogging())
+			{
+				CvString strLogString;
+				strLogString.Format("Moving Messenger to safety.");
+				LogHomelandMessage(strLogString);
+			}
 		}
 	}
 }
@@ -4332,28 +4422,28 @@ void CvHomelandAI::ExecuteAdmiralMoves()
 		CvCity* pLoopCity;
 		int iLoopCity = 0;
 		CvWeightedVector<CvCity *, SAFE_ESTIMATE_NUM_CITIES, true> weightedCityList;
-			for(pLoopCity = m_pPlayer->firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = m_pPlayer->nextCity(&iLoopCity))
+		for(pLoopCity = m_pPlayer->firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = m_pPlayer->nextCity(&iLoopCity))
+		{
+			if (bHaveApolloInCapital && pLoopCity->isCapital())
 			{
-				if(bHaveApolloInCapital && pLoopCity->isCapital())
-				{
-					continue;
-				}
+				continue;
+			}
 
-				if(bKeepHolyCityClear && pLoopCity == pHolyCity)
-				{
-					continue;
-				}
+			if (bKeepHolyCityClear && pLoopCity == pHolyCity)
+			{
+				continue;
+			}
 
-				if(!pLoopCity->isCoastal())
-				{
-					continue;
-				}
+			if (!pLoopCity->isCoastal())
+			{
+				continue;
+			}
 
 			// Don't go here if a different general or admiral is already present
 			bool bSkipCity = false;
-				CvPlot* pTarget = pLoopCity->plot();
-				for(int iUnitLoop = 0; iUnitLoop < pTarget->getNumUnits(); iUnitLoop++)
-				{
+			CvPlot* pTarget = pLoopCity->plot();
+			for(int iUnitLoop = 0; iUnitLoop < pTarget->getNumUnits(); iUnitLoop++)
+			{
 				CvUnit *pLoopUnit = pTarget->getUnitByIndex(iUnitLoop);
 				if(pLoopUnit->AI_getUnitAIType() == UNITAI_GENERAL && pLoopUnit->GetID() != pUnit->GetID())
 				{

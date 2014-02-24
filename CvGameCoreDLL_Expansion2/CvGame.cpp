@@ -542,7 +542,7 @@ bool CvGame::InitMap(CvGameInitialItemsOverrides& kGameInitialItemsOverrides)
 			}
 		}
 	}
-	
+
 	return true;
 }
 //------------------------------------------------------------------------------
@@ -1043,7 +1043,7 @@ void CvGame::uninit()
 	m_eReligionTech = NO_TECH;
 	m_eIndustrialRoute = NO_ROUTE;
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
-	m_ePlayerThatCircumnavigated = NO_PLAYER;
+	m_eTeamThatCircumnavigated = NO_TEAM;
 #endif
 
 	m_strScriptData = "";
@@ -9517,7 +9517,7 @@ void CvGame::Read(FDataStream& kStream)
 	kStream >> m_eIndustrialRoute;
 
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
-	MOD_SERIALIZE_READ(39, kStream, m_ePlayerThatCircumnavigated, NO_PLAYER);
+	MOD_SERIALIZE_READ(39, kStream, m_eTeamThatCircumnavigated, NO_TEAM);
 #endif
 
 	kStream >> m_strScriptData;
@@ -9755,7 +9755,7 @@ void CvGame::Write(FDataStream& kStream) const
 	kStream << m_eIndustrialRoute;
 
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
-	MOD_SERIALIZE_WRITE(kStream, m_ePlayerThatCircumnavigated);
+	MOD_SERIALIZE_WRITE(kStream, m_eTeamThatCircumnavigated);
 #endif
 
 	kStream << m_strScriptData;
@@ -10227,17 +10227,16 @@ void CvGame::DoUpdateIndustrialRoute()
 }
 
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
-
 //	--------------------------------------------------------------------------------
-PlayerTypes CvGame::GetPlayerThatCircumnavigated() const
+TeamTypes CvGame::GetTeamThatCircumnavigated() const
 {
-	return (PlayerTypes) m_ePlayerThatCircumnavigated;
+	return (TeamTypes) m_eTeamThatCircumnavigated;
 }
 
 //	--------------------------------------------------------------------------------
-void CvGame::SetPlayerThatCircumnavigated(PlayerTypes eNewValue)
+void CvGame::SetTeamThatCircumnavigated(TeamTypes eNewValue)
 {
-	m_ePlayerThatCircumnavigated = eNewValue;
+	m_eTeamThatCircumnavigated = eNewValue;
 }
 #endif
 
@@ -10525,10 +10524,10 @@ void CvGame::DoMinorBuyout(PlayerTypes eMajor, PlayerTypes eMinor)
 
 
 //	--------------------------------------------------------------------------------
-/// Notification letting the active player know that two teams made a Research Agreement.  This is in CvGame because we only want it called once, and if it were in CvDealClasses it would be called twice, or have to be special-cased, so we'll special-case it here instead
+/// Notification letting all non-party players know that two teams made a Research Agreement.  This is in CvGame because we only want it called once, and if it were in CvDealClasses it would be called twice, or have to be special-cased, so we'll special-case it here instead
 void CvGame::DoResearchAgreementNotification(TeamTypes eTeam1, TeamTypes eTeam2)
 {
-	// Notification for active player
+	// Notify all non-parties that these civs made a research agreement.
 	for(int iNotifyLoop = 0; iNotifyLoop < MAX_MAJOR_CIVS; ++iNotifyLoop){
 		PlayerTypes eNotifyPlayer = (PlayerTypes) iNotifyLoop;
 		CvPlayerAI& kCurNotifyPlayer = GET_PLAYER(eNotifyPlayer);
@@ -11912,3 +11911,4 @@ void CvGame::SetLastTurnAICivsProcessed()
 		m_lastTurnAICivsProcessed = getGameTurn();
 	}
 }
+

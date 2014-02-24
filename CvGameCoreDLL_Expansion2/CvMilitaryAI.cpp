@@ -1366,6 +1366,24 @@ int CvMilitaryAI::ScoreTarget(CvMilitaryTarget& target, AIOperationTypes eAIOper
 		uliRtnValue *= GC.getAI_MILITARY_RECAPTURING_OWN_CITY();
 		uliRtnValue /= 100;
 	}
+	
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) {
+		for(int iMinorLoop = MAX_MAJOR_CIVS; iMinorLoop < MAX_CIV_PLAYERS; iMinorLoop++)
+		{
+			PlayerTypes eMinor = (PlayerTypes) iMinorLoop;
+			if (target.m_pTargetCity->getOriginalOwner() == eMinor)
+			{
+				CvPlayer* pMinor = &GET_PLAYER(eMinor);
+				if(pMinor->GetMinorCivAI()->GetQuestData1(m_pPlayer->GetID(), MINOR_CIV_QUEST_LIBERATION) == eMinor)
+				{
+					uliRtnValue *= GC.getAI_MILITARY_RECAPTURING_CITY_STATE();
+					uliRtnValue /= 100;
+				}
+			}
+		}
+	}
+#endif
 
 	// Don't want it to already be targeted by an operation that's not well on its way
 	if(m_pPlayer->IsCityAlreadyTargeted(target.m_pTargetCity, NO_DOMAIN, 50))
@@ -1574,7 +1592,7 @@ int CvMilitaryAI::GetBarbarianThreatTotal()
 
 	ScanForBarbarians();
 
-	// Minor threat for each camp seen
+	// Major threat for each camp seen
 	iRtnValue += GC.getAI_MILITARY_THREAT_WEIGHT_MAJOR() * m_iBarbarianCampCount;
 
 	// One minor threat for every X barbarians
@@ -2284,7 +2302,7 @@ void CvMilitaryAI::ScanForBarbarians()
 			{
 				m_iBarbarianCampCount++;
 
-				// Count it as 5 camps if sitting inside our territory, that is annoying!
+				// Count it as 10 camps if sitting inside our territory, that is annoying!
 				if(pPlot->getOwner() == m_pPlayer->GetID())
 				{
 					m_iBarbarianCampCount += 9;
@@ -3270,7 +3288,7 @@ void CvMilitaryAI::UpdateOperations()
 }
 
 /// Spend money on units/buildings for military contingencies
-//  NOTE: The defensive side of this is done in dominance zone processing in the Tactical AI; this is spending to speed offensive operations
+//  NOTE: The defensive side of this is done in dominance zone processing in the Tactical AI; this is spending to speed operations
 void CvMilitaryAI::MakeEmergencyPurchases()
 {
 	AI_PERF_FORMAT("Military-AI-perf.csv", ("MakeEmergencyPurchases, Turn %03d, %s", GC.getGame().getElapsedGameTurns(), m_pPlayer->getCivilizationShortDescription()) );
@@ -3688,7 +3706,7 @@ bool CvMilitaryAI::WillAirUnitRebase(CvUnit* pUnit) const
 		return false;
 	}
 
-	// first look for open carrier slots
+	// first look for open carrier slots in carriers within operations
 	int iLoopUnit = 0;
 	for(CvUnit* pLoopUnit = m_pPlayer->firstUnit(&iLoopUnit); pLoopUnit != NULL; pLoopUnit = m_pPlayer->nextUnit(&iLoopUnit))
 	{
@@ -4501,7 +4519,7 @@ bool MilitaryAIHelpers::IsTestStrategy_EradicateBarbarians(MilitaryAIStrategyTyp
 	int iStrategyWeight;
 	PlayerTypes eOtherPlayer;
 
-	// If we're at war don't bother with this Strategy (unless iti s clear we are already winning)
+	// If we're at war don't bother with this Strategy (unless it is clear we are already winning)
 	MilitaryAIStrategyTypes eStrategyAtWar = (MilitaryAIStrategyTypes) GC.getInfoTypeForString("MILITARYAISTRATEGY_AT_WAR");
 	if(eStrategyAtWar != NO_MILITARYAISTRATEGY)
 	{

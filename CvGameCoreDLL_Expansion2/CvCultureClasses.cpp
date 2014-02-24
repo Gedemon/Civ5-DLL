@@ -824,7 +824,7 @@ CvCity *CvPlayerCulture::GetClosestAvailableGreatWorkSlot(int iX, int iY, GreatW
 			}
 		}
 	}
-	
+
 	return pBestCity;
 }
 
@@ -1999,6 +1999,7 @@ bool CvPlayerCulture::HasDigCompleteHere(CvPlot *pPlot) const
 	return false;
 }
 
+/// How much culture can we receive from cashing in a written artifact?
 int CvPlayerCulture::GetWrittenArtifactCulture() const
 {
 	// Culture boost based on 8 previous turns; same as GREAT_WRITER; move to XML?

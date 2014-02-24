@@ -98,6 +98,7 @@ public:
 
 #if defined(MOD_GLOBAL_CITY_WORKING)
 	int getBuyPlotDistance() const;
+	int getWorkPlotDistance() const;
 	int GetNumWorkablePlots() const;
 #endif
 
@@ -1507,6 +1508,10 @@ public:
 	CvTradeAI* GetTradeAI() const;
 	CvLeagueAI* GetLeagueAI() const;
 	CvNotifications* GetNotifications() const;
+#if defined(MOD_API_EXTENSIONS)
+	int AddNotification(NotificationTypes eNotificationType, const char* sMessage, const char* sSummary, CvPlot* pPlot = NULL, int iGameDataIndex = -1, int iExtraGameData = -1);
+	int AddNotification(NotificationTypes eNotificationType, const char* sMessage, const char* sSummary, int iGameDataIndex, int iExtraGameData = -1);
+#endif
 	CvDiplomacyRequests* GetDiplomacyRequests() const;
 	bool HasActiveDiplomacyRequests() const;
 

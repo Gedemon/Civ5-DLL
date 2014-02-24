@@ -160,7 +160,7 @@ CvCity::CvCity() :
 	, m_iFreeExperience("CvCity::m_iFreeExperience", m_syncArchive)
 	, m_iCurrAirlift("CvCity::m_iCurrAirlift", m_syncArchive) // unused
 	, m_iMaxAirUnits("CvCity::m_iMaxAirUnits", m_syncArchive)
-	, m_iAirModifier("CvCity::m_iAirModifier", m_syncArchive)
+	, m_iAirModifier("CvCity::m_iAirModifier", m_syncArchive) // unused
 	, m_iNukeModifier("CvCity::m_iNukeModifier", m_syncArchive)
 	, m_iCultureUpdateTimer("CvCity::m_iCultureUpdateTimer", m_syncArchive)	// unused
 	, m_iCitySizeBoost("CvCity::m_iCitySizeBoost", m_syncArchive)
@@ -440,7 +440,7 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	setGameTurnLastExpanded(iGameTurn);
 
 #if defined(MOD_GLOBAL_CITY_WORKING)
-	GC.getMap().updateWorkingCity(pPlot,getBuyPlotDistance()*2);
+	GC.getMap().updateWorkingCity(pPlot,getWorkPlotDistance()*2);
 #else	
 	GC.getMap().updateWorkingCity(pPlot,NUM_CITY_RINGS*2);
 #endif
@@ -454,7 +454,7 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	// Free food from things (e.g. Policies)
 	int iFreeFood = growthThreshold() * GET_PLAYER(getOwner()).GetFreeFoodBox();
 	changeFoodTimes100(iFreeFood);
-
+	
 	if (bInitialFounding)
 	{
 		owningPlayer.setFoundedFirstCity(true);
@@ -744,7 +744,7 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 	m_iFreeExperience = 0;
 	m_iCurrAirlift = 0; // unused
 	m_iMaxAirUnits = GC.getBASE_CITY_AIR_STACKING();
-	m_iAirModifier = 0;
+	m_iAirModifier = 0; // unused
 	m_iNukeModifier = 0;
 	m_iTradeRouteRecipientBonus = 0;
 	m_iTradeRouteTargetBonus = 0;
@@ -1406,7 +1406,7 @@ void CvCity::PostKill(bool bCapital, CvPlot* pPlot, PlayerTypes eOwner)
 	}
 
 #if defined(MOD_GLOBAL_CITY_WORKING)
-	GC.getMap().updateWorkingCity(pPlot,getBuyPlotDistance()*2);
+	GC.getMap().updateWorkingCity(pPlot,getWorkPlotDistance()*2);
 #else	
 	GC.getMap().updateWorkingCity(pPlot,NUM_CITY_RINGS*2);
 #endif
@@ -2011,10 +2011,20 @@ void CvCity::chooseProduction(UnitTypes eTrainUnit, BuildingTypes eConstructBuil
 
 #if defined(MOD_GLOBAL_CITY_WORKING)
 //	--------------------------------------------------------------------------------
-/// How far out this city may buy/work plots
+/// How far out this city may buy plots
 int CvCity::getBuyPlotDistance() const
 {
 	int iDistance = GET_PLAYER(getOwner()).getBuyPlotDistance();
+	
+	iDistance = std::min(MAX_CITY_RADIUS, std::max(getWorkPlotDistance(), iDistance));
+	return iDistance;
+}
+
+//	--------------------------------------------------------------------------------
+/// How far out this city may buy/work plots
+int CvCity::getWorkPlotDistance() const
+{
+	int iDistance = GET_PLAYER(getOwner()).getWorkPlotDistance();
 	
 	// Change distance based on buildings/wonders in this city
 	iDistance += GetCityWorkingChange();
@@ -2027,7 +2037,7 @@ int CvCity::getBuyPlotDistance() const
 /// How many plots this city may work
 int CvCity::GetNumWorkablePlots() const
 {
-	int iWorkablePlots = ((6 * (1+getBuyPlotDistance()) * getBuyPlotDistance() / 2) + 1);
+	int iWorkablePlots = ((6 * (1+getWorkPlotDistance()) * getWorkPlotDistance() / 2) + 1);
 	return iWorkablePlots;
 }
 #endif
@@ -6116,16 +6126,16 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 
 		ChangeNoOccupiedUnhappinessCount(pBuildingInfo->IsNoOccupiedUnhappiness() * iChange);
 
-		// Trust the modder if they set a building to negative happiness
 #if !defined(MOD_API_EXTENSIONS)
+		// Trust the modder if they set a building to negative happiness
 		if(pBuildingInfo->GetHappiness() > 0)
 #endif
 		{
 			ChangeBaseHappinessFromBuildings(pBuildingInfo->GetHappiness() * iChange);
 		}
 
-		// Trust the modder if they set a building to negative global happiness
 #if !defined(MOD_API_EXTENSIONS)
+		// Trust the modder if they set a building to negative global happiness
 		if(pBuildingInfo->GetUnmoddedHappiness() > 0)
 #endif
 		{
@@ -7674,7 +7684,7 @@ void CvCity::DoJONSCultureLevelIncrease()
 		if (MOD_UI_CITY_EXPANSION && bIsHumanControlled) {
 			// Yep CITY_PLOTS_RADIUS is a #define and not taken from the database - well done Firaxis!
 #if defined(MOD_GLOBAL_CITY_WORKING)
-			bool bCanAcquirePlot = plotDistance(getX(), getY(), pPlotToAcquire->getX(), pPlotToAcquire->getY()) <= getBuyPlotDistance();
+			bool bCanAcquirePlot = plotDistance(getX(), getY(), pPlotToAcquire->getX(), pPlotToAcquire->getY()) <= getWorkPlotDistance();
 #else
 			bool bCanAcquirePlot = plotDistance(getX(), getY(), pPlotToAcquire->getX(), pPlotToAcquire->getY()) <= CITY_PLOTS_RADIUS);
 #endif
@@ -11307,7 +11317,7 @@ void CvCity::GetBuyablePlotList(std::vector<int>& aiPlotList)
 						if (bBonusResource)
 						{
 #if defined(MOD_GLOBAL_CITY_WORKING)
-							if (plotDistance(pLoopPlot->getX(),pLoopPlot->getY(),getX(),getY()) > getBuyPlotDistance())
+							if (plotDistance(pLoopPlot->getX(),pLoopPlot->getY(),getX(),getY()) > getWorkPlotDistance())
 #else	
 							if (plotDistance(pLoopPlot->getX(),pLoopPlot->getY(),getX(),getY()) > NUM_CITY_RINGS)
 #endif
@@ -11333,7 +11343,7 @@ void CvCity::GetBuyablePlotList(std::vector<int>& aiPlotList)
 
 						// if we can't work this tile in this city make it much less likely to be picked
 #if defined(MOD_GLOBAL_CITY_WORKING)
-						if (plotDistance(pLoopPlot->getX(),pLoopPlot->getY(),getX(),getY()) > getBuyPlotDistance())
+						if (plotDistance(pLoopPlot->getX(),pLoopPlot->getY(),getX(),getY()) > getWorkPlotDistance())
 #else	
 						if (plotDistance(pLoopPlot->getX(),pLoopPlot->getY(),getX(),getY()) > NUM_CITY_RINGS)
 #endif
@@ -11391,7 +11401,7 @@ void CvCity::GetBuyablePlotList(std::vector<int>& aiPlotList)
 								{
 									// if we are close enough to work, or this is not a bonus resource
 #if defined(MOD_GLOBAL_CITY_WORKING)
-									if (iPlotDistance <= getBuyPlotDistance() || GC.getResourceInfo(eAdjacentResource)->getResourceUsage() != RESOURCEUSAGE_BONUS)
+									if (iPlotDistance <= getWorkPlotDistance() || GC.getResourceInfo(eAdjacentResource)->getResourceUsage() != RESOURCEUSAGE_BONUS)
 #else	
 									if (iPlotDistance <= NUM_CITY_RINGS || GC.getResourceInfo(eAdjacentResource)->getResourceUsage() != RESOURCEUSAGE_BONUS)
 #endif
@@ -11402,7 +11412,7 @@ void CvCity::GetBuyablePlotList(std::vector<int>& aiPlotList)
 								if (pAdjacentPlot->IsNaturalWonder())
 								{
 #if defined(MOD_GLOBAL_CITY_WORKING)
-									if (iPlotDistance <= getBuyPlotDistance()) // grab for this city
+									if (iPlotDistance <= getWorkPlotDistance()) // grab for this city
 #else	
 									if (iPlotDistance <= NUM_CITY_RINGS) // grab for this city
 #endif
@@ -13022,7 +13032,7 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 		else if(eBuildingType != NO_BUILDING)
 		{
 			CvBuildingEntry* pkBuildingInfo = GC.GetGameBuildings()->GetEntry(eBuildingType);
-
+ 
 			// Religion-enabled building
 			if(pkBuildingInfo && pkBuildingInfo->IsUnlockedByBelief())
 			{
@@ -14044,7 +14054,7 @@ void CvCity::read(FDataStream& kStream)
 
 		// Note that this can get boosted further below once we know which buildings we have
 	}
-	kStream >> m_iAirModifier;
+	kStream >> m_iAirModifier; // unused
 	kStream >> m_iNukeModifier;
 
 	if (uiVersion >= 2)
@@ -14387,7 +14397,7 @@ void CvCity::write(FDataStream& kStream) const
 	kStream << m_iFreeExperience;
 	kStream << m_iCurrAirlift; // unused
 	kStream << m_iMaxAirUnits;
-	kStream << m_iAirModifier;
+	kStream << m_iAirModifier; // unused
 	kStream << m_iNukeModifier;
 	kStream << m_iTradeRouteTargetBonus;
 	kStream << m_iTradeRouteRecipientBonus;

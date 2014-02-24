@@ -879,6 +879,7 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(MINOR_CIV_QUEST_CONTEST_TOURISM);
 	RegisterEnum(MINOR_CIV_QUEST_ARCHAEOLOGY);
 	RegisterEnum(MINOR_CIV_QUEST_CIRCUMNAVIGATION);
+	RegisterEnum(MINOR_CIV_QUEST_LIBERATION);
 #endif
 	RegisterEnum(NUM_MINOR_CIV_QUEST_TYPES);
 	EnumEnd(L);

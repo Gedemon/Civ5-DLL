@@ -88,6 +88,7 @@ public:
 
 #if defined(MOD_GLOBAL_CITY_WORKING)
 	int getBuyPlotDistance() const;
+	int getWorkPlotDistance() const;
 	int GetNumWorkablePlots() const;
 #endif
 

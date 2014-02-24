@@ -116,7 +116,7 @@ int plotCityXY(const CvCity* pCity, const CvPlot* pPlot)
 	iDX = dxWrap(iPlotHexX - iCityHexX);
 
 #if defined(MOD_GLOBAL_CITY_WORKING)
-	if(hexDistance(iDX, iDY) > pCity->getBuyPlotDistance())
+	if(hexDistance(iDX, iDY) > pCity->getWorkPlotDistance())
 #else
 	if(hexDistance(iDX, iDY) > CITY_PLOTS_RADIUS)
 #endif

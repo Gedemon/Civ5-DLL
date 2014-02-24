@@ -312,7 +312,13 @@ public:
 	bool HasCreatedReligion() const;
 	bool HasAddedReformationBelief() const;
 	ReligionTypes GetReligionCreatedByPlayer() const;
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+	bool CanAffordNextPurchase();
+	void SetFaithAtLastNotify(int iFaith);
+	bool CanAffordFaithPurchase(int iMinimumFaith) const;
+#else
 	bool CanAffordFaithPurchase() const;
+#endif
 	bool HasReligiousCity() const;
 	bool HasOthersReligionInMostCities(PlayerTypes eOtherPlayer) const;
 	bool HasReligionInMostCities(ReligionTypes eReligion) const;
@@ -328,6 +334,9 @@ private:
 
 	int m_iNumProphetsSpawned;
 	int m_bFoundingReligion;
+#if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
+	int m_iFaithAtLastNotify;
+#endif
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

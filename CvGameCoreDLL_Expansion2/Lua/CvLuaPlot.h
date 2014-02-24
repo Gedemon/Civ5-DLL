@@ -238,6 +238,17 @@ protected:
 	static int lSetRouteType(lua_State* L);
 	static int lIsRoutePillaged(lua_State* L);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(GetPlayerThatBuiltImprovement);
+	LUAAPIEXTN(SetPlayerThatBuiltImprovement);
+	LUAAPIEXTN(GetPlayerResponsibleForImprovement);
+	LUAAPIEXTN(SetPlayerResponsibleForImprovement);
+	LUAAPIEXTN(GetPlayerResponsibleForRoute);
+	LUAAPIEXTN(SetPlayerResponsibleForRoute);
+	LUAAPIEXTN(GetPlayerThatClearedBarbCampHere);
+	LUAAPIEXTN(SetPlayerThatClearedBarbCampHere);
+#endif
+
 	static int lGetPlotCity(lua_State* L);
 	static int lGetWorkingCity(lua_State* L);
 	static int lGetWorkingCityOverride(lua_State* L);

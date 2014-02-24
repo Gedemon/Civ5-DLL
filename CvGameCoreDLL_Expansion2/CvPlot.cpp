@@ -2038,6 +2038,7 @@ bool CvPlot::canHaveResource(ResourceTypes eResource, bool bIgnoreLatitude) cons
 		}
 	}
 
+
 	return true;
 }
 
@@ -4330,8 +4331,8 @@ bool CvPlot::isValidDomainForAction(const CvUnit& unit) const
 
 	case DOMAIN_LAND:
 	case DOMAIN_IMMOBILE:
-		// Only hover over shallow water or ice
 #if defined(MOD_BUGFIX_HOVERING_PATHFINDER)
+		// Only hover over shallow water or ice
 		{ bool bOK = (!isWater() || (unit.IsHoveringUnit() && isShallowWater()) || unit.canMoveAllTerrain() || unit.isEmbarked() || IsAllowsWalkWater());
 #if defined(MOD_PROMOTIONS_CROSS_ICE)
 		bOK = bOK || (unit.IsHoveringUnit() && isIce());
@@ -5360,7 +5361,7 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 				{
 					GET_PLAYER(eNewValue).changeImprovementCount(getImprovementType(), 1);
 
-					// Add siphoned resources
+					// Add vote
 					CvImprovementEntry* pImprovementInfo = GC.getImprovementInfo(getImprovementType());
 					if (pImprovementInfo != NULL && pImprovementInfo->GetCityStateExtraVote() > 0)
 					{
@@ -6061,8 +6062,8 @@ void CvPlot::setFeatureType(FeatureTypes eNewValue, int iVariety)
 			}
 		}
 
-		// TODO - WH - need to enable and test tile improvement events
 #if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+		// TODO - WH - need to enable and test tile improvement events
 		if (MOD_EVENTS_TILE_IMPROVEMENTS) {
 			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TileFeatureChanged, getX(), getY(), getOwner(), eOldFeature, eNewValue);
 		}
@@ -6266,9 +6267,8 @@ int CvPlot::getNumResourceForPlayer(PlayerTypes ePlayer) const
 	return iRtnValue;
 }
 
-//	--------------------------------------------------------------------------------
-
 #if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
+//	--------------------------------------------------------------------------------
 // Lifted from CvMinorCivAI::DoRemoveStartingResources()
 void CvPlot::removeMinorResources(bool bVenice)
 {

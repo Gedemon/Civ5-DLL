@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 41)
+#define MOD_DLL_VERSION_NUMBER ((uint) 42)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -197,6 +197,8 @@
 #define MOD_RELIGION_CONVERSION_MODIFIERS           gCustomMods.isRELIGION_CONVERSION_MODIFIERS()
 // Keeps overflow faith from spawning a Great Prophet if the base spawn chance is 100%
 #define MOD_RELIGION_KEEP_PROPHET_OVERFLOW          gCustomMods.isRELIGION_KEEP_PROPHET_OVERFLOW()
+// Send purchase notifications at every boundary and not just the first
+#define MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY     gCustomMods.isRELIGION_RECURRING_PURCHASE_NOTIFIY()
 #if defined(MOD_API_PLOT_YIELDS)
 // Adds support for the Belief_PlotYieldChanges table
 #define MOD_RELIGION_PLOT_YIELDS                    (gCustomMods.isRELIGION_PLOT_YIELDS() && MOD_API_PLOT_YIELDS)
@@ -359,6 +361,8 @@
 #define MOD_BUGFIX_MISSING_POLICY_EVENTS			(true)
 // Fixes trade routes sticking to coastal water when the player has the EmbarkAllWater trait
 #define MOD_BUGFIX_TRADE_ROUTES_EMBARK_ALL_WATER	(true)
+// Fixes the bug where Venice puppets it's own capital
+#define MOD_BUGFIX_VENICE_PUPPETS_CAPITAL			(true)
 // Fixes the bug in the Lua Plot:ChangeVisibilityCount() method where iChange is treated as a boolean and not a signed int
 #define MOD_BUGFIX_LUA_CHANGE_VISIBILITY_COUNT      gCustomMods.isBUGFIX_LUA_CHANGE_VISIBILITY_COUNT()
 // Fixes the CanMoveAfterPurchase() bug where it is only tested for at one specific point in the code
@@ -459,6 +463,14 @@ enum TerraformingEventTypes {
 #else
 #define	CUSTOMLOG(sFmt, ...) __noop
 #endif
+
+
+// Message wrappers
+#define SHOW_PLAYER_MESSAGE(pPlayer, szMessage)       DLLUI->AddMessage(0, pPlayer->GetID(), false, GC.getEVENT_MESSAGE_TIME(), szMessage)
+#define SHOW_CITY_MESSAGE(pCity, ePlayer, szMessage)  DLLUI->AddCityMessage(0, pCity->GetIDInfo(), ePlayer, false, GC.getEVENT_MESSAGE_TIME(), szMessage)
+#define SHOW_UNIT_MESSAGE(pUnit, ePlayer, szMessage)  DLLUI->AddUnitMessage(0, pUnit->GetIDInfo(), ePlayer, false, GC.getEVENT_MESSAGE_TIME(), szMessage)
+#define SHOW_PLOT_MESSAGE(pPlot, ePlayer, szMessage)  DLLUI->AddPlotMessage(0, pPlot->GetPlotIndex(), ePlayer, false, GC.getEVENT_MESSAGE_TIME(), szMessage)
+#define SHOW_PLOT_POPUP(pPlot, ePlayer, szMessage, fDelay)  if (pPlot->isVisible(GET_PLAYER(ePlayer).getTeam())) DLLUI->AddPopupText(pPlot->getX(), pPlot->getY(), szMessage, fDelay)
 
 
 // GlobalDefines wrappers
@@ -687,6 +699,7 @@ public:
 	MOD_OPT_DECL(RELIGION_RANDOMISE);
 	MOD_OPT_DECL(RELIGION_CONVERSION_MODIFIERS);
 	MOD_OPT_DECL(RELIGION_KEEP_PROPHET_OVERFLOW);
+	MOD_OPT_DECL(RELIGION_RECURRING_PURCHASE_NOTIFIY);
 	MOD_OPT_DECL(RELIGION_PLOT_YIELDS);
 
 	MOD_OPT_DECL(PROCESS_STOCKPILE);

@@ -43,7 +43,6 @@ enum AIOperationTypes
 	AI_OPERATION_CONCERT_TOUR,
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	AI_OPERATION_DIPLOMAT_DELEGATION,
-	AI_OPERATION_MESSENGER_DELEGATION,
 #endif
     NUM_AI_OPERATIONS,
 };
@@ -645,34 +644,6 @@ public:
 	virtual MultiunitFormationTypes GetFormation() const
 	{
 		return MUFORMATION_DIPLOMAT_ESCORT;
-	}
-	virtual bool ArmyInPosition(CvArmyAI* pArmy);
-
-private:
-	CvPlot* FindBestTarget(CvUnit* pUnit, bool bOnlySafePaths);
-};
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//  CLASS:      CvAIOperationMessengerDelegation
-//!  \brief		Send a messenger to a city state
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-class CvAIOperationMessengerDelegation : public CvAIEscortedOperation
-{
-public:
-
-	CvAIOperationMessengerDelegation();
-	virtual ~CvAIOperationMessengerDelegation();
-
-	virtual int GetOperationType() const
-	{
-		return AI_OPERATION_MESSENGER_DELEGATION;
-	}
-	virtual CvString GetOperationName() const
-	{
-		return CvString("AI_OPERATION_MESSENGER_DELEGATION");
-	}
-	virtual MultiunitFormationTypes GetFormation() const
-	{
-		return MUFORMATION_MESSENGER_ESCORT;
 	}
 	virtual bool ArmyInPosition(CvArmyAI* pArmy);
 

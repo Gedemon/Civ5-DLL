@@ -1492,6 +1492,12 @@ void CvCityStrategyAI::DoTurn()
 					bStrategyShouldBeActive = CityStrategyAIHelpers::IsTestCityStrategy_NeedTourismBuilding(GetCity());
 				else if(strStrategyName == "AICITYSTRATEGY_GOOD_AIRLIFT_CITY")
 					bStrategyShouldBeActive = CityStrategyAIHelpers::IsTestCityStrategy_GoodAirliftCity(GetCity());
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+				else if(MOD_DIPLOMACY_CITYSTATES && strStrategyName == "AICITYSTRATEGY_NEED_DIPLOMATS")
+					bStrategyShouldBeActive = CityStrategyAIHelpers::IsTestCityStrategy_NeedDiplomats(GetCity()); 
+				else if(MOD_DIPLOMACY_CITYSTATES && strStrategyName == "AICITYSTRATEGY_NEED_DIPLOMATS_CRITICAL")
+					bStrategyShouldBeActive = CityStrategyAIHelpers::IsTestCityStrategy_NeedDiplomatsCritical(GetCity()); 
+#endif
 
 				// Check Lua hook
 				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
@@ -3363,3 +3369,105 @@ bool CityStrategyAIHelpers::IsTestCityStrategy_GoodAirliftCity(CvCity *pCity)
 
 	return false;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+/// Do we need more Diplomatic Units? Check and see.
+bool CityStrategyAIHelpers::IsTestCityStrategy_NeedDiplomats(CvCity *pCity)
+{
+	PlayerTypes ePlayer = pCity->getOwner();
+	EconomicAIStrategyTypes eStrategyNeedDiplomats = (EconomicAIStrategyTypes) GC.getInfoTypeForString("ECONOMICAISTRATEGY_NEED_DIPLOMATS");
+
+	bool bHasDiploBuilding = false;
+
+	for (int iBuildingLoop = 0; iBuildingLoop < GC.getNumBuildingInfos(); iBuildingLoop++)
+	{
+		const BuildingTypes eBuilding = static_cast<BuildingTypes>(iBuildingLoop);
+		CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eBuilding);
+
+		if(pkBuildingInfo)
+		{
+			// Has this Building
+			if (pCity->GetCityBuildings()->GetNumBuilding(eBuilding) > 0)
+			{
+				// Does it grant a diplomatic production bonus?
+				if (pkBuildingInfo->GetBuildingClassType() == (BuildingClassTypes)GC.getInfoTypeForString("BUILDINGCLASS_SCRIBE"))
+				{
+					bHasDiploBuilding = true;
+				}
+
+				if (bHasDiploBuilding)
+				{
+					//Let's make sure the city is robust before we start this.
+					if(pCity->getPopulation() >= 6)
+					{
+						//Need diplomats?
+						if(GET_PLAYER(ePlayer).GetEconomicAI()->IsUsingStrategy(eStrategyNeedDiplomats))
+						{
+							return true;
+						}
+					}
+				}
+			}
+		}
+	}
+	if (pCity->isCapital() && pCity->getPopulation() >= 6)
+	{
+		//Need diplomats?
+		if(GET_PLAYER(ePlayer).GetEconomicAI()->IsUsingStrategy(eStrategyNeedDiplomats))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+/// Do we REALLY need more Diplomatic Units? Check and see.
+bool CityStrategyAIHelpers::IsTestCityStrategy_NeedDiplomatsCritical(CvCity *pCity)
+{
+	PlayerTypes ePlayer = pCity->getOwner();
+	EconomicAIStrategyTypes eStrategyNeedDiplomatsCritical = (EconomicAIStrategyTypes) GC.getInfoTypeForString("ECONOMICAISTRATEGY_NEED_DIPLOMATS_CRITICAL");
+
+	bool bHasDiploBuilding = false;
+
+	for (int iBuildingLoop = 0; iBuildingLoop < GC.getNumBuildingInfos(); iBuildingLoop++)
+	{
+		const BuildingTypes eBuilding = static_cast<BuildingTypes>(iBuildingLoop);
+		CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eBuilding);
+
+		if(pkBuildingInfo)
+		{
+			// Has this Building
+			if (pCity->GetCityBuildings()->GetNumBuilding(eBuilding) > 0)
+			{
+				// Does it grant a diplomatic production bonus?
+				if (pkBuildingInfo->GetBuildingClassType() == (BuildingClassTypes)GC.getInfoTypeForString("BUILDINGCLASS_SCRIBE"))
+				{
+					bHasDiploBuilding = true;
+				}
+
+				if (bHasDiploBuilding)
+				{
+					//Let's make sure the city is robust before we start this.
+					if(pCity->getPopulation() >= 5)
+					{
+						//Need diplomats?
+						if(GET_PLAYER(ePlayer).GetEconomicAI()->IsUsingStrategy(eStrategyNeedDiplomatsCritical))
+						{
+							return true;
+						}
+					}
+				}
+			}
+		}
+	}
+	if (pCity->isCapital() && pCity->getPopulation() >= 5)
+	{
+		//Need diplomats?
+		if(GET_PLAYER(ePlayer).GetEconomicAI()->IsUsingStrategy(eStrategyNeedDiplomatsCritical))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+#endif

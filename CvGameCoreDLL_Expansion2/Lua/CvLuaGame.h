@@ -399,10 +399,6 @@ protected:
 	LUAAPIEXTN(SpewTestEvents);
 #endif
 
-#if defined(MOD_API_LUA_EXTENSIONS)
-	LUAAPIEXTN(AddMessage);
-#endif
-
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	static int lGetMinimumVoluntaryVassalTurns(lua_State* L);
 	static int lGetMinimumVassalTurns(lua_State* L);
