@@ -75,8 +75,6 @@ public:
 	bool IsNoMaintenance() const;
 	int GetUnhappiness() const;
 	int GetUnitClassType() const;
-	const char* GetUnitStackClassType() const; // RED
-	int GetUnitMaxStack() const; // RED
 	int GetSpecialUnitType() const;
 	int GetUnitCaptureClassType() const;
 	int GetUnitCombatType() const;
@@ -135,6 +133,17 @@ public:
 
 	const char* GetUnitNames(int i) const;
 	GreatWorkType GetGreatWorks(int i) const;
+	
+	// RED <<<<<
+	const char* GetUnitStackClassType() const;
+	int GetUnitMaxStack() const;
+	
+	bool IsOffensiveSupportFire() const;
+	bool IsDefensiveSupportFire() const;
+	bool HasCounterFireCapability() const;
+	bool IsOnlySupportFire() const;
+	bool IsCounterFireSameCombatTypeOnly() const;
+	// RED >>>>>
 
 	// Accessor Functions (Arrays)
 	int GetPrereqAndTechs(int i) const;
@@ -208,8 +217,6 @@ private:
 	bool m_bNoMaintenance;
 	int m_iUnhappiness;
 	int m_iUnitClassType;
-	CvString m_strUnitStackClassType; // RED
-	int m_iUnitMaxStack; // RED
 	int m_iSpecialUnitType;
 	int m_iUnitCaptureClassType;
 	int m_iUnitCombatType;
@@ -253,6 +260,16 @@ private:
 	int m_iLeaderPromotion;
 	bool m_bTrade;
 	int m_iNumExoticGoods;
+	
+	// RED <<<<<<
+	CvString m_strUnitStackClassType;
+	int m_iUnitMaxStack;
+	bool m_bOffensiveSupportFire;
+	bool m_bDefensiveSupportFire;
+	bool m_bCounterFire;
+	bool m_bCounterFireSameCombatType;
+	bool m_bOnlySupportFire;
+	// RED >>>>>
 
 	// This is not loaded from XML, but cached so we don't have to recalculate every time
 	int m_iCachedPower;

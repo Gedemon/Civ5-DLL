@@ -2592,6 +2592,26 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::Attack(CvUnit& kAttacker, CvPlot& targ
 	{
 		return eResult;
 	}
+	
+	// RED <<<<<
+	// Logging
+
+	CvString redLogMessage;
+	CvString strTemp;
+	CvString strCombatID;
+	FILogFile* pLog = LOGFILEMGR.GetLog("red_combat_debug.log", FILogFile::kDontTimeStamp);
+	
+	strTemp.Format("turn:%d - Melee Attack - ", GC.getGame().getElapsedGameTurns());
+	strCombatID += strTemp + kAttacker.getNameKey();
+	strTemp.Format(" (id %d / player %d) at (%d,%d)", kAttacker.GetID(), kAttacker.getOwner(), kAttacker.getX(), kAttacker.getY());
+	strCombatID += strTemp + " vs " + pDefender->getNameKey();
+	strTemp.Format(" (id %d / player %d) at (%d,%d)", pDefender->GetID(), pDefender->getOwner(), pDefender->getX(), pDefender->getY());
+	strCombatID += strTemp;
+
+	pLog->Msg("-----------------------------------------------------");
+	pLog->Msg(strCombatID);
+	pLog->Msg("-----------------------------------------------------");
+	// RED >>>>>
 
 	kAttacker.SetAutomateType(NO_AUTOMATE);
 	pDefender->SetAutomateType(NO_AUTOMATE);
@@ -2621,12 +2641,13 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::Attack(CvUnit& kAttacker, CvPlot& targ
 	}
 
 	CvCombatInfo kCombatInfo;
+	pLog->Msg("   GenerateMeleeCombatInfo"); // RED
 	GenerateMeleeCombatInfo(kAttacker, pDefender.pointer(), targetPlot, &kCombatInfo);
 
 	CvAssertMsg(!kAttacker.isDelayedDeath() && !pDefender->isDelayedDeath(), "Trying to battle and one of the units is already dead!");
 
 	if(pDefender->getExtraWithdrawal() > 0 && pDefender->CanWithdrawFromMelee(kAttacker))
-	{
+	{		
 		pDefender->DoWithdrawFromMelee(kAttacker);
 
 		if(kAttacker.getOwner() == GC.getGame().getActivePlayer())
@@ -2721,28 +2742,133 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::Attack(CvUnit& kAttacker, CvPlot& targ
 	}
 	else
 	{
-		ATTACK_RESULT eSupportResult = ATTACK_ABORTED;
-		if(eOption != ATTACK_OPTION_NO_DEFENSIVE_SUPPORT)
+		pLog->Msg("   case : other"); 
+		// RED <<<<<
+		// check for first strikes...
+
+		// check for offensive first strike		
+		ATTACK_RESULT eOffensiveSupportResult = ATTACK_ABORTED;
 		{
-			// Ranged fire support from artillery units
-			CvUnit* pFireSupportUnit = GetFireSupportUnit(pDefender->getOwner(), pDefender->getX(), pDefender->getY(), kAttacker.getX(), kAttacker.getY());
-			if(pFireSupportUnit != NULL)
+			pLog->Msg("      Check for offensive first strike...");
+							
+			// Mark the defending unit to be sure the combat simulation does not pick another unit (with a higher ranged protection) on the tile
+			pDefender->setMarkedBestDefender(true);
+
+			// Get the support fire unit
+			CvUnit* pFireSupportUnit = GetFireSupportUnit(kAttacker.getOwner(), kAttacker.getX(), kAttacker.getY(), pDefender->getX(), pDefender->getY(), FIRE_SUPPORT_OFFENSIVE);
+
+			// Unmark the defending unit
+			pDefender->setMarkedBestDefender(false);
+
+			if(pFireSupportUnit != NULL && pFireSupportUnit->GetID() != kAttacker.GetID())
 			{
 				CvAssertMsg(!pFireSupportUnit->isDelayedDeath(), "Supporting battle unit is already dead!");
-				eSupportResult = AttackRanged(*pFireSupportUnit, kAttacker.getX(), kAttacker.getY(), CvUnitCombat::ATTACK_OPTION_NO_DEFENSIVE_SUPPORT);
-				// Turn off Fortify Turns, as this is the trigger for whether or not a ranged Unit can provide support fire (in addition to hasMadeAttack)
-				pFireSupportUnit->setFortifyTurns(0);
+
+				strTemp.Format(" at (%d,%d) XP = %d", pFireSupportUnit->getX(), pFireSupportUnit->getY(), pFireSupportUnit->getExperience());
+				CvString strName = pFireSupportUnit->getNameKey();
+				redLogMessage = "           Selected Fire Support Unit : " + strName + strTemp;				
+				pLog->Msg(redLogMessage);
+				pLog->Msg("           Launching offensive first strike !");
+				
+				// Mark the defending unit again for the real combat
+				pDefender->setMarkedBestDefender(true);
+
+				// Save the number of moves left for the support unit
+				int iMovesLeft = pFireSupportUnit->getMoves();
+
+				// First Strike !
+				eOffensiveSupportResult = AttackRanged(*pFireSupportUnit, pDefender->getX(), pDefender->getY(), CvUnitCombat::ATTACK_OPTION_NO_DEFENSIVE_SUPPORT);
+				
+				// Unmark the defending unit
+				pDefender->setMarkedBestDefender(false);
+
+				if (eOffensiveSupportResult != ATTACK_ABORTED)
+				{	
+					if(kAttacker.getOwner() == GC.getGame().getActivePlayer())
+					{
+						strBuffer = GetLocalizedText("TXT_KEY_MISC_YOU_GET_OFFENSIVE_SUPPORT", pFireSupportUnit->getNameKey(), kAttacker.getNameKey());
+						GC.GetEngineUserInterface()->AddMessage(0, kAttacker.getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+					}
+					else if(pDefender->getOwner() == GC.getGame().getActivePlayer())
+					{
+						strBuffer = GetLocalizedText("TXT_KEY_MISC_ENEMY_GET_OFFENSIVE_SUPPORT", pFireSupportUnit->getNameKey(), kAttacker.getNameKey());
+						GC.GetEngineUserInterface()->AddMessage(0, pDefender->getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+					}
+					// To do: limit number of strike by something else than moves left...
+					pFireSupportUnit->setMadeAttack(false);
+					pFireSupportUnit->setMoves(iMovesLeft - (GC.getMOVE_DENOMINATOR()/3));  // 2 offensive strikes (testing getMoves>MOVE_DENOMINATOR in GetFireSupportUnit) - note that setting position cost the first move, so siege units can't provide offensive support right away
+				}
+
+				if(eOffensiveSupportResult == ATTACK_QUEUED)
+					CvUnitMission::WaitFor(&kAttacker, pFireSupportUnit);
 			}
 
-			if(eSupportResult == ATTACK_QUEUED)
-			{
-				// The supporting unit has queued their attack (against the attacker), we must have the attacker queue its attack.
-				// Also, flag the current mission that the next time through, the defender doesn't get any defensive support.
-				const_cast<MissionData*>(kAttacker.GetHeadMissionData())->iFlags |= MISSION_MODIFIER_NO_DEFENSIVE_SUPPORT;
-				CvUnitMission::WaitFor(&kAttacker, pFireSupportUnit);
-				eResult = ATTACK_QUEUED;
-			}
+			// Remove Support Fire State to the support unit.
+			if(pFireSupportUnit != NULL)
+				pFireSupportUnit->setSupportFireState(false);
+
 		}
+
+		// check for defensive first strike		
+		ATTACK_RESULT eDefensiveSupportResult = ATTACK_ABORTED;
+		{
+			pLog->Msg("      Check for defensive first strike...");
+			
+			// Mark the defending unit to be sure the combat simulation does not pick another unit (with a higher ranged protection) on the tile
+			kAttacker.setMarkedBestDefender(true);
+
+			CvUnit* pFireSupportUnit = GetFireSupportUnit(pDefender->getOwner(), pDefender->getX(), pDefender->getY(), kAttacker.getX(), kAttacker.getY(), FIRE_SUPPORT_DEFENSIVE);
+
+			// Unmark the attacking unit after the simulation
+			kAttacker.setMarkedBestDefender(false);
+
+			if(pFireSupportUnit != NULL) // pFireSupportUnit can also be pDefender
+			{
+				CvAssertMsg(!pFireSupportUnit->isDelayedDeath(), "Supporting battle unit is already dead!");
+
+				strTemp.Format(" at (%d,%d) XP = %d", pFireSupportUnit->getX(), pFireSupportUnit->getY(), pFireSupportUnit->getExperience());
+				CvString strName = pFireSupportUnit->getNameKey();
+				redLogMessage = "           Selected Fire Support Unit : " + strName + strTemp;				
+				pLog->Msg(redLogMessage);
+				pLog->Msg("           Launching defensive first strike !");
+				
+				// Mark the attacking unit again for the real combat
+				kAttacker.setMarkedBestDefender(true);
+
+				// Save the moves left for the support units
+				int iMovesLeft = pFireSupportUnit->getMoves();
+
+				// First Strike !
+				eDefensiveSupportResult = AttackRanged(*pFireSupportUnit, kAttacker.getX(), kAttacker.getY(), CvUnitCombat::ATTACK_OPTION_NO_DEFENSIVE_SUPPORT);
+
+				// Unmark the attacking unit
+				kAttacker.setMarkedBestDefender(false);
+
+				if (eDefensiveSupportResult != ATTACK_ABORTED)
+				{	
+					if(kAttacker.getOwner() == GC.getGame().getActivePlayer())
+					{
+						strBuffer = GetLocalizedText("TXT_KEY_MISC_ENEMY_GET_DEFENSIVE_SUPPORT", pFireSupportUnit->getNameKey(), kAttacker.getNameKey());
+						GC.GetEngineUserInterface()->AddMessage(0, kAttacker.getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+					}
+					else if(pDefender->getOwner() == GC.getGame().getActivePlayer())
+					{
+						strBuffer = GetLocalizedText("TXT_KEY_MISC_YOU_GET_DEFENSIVE_SUPPORT", pFireSupportUnit->getNameKey(), kAttacker.getNameKey());
+						GC.GetEngineUserInterface()->AddMessage(0, pDefender->getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+					}
+					// To do: limit number of strike by something else than moves left...
+					pFireSupportUnit->setMadeAttack(false);
+					pFireSupportUnit->setMoves(iMovesLeft - (GC.getMOVE_DENOMINATOR()/4)); // 3 defensive strikes (testing getMoves>MOVE_DENOMINATOR in GetFireSupportUnit)
+				}
+
+				if(eDefensiveSupportResult == ATTACK_QUEUED)
+					CvUnitMission::WaitFor(&kAttacker, pFireSupportUnit);
+			}			
+			// Remove Support Fire State to the support unit.
+			if(pFireSupportUnit != NULL)
+				pFireSupportUnit->setSupportFireState(false);
+		}
+		// RED >>>>>
 
 		if(eResult != ATTACK_QUEUED)
 		{
@@ -2779,7 +2905,15 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::Attack(CvUnit& kAttacker, CvPlot& targ
 
 		}
 	}
-
+	
+	// RED <<<<<
+	strTemp.Format("Attack Result: eResult= %d", eResult );
+	pLog->Msg(strTemp);
+	pLog->Msg("-----------------------------------------------------");
+	pLog->Msg(strCombatID);
+	pLog->Msg("-----------------------------------------------------");
+	pLog->Msg("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
+	// RED >>>>>
 	return eResult;
 }
 
@@ -2787,7 +2921,17 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::Attack(CvUnit& kAttacker, CvPlot& targ
 CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackRanged(CvUnit& kAttacker, int iX, int iY, CvUnitCombat::ATTACK_OPTION /* eOption */)
 {
 	//VALIDATE_OBJECT
+
+	// RED <<<<<
+	// Logging
+	CvString redLogMessage;
+	CvString strTemp;
+	CvString strCombatID;
+	FILogFile* pLog = LOGFILEMGR.GetLog("red_combat_debug.log", FILogFile::kDontTimeStamp);
+	CvString strBuffer;
 	CvPlot* pPlot = GC.getMap().plot(iX, iY);
+	// RED >>>>>
+
 	ATTACK_RESULT eResult = ATTACK_ABORTED;
 
 	CvAssertMsg(kAttacker.getDomainType() != DOMAIN_AIR, "Air units should not use AttackRanged, they should just MoveTo the target");
@@ -2831,6 +2975,21 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackRanged(CvUnit& kAttacker, int iX
 		CvAssert(pDefender != NULL);
 		if(!pDefender) return ATTACK_ABORTED;
 
+		// RED <<<<<
+		// Logging
+
+		strTemp.Format("turn:%d - Ranged Attack - ", GC.getGame().getElapsedGameTurns());
+		strCombatID += strTemp + kAttacker.getNameKey();
+		strTemp.Format(" (id %d / player %d) at (%d,%d)", kAttacker.GetID(), kAttacker.getOwner(), kAttacker.getX(), kAttacker.getY());
+		strCombatID += strTemp + " vs " + pDefender->getNameKey();
+		strTemp.Format(" (id %d / player %d) at (%d,%d)", pDefender->GetID(), pDefender->getOwner(), pDefender->getX(), pDefender->getY());
+		strCombatID += strTemp;
+
+		pLog->Msg("-----------------------------------------------------");
+		pLog->Msg(strCombatID);
+		pLog->Msg("-----------------------------------------------------");
+		// RED >>>>>
+
 		pDefender->SetAutomateType(NO_AUTOMATE);
 
 		CvCombatInfo kCombatInfo;
@@ -2861,6 +3020,71 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackRanged(CvUnit& kAttacker, int iX
 			eResult = ATTACK_COMPLETED;
 
 		ResolveCombat(kCombatInfo, uiParentEventID);
+
+		// RED <<<<<
+		// check for counter-fire		
+		ATTACK_RESULT eCounterFireResult = ATTACK_ABORTED;
+		
+		CvPlot* pAttackerPlot = GC.getMap().plot(kAttacker.getX(), kAttacker.getY());
+		if (eResult != ATTACK_ABORTED && !pAttackerPlot->isCity()) // don't counter fire on a city. to do: allow attacking an unit in a city...
+		{
+			pLog->Msg("      Check for counter-fire...");
+			
+			// Mark the attacking unit to be sure the combat simulation does not pick another unit (with a higher ranged protection) on the tile
+			kAttacker.setMarkedBestDefender(true);
+
+			CvUnit* pFireSupportUnit = GetFireSupportUnit(pDefender->getOwner(), pDefender->getX(), pDefender->getY(), kAttacker.getX(), kAttacker.getY(), FIRE_SUPPORT_COUNTER);
+
+			// Unmark the attacking unit after the simulation
+			kAttacker.setMarkedBestDefender(false);
+
+			if(pFireSupportUnit != NULL) // && pFireSupportUnit->GetID() != pDefender->GetID())
+			{
+				CvAssertMsg(!pFireSupportUnit->isDelayedDeath(), "Supporting battle unit is already dead!");
+
+				strTemp.Format(" at (%d,%d) XP = %d", pFireSupportUnit->getX(), pFireSupportUnit->getY(), pFireSupportUnit->getExperience());
+				CvString strName = pFireSupportUnit->getNameKey();
+				redLogMessage = "           Selected Fire Support Unit : " + strName + strTemp;				
+				pLog->Msg(redLogMessage);
+				pLog->Msg("           Launching counter-fire !");
+				
+				// Mark the attacking unit again for the real combat
+				kAttacker.setMarkedBestDefender(true);
+
+				// Save the moves left for the support units
+				int iMovesLeft = pFireSupportUnit->getMoves();
+
+				// Counter Fire !
+				eCounterFireResult = AttackRanged(*pFireSupportUnit, kAttacker.getX(), kAttacker.getY(), CvUnitCombat::ATTACK_OPTION_NO_DEFENSIVE_SUPPORT);
+
+				// Unmark the attacking unit
+				kAttacker.setMarkedBestDefender(false);
+
+				if (eCounterFireResult != ATTACK_ABORTED)
+				{	
+					if(kAttacker.getOwner() == GC.getGame().getActivePlayer())
+					{
+						strBuffer = GetLocalizedText("TXT_KEY_MISC_YOU_RECEIVE_COUNTER_FIRE", kAttacker.getNameKey(), pFireSupportUnit->getNameKey());
+						GC.GetEngineUserInterface()->AddMessage(0, kAttacker.getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+					}
+					else if(pDefender->getOwner() == GC.getGame().getActivePlayer())
+					{
+						strBuffer = GetLocalizedText("TXT_KEY_MISC_YOU_USE_COUNTER_FIRE", pFireSupportUnit->getNameKey(), kAttacker.getNameKey());
+						GC.GetEngineUserInterface()->AddMessage(0, pDefender->getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+					}
+					// To do: limit number of strike by something else than moves left ?
+					pFireSupportUnit->setMadeAttack(false); // if it has been selected, it hadn't made any normal attack
+					pFireSupportUnit->setMoves(iMovesLeft - (GC.getMOVE_DENOMINATOR()/6)); // 5 counter-fire (testing getMoves>MOVE_DENOMINATOR in GetFireSupportUnit)
+				}
+
+				// Remove Support Fire State to the support unit.
+				pFireSupportUnit->setSupportFireState(false);
+			}
+			
+		}
+		// RED >>>>>
+
+
 	}
 	// Range-striking a City
 	else
@@ -2869,6 +3093,23 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackRanged(CvUnit& kAttacker, int iX
 		{
 			return eResult;
 		}
+
+		CvCity* pkDefender = pPlot->getPlotCity();
+
+		// RED <<<<<
+		// Logging
+
+		strTemp.Format("turn:%d - Ranged Attack - ", GC.getGame().getElapsedGameTurns());
+		strCombatID += strTemp + kAttacker.getNameKey();
+		strTemp.Format(" (id %d / player %d) at (%d,%d)", kAttacker.GetID(), kAttacker.getOwner(), kAttacker.getX(), kAttacker.getY());
+		strCombatID += strTemp + " vs " + pkDefender->getNameKey();
+		strTemp.Format(" (id %d / player %d) at (%d,%d)", pkDefender->GetID(), pkDefender->getOwner(), pkDefender->getX(), pkDefender->getY());
+		strCombatID += strTemp;
+
+		pLog->Msg("-----------------------------------------------------");
+		pLog->Msg(strCombatID);
+		pLog->Msg("-----------------------------------------------------");
+		// RED >>>>>
 
 		CvCombatInfo kCombatInfo;
 		GenerateRangedCombatInfo(kAttacker, NULL, *pPlot, &kCombatInfo);
@@ -2890,7 +3131,7 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackRanged(CvUnit& kAttacker, int iX
 			auto_ptr<ICvCombatInfo1> pDllCombatInfo(new CvDllCombatInfo(&kCombatInfo));
 			uiParentEventID = gDLL->GameplayCityCombat(pDllCombatInfo.get());
 
-			CvCity* pkDefender = pPlot->getPlotCity();
+			
 			kAttacker.setCombatCity(pkDefender);
 			if(pkDefender)
 				pkDefender->setCombatUnit(&kAttacker);
@@ -2900,7 +3141,77 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackRanged(CvUnit& kAttacker, int iX
 			eResult = ATTACK_COMPLETED;
 
 		ResolveCombat(kCombatInfo, uiParentEventID);
+
+		// RED <<<<<
+		// check for counter-fire		
+		ATTACK_RESULT eCounterFireResult = ATTACK_ABORTED;
+		if (eResult != ATTACK_ABORTED)
+		{
+			pLog->Msg("      Check for counter-fire...");
+			
+			// Mark the attacking unit to be sure the combat simulation does not pick another unit (with a higher ranged protection) on the tile
+			kAttacker.setMarkedBestDefender(true);
+
+			CvUnit* pFireSupportUnit = GetFireSupportUnit(pkDefender->getOwner(), pkDefender->getX(), pkDefender->getY(), kAttacker.getX(), kAttacker.getY(), FIRE_SUPPORT_COUNTER);
+
+			// Unmark the attacking unit after the simulation
+			kAttacker.setMarkedBestDefender(false);
+
+			if(pFireSupportUnit != NULL)
+			{
+				CvAssertMsg(!pFireSupportUnit->isDelayedDeath(), "Supporting battle unit is already dead!");
+
+				strTemp.Format(" at (%d,%d) XP = %d", pFireSupportUnit->getX(), pFireSupportUnit->getY(), pFireSupportUnit->getExperience());
+				CvString strName = pFireSupportUnit->getNameKey();
+				redLogMessage = "           Selected Fire Support Unit : " + strName + strTemp;				
+				pLog->Msg(redLogMessage);
+				pLog->Msg("           Launching counter-fire !");
+				
+				// Mark the attacking unit again for the real combat
+				kAttacker.setMarkedBestDefender(true);
+
+				// Save the moves left for the support units
+				int iMovesLeft = pFireSupportUnit->getMoves();
+
+				// Counter Fire !
+				eCounterFireResult = AttackRanged(*pFireSupportUnit, kAttacker.getX(), kAttacker.getY(), CvUnitCombat::ATTACK_OPTION_NO_DEFENSIVE_SUPPORT);
+
+				// Unmark the attacking unit
+				kAttacker.setMarkedBestDefender(false);
+
+				if (eCounterFireResult != ATTACK_ABORTED)
+				{	
+					if(kAttacker.getOwner() == GC.getGame().getActivePlayer())
+					{
+						strBuffer = GetLocalizedText("TXT_KEY_MISC_YOU_RECEIVE_COUNTER_FIRE", kAttacker.getNameKey(), pFireSupportUnit->getNameKey());
+						GC.GetEngineUserInterface()->AddMessage(0, kAttacker.getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+					}
+					else if(pkDefender->getOwner() == GC.getGame().getActivePlayer())
+					{
+						strBuffer = GetLocalizedText("TXT_KEY_MISC_YOU_USE_COUNTER_FIRE", pFireSupportUnit->getNameKey(), kAttacker.getNameKey());
+						GC.GetEngineUserInterface()->AddMessage(0, pkDefender->getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+					}
+					// To do: limit number of strike by something else than moves left...
+					pFireSupportUnit->setMadeAttack(false);
+					pFireSupportUnit->setMoves(iMovesLeft - (GC.getMOVE_DENOMINATOR()/6)); // 5 counter-fire (testing getMoves>MOVE_DENOMINATOR in GetFireSupportUnit)
+				}
+				
+				// Remove Support Fire State to the support unit.
+				pFireSupportUnit->setSupportFireState(false);
+			}
+		}
+		// RED >>>>>
+
 	}
+
+	// RED <<<<<
+	strTemp.Format("Attack Result: eResult= %d", eResult );
+	pLog->Msg(strTemp);
+	pLog->Msg("-----------------------------------------------------");
+	pLog->Msg(strCombatID);
+	pLog->Msg("-----------------------------------------------------");
+	pLog->Msg("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
+	// RED >>>>>
 
 	return eResult;
 }
@@ -2929,6 +3240,23 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackAir(CvUnit& kAttacker, CvPlot& t
 		CvUnit* pDefender = kAttacker.airStrikeTarget(targetPlot, true);
 		CvAssert(pDefender != NULL);
 		if(!pDefender) return CvUnitCombat::ATTACK_ABORTED;
+
+		// RED <<<<<
+		// Logging
+		CvString redLogMessage;
+		CvString strTemp;
+		FILogFile* pLog = LOGFILEMGR.GetLog("red_combat_debug.log", FILogFile::kDontTimeStamp);
+
+		strTemp.Format("turn: %d - Air Attack : ", GC.getGame().getElapsedGameTurns());
+		redLogMessage += strTemp + kAttacker.getNameKey();
+		strTemp.Format(" from (%d,%d) vs ", kAttacker.getX(), kAttacker.getY() );	
+		redLogMessage += strTemp + pDefender->getNameKey();
+		strTemp.Format(" at (%d,%d)", pDefender->getX(), pDefender->getY() );
+		redLogMessage += strTemp;
+		//strTemp.Format("  Attacking from (%d,%d) to (%d,%d)", kAttacker.getX(), kAttacker.getY(), pDefender->getX(), pDefender->getY() );
+		//redLogMessage += strTemp + "\n";
+		pLog->Msg(redLogMessage);
+		// RED >>>>>
 
 		pDefender->SetAutomateType(NO_AUTOMATE);
 
@@ -2971,6 +3299,23 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackAir(CvUnit& kAttacker, CvPlot& t
 		CvCombatInfo kCombatInfo;
 		GenerateAirCombatInfo(kAttacker, NULL, targetPlot, &kCombatInfo);
 		CvAssertMsg(!kAttacker.isDelayedDeath(), "Trying to battle and the attacker is already dead!");
+
+		// RED <<<<<
+		// Logging
+		CvString redLogMessage;
+		CvString strTemp;
+		FILogFile* pLog = LOGFILEMGR.GetLog("red_combat_debug.log", FILogFile::kDontTimeStamp);
+
+		strTemp.Format("turn: %d - Air Attack : ", GC.getGame().getElapsedGameTurns());
+		redLogMessage += strTemp + kAttacker.getNameKey();
+		strTemp.Format(" from (%d,%d) vs City ", kAttacker.getX(), kAttacker.getY() );	
+		redLogMessage += strTemp;
+		strTemp.Format(" at (%d,%d)", targetPlot.getX(), targetPlot.getY() );
+		redLogMessage += strTemp;
+		//strTemp.Format("  Attacking from (%d,%d) to (%d,%d)", kAttacker.getX(), kAttacker.getY(), pDefender->getX(), pDefender->getY() );
+		//redLogMessage += strTemp + "\n";
+		pLog->Msg(redLogMessage);
+		// RED >>>>>
 
 		uint uiParentEventID = 0;
 		if(!bDoImmediate)
@@ -3025,6 +3370,23 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackAirSweep(CvUnit& kAttacker, CvPl
 	// Any interceptor to sweep for?
 	if(pInterceptor != NULL)
 	{
+		// RED <<<<<
+		// Logging
+		CvString redLogMessage;
+		CvString strTemp;
+		FILogFile* pLog = LOGFILEMGR.GetLog("red_combat_debug.log", FILogFile::kDontTimeStamp);
+
+		strTemp.Format("turn: %d - Air Sweep : ", GC.getGame().getElapsedGameTurns());
+		redLogMessage += strTemp + kAttacker.getNameKey();
+		strTemp.Format(" from (%d,%d) vs ", kAttacker.getX(), kAttacker.getY() );	
+		redLogMessage += strTemp + pInterceptor->getNameKey();
+		strTemp.Format(" at (%d,%d)", pInterceptor->getX(), pInterceptor->getY() );
+		redLogMessage += strTemp;
+		//strTemp.Format("  Attacking from (%d,%d) to (%d,%d)", kAttacker.getX(), kAttacker.getY(), pDefender->getX(), pDefender->getY() );
+		//redLogMessage += strTemp + "\n";
+		pLog->Msg(redLogMessage);
+		// RED >>>>>
+
 		kAttacker.setMadeAttack(true);
 		CvCombatInfo kCombatInfo;
 		CvUnitCombat::GenerateAirSweepCombatInfo(kAttacker, pInterceptor, targetPlot, &kCombatInfo);
@@ -3092,30 +3454,144 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackCity(CvUnit& kAttacker, CvPlot& 
 	CvAssertMsg(pCity != NULL, "If this unit is attacking a NULL city then something funky is goin' down");
 	if(!pCity) return eResult;
 
+	// RED <<<<<
+	CvString strBuffer;
+
+	// Logging
+	CvString redLogMessage;
+	CvString strTemp;
+	CvString strCombatID;
+	FILogFile* pLog = LOGFILEMGR.GetLog("red_combat_debug.log", FILogFile::kDontTimeStamp);
+
+	strTemp.Format("turn:%d - City Attack - ", GC.getGame().getElapsedGameTurns());
+	strCombatID += strTemp + kAttacker.getNameKey();
+	strTemp.Format(" (id %d / player %d) at (%d,%d)", kAttacker.GetID(), kAttacker.getOwner(), kAttacker.getX(), kAttacker.getY());
+	strCombatID += strTemp + " vs " + pCity->getNameKey();
+	strTemp.Format(" (id %d / player %d) at (%d,%d)", pCity->GetID(), pCity->getOwner(), pCity->getX(), pCity->getY());
+	strCombatID += strTemp;
+
+	pLog->Msg("-----------------------------------------------------");
+	pLog->Msg(strCombatID);
+	pLog->Msg("-----------------------------------------------------");
+	// RED >>>>>
+
 	kAttacker.SetAutomateType(NO_AUTOMATE);
+	
+	// RED <<<<<
+	// check for first strikes...
 
-	if(eOption != ATTACK_OPTION_NO_DEFENSIVE_SUPPORT)
+	// check for offensive first strike		
+	ATTACK_RESULT eOffensiveSupportResult = ATTACK_ABORTED;
 	{
-		// See if the city has some supporting fire to fend off the attacker
-		CvUnit* pFireSupportUnit = GetFireSupportUnit(pCity->getOwner(), pCity->getX(), pCity->getY(), kAttacker.getX(), kAttacker.getY());
+		pLog->Msg("      Check for offensive first strike...");
+							
+		// Get the support fire unit
+		CvUnit* pFireSupportUnit = GetFireSupportUnit(kAttacker.getOwner(), kAttacker.getX(), kAttacker.getY(), pCity->getX(), pCity->getY(), FIRE_SUPPORT_OFFENSIVE);
 
-		ATTACK_RESULT eSupportResult = ATTACK_ABORTED;
-		if(pFireSupportUnit)
+		if(pFireSupportUnit != NULL && pFireSupportUnit->GetID() != kAttacker.GetID())
 		{
-			eSupportResult = AttackRanged(*pFireSupportUnit, kAttacker.getX(), kAttacker.getY(), CvUnitCombat::ATTACK_OPTION_NO_DEFENSIVE_SUPPORT);
-			// Turn off Fortify Turns, as this is the trigger for whether or not a ranged Unit can provide support fire (in addition to hasMadeAttack)
-			pFireSupportUnit->setFortifyTurns(0);
+			CvAssertMsg(!pFireSupportUnit->isDelayedDeath(), "Supporting battle unit is already dead!");
+
+			strTemp.Format(" at (%d,%d) XP = %d", pFireSupportUnit->getX(), pFireSupportUnit->getY(), pFireSupportUnit->getExperience());
+			CvString strName = pFireSupportUnit->getNameKey();
+			redLogMessage = "           Selected Fire Support Unit : " + strName + strTemp;				
+			pLog->Msg(redLogMessage);
+			pLog->Msg("           Launching offensive first strike !");
+				
+			// Save the number of moves left for the support unit
+			int iMovesLeft = pFireSupportUnit->getMoves();
+
+			// First Strike !
+			eOffensiveSupportResult = AttackRanged(*pFireSupportUnit, pCity->getX(), pCity->getY(), CvUnitCombat::ATTACK_OPTION_NO_DEFENSIVE_SUPPORT);
+				
+			if (eOffensiveSupportResult != ATTACK_ABORTED)
+			{	
+				if(kAttacker.getOwner() == GC.getGame().getActivePlayer())
+				{
+					strBuffer = GetLocalizedText("TXT_KEY_MISC_YOU_GET_OFFENSIVE_SUPPORT", pFireSupportUnit->getNameKey(), kAttacker.getNameKey());
+					GC.GetEngineUserInterface()->AddMessage(0, kAttacker.getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+				}
+				else if(pCity->getOwner() == GC.getGame().getActivePlayer())
+				{
+					strBuffer = GetLocalizedText("TXT_KEY_MISC_ENEMY_GET_OFFENSIVE_SUPPORT", pFireSupportUnit->getNameKey(), kAttacker.getNameKey());
+					GC.GetEngineUserInterface()->AddMessage(0, pCity->getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+				}
+				// To do: limit number of strike by something else than moves left...
+				pFireSupportUnit->setMadeAttack(false);
+				pFireSupportUnit->setMoves(iMovesLeft - (GC.getMOVE_DENOMINATOR()/3));  // 2 offensive strikes (testing getMoves>MOVE_DENOMINATOR in GetFireSupportUnit) - note that setting position cost the first move, so siege units can't provide offensive support right away
+			}
+
+			if(eOffensiveSupportResult == ATTACK_QUEUED)
+				CvUnitMission::WaitFor(&kAttacker, pFireSupportUnit);
 		}
+		
+		// Remove Support Fire State to the support unit.
+		if(pFireSupportUnit != NULL)
+			pFireSupportUnit->setSupportFireState(false);
 
-		if(eSupportResult == ATTACK_QUEUED)
+	}
+
+	// check for defensive first strike		
+	ATTACK_RESULT eDefensiveSupportResult = ATTACK_ABORTED;
+	{
+		pLog->Msg("      Check for defensive first strike...");
+			
+		// Mark the defending unit to be sure the combat simulation does not pick another unit (with a higher ranged protection) on the tile
+		kAttacker.setMarkedBestDefender(true);
+
+		CvUnit* pFireSupportUnit = GetFireSupportUnit(pCity->getOwner(), pCity->getX(), pCity->getY(), kAttacker.getX(), kAttacker.getY(), FIRE_SUPPORT_DEFENSIVE);
+
+		// Unmark the attacking unit after the simulation
+		kAttacker.setMarkedBestDefender(false);
+
+		if(pFireSupportUnit != NULL)
 		{
-			// The supporting unit has queued their attack (against the attacker), we must have the attacker queue its attack.
-			// Also, flag the current mission that the next time through, the defender doesn't get any defensive support.
-			const_cast<MissionData*>(kAttacker.GetHeadMissionData())->iFlags |= MISSION_MODIFIER_NO_DEFENSIVE_SUPPORT;
-			CvUnitMission::WaitFor(&kAttacker, pFireSupportUnit);
-			eResult = ATTACK_QUEUED;
+			CvAssertMsg(!pFireSupportUnit->isDelayedDeath(), "Supporting battle unit is already dead!");
+
+			strTemp.Format(" at (%d,%d) XP = %d", pFireSupportUnit->getX(), pFireSupportUnit->getY(), pFireSupportUnit->getExperience());
+			CvString strName = pFireSupportUnit->getNameKey();
+			redLogMessage = "           Selected Fire Support Unit : " + strName + strTemp;				
+			pLog->Msg(redLogMessage);
+			pLog->Msg("           Launching defensive first strike !");
+				
+			// Mark the attacking unit again for the real combat
+			kAttacker.setMarkedBestDefender(true);
+
+			// Save the moves left for the support units
+			int iMovesLeft = pFireSupportUnit->getMoves();
+
+			// First Strike !
+			eDefensiveSupportResult = AttackRanged(*pFireSupportUnit, kAttacker.getX(), kAttacker.getY(), CvUnitCombat::ATTACK_OPTION_NO_DEFENSIVE_SUPPORT);
+
+			// Unmark the attacking unit
+			kAttacker.setMarkedBestDefender(false);
+
+			if (eDefensiveSupportResult != ATTACK_ABORTED)
+			{	
+				if(kAttacker.getOwner() == GC.getGame().getActivePlayer())
+				{
+					strBuffer = GetLocalizedText("TXT_KEY_MISC_ENEMY_GET_DEFENSIVE_SUPPORT", pFireSupportUnit->getNameKey(), kAttacker.getNameKey());
+					GC.GetEngineUserInterface()->AddMessage(0, kAttacker.getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+				}
+				else if(pCity->getOwner() == GC.getGame().getActivePlayer())
+				{
+					strBuffer = GetLocalizedText("TXT_KEY_MISC_YOU_GET_DEFENSIVE_SUPPORT", pFireSupportUnit->getNameKey(), kAttacker.getNameKey());
+					GC.GetEngineUserInterface()->AddMessage(0, pCity->getOwner(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+				}
+				// To do: limit number of strike by something else than moves left...
+				pFireSupportUnit->setMadeAttack(false);
+				pFireSupportUnit->setMoves(iMovesLeft - (GC.getMOVE_DENOMINATOR()/4)); // 3 defensive strikes (testing getMoves>MOVE_DENOMINATOR in GetFireSupportUnit)
+			}
+
+			if(eDefensiveSupportResult == ATTACK_QUEUED)
+				CvUnitMission::WaitFor(&kAttacker, pFireSupportUnit);
+			
+			// Remove Support Fire State to the support unit.
+			pFireSupportUnit->setSupportFireState(false);
 		}
 	}
+	// RED >>>>>
+
 
 	if(eResult != ATTACK_QUEUED)
 	{
@@ -3155,25 +3631,44 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackCity(CvUnit& kAttacker, CvPlot& 
 
 		ResolveCombat(kCombatInfo, uiParentEventID);
 	}
+
+	// RED <<<<<
+	pLog->Msg("-----------------------------------------------------");
+	strTemp.Format("Attack Result: eResult= %d", eResult );
+	pLog->Msg(strTemp);
+	pLog->Msg(strCombatID);
+	pLog->Msg("-----------------------------------------------------");
+	pLog->Msg("+++++++++++++++++++++++++++++++++++++++++++++++++++++");
+	// RED >>>>>
+
 	return eResult;
 }
 
 //	-------------------------------------------------------------------------------------------
-//	Return a ranged unit that will defend the supplied location against the attacker at the specified location.
-CvUnit* CvUnitCombat::GetFireSupportUnit(PlayerTypes eDefender, int iDefendX, int iDefendY, int iAttackX, int iAttackY)
+//	Return a ranged unit that will provide fire support at the specified location.
+CvUnit* CvUnitCombat::GetFireSupportUnit(PlayerTypes ePlayer, int iSupportX, int iSupportY, int iTargetX, int iTargetY, FIRE_SUPPORT eSupport)
 {
 	VALIDATE_OBJECT
 
-	if(GC.getFIRE_SUPPORT_DISABLED() == 1)
+	if(eSupport == FIRE_SUPPORT_OFFENSIVE && !GC.getGame().isOption("GAMEOPTION_OFFENSIVE_SUPPORT_FIRE"))
+		return NULL;
+	
+	if(eSupport == FIRE_SUPPORT_DEFENSIVE && !GC.getGame().isOption("GAMEOPTION_DEFENSIVE_SUPPORT_FIRE"))
+		return NULL;
+	
+	if(eSupport == FIRE_SUPPORT_COUNTER && !GC.getGame().isOption("GAMEOPTION_COUNTER_FIRE"))
 		return NULL;
 
-	CvPlot* pAdjacentPlot = NULL;
-	CvPlot* pPlot = GC.getMap().plot(iDefendX, iDefendY);
+	CvPlot* pPlot = GC.getMap().plot(iSupportX, iSupportY);
+	CvPlot* pTargetedPlot = GC.getMap().plot(iTargetX, iTargetY);
+	CvCity* pCity = pTargetedPlot->getPlotCity();
+	UnitHandle pDefender = pTargetedPlot->getBestDefender(NO_PLAYER, ePlayer);	
+	CvPlot* pAdjacentPlot = pPlot; // Multiple units per tile may be allowed, so first test the central plot
+	CvUnit* pBestUnit = NULL;
+	int iBestUnitExpectedDamage = 0;
 
-	for(int iI = 0; iI < NUM_DIRECTION_TYPES; iI++)
+	for(int iI = 0; iI <= NUM_DIRECTION_TYPES; iI++)
 	{
-		pAdjacentPlot = plotDirection(pPlot->getX(), pPlot->getY(), ((DirectionTypes)iI));
-
 		if(pAdjacentPlot != NULL)
 		{
 			for(int iUnitLoop = 0; iUnitLoop < pAdjacentPlot->getNumUnits(); iUnitLoop++)
@@ -3181,20 +3676,57 @@ CvUnit* CvUnitCombat::GetFireSupportUnit(PlayerTypes eDefender, int iDefendX, in
 				CvUnit* pLoopUnit = pAdjacentPlot->getUnitByIndex(iUnitLoop);
 
 				// Unit owned by same player?
-				if(pLoopUnit->getOwner() == eDefender)
+				if(pLoopUnit->getOwner() == ePlayer)
 				{
+					// mark the unit as trying to provide support fire, so it seems able to actually attack when calling canRangeStrikeAt()
+					pLoopUnit->setSupportFireState(true);
+
 					// Can this unit perform a ranged strike on the attacker's plot?
-					if(pLoopUnit->canRangeStrikeAt(iAttackX, iAttackY))
+					if(pLoopUnit->canRangeStrikeAt(iTargetX, iTargetY))
 					{
-						// Range strike would be calculated here, so get the estimated damage
-						return pLoopUnit;
+						if ( pLoopUnit->getMoves() > GC.getMOVE_DENOMINATOR() && // each support fire use a fraction of movement points until there is only 1 point left
+							(  (eSupport == FIRE_SUPPORT_OFFENSIVE && pLoopUnit->isOffensiveSupportFire()) 
+							|| (eSupport == FIRE_SUPPORT_DEFENSIVE && pLoopUnit->isDefensiveSupportFire()) 
+							|| (eSupport == FIRE_SUPPORT_COUNTER && pLoopUnit->canCounterFire(pDefender.pointer())) ) // when checking for counter-fire, the attacking unit was marked as the best defender
+							)
+						{
+							if (pBestUnit == NULL)
+							{
+								pBestUnit = pLoopUnit;
+								if(pCity)						
+									iBestUnitExpectedDamage = pBestUnit->GetRangeCombatDamage(NULL, pCity, /*bIncludeRand*/ false);
+
+								else if(pDefender)
+									iBestUnitExpectedDamage = pBestUnit->GetRangeCombatDamage(pDefender.pointer(), NULL, false);
+							}
+							else
+							{
+								int iExpectedDamage = 0;
+								if(pCity)
+									iExpectedDamage = pLoopUnit->GetRangeCombatDamage(NULL, pCity, /*bIncludeRand*/ false);
+
+								else if(pDefender)
+									iExpectedDamage = pLoopUnit->GetRangeCombatDamage(pDefender.pointer(), NULL, false);
+
+								if (iExpectedDamage > iBestUnitExpectedDamage)  
+								{
+									pBestUnit->setSupportFireState(false);
+									pBestUnit = pLoopUnit;
+									iBestUnitExpectedDamage = iExpectedDamage;
+								}
+							}
+						}
 					}
+					// remove the support fire state if the unit was not chosen. That state is removed from the selected unit after firing...
+					if (pLoopUnit != pBestUnit)
+						pLoopUnit->setSupportFireState(false);
 				}
 			}
 		}
+		pAdjacentPlot = plotDirection(pPlot->getX(), pPlot->getY(), ((DirectionTypes)iI));
 	}
 
-	return NULL;
+	return pBestUnit;
 }
 
 //	----------------------------------------------------------------------------

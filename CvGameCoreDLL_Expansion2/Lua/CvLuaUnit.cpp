@@ -691,7 +691,7 @@ int CvLuaUnit::lGetFireSupportUnit(lua_State* L)
 	const int iX = lua_tointeger(L, 3);
 	const int iY = lua_tointeger(L, 4);
 
-	CvUnit* pkUnitToReturn = CvUnitCombat::GetFireSupportUnit(eDefender, iX, iY, pkUnit->getX(), pkUnit->getY());
+	CvUnit* pkUnitToReturn = CvUnitCombat::GetFireSupportUnit(eDefender, iX, iY, pkUnit->getX(), pkUnit->getY(), CvUnitCombat::FIRE_SUPPORT_DEFENSIVE); // RED
 	CvLuaUnit::Push(L, pkUnitToReturn);
 
 	return 1;

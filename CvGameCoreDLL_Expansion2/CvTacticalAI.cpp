@@ -5626,7 +5626,7 @@ void CvTacticalAI::IdentifyPriorityTargets()
 				{
 					int iAttackerStrength = pEnemyUnit->GetMaxAttackStrength(NULL, pLoopCity->plot(), NULL);
 					int iDefenderStrength = pLoopCity->getStrengthValue();
-					CvUnit* pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pLoopCity->getOwner(), pLoopCity->getX(), pLoopCity->getY(), pEnemyUnit->getX(), pEnemyUnit->getY());
+					CvUnit* pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pLoopCity->getOwner(), pLoopCity->getX(), pLoopCity->getY(), pEnemyUnit->getX(), pEnemyUnit->getY(), CvUnitCombat::FIRE_SUPPORT_DEFENSIVE); // RED
 					int iDefenderFireSupportCombatDamage = 0;
 					if(pFireSupportUnit != NULL)
 					{
@@ -8768,7 +8768,7 @@ int CvTacticalAI::ComputeTotalExpectedDamage(CvTacticalTarget* pTarget, CvPlot* 
 				{
 					int iAttackerStrength = pAttacker->GetMaxAttackStrength(NULL, pTargetPlot, NULL);
 					int iDefenderStrength = pDefender->GetMaxDefenseStrength(pTargetPlot, pAttacker.pointer());
-					UnitHandle pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pDefender->getOwner(), pTargetPlot->getX(), pTargetPlot->getY(), pAttacker->getX(), pAttacker->getY());
+					UnitHandle pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pDefender->getOwner(), pTargetPlot->getX(), pTargetPlot->getY(), pAttacker->getX(), pAttacker->getY(), CvUnitCombat::FIRE_SUPPORT_DEFENSIVE); // RED
 					int iDefenderFireSupportCombatDamage = 0;
 					if(pFireSupportUnit)
 					{
@@ -8798,7 +8798,7 @@ int CvTacticalAI::ComputeTotalExpectedDamage(CvTacticalTarget* pTarget, CvPlot* 
 				{
 					int iAttackerStrength = pAttacker->GetMaxAttackStrength(NULL, pTargetPlot, NULL);
 					int iDefenderStrength = pCity->getStrengthValue();
-					CvUnit* pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pCity->getOwner(), pTargetPlot->getX(), pTargetPlot->getY(), pAttacker->getX(), pAttacker->getY());
+					CvUnit* pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pCity->getOwner(), pTargetPlot->getX(), pTargetPlot->getY(), pAttacker->getX(), pAttacker->getY(), CvUnitCombat::FIRE_SUPPORT_DEFENSIVE); // RED
 					int iDefenderFireSupportCombatDamage = 0;
 					if(pFireSupportUnit != NULL)
 					{

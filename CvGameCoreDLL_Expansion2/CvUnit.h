@@ -935,11 +935,6 @@ public:
 	int getDropRange() const;
 	void changeDropRange(int iChange);
 
-	// RED <<<<<<
-	bool isMarkedBestDefender() const;
-	void setMarkedBestDefender(bool bNewValue);
-	// RED >>>>>>
-
 	bool isOutOfAttacks() const;
 	void setMadeAttack(bool bNewValue);
 
@@ -989,8 +984,6 @@ public:
 	const UnitTypes getUnitType() const;
 	CvUnitEntry& getUnitInfo() const;
 	UnitClassTypes getUnitClassType() const;
-	const CvString getUnitStackClassType() const; // RED
-	int getUnitMaxStack() const; // RED
 
 	const UnitTypes getLeaderUnitType() const;
 	void setLeaderUnitType(UnitTypes leaderUnitType);
@@ -1086,6 +1079,28 @@ public:
 	bool canRangeStrike() const;
 	bool canEverRangeStrikeAt(int iX, int iY) const;
 	bool canRangeStrikeAt(int iX, int iY, bool bNeedWar = true, bool bNoncombatAllowed = true) const;
+
+	// RED <<<<<
+
+	// Stacking
+	const CvString getUnitStackClassType() const; // RED
+	int getUnitMaxStack() const; // RED
+
+	// Force "BestDefender"
+	bool isMarkedBestDefender() const;
+	void setMarkedBestDefender(bool bNewValue);
+
+	// SupportFire
+	bool isOnlySupportFire() const;
+	bool isOffensiveSupportFire() const;
+	bool isDefensiveSupportFire() const;
+	bool hasCounterFireCapability() const;
+	bool canCounterFire(CvUnit* pUnit) const;
+	bool isCounterFireSameCombatTypeOnly() const;
+	bool isProvidingSupportFire() const;
+	void setSupportFireState(bool bNewValue);
+
+	// RED >>>>>
 
 	bool IsAirSweepCapable() const;
 	int GetAirSweepCapableCount() const;
@@ -1400,7 +1415,11 @@ protected:
 	int m_iCanHeavyCharge;
 	int m_iNumExoticGoods;
 
-	bool m_bBestDefender; // RED
+	// RED <<<<<
+	bool m_bBestDefender;
+	bool m_bProvidingSupportFire;
+	// RED >>>>>
+
 	FAutoVariable<bool, CvUnit> m_bPromotionReady;
 	FAutoVariable<bool, CvUnit> m_bDeathDelay;
 	FAutoVariable<bool, CvUnit> m_bCombatFocus;

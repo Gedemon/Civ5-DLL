@@ -58,8 +58,6 @@ CvUnitEntry::CvUnitEntry(void) :
 	m_bNoMaintenance(false),
 	m_iUnhappiness(0),
 	m_iUnitClassType(NO_UNITCLASS),
-	m_strUnitStackClassType("DEFAULT"), // RED
-	m_iUnitMaxStack(0), // RED
 	m_iSpecialUnitType(NO_SPECIALUNIT),
 	m_iUnitCaptureClassType(NO_UNITCLASS),
 	m_iUnitCombatType(NO_UNITCOMBAT),
@@ -119,7 +117,17 @@ CvUnitEntry::CvUnitEntry(void) :
 	m_bUnitArtInfoEraVariation(false),
 	m_bUnitArtInfoCulturalVariation(false),
 	m_iUnitFlagIconOffset(0),
-	m_iUnitPortraitOffset(0)
+	m_iUnitPortraitOffset(0),
+	
+	// RED <<<<<
+	m_strUnitStackClassType("DEFAULT"),
+	m_iUnitMaxStack(0),
+	m_bOffensiveSupportFire(false),
+	m_bDefensiveSupportFire(false),
+	m_bCounterFire(false),
+	m_bCounterFireSameCombatType(false),
+	m_bOnlySupportFire(false)
+	// RED >>>>>
 {
 }
 
@@ -224,8 +232,15 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	m_bUnitArtInfoCulturalVariation = kResults.GetBool("UnitArtInfoCulturalVariation");
 	m_bUnitArtInfoEraVariation = kResults.GetBool("UnitArtInfoEraVariation");
 
-	m_strUnitStackClassType = kResults.GetText("StackClass"); // RED
-	m_iUnitMaxStack = kResults.GetInt("MaxStack"); // RED
+	// RED <<<<<
+	m_strUnitStackClassType = kResults.GetText("StackClass");
+	m_iUnitMaxStack = kResults.GetInt("MaxStack");
+	m_bOffensiveSupportFire = kResults.GetBool("OffensiveSupportFire");
+	m_bDefensiveSupportFire = kResults.GetBool("DefensiveSupportFire");
+	m_bCounterFire = kResults.GetBool("CounterFire");
+	m_bCounterFireSameCombatType = kResults.GetBool("CounterFireSameCombatType");
+	m_bOnlySupportFire = kResults.GetBool("OnlySupportFire");
+	// RED >>>>>
 
 	//References
 	const char* szTextVal = NULL;
@@ -698,22 +713,6 @@ int CvUnitEntry::GetUnitClassType() const
 	return m_iUnitClassType;
 }
 
-// RED <<<<<
-
-/// Stack Class of unit
-const char* CvUnitEntry::GetUnitStackClassType() const
-{
-	return m_strUnitStackClassType;
-}
-
-/// Max Stack for this unit
-int CvUnitEntry::GetUnitMaxStack() const
-{
-	return m_iUnitMaxStack;
-}
-
-// RED >>>>>
-
 /// Special class of this unit (if any)
 int CvUnitEntry::GetSpecialUnitType() const
 {
@@ -947,6 +946,53 @@ void CvUnitEntry::SetCommandType(int iNewType)
 {
 	m_iCommandType = iNewType;
 }
+
+
+// RED <<<<<
+
+/// Stack Class of unit
+const char* CvUnitEntry::GetUnitStackClassType() const
+{
+	return m_strUnitStackClassType;
+}
+
+/// Max Stack for this unit
+int CvUnitEntry::GetUnitMaxStack() const
+{
+	return m_iUnitMaxStack;
+}
+
+/// 
+bool CvUnitEntry::IsOffensiveSupportFire() const
+{
+	return m_bOffensiveSupportFire;
+}
+
+/// 
+bool CvUnitEntry::IsDefensiveSupportFire() const
+{
+	return m_bDefensiveSupportFire;
+}
+
+/// 
+bool CvUnitEntry::HasCounterFireCapability() const
+{
+	return m_bCounterFire;
+}
+
+/// 
+bool CvUnitEntry::IsOnlySupportFire() const
+{
+	return m_bOnlySupportFire;
+}
+
+/// 
+bool CvUnitEntry::IsCounterFireSameCombatTypeOnly() const
+{
+	return m_bCounterFireSameCombatType;
+}
+
+// RED >>>>>
 
 // ARRAYS
 

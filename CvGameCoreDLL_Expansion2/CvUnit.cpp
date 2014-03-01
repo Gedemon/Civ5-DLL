@@ -861,7 +861,10 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	m_iTradeMissionInfluenceModifier = 0;
 	m_iTradeMissionGoldModifier = 0;
 
-	m_bBestDefender = false; // RED
+	// RED <<<<<
+	m_bBestDefender = false;
+	// RED >>>>>
+
 	m_bPromotionReady = false;
 	m_bDeathDelay = false;
 	m_bCombatFocus = false;
@@ -16006,26 +16009,6 @@ void CvUnit::rotateFacingDirectionCounterClockwise()
 	setFacingDirection(newDirection);
 }
 
-// RED <<<<<
-//	--------------------------------------------------------------------------------
-bool CvUnit::isMarkedBestDefender() const
-{
-	VALIDATE_OBJECT
-
-	return m_bBestDefender;
-}
-
-//	--------------------------------------------------------------------------------
-void CvUnit::setMarkedBestDefender(bool bNewValue)
-{
-	VALIDATE_OBJECT
-	if (bNewValue != isMarkedBestDefender())
-	{
-		m_bBestDefender = bNewValue;
-	}
-}
-// RED >>>>>
-
 //	--------------------------------------------------------------------------------
 bool CvUnit::isOutOfAttacks() const
 {
@@ -16339,23 +16322,6 @@ UnitClassTypes CvUnit::getUnitClassType() const
 	VALIDATE_OBJECT
 	return (UnitClassTypes)getUnitInfo().GetUnitClassType();
 }
-
-
-// RED <<<<<
-//	--------------------------------------------------------------------------------
-const CvString CvUnit::getUnitStackClassType() const
-{
-	VALIDATE_OBJECT
-	return getUnitInfo().GetUnitStackClassType();
-}
-
-//	--------------------------------------------------------------------------------
-int CvUnit::getUnitMaxStack() const
-{
-	VALIDATE_OBJECT
-	return getUnitInfo().GetUnitMaxStack();
-}
-// RED >>>>>
 
 //	--------------------------------------------------------------------------------
 const UnitTypes CvUnit::getLeaderUnitType() const
@@ -17948,6 +17914,13 @@ bool CvUnit::canRangeStrikeAt(int iX, int iY, bool bNeedWar, bool bNoncombatAllo
 	{
 		return false;
 	}
+
+	// RED <<<<<
+	if (isOnlySupportFire() && !isProvidingSupportFire())
+	{
+		return false;
+	}
+	// RED >>>>>
 
 	CvPlot* pTargetPlot = GC.getMap().plot(iX, iY);
 
@@ -19687,6 +19660,9 @@ bool CvUnit::IsCanAttackWithMoveNow() const
 
 	// Can't attack out of cities if there is more than 1 combat unit of the same domain in it.
 	// This does not apply to air units, which strangely don't show up as combat unit anyhow.
+	// RED : this is handled by getNumFriendlyUnitsOfType somewhere else in the code IIRC,
+	// RED : and should not be coded this way with multiple unit stacking that could be allowed...
+	/*
 	DomainTypes eSourceDomain = getDomainType();
 	CvPlot* pkPlot = plot();
 	if (pkPlot->isCity() && eSourceDomain != DOMAIN_AIR)
@@ -19706,6 +19682,7 @@ bool CvUnit::IsCanAttackWithMoveNow() const
 
 		return iCount <= 1;	// Just us?  Then it is ok.
 	}
+	*/
 
 	return true;
 }
@@ -21117,3 +21094,112 @@ FDataStream& operator>>(FDataStream& loadFrom, CvUnit& writeTo)
 	writeTo.read(loadFrom);
 	return loadFrom;
 }
+
+
+
+// RED <<<<<
+
+//	--------------------------------------------------------------------------------
+bool CvUnit::isMarkedBestDefender() const
+{
+	VALIDATE_OBJECT
+
+	return m_bBestDefender;
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setMarkedBestDefender(bool bNewValue)
+{
+	VALIDATE_OBJECT
+	if (bNewValue != isMarkedBestDefender())
+	{
+		m_bBestDefender = bNewValue;
+	}
+}
+
+//	--------------------------------------------------------------------------------
+const CvString CvUnit::getUnitStackClassType() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().GetUnitStackClassType();
+}
+
+//	--------------------------------------------------------------------------------
+int CvUnit::getUnitMaxStack() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().GetUnitMaxStack();
+}
+
+//	--------------------------------------------------------------------------------
+/// Can this Unit execute only support fire attack ?
+bool CvUnit::isOnlySupportFire() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().IsOnlySupportFire();
+}
+
+//	--------------------------------------------------------------------------------
+/// Can this Unit execute offensive support fire attack ?
+bool CvUnit::isOffensiveSupportFire() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().IsOffensiveSupportFire();
+}
+
+//	--------------------------------------------------------------------------------
+/// Can this Unit execute defensive support fire attack ?
+bool CvUnit::isDefensiveSupportFire() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().IsDefensiveSupportFire();
+}
+
+
+//	--------------------------------------------------------------------------------
+bool CvUnit::hasCounterFireCapability() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().HasCounterFireCapability();
+}
+
+//	--------------------------------------------------------------------------------
+/// Can this Unit execute counter fire against pUnit ?
+bool CvUnit::canCounterFire(CvUnit* pUnit) const
+{
+	if (!hasCounterFireCapability())
+		return false;
+
+	if (isCounterFireSameCombatTypeOnly() && (getUnitCombatType() != pUnit->getUnitCombatType()))
+		return false;
+
+	return true;
+}
+
+//	--------------------------------------------------------------------------------
+bool CvUnit::isCounterFireSameCombatTypeOnly() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().IsCounterFireSameCombatTypeOnly();
+}
+
+//	--------------------------------------------------------------------------------
+/// Is this Unit actually trying to provide support fire ?
+bool CvUnit::isProvidingSupportFire() const
+{
+	VALIDATE_OBJECT
+
+	return m_bProvidingSupportFire;
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setSupportFireState(bool bNewValue)
+{
+
+	VALIDATE_OBJECT
+	if (bNewValue != isProvidingSupportFire())
+	{
+		m_bProvidingSupportFire = bNewValue;
+	}
+}
+// RED >>>>>
