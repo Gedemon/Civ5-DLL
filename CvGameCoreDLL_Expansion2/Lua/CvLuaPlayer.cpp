@@ -4197,6 +4197,10 @@ int CvLuaPlayer::lGetTradeRoutes(lua_State* L)
 		lua_createtable(L, 0, 0);
 		const int t = lua_gettop(L);
 
+#if defined(MOD_API_TRADEROUTES)
+		lua_pushinteger(L, pConnection->m_eConnectionType);
+		lua_setfield(L, t, "TradeConnectionType");
+#endif
 		lua_pushinteger(L, pConnection->m_eDomain);
 		lua_setfield(L, t, "Domain");
 		lua_pushinteger(L, pkPlayer->getCivilizationType());
@@ -4364,6 +4368,10 @@ int CvLuaPlayer::lGetTradeRoutesAvailable(lua_State* L)
 							iTurnsLeft = pConnection->m_iTurnRouteComplete - GC.getGame().getGameTurn();
 						}
 
+#if defined(MOD_API_TRADEROUTES)
+						lua_pushinteger(L, kConnection.m_eConnectionType);
+						lua_setfield(L, t, "TradeConnectionType");
+#endif
 						lua_pushinteger(L, eDomain);
 						lua_setfield(L, t, "Domain");
 						lua_pushinteger(L, pkPlayer->getCivilizationType());
@@ -4486,6 +4494,10 @@ int CvLuaPlayer::lGetTradeRoutesToYou(lua_State* L)
 		lua_createtable(L, 0, 0);
 		const int t = lua_gettop(L);
 
+#if defined(MOD_API_TRADEROUTES)
+		lua_pushinteger(L, pConnection->m_eConnectionType);
+		lua_setfield(L, t, "TradeConnectionType");
+#endif
 		lua_pushinteger(L, pConnection->m_eDomain);
 		lua_setfield(L, t, "Domain");
 		lua_pushinteger(L, pkPlayer->getCivilizationType());

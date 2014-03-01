@@ -223,6 +223,7 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetTradeRouteIndex);
 	Method(IsRecalledTrader);
 	Method(RecallTrader);
+	Method(EndTrader);
 #endif
 
 	Method(GetBaseRangedCombatStrength);
@@ -2273,6 +2274,22 @@ int CvLuaUnit::lRecallTrader(lua_State* L)
 		int iRouteIndex = pkTrades->GetIndexFromUnitID(pkUnit->GetID(), pkUnit->getOwner());
 		if (iRouteIndex >= 0) {
 			pkTrades->RecallUnit(iRouteIndex, bImmediate);
+		}
+	}
+
+	return 0;
+}
+
+//------------------------------------------------------------------------------
+int CvLuaUnit::lEndTrader(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+
+	if (pkUnit->isTrade()) {
+		CvGameTrade* pkTrades = GC.getGame().GetGameTrade();
+		int iRouteIndex = pkTrades->GetIndexFromUnitID(pkUnit->GetID(), pkUnit->getOwner());
+		if (iRouteIndex >= 0) {
+			pkTrades->EndTradeRoute(iRouteIndex);
 		}
 	}
 

@@ -121,6 +121,7 @@ public:
 #if defined(MOD_API_TRADEROUTES)
 	bool IsRecalledUnit (int iIndex); // has the unit been recalled
 	void RecallUnit (int iIndex, bool bImmediate = false); // recall a trade unit
+	void EndTradeRoute (int iIndex); // end a trade route
 #endif
 	// trade unit movement
 	bool MoveUnit (int iIndex); // move a trade unit along its path for all its movement points

@@ -1067,6 +1067,19 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(CONTROL_RESTART_GAME);
 	EnumEnd(L);
 
+#if defined(MOD_API_TRADEROUTES)
+	// TradeConnectionTypes
+	EnumStart(L, "TradeConnectionTypes");
+	RegisterEnum(TRADE_CONNECTION_INTERNATIONAL);
+	RegisterEnum(TRADE_CONNECTION_FOOD);
+	RegisterEnum(TRADE_CONNECTION_PRODUCTION);
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+	RegisterEnum(TRADE_CONNECTION_WONDER_RESOURCE);
+#endif
+	RegisterEnum(NUM_TRADE_CONNECTION_TYPES);
+	EnumEnd(L);
+#endif
+
 #if defined(MOD_EVENTS_TERRAFORMING)	
 	// TerraformingEventTypes
 	EnumStart(L, "TerraformingEventTypes");

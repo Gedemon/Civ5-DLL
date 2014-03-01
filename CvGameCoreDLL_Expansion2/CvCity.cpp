@@ -3081,6 +3081,16 @@ bool CvCity::IsHasResourceLocal(ResourceTypes eResource, bool bTestVisible) cons
 	return bFoundResourceLinked;
 }
 
+#if defined(MOD_API_EXTENSIONS) || defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+int CvCity::GetNumResourceLocal(ResourceTypes eResource)
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eResource > -1 && eResource < GC.getNumResourceInfos(), "Invalid resource index.");
+
+	return m_paiNumResourcesLocal[eResource];
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 void CvCity::ChangeNumResourceLocal(ResourceTypes eResource, int iChange)
 {
@@ -8242,14 +8252,16 @@ int CvCity::GetLocalResourceWonderProductionMod(BuildingTypes eBuilding, CvStrin
 
 				if (pGameTrade->m_aTradeConnections[ui].m_eConnectionType == TRADE_CONNECTION_WONDER_RESOURCE)
 				{
+					CvCity* pOriginCity = CvGameTrade::GetOriginCity(pGameTrade->m_aTradeConnections[ui]);
 					CvCity* pDestCity = CvGameTrade::GetDestCity(pGameTrade->m_aTradeConnections[ui]);
+
 					if (pDestCity->getX() == getX() && pDestCity->getY() == getY())
 					{
-						bWonderResourceIn = true;
+						ResourceTypes eWonderResource = ::getWonderResource();
+						bWonderResourceIn = (eWonderResource != NO_RESOURCE && pOriginCity->GetNumResourceLocal(eWonderResource) > 0);
 					}
 					else
 					{
-						CvCity* pOriginCity = CvGameTrade::GetOriginCity(pGameTrade->m_aTradeConnections[ui]);
 						if (pOriginCity->getX() == getX() && pOriginCity->getY() == getY())
 						{
 							bWonderResourceOut = true;
@@ -12212,6 +12224,34 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 				{
 					kOwner.GetTreasury()->ChangeGoldTimes100(iProductionGold);
 				}
+				
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+				if (MOD_TRADE_WONDER_RESOURCE_ROUTES) {
+					// If the AI has just finished building a World Wonder, cancel any marble trade routes into this city
+					if (!GetPlayer()->isHuman()) {
+						const BuildingClassTypes eBuildingClass = (BuildingClassTypes)pkBuildingInfo->GetBuildingClassType();
+						CvBuildingClassInfo* pBuildingClass = GC.getBuildingClassInfo(eBuildingClass);
+						if (pBuildingClass && ::isWorldWonderClass(*pBuildingClass)) {
+							CvGameTrade* pGameTrade = GC.getGame().GetGameTrade();
+							for (uint ui = 0; ui < pGameTrade->m_aTradeConnections.size(); ui++) {
+								if (pGameTrade->IsTradeRouteIndexEmpty(ui)) {
+									continue;
+								}
+
+								TradeConnection kConnection = pGameTrade->m_aTradeConnections[ui];
+
+								if (kConnection.m_eConnectionType == TRADE_CONNECTION_WONDER_RESOURCE) {
+									CvCity* pDestCity = CvGameTrade::GetDestCity(kConnection);
+
+									if (pDestCity->getX() == getX() && pDestCity->getY() == getY()) {
+										kConnection.m_iCircuitsCompleted = kConnection.m_iCircuitsToComplete;
+									}
+								}
+							}
+						}
+					}
+				}
+#endif
 
 				if(GC.getLogging() && GC.getAILogging())
 				{

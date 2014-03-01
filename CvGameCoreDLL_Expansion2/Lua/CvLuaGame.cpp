@@ -2892,6 +2892,8 @@ int CvLuaGame::lGetTradeRoute(lua_State* L)
 		lua_createtable(L, 0, 0);
 		const int t = lua_gettop(L);
 
+		lua_pushinteger(L, pConnection->m_eConnectionType);
+		lua_setfield(L, t, "TradeConnectionType");
 		lua_pushinteger(L, pConnection->m_eDomain);
 		lua_setfield(L, t, "Domain");
 		lua_pushinteger(L, pFromPlayer->getCivilizationType());

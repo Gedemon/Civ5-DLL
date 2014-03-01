@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 42)
+#define MOD_DLL_VERSION_NUMBER ((uint) 43)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -179,8 +179,7 @@
 #define MOD_BUILDINGS_CITY_WORKING                  gCustomMods.isBUILDINGS_CITY_WORKING()
 
 // Permits wonder resource (ie Marble) trade routes to be established
-// TODO - WH - Marble trade routes
-// #define MOD_TRADE_WONDER_RESOURCE_ROUTES            gCustomMods.isTRADE_WONDER_RESOURCE_ROUTES()
+#define MOD_TRADE_WONDER_RESOURCE_ROUTES            gCustomMods.isTRADE_WONDER_RESOURCE_ROUTES()
 
 // Restricts worker suggestions to local tiles
 #define MOD_UNITS_LOCAL_WORKERS                     gCustomMods.isUNITS_LOCAL_WORKERS()
@@ -385,6 +384,8 @@
 #define MOD_BUGFIX_BARB_CAMP_TERRAINS               gCustomMods.isBUGFIX_BARB_CAMP_TERRAINS()
 // Fixes the bug where Barb Camps won't spawn units if they are added via pPlot:SetImprovementType()
 #define MOD_BUGFIX_BARB_CAMP_SPAWNING               gCustomMods.isBUGFIX_BARB_CAMP_SPAWNING()
+// Fixes the bug where ranged combat (archers, catapults, ships and planes) against barbarians generates Great People XP
+#define MOD_BUGFIX_BARB_GP_XP                       gCustomMods.isBUGFIX_BARB_GP_XP()
 // Fixes the bug where you can't remove roads in no-mans-land originally built by a now dead player
 #define MOD_BUGFIX_REMOVE_GHOST_ROUTES              gCustomMods.isBUGFIX_REMOVE_GHOST_ROUTES()
 // Fixes healing units ignoring enemy units and sleeping units under direct fire remaining asleep - thanks to hulkster for highlighting the latter issue
@@ -599,6 +600,8 @@ enum TerraformingEventTypes {
 #define MOD_DB_COL_NAME "Name"
 #define MOD_DB_COL_VALUE "Value"
 #define MOD_DB_COL_CLASS "Class"
+#define MOD_DB_COL_DBUPDATES "DbUpdates"
+#define MOD_DB_UPDATES "CustomModDbUpdates"
 
 
 // CustomMod option wrappers
@@ -761,6 +764,7 @@ public:
 	MOD_OPT_DECL(BUGFIX_CITY_STACKING);
 	MOD_OPT_DECL(BUGFIX_BARB_CAMP_TERRAINS);
 	MOD_OPT_DECL(BUGFIX_BARB_CAMP_SPAWNING);
+	MOD_OPT_DECL(BUGFIX_BARB_GP_XP);
 	MOD_OPT_DECL(BUGFIX_REMOVE_GHOST_ROUTES);
 	MOD_OPT_DECL(BUGFIX_UNITS_AWAKE_IN_DANGER);
 	MOD_OPT_DECL(BUGFIX_WORKERS_VISIBLE_DANGER);

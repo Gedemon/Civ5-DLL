@@ -229,6 +229,7 @@ protected:
 	LUAAPIEXTN(GetTradeRouteIndex);
 	LUAAPIEXTN(IsRecalledTrader);
 	LUAAPIEXTN(RecallTrader);
+	LUAAPIEXTN(EndTrader);
 #endif
 
 	static int lGetBaseRangedCombatStrength(lua_State* L);

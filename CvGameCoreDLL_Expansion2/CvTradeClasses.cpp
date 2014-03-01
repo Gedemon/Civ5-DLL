@@ -18,6 +18,7 @@
 #include "cvStopWatch.h"
 #include "CvCityManager.h"
 #if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+#include "CvInternalGameCoreUtils.h"
 #include "CvWonderProductionAI.h"
 #endif
 
@@ -181,19 +182,7 @@ bool CvGameTrade::CanCreateTradeRoute(CvCity* pOriginCity, CvCity* pDestCity, Do
 		else if (eConnectionType == TRADE_CONNECTION_WONDER_RESOURCE)
 		{
 			bool bAllowsWonderResourceConnection = false;
-
-			// Find the wonder resource, we don't assume it's Marble, but we do assume there's only one
-			ResourceTypes eWonderResource = NO_RESOURCE;
-			for (int iResourceLoop = 0; iResourceLoop < GC.getNumResourceInfos(); iResourceLoop++) {
-				const ResourceTypes eResource = static_cast<ResourceTypes>(iResourceLoop);
-				CvResourceInfo* pkResource = GC.getResourceInfo(eResource);
-				if (pkResource) {
-					if (pkResource->getWonderProductionMod() != 0) {
-						eWonderResource = eResource;
-						break;
-					}
-				}
-			}
+			ResourceTypes eWonderResource = ::getWonderResource();
 
 			// We need the wonder resource at pOriginCity AND not at pDestCity
 			if (eWonderResource != NO_RESOURCE) {
@@ -1389,6 +1378,20 @@ void CvGameTrade::RecallUnit (int iIndex, bool bImmediate) {
 	if (bImmediate) {
 		kTradeConnection.m_bTradeUnitMovingForward = false;
 	}
+}
+
+//	--------------------------------------------------------------------------------
+/// end a trade route
+void CvGameTrade::EndTradeRoute (int iIndex) {
+	CvAssertMsg(iIndex >= 0 && iIndex < (int)m_aTradeConnections.size(), "iIndex out of bounds");
+	if (iIndex < 0 || iIndex >= (int)m_aTradeConnections.size())
+	{
+		return;
+	}
+
+	TradeConnection &kTradeConnection = m_aTradeConnections[iIndex];
+	kTradeConnection.m_iCircuitsCompleted = kTradeConnection.m_iCircuitsToComplete;
+	kTradeConnection.m_bTradeUnitRecalled = true;
 }
 #endif
 
@@ -4597,27 +4600,14 @@ void CvTradeAI::PrioritizeTradeRoutes(TradeConnectionList& aTradeConnectionList)
 #if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
 	if (MOD_TRADE_WONDER_RESOURCE_ROUTES) {
 		// WONDER WONDER WONDER WONDER
-		// Find the wonder resource, we don't assume it's Marble, but we do assume there's only one
-		ResourceTypes eWonderResource = NO_RESOURCE;
-		for (int iResourceLoop = 0; iResourceLoop < GC.getNumResourceInfos(); iResourceLoop++)
-		{
-			const ResourceTypes eResource = static_cast<ResourceTypes>(iResourceLoop);
-			CvResourceInfo* pkResource = GC.getResourceInfo(eResource);
-			if (pkResource)
-			{
-				if (pkResource->getWonderProductionMod() != 0)
-				{
-					eWonderResource = eResource;
-					break;
-				}
-			}
-		}
+		ResourceTypes eWonderResource = ::getWonderResource();
 
 		if (eWonderResource != NO_RESOURCE) {
 			std::vector<CvCity*> apWonderTargetCities;
 			CvCity* pCity = NULL;
 			int iCityLoop;
 			for (pCity = m_pPlayer->firstCity(&iCityLoop); pCity != NULL; pCity = m_pPlayer->nextCity(&iCityLoop)) {
+				// Only interested in cities that don't have the wonder resource locally and are actually building a wonder!
 				if (!pCity->IsHasResourceLocal(eWonderResource, true))
 				{
 					BuildingTypes eBuilding = pCity->getProductionBuilding();
@@ -4707,6 +4697,16 @@ void CvTradeAI::PrioritizeTradeRoutes(TradeConnectionList& aTradeConnectionList)
 		aTradeConnectionList.push_back(aFoodSortedTR[0].m_kTradeConnection);
 	}
 	
+#if defined(MOD_TRADE_WONDER_RESOURCE_ROUTES)
+	if (MOD_TRADE_WONDER_RESOURCE_ROUTES) {
+		// add first wonder resource tr
+		if (aWonderSortedTR.size() > 0)
+		{
+			aTradeConnectionList.push_back(aWonderSortedTR[0].m_kTradeConnection);
+		}
+	}
+#endif
+
 	// add first production tr
 	if (aProductionSortedTR.size() > 0)
 	{

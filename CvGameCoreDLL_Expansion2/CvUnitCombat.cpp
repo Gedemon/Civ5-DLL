@@ -601,8 +601,11 @@ void CvUnitCombat::GenerateRangedCombatInfo(CvUnit& kAttacker, CvUnit* pkDefende
 	pkCombatInfo->setExperience(BATTLE_UNIT_ATTACKER, iExperience);
 	pkCombatInfo->setMaxExperienceAllowed(BATTLE_UNIT_ATTACKER, iMaxXP);
 	pkCombatInfo->setInBorders(BATTLE_UNIT_ATTACKER, plot.getOwner() == eDefenderOwner);
-	// TODO - WH - bug, the attacker should only get ranged global XP if the DEFENDER is not a barb
+#if defined (MOD_BUGFIX_BARB_GP_XP)
+	pkCombatInfo->setUpdateGlobal(BATTLE_UNIT_ATTACKER, ((MOD_BUGFIX_BARB_GP_XP) ? !pkDefender->isBarbarian() : !kAttacker.isBarbarian()));
+#else
 	pkCombatInfo->setUpdateGlobal(BATTLE_UNIT_ATTACKER, !kAttacker.isBarbarian());
+#endif
 
 	iExperience = /*2*/ GC.getEXPERIENCE_DEFENDING_UNIT_RANGED();
 	pkCombatInfo->setExperience(BATTLE_UNIT_DEFENDER, iExperience);
@@ -1277,8 +1280,11 @@ void CvUnitCombat::GenerateAirCombatInfo(CvUnit& kAttacker, CvUnit* pkDefender, 
 	pkCombatInfo->setExperience(BATTLE_UNIT_ATTACKER, iExperience);
 	pkCombatInfo->setMaxExperienceAllowed(BATTLE_UNIT_ATTACKER, iMaxXP);
 	pkCombatInfo->setInBorders(BATTLE_UNIT_ATTACKER, plot.getOwner() == eDefenderOwner);
-	// TODO - WH - bug, the attacker should only get air ranged global XP if the DEFENDER is not a barb
+#if defined (MOD_BUGFIX_BARB_GP_XP)
+	pkCombatInfo->setUpdateGlobal(BATTLE_UNIT_ATTACKER, ((MOD_BUGFIX_BARB_GP_XP) ? !pkDefender->isBarbarian() : !kAttacker.isBarbarian()));
+#else
 	pkCombatInfo->setUpdateGlobal(BATTLE_UNIT_ATTACKER, !kAttacker.isBarbarian());
+#endif
 
 	iExperience = /*2*/ GC.getEXPERIENCE_DEFENDING_UNIT_AIR();
 	pkCombatInfo->setExperience(BATTLE_UNIT_DEFENDER, iExperience);

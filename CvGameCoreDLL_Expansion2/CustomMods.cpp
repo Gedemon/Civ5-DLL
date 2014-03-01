@@ -176,9 +176,47 @@ int CustomMods::getOption(string sOption, int defValue) {
 
 		while (kResults.Step()) {
 			const char* szName = kResults.GetText(MOD_DB_COL_NAME);
-			const int iValue = kResults.GetInt(MOD_DB_COL_VALUE);
+			const int iDbUpdates = kResults.GetInt(MOD_DB_COL_DBUPDATES);
+			int iValue = kResults.GetInt(MOD_DB_COL_VALUE);
 
 			bool bPrefixError = (strncmp(szName, szBadPrefix, strlen(szBadPrefix)) == 0);
+
+			if (iValue && iDbUpdates) {
+				Database::Results kUpdates;
+				char szQuery[512] = {0};
+
+				// Did the required mods to the database occur?  We'll assume they didn't, unless proven otherwise!
+				bool bOK = false;
+
+				sprintf_s(szQuery, "Name='%s' AND Value=1", szName);
+				if (DB.SelectWhere(kUpdates, MOD_DB_UPDATES, szQuery)) {
+					if (kUpdates.Step()) {
+						// BINGO!  We have our updates
+						bOK = true;
+					} else {
+						// All is not lost as there could be BOTH xml and sql updates
+						sprintf_s(szQuery, "Name='%s_SQL' AND Value=1", szName);
+						if (DB.SelectWhere(kUpdates, MOD_DB_UPDATES, szQuery)) {
+							if (kUpdates.Step()) {
+								sprintf_s(szQuery, "Name='%s_XML' AND Value=1", szName);
+								if (DB.SelectWhere(kUpdates, MOD_DB_UPDATES, szQuery)) {
+									if (kUpdates.Step()) {
+										// BINGO!  We have BOTH our updates
+										bOK = true;
+									}
+								}
+							}
+						}
+					}
+				}
+
+				if (bOK) {
+					CUSTOMLOG("%s: %s appears to have the required database updates", (bPrefixError ? "PREFIX ERROR" : "Cache"), szName);
+				} else {
+					CUSTOMLOG("%s: %s has missing database updates!", (bPrefixError ? "PREFIX ERROR" : "Cache"), szName);
+					iValue = 0;
+				}
+			}
 
 			CUSTOMLOG("%s: %s = %d", (bPrefixError ? "PREFIX ERROR" : "Cache"), szName, iValue);
 			m_options[string(szName)] = iValue;
@@ -317,6 +355,7 @@ int CustomMods::getOption(string sOption, int defValue) {
 		MOD_OPT_CACHE(BUGFIX_CITY_STACKING);
 		MOD_OPT_CACHE(BUGFIX_BARB_CAMP_TERRAINS);
 		MOD_OPT_CACHE(BUGFIX_BARB_CAMP_SPAWNING);
+		MOD_OPT_CACHE(BUGFIX_BARB_GP_XP);
 		MOD_OPT_CACHE(BUGFIX_REMOVE_GHOST_ROUTES);
 		MOD_OPT_CACHE(BUGFIX_UNITS_AWAKE_IN_DANGER);
 		MOD_OPT_CACHE(BUGFIX_WORKERS_VISIBLE_DANGER);
