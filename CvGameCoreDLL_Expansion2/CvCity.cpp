@@ -364,12 +364,12 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 		static BuildTypes eBuildRemoveForest = (BuildTypes)GC.getInfoTypeForString("BUILD_REMOVE_FOREST");
 
 		// Only for major civs building on a forest
-		if(!owningPlayer.isMinorCiv() && pPlot->getFeatureType() == FEATURE_FOREST && MOD_GLOBAL_CITY_FOREST_BONUS)
+		if(MOD_GLOBAL_CITY_FOREST_BONUS && !owningPlayer.isMinorCiv() && pPlot->getFeatureType() == FEATURE_FOREST)
 		{
 			// Don't do this for the AI capitals - it's just too much of an initial boost!
 			if (owningPlayer.isHuman() || owningPlayer.getCapitalCity() != NULL) {
-				CvCity *thisCity = this;
-				int iProduction = pPlot->getFeatureProduction(eBuildRemoveForest, getOwner(), &thisCity);
+				CvCity* pLogCity = NULL;
+				int iProduction = pPlot->getFeatureProduction(eBuildRemoveForest, getOwner(), &pLogCity);
 
 				if(iProduction > 0)
 				{
@@ -8271,8 +8271,8 @@ int CvCity::GetLocalResourceWonderProductionMod(BuildingTypes eBuilding, CvStrin
 					break;
 				}
 			}
-			if (bWonderResourceIn) CUSTOMLOG("Shipping a wonder resource into %s", getName().c_str());
-			if (bWonderResourceOut) CUSTOMLOG("Shipping a wonder resource out of %s", getName().c_str());
+			// if (bWonderResourceIn) CUSTOMLOG("Shipping a wonder resource into %s", getName().c_str());
+			// if (bWonderResourceOut) CUSTOMLOG("Shipping a wonder resource out of %s", getName().c_str());
 		}
 #endif
 

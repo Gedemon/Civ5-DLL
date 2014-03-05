@@ -20207,6 +20207,18 @@ RouteTypes CvUnit::GetBestBuildRoute(CvPlot* pPlot, BuildTypes* peBestBuild) con
 
 	int iBestValue = 0;
 	RouteTypes eBestRoute = NO_ROUTE;
+	
+#if defined(MOD_GLOBAL_QUICK_ROUTES)
+	CvPlayer& kPlayer = GET_PLAYER(getOwner());
+	const MissionQueueNode* pkMissionNode = HeadMissionQueueNode();
+	bool bOnlyRoad = MOD_GLOBAL_QUICK_ROUTES && kPlayer.isHuman() && (pkMissionNode != NULL && pkMissionNode->eMissionType == CvTypes::getMISSION_ROUTE_TO());
+	
+	if (bOnlyRoad) {
+		// If there is no road to the mission end plot, bOnlyRoad is true
+		CvUnit* me = kPlayer.getUnit(m_iID); // God I truely hate "const" - we're in a const method, but LastMissionPlot() isn't so we can't call it!!!
+		bOnlyRoad = !kPlayer.IsPlotConnectedToPlot(pPlot, me->LastMissionPlot(), ROUTE_ROAD);;
+	}
+#endif
 
 	for(int iI = 0; iI < GC.getNumBuildInfos(); iI++)
 	{
@@ -20223,6 +20235,12 @@ RouteTypes CvUnit::GetBestBuildRoute(CvPlot* pPlot, BuildTypes* peBestBuild) con
 					if(canBuild(pPlot, eBuild))
 					{
 						int iValue = pkRouteInfo->getValue();
+						
+#if defined(MOD_GLOBAL_QUICK_ROUTES)
+						if (bOnlyRoad && eRoute != ROUTE_ROAD) {
+							iValue = 0;
+						}
+#endif
 
 						if(iValue > iBestValue)
 						{

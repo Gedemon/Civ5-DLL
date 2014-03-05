@@ -2503,14 +2503,6 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 					}
 				}
 			}
-#if defined(MOD_GLOBAL_QUICK_ROUTES)
-		} else if (MOD_GLOBAL_QUICK_ROUTES) {
-			// If there is no route in this plot, and the player is human, only permit roads 
-			// (they can come back later and upgrade to rail, but let's get the trade route connected quickly)
-			if (GET_PLAYER(ePlayer).isHuman() && eRoute > ROUTE_ROAD) {
-				return false;
-			}
-#endif
 		}
 
 		bValid = true;
@@ -6063,7 +6055,6 @@ void CvPlot::setFeatureType(FeatureTypes eNewValue, int iVariety)
 		}
 
 #if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
-		// TODO - WH - need to enable and test tile improvement events
 		if (MOD_EVENTS_TILE_IMPROVEMENTS) {
 			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TileFeatureChanged, getX(), getY(), getOwner(), eOldFeature, eNewValue);
 		}
@@ -6602,6 +6593,7 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 						}
 					}
 				}
+
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 				// Embassy extra vote in WC mod
 				if(MOD_DIPLOMACY_CITYSTATES && newImprovementEntry.GetCityStateExtraVote() > 0 && eBuilder != NO_PLAYER)
@@ -6992,13 +6984,13 @@ void CvPlot::SetRoutePillaged(bool bPillaged)
 				}
 			}
 		}
-
-#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
-		if (bEvents && MOD_EVENTS_TILE_IMPROVEMENTS) {
-			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TileRouteChanged, getX(), getY(), getOwner(), getRouteType(), getRouteType(), IsRoutePillaged());
-		}
-#endif
 	}
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+	else
+	{
+		bEvents = false;
+	}
+#endif
 
 	m_bRoutePillaged = bPillaged;
 
@@ -7016,6 +7008,12 @@ void CvPlot::SetRoutePillaged(bool bPillaged)
 			}
 		}
 	}
+
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+	if (bEvents && MOD_EVENTS_TILE_IMPROVEMENTS) {
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_TileRouteChanged, getX(), getY(), getOwner(), getRouteType(), getRouteType(), IsRoutePillaged());
+	}
+#endif
 }
 
 //	--------------------------------------------------------------------------------

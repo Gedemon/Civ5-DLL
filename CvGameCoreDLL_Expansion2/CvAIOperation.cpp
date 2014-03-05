@@ -3624,8 +3624,53 @@ bool CvAIOperationDiplomatDelegation::ArmyInPosition(CvArmyAI* pArmy)
 		// If we were gathering forces, we have to insist that any escort is in the same plot as the Diplomat.
 		// If not we'll fall through and just stay in this state.
 	case AI_OPERATION_STATE_GATHERING_FORCES:
+		// No escort, can just let base class handle it
+		if(!m_bEscorted)
+		{
+			return CvAIOperation::ArmyInPosition(pArmy);
+		}
 
-		return CvAIOperation::ArmyInPosition(pArmy);
+		// More complex if we are waiting for an escort
+		else
+		{
+			iUnitID = pArmy->GetFirstUnitID();
+			if(iUnitID != -1)
+			{
+				pDiplomat = GET_PLAYER(m_eOwner).getUnit(iUnitID);
+			}
+			iUnitID = pArmy->GetNextUnitID();
+			if(iUnitID != -1)
+			{
+				pEscort = GET_PLAYER(m_eOwner).getUnit(iUnitID);
+			}
+			else
+			{
+				// Escort died while gathering forces.  Abort (and return TRUE since state changed)
+				m_eCurrentState = AI_OPERATION_STATE_ABORTED;
+				m_eAbortReason = AI_ABORT_ESCORT_DIED;
+				return true;
+			}
+			if(pDiplomat != NULL && pEscort != NULL && pDiplomat->plot() == pEscort->plot())
+			{
+				// let's see if the target still makes sense (this is modified from RetargetCivilian)
+				CvPlot* pBetterTarget = FindBestTarget(pDiplomat, true);
+
+				// No targets at all!  Abort
+				if(pBetterTarget == NULL)
+				{
+					m_eCurrentState = AI_OPERATION_STATE_ABORTED;
+					m_eAbortReason = AI_ABORT_NO_TARGET;
+					return false;
+				}
+				// If we have a target
+				else
+				{
+					SetTargetPlot(pBetterTarget);
+					pArmy->SetGoalPlot(pBetterTarget);
+				}
+				return CvAIOperation::ArmyInPosition(pArmy);
+			}
+		}
 		break;
 	case AI_OPERATION_STATE_MOVING_TO_TARGET:
 	case AI_OPERATION_STATE_AT_TARGET:

@@ -9801,7 +9801,7 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 						}
 						if (eOpinion <= MAJOR_CIV_OPINION_COMPETITOR)
 						{
-							iScore += 10;
+							iScore += 11;
 						}
 						else if (eOpinion >= MAJOR_CIV_OPINION_FAVORABLE)
 						{
@@ -9825,7 +9825,7 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 						}
 						else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_PROTECTIVE)
 						{
-							iScore += 7;
+							iScore += 8;
 						}
 						else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_IGNORE)
 						{
@@ -9841,21 +9841,21 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 						}
 						else if(eProximity == PLAYER_PROXIMITY_CLOSE)
 						{
-							iScore += 4;
+							iScore += 5;
 						}
 						else if(eProximity == PLAYER_PROXIMITY_NEIGHBORS)
 						{
-							iScore += 6;
+							iScore += 7;
 						}
 					}
 					else if(GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) > 40)
 					{
-						iScore += -100;
+						iScore += -200;
 					}
 				}
 				else if(eAlliedPlayer == ePlayer)
 				{
-					iScore += -200;
+					iScore += -500;
 				}
 			}
 			else if(GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) > 40)
@@ -9912,7 +9912,7 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 					}
 					if (eOpinion <= MAJOR_CIV_OPINION_COMPETITOR)
 					{
-						iScore += 11;
+						iScore += 12;
 					}
 
 					if (eOpinion >= MAJOR_CIV_OPINION_FAVORABLE)
@@ -9923,7 +9923,7 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 					{
 						if (eOpinion <= MAJOR_CIV_OPINION_COMPETITOR)
 						{
-							iScore += 40;
+							iScore += 42;
 						}
 						else
 						{
@@ -10073,7 +10073,7 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 				}		
 				else if (eAlliedPlayer == ePlayer)
 				{
-					iScore += -300;
+					iScore += -500;
 				}
 			}
 			if (GET_PLAYER(eTargetCityState).GetMinorCivAI()->IsFriends(ePlayer))

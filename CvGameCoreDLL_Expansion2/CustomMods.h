@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 43)
+#define MOD_DLL_VERSION_NUMBER ((uint) 44)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -115,7 +115,7 @@
 #define MOD_GLOBAL_GRATEFUL_SETTLERS                gCustomMods.isGLOBAL_GRATEFUL_SETTLERS()
 // Units that can found a city take their religion with them
 #define MOD_GLOBAL_RELIGIOUS_SETTLERS               gCustomMods.isGLOBAL_RELIGIOUS_SETTLERS()
-// TODO - WH - Fix this! Route To will only build roads, or upgrade road to rail, for human players
+// Route To will only build roads, or upgrade road to rail, for human players
 #define MOD_GLOBAL_QUICK_ROUTES                     gCustomMods.isGLOBAL_QUICK_ROUTES()
 // Subs under ice are immune to all attacks except from other subs
 #define MOD_GLOBAL_SUBS_UNDER_ICE_IMMUNITY          gCustomMods.isGLOBAL_SUBS_UNDER_ICE_IMMUNITY()
@@ -215,6 +215,12 @@
 //   GameEvents.TerraformingMap.Add(function(iEvent, iLoad) end)
 //   GameEvents.TerraformingPlot.Add(function(iEvent, iPlotX, iPlotY, iInfo, iNewValue, iOldValue, iNewExtra, iOldExtra) end)
 #define MOD_EVENTS_TERRAFORMING                     gCustomMods.isEVENTS_TERRAFORMING()
+
+// Events sent when plots change from worker actions -->
+//   GameEvents.TileFeatureChanged.Add(function(iPlotX, iPlotY, iOwner, iOldFeature, iNewFeature) end)
+//   GameEvents.TileImprovementChanged.Add(function(iPlotX, iPlotY, iOwner, iOldImprovement, iNewImprovement, bPillaged) end)
+//   GameEvents.TileRouteChanged.Add(function(iPlotX, iPlotY, iOwner, iOldRoute, iNewRoute, bPillaged) end)
+#define MOD_EVENTS_TILE_IMPROVEMENTS                gCustomMods.isEVENTS_TILE_IMPROVEMENTS()
 
 // Event sent when a team circumnavigates the globe
 //   GameEvents.CircumnavigatedGlobe.Add(function(iTeam) end)
@@ -711,6 +717,7 @@ public:
 	MOD_OPT_DECL(AI_SECONDARY_SETTLERS);
 
 	MOD_OPT_DECL(EVENTS_TERRAFORMING);
+	MOD_OPT_DECL(EVENTS_TILE_IMPROVEMENTS);
 	MOD_OPT_DECL(EVENTS_CIRCUMNAVIGATION);
 	MOD_OPT_DECL(EVENTS_NEW_ERA);
 	MOD_OPT_DECL(EVENTS_NW_DISCOVERY);
