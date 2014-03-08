@@ -1635,6 +1635,30 @@ void CvUnit::doTurn()
 	VALIDATE_OBJECT
 	CvAssertMsg(!IsDead(), "isDead did not return false as expected");
 
+	// Providing support fire is a temporary state, it should not return true there...
+	if (isProvidingSupportFire())
+	{
+		CvString redLogMessage;
+		FILogFile* pLog = LOGFILEMGR.GetLog("red_combat_debug.log", FILogFile::kDontTimeStamp);	
+		redLogMessage.Format("WARNING: %s (ID= %d - player= %d) is still marked as providing support fire in unit::doTurn() -> removing mark !", getNameKey(), GetID(), getOwner());
+		pLog->Msg("-----------------------------------------------------");
+		pLog->Msg(redLogMessage);
+		pLog->Msg("-----------------------------------------------------");
+		setSupportFireState(false);
+	}
+	
+	// Being marked "BestDefender" is a temporary state, it should not return true there...
+	if (isMarkedBestDefender())
+	{
+		CvString redLogMessage;
+		FILogFile* pLog = LOGFILEMGR.GetLog("red_combat_debug.log", FILogFile::kDontTimeStamp);	
+		redLogMessage.Format("WARNING: %s (ID= %d - player= %d) is still marked as best defender in unit::doTurn() -> removing mark !", getNameKey(), GetID(), getOwner());
+		pLog->Msg("-----------------------------------------------------");
+		pLog->Msg(redLogMessage);
+		pLog->Msg("-----------------------------------------------------");
+		setMarkedBestDefender(false);
+	}
+
 	// Wake unit if skipped last turn
 	ActivityTypes eActivityType = GetActivityType();
 	bool bHoldCheck = (eActivityType == ACTIVITY_HOLD) && (isHuman() || !getFortifyTurns());
@@ -17841,6 +17865,13 @@ bool CvUnit::canRangeStrike() const
 		}
 	}
 
+	// RED <<<<<
+	if (isOnlySupportFire() && !isProvidingSupportFire())
+	{
+		return false;
+	}
+	// RED >>>>>
+
 	if(isOutOfAttacks())
 	{
 		return false;
@@ -17914,13 +17945,6 @@ bool CvUnit::canRangeStrikeAt(int iX, int iY, bool bNeedWar, bool bNoncombatAllo
 	{
 		return false;
 	}
-
-	// RED <<<<<
-	if (isOnlySupportFire() && !isProvidingSupportFire())
-	{
-		return false;
-	}
-	// RED >>>>>
 
 	CvPlot* pTargetPlot = GC.getMap().plot(iX, iY);
 
@@ -18773,7 +18797,9 @@ bool CvUnit::UnitAttack(int iX, int iY, int iFlags, int iSteps)
 	{
 		return false;
 	}
-
+	// RED <<<<<
+	// This is called too late (after moving) with multiple units per tile allowed...
+	/*
 	if(isHuman() && getOwner() == GC.getGame().getActivePlayer())
 	{
 		TeamTypes eRivalTeam = GetDeclareWarMove(*pDestPlot);
@@ -18804,7 +18830,7 @@ bool CvUnit::UnitAttack(int iX, int iY, int iFlags, int iSteps)
 
 			return false;
 		}
-	}
+	}// RED >>>>> */
 
 	const CvPathNodeArray& kPathNodeArray = GetPathNodeArray();
 
@@ -21197,9 +21223,29 @@ void CvUnit::setSupportFireState(bool bNewValue)
 {
 
 	VALIDATE_OBJECT
+
+	CvString redLogMessage;
+	FILogFile* pLog = LOGFILEMGR.GetLog("red_support_fire_state_debug.log", FILogFile::kDontTimeStamp);	
+	if (bNewValue == true)
+	{
+		redLogMessage.Format("1- Mark %s (ID= %d - player= %d) to provide support fire", getNameKey(), GetID(), getOwner());
+		pLog->Msg("-----------------------------------------------------");
+		pLog->Msg(redLogMessage);
+		m_bProvidingSupportFire = bNewValue;
+	}
+	else
+	{
+		redLogMessage.Format("2- Remove %s (ID= %d - player= %d) from providing support fire", getNameKey(), GetID(), getOwner());
+		pLog->Msg(redLogMessage);
+		pLog->Msg("-----------------------------------------------------");	
+		m_bProvidingSupportFire = bNewValue;
+	}
+
+	/*
 	if (bNewValue != isProvidingSupportFire())
 	{
 		m_bProvidingSupportFire = bNewValue;
 	}
+	//*/
 }
 // RED >>>>>
