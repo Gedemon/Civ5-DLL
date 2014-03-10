@@ -285,5 +285,11 @@ protected:
 
 	static int lGetCityPurchaseID(lua_State* L);
 	static int lSetCityPurchaseID(lua_State* L);
+	
+	// RED <<<<<
+	static int lGetCulture(lua_State* L);
+	static int lGetTotalCulture(lua_State* L);
+	static int lGetCulturePercent(lua_State* L);
+	// RED >>>>>
 };
 #endif

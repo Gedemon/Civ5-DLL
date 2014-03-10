@@ -34,6 +34,10 @@
 #define MAX_DAMAGE_MEMBER_COUNT								32
 #define CVHEADER_VERSIONING_STARTED							7		/// The version of CvSavedGameHeader where we added versions to CvPreGame data.
 
+// RED <<<<<
+#define SEPARATIST_PLAYER									((PlayerTypes)(MAX_CIV_PLAYERS + 1)) // fake player for Revolutions
+// RED >>>>>
+
 // don't use -1 since that is a valid wrap coordinate
 #define INVALID_PLOT_COORD									(-(INT_MAX))
 

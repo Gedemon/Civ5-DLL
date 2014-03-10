@@ -565,6 +565,13 @@ public:
 	int GetNumArchaeologySites() const;
 	int GetNumHiddenArchaeologySites() const;
 
+	// RED <<<<<	
+
+	void setCultureDiffusionRatePer1000(int iNewValue);
+	int getCultureDiffusionRatePer1000() const;
+
+	// RED >>>>>
+
 public:
 
 	//Function to determine city size from city population
@@ -769,7 +776,11 @@ protected:
 	void PopulateDigSite(CvPlot& kPlot, EraTypes eEra, GreatWorkArtifactClass eArtifact);
 	void SpawnArchaeologySitesHistorically();
 
+	// RED <<<<<
 
+	int m_iCultureDiffusionRatePer1000;
+
+	// RED >>>>>
 };
 
 #endif

@@ -1100,6 +1100,9 @@ public:
 	bool isProvidingSupportFire() const;
 	void setSupportFireState(bool bNewValue);
 
+	// Culture Diffusion	
+	void capturePlot(CvPlot* pPlot);
+
 	// RED >>>>>
 
 	bool IsAirSweepCapable() const;

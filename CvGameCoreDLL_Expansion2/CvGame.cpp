@@ -399,6 +399,26 @@ bool CvGame::init2()
 	}
 
 	CheckGenerateArchaeology();
+	
+	// RED <<<<<
+	//
+	// Set Culture Diffusion Rate From Game Setting
+	//
+	if (GC.getCULTURE_DIFFUSION_ENABLED() > 0)
+	{
+		int iSettingFactor = 100;
+		int iStandardTurns = 500;
+		iSettingFactor *= (iStandardTurns / getMaxTurns());
+
+		int iStandardSize = 80 * 52;
+		int iMapsize = GC.getMap().getGridHeight() * GC.getMap().getGridWidth();
+		if (iMapsize > 0)
+			iSettingFactor *= (iStandardSize / iMapsize);
+
+		int iCultureDiffusionRatePer1000 = GC.getCULTURE_DIFFUSION_RATE() * iSettingFactor / 100;
+		setCultureDiffusionRatePer1000(iCultureDiffusionRatePer1000);
+	}
+	// RED >>>>>
 
 	initScoreCalculation();
 	setFinalInitialized(true);
@@ -1052,6 +1072,10 @@ void CvGame::uninit()
 	}
 
 	m_iLastMouseoverUnitID = 0;
+
+	// RED <<<<<
+	m_iCultureDiffusionRatePer1000 = 0;
+	// RED >>>>>
 
 	CvCityManager::Shutdown();
 }
@@ -9420,6 +9444,10 @@ void CvGame::Read(FDataStream& kStream)
 	kStream >> *m_pGameLeagues;
 	kStream >> *m_pGameTrade;
 
+	// RED <<<<<
+	kStream >> m_iCultureDiffusionRatePer1000;
+	// RED >>>>>
+
 	unsigned int lSize = 0;
 	kStream >> lSize;
 	if(lSize > 0)
@@ -9595,6 +9623,10 @@ void CvGame::Write(FDataStream& kStream) const
 	kStream << *m_pGameCulture;
 	kStream << *m_pGameLeagues;
 	kStream << *m_pGameTrade;
+
+	// RED <<<<<
+	kStream << m_iCultureDiffusionRatePer1000;
+	// RED >>>>>
 
 	//In Version 8, Serialize Saved Game database
 	CvString strPath = gDLL->GetCacheFolderPath();
@@ -11668,3 +11700,19 @@ void CvGame::SetLastTurnAICivsProcessed()
 	}
 }
 
+// RED <<<<<
+
+//	--------------------------------------------------------------------------------
+int CvGame::getCultureDiffusionRatePer1000() const
+{
+	return m_iCultureDiffusionRatePer1000;
+}
+
+//	---------------------------------------------------------------------------
+void CvGame::setCultureDiffusionRatePer1000(int iNewValue)
+{
+	if (m_iCultureDiffusionRatePer1000 != iNewValue)
+		m_iCultureDiffusionRatePer1000 = iNewValue;
+}
+
+// RED >>>>>

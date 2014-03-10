@@ -2072,6 +2072,43 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 			aiPurchasedPlotX.push_back(pLoopPlot->getX());
 			aiPurchasedPlotY.push_back(pLoopPlot->getY());
 			pLoopPlot->ClearCityPurchaseInfo();
+
+			// RED <<<<<
+			// Update culture on plot on city capture			
+			if (GC.getCULTURE_DIFFUSION_ENABLED() > 0)
+			{				
+				// Logging
+				CvString redLogMessage;
+				CvString strBuffer;
+				CvString strTemp;
+				FILogFile* pLog = LOGFILEMGR.GetLog("red_capture_city_culture_debug.log", FILogFile::kDontTimeStamp);
+
+				redLogMessage += "---------------------------------------------------------------------------\n";
+				strTemp.Format("Update culture on plot (%d,%d) (City %s captured at (%d,%d) on turn %d)", pLoopPlot->getX(), pLoopPlot->getY(), pOldCity->getName(), pOldCity->getX(), pOldCity->getY(), GC.getGame().getElapsedGameTurns());
+				redLogMessage += strTemp;
+
+				int iTotalCultureLoss = 0;
+				for (iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
+				{
+					int iCultureLoss = pLoopPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_CITY_LOST_CONQUEST() / 100;
+					if (iCultureLoss > 0)
+					{
+						strTemp.Format("\n	Player (ID= %d) lose %d of his %d culture (CULTURE_CITY_LOST_CONQUEST = %d)", iI, iCultureLoss, pLoopPlot->getCulture((PlayerTypes)iI), GC.getCULTURE_CITY_LOST_CONQUEST());
+						redLogMessage += strTemp;
+						pLoopPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
+						iTotalCultureLoss += iCultureLoss;
+					}
+				}
+			
+				int iConverted = iTotalCultureLoss * GC.getCULTURE_CITY_GAIN_CONQUEST() / 100;
+				pLoopPlot->changeCulture(GetID(), iConverted);
+				
+				strTemp.Format("\n	Player (ID= %d) gain %d culture from iTotalCultureLoss = %d (CULTURE_CITY_GAIN_CONQUEST = %d) ", GetID(), iConverted, iTotalCultureLoss, GC.getCULTURE_CITY_GAIN_CONQUEST());
+				redLogMessage += strTemp;
+
+				pLog->Msg(redLogMessage);
+				// RED >>>>>
+			}
 		}
 	}
 

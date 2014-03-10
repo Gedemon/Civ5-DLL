@@ -696,6 +696,23 @@ public:
 	void SetArtifactGreatWork(GreatWorkType eWork);
 	bool HasWrittenArtifact() const;
 
+	// RED <<<<<
+
+	int getCulture(PlayerTypes eIndex) const;
+	void setCulture(PlayerTypes eIndex, int iNewValue);
+	void changeCulture(PlayerTypes eIndex, int iChange);
+	int getCulturePercent(PlayerTypes eIndex) const;
+	int getTotalCulture() const;
+	void doConquestCountDown();
+	int getConquestCountDown() const;
+	void setConquestCountDown();
+	
+	void updateCulture();	
+	void updateOwnership();
+	void diffuseCulture();
+
+	// RED >>>>>
+
 protected:
 	class PlotBoolField
 	{
@@ -852,6 +869,10 @@ protected:
 	void doImprovementUpgrade();
 	void updateImpassable();
 
+	// RED <<<<<
+	int m_aiCulture[REALLY_MAX_PLAYERS];
+	int m_iConquestCountDown;
+	// RED >>>>>
 
 	// added so under cheat mode we can access protected stuff
 	friend class CvGameTextMgr;

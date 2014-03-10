@@ -268,6 +268,12 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 
 	Method(GetCityPurchaseID);
 	Method(SetCityPurchaseID);
+	
+	// RED <<<<<	
+	Method(GetCulture);
+	Method(GetTotalCulture);
+	Method(GetCulturePercent);
+	// RED >>>>>
 }
 //------------------------------------------------------------------------------
 void CvLuaPlot::HandleMissingInstance(lua_State* L)
@@ -1820,3 +1826,43 @@ int CvLuaPlot::lSetCityPurchaseID(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlot::SetCityPurchaseID);
 }
+
+// RED <<<<<
+//------------------------------------------------------------------------------
+//int getCulture();
+int CvLuaPlot::lGetCulture(lua_State* L)
+{
+	CvPlot* kPlot = GetInstance(L);	
+	const PlayerTypes ePlayer = (PlayerTypes)lua_tointeger(L, 2);
+
+	const int iResult = kPlot->getCulture(ePlayer);
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//int getTotalCulture();
+int CvLuaPlot::lGetTotalCulture(lua_State* L)
+{
+	CvPlot* kPlot = GetInstance(L);	
+	const int iResult = kPlot->getTotalCulture();
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//int getCulturePercent();
+int CvLuaPlot::lGetCulturePercent(lua_State* L)
+{
+	CvPlot* kPlot = GetInstance(L);	
+	const PlayerTypes ePlayer = (PlayerTypes)lua_tointeger(L, 2);
+
+	const int iResult = kPlot->getCulturePercent(ePlayer);
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+
+// RED >>>>>

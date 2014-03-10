@@ -13543,6 +13543,12 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 		LuaSupport::CallHook(pkScriptSystem, "UnitSetXY", args.get(), bResult);
 	}
 
+	// RED <<<<<
+	if (GC.getCULTURE_CONQUEST_ENABLED() > 0)
+		capturePlot(pNewPlot);
+
+	// RED >>>>>
+
 	if (bOwnerIsActivePlayer)
 		DLLUI->SetDontShowPopups(false);
 
@@ -21247,5 +21253,107 @@ void CvUnit::setSupportFireState(bool bNewValue)
 		m_bProvidingSupportFire = bNewValue;
 	}
 	//*/
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::capturePlot(CvPlot* pPlot)
+{
+
+	VALIDATE_OBJECT
+	
+	if (pPlot == NULL)
+		return;
+
+	if (pPlot->isCity() || pPlot->isWater())
+		return;
+
+	if (!IsCombatUnit())
+		return;
+
+	if (getOwner() != pPlot->getOwner() && pPlot->getOwner() != NO_PLAYER)
+	{
+		PlayerTypes eUnitOwner = getOwner();
+		PlayerTypes ePlotOwner = pPlot->getOwner();
+
+		if (GET_TEAM(GET_PLAYER(eUnitOwner).getTeam()).isAtWar(GET_PLAYER(ePlotOwner).getTeam())) // player are at war ?
+		{
+			// Logging
+			CvString redLogMessage;
+			CvString strBuffer;
+			CvString strTemp;
+			FILogFile* pLog = LOGFILEMGR.GetLog("red_capture_plot_culture_debug.log", FILogFile::kDontTimeStamp);
+
+			redLogMessage += "---------------------------------------------------------------------------\n";
+			strTemp.Format("Possible plot capture at (%d,%d) on turn %d)", pPlot->getX(), pPlot->getY(), GC.getGame().getElapsedGameTurns());
+			redLogMessage += strTemp;
+
+			// to do: check for liberation here
+			// if ( check to liberate a captured plot)
+			// ... do some stuff ...
+			// else
+			if (pPlot->getCulture(eUnitOwner) > pPlot->getCulture(ePlotOwner) || GC.getCULTURE_CONQUEST_EVEN_LOWER() > 0) // more culture for the conqueror (or more culture is not needed)
+			{
+				if (pPlot->getCulture(eUnitOwner) > GC.getCULTURE_MINIMAL_FOR_CONQUEST() || GC.getCULTURE_CONQUEST_EVEN_NONE() > 0) // above minimal culture needed (or none needed)
+				{
+					// Do we allow non-adjacent capture ?
+					if (!pPlot->isAdjacentPlayer(eUnitOwner, /*LandOnly*/ true) && GC.getCULTURE_CONQUEST_ONLY_ADJACENT() > 0)
+						return;
+
+					CvCity* pNearestCity = GC.getMap().findCity(pPlot->getX(), pPlot->getY(), eUnitOwner);					
+					int iDistance = plotDistance(pPlot->getX(), pPlot->getY(), pNearestCity->getX(), pNearestCity->getY());
+
+					// Is the plot too far away ?
+					if (GC.getCULTURE_FLIPPING_MAX_DISTANCE() > 0 && iDistance > GC.getCULTURE_FLIPPING_MAX_DISTANCE())
+						return;
+
+					// All green, calculate culture loss/gain and change owner...
+					int iTotalCultureLoss = 0;
+					for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
+					{
+						int iCultureLoss = pPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_PLOT_LOST_CONQUEST() / 100;
+						pPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
+						iTotalCultureLoss += iCultureLoss;
+					}
+			
+					int iConverted = iTotalCultureLoss * GC.getCULTURE_PLOT_GAIN_CONQUEST() / 100;
+					pPlot->changeCulture(eUnitOwner, iConverted);
+					pPlot->setOwner(eUnitOwner, pNearestCity->GetID(), /*bCheckUnits*/ true);
+
+					// If we've just captured a citadel, convert all plots around
+					ImprovementTypes eImprovement = pPlot->getImprovementType();
+					if (eImprovement != NO_IMPROVEMENT && !pPlot->IsImprovementPillaged())
+					{
+						if (GC.getImprovementInfo(eImprovement)->GetNearbyEnemyDamage() > 0)
+						{	
+							CvPlot* pAdjacentPlot;
+							for(int iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
+							{
+								pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
+								if(pAdjacentPlot != NULL)
+								{
+									if (!pAdjacentPlot->isWater())
+									{
+										int iTotalCultureLoss = 0;
+										for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
+										{
+											int iCultureLoss = pAdjacentPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_PLOT_LOST_CONQUEST() / 100;
+											pAdjacentPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
+											iTotalCultureLoss += iCultureLoss;
+										}			
+										int iConverted = iTotalCultureLoss * GC.getCULTURE_PLOT_GAIN_CONQUEST() / 100;
+										pAdjacentPlot->changeCulture(eUnitOwner, iConverted);
+									}									
+									pAdjacentPlot->setOwner(eUnitOwner, pNearestCity->GetID(), /*bCheckUnits*/ true);
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			pLog->Msg(redLogMessage);
+		}
+	}
+
 }
 // RED >>>>>
