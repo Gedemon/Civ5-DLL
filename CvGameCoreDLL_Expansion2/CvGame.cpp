@@ -406,17 +406,34 @@ bool CvGame::init2()
 	//
 	if (GC.getCULTURE_DIFFUSION_ENABLED() > 0)
 	{
-		int iSettingFactor = 100;
+		// Logging
+		CvString redLogMessage;
+		CvString strBuffer;
+		CvString strTemp;
+		FILogFile* pLog = LOGFILEMGR.GetLog("red_debug.log", FILogFile::kDontTimeStamp);
+
+		int iSettingFactor = 1;
 		int iStandardTurns = 500;
-		iSettingFactor *= (iStandardTurns / getMaxTurns());
+		int iTurnsFactor = (iStandardTurns * 100 / getMaxTurns());
+		iSettingFactor *= iTurnsFactor;
 
 		int iStandardSize = 80 * 52;
 		int iMapsize = GC.getMap().getGridHeight() * GC.getMap().getGridWidth();
+		int iSizeFactor = 1;
 		if (iMapsize > 0)
-			iSettingFactor *= (iStandardSize / iMapsize);
+			iSizeFactor = (iMapsize * 100 / iStandardSize);	
 
-		int iCultureDiffusionRatePer1000 = GC.getCULTURE_DIFFUSION_RATE() * iSettingFactor / 100;
+		iSettingFactor *= iSizeFactor;
+
+		int iCultureDiffusionRatePer1000 = GC.getCULTURE_DIFFUSION_RATE() * iSettingFactor / 100 / 100;
+
+		redLogMessage += "---------------------------------------------------------------------------\n";
+		strTemp.Format("Updating Culture Diffusion Rate from settings: \n	CULTURE_DIFFUSION_RATE = %d, iTurnsFactor = %d percents, iSizeFactor = %d percents, iSettingFactor = %d, iCultureDiffusionRatePer1000 = %d \n", GC.getCULTURE_DIFFUSION_RATE(), iTurnsFactor, iSizeFactor, iSettingFactor, iCultureDiffusionRatePer1000);
+		redLogMessage += strTemp;
+
 		setCultureDiffusionRatePer1000(iCultureDiffusionRatePer1000);
+
+		pLog->Msg(redLogMessage);
 	}
 	// RED >>>>>
 

@@ -10863,54 +10863,54 @@ void CvPlot::updateCulture()
 			}
 		}
 
-		// Culture Convertion in cities
-		int iCultureConvertionRatePer10000 = GC.getCULTURE_CITY_CONVERSION_RATE();		
+		// Culture Conversion in cities
+		int iCultureConversionRatePer10000 = GC.getCULTURE_CITY_CONVERSION_RATE();		
 		
 		redLogMessage += "\n\n- Converting culture in City";
-		strTemp.Format("\n	iCultureConvertionRatePer10000 = %d, CULTURE_USE_POLICIES = %d", iCultureConvertionRatePer10000, GC.getCULTURE_USE_POLICIES());
+		strTemp.Format("\n	iCultureConversionRatePer10000 = %d, CULTURE_USE_POLICIES = %d", iCultureConversionRatePer10000, GC.getCULTURE_USE_POLICIES());
 		redLogMessage += strTemp;
 
-		// to do: remove hardcoding, create a column "CultureConvertionRate" in Buildings and Policies (and units ?) and related functions to get values
+		// to do: remove hardcoding, create a column "CultureConversionRate" in Buildings and Policies (and units ?) and related functions to get values
 		if (GC.getCULTURE_USE_POLICIES() > 0)
 		{
 			if (GET_PLAYER(getOwner()).GetPlayerPolicies()->HasPolicy((PolicyTypes)GC.getInfoTypeForString("POLICY_TRADITION")))
-				iCultureConvertionRatePer10000+= GC.getCULTURE_TRADITION_OPENER_CONVERTION_RATE();
+				iCultureConversionRatePer10000+= GC.getCULTURE_TRADITION_OPENER_CONVERSION_RATE();
 			
 			if (GET_PLAYER(getOwner()).GetPlayerPolicies()->HasPolicy((PolicyTypes)GC.getInfoTypeForString("POLICY_TRADITION_FINISHER")))
-				iCultureConvertionRatePer10000+= GC.getCULTURE_TRADITION_FINISHER_CONVERTION_RATE();
+				iCultureConversionRatePer10000+= GC.getCULTURE_TRADITION_FINISHER_CONVERSION_RATE();
 			
 			if (GET_PLAYER(getOwner()).GetPlayerPolicies()->HasPolicy((PolicyTypes)GC.getInfoTypeForString("POLICY_SOCIALIST_REALISM")))
-				iCultureConvertionRatePer10000+= GC.getCULTURE_SOCIALIST_REALISM_CONVERTION_RATE();
+				iCultureConversionRatePer10000+= GC.getCULTURE_SOCIALIST_REALISM_CONVERSION_RATE();
 			
 			if (GET_PLAYER(getOwner()).GetPlayerPolicies()->HasPolicy((PolicyTypes)GC.getInfoTypeForString("POLICY_MEDIA_CULTURE")))
-				iCultureConvertionRatePer10000+= GC.getCULTURE_MEDIA_CULTURE_CONVERTION_RATE();
+				iCultureConversionRatePer10000+= GC.getCULTURE_MEDIA_CULTURE_CONVERSION_RATE();
 			
 			if (GET_PLAYER(getOwner()).GetPlayerPolicies()->HasPolicy((PolicyTypes)GC.getInfoTypeForString("POLICY_NATIONALISM")))
-				iCultureConvertionRatePer10000+= GC.getCULTURE_NATIONALISM_CONVERTION_RATE();
+				iCultureConversionRatePer10000+= GC.getCULTURE_NATIONALISM_CONVERSION_RATE();
 		}
 
 		if (pCity->GetCityBuildings()->GetNumBuilding((BuildingTypes)GC.getInfoTypeForString("BUILDING_LIBRARY")))
-			iCultureConvertionRatePer10000+= GC.getCULTURE_LIBRARY_CONVERTION_RATE();
+			iCultureConversionRatePer10000+= GC.getCULTURE_LIBRARY_CONVERSION_RATE();
 		
 		if (pCity->GetCityBuildings()->GetNumBuilding((BuildingTypes)GC.getInfoTypeForString("BUILDING_UNIVERSITY")))
-			iCultureConvertionRatePer10000+= GC.getCULTURE_UNIVERSITY_CONVERTION_RATE();
+			iCultureConversionRatePer10000+= GC.getCULTURE_UNIVERSITY_CONVERSION_RATE();
 		
 		if (pCity->GetCityBuildings()->GetNumBuilding((BuildingTypes)GC.getInfoTypeForString("BUILDING_PUBLIC_SCHOOL")))
-			iCultureConvertionRatePer10000+= GC.getCULTURE_PUBLIC_SCHOOL_CONVERTION_RATE();
+			iCultureConversionRatePer10000+= GC.getCULTURE_PUBLIC_SCHOOL_CONVERSION_RATE();
 
-		if (iCultureConvertionRatePer10000 > 0)
+		if (iCultureConversionRatePer10000 > 0)
 		{
 			for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
 			{
-				if ((PlayerTypes)iI != getOwner() && (PlayerTypes)iI != SEPARATIST_PLAYER) // but separatists are not affected by foreign culture groups convertion
+				if ((PlayerTypes)iI != getOwner() && (PlayerTypes)iI != SEPARATIST_PLAYER) // but separatists are not affected by foreign culture groups conversion
 				{
-					int iConverted = getCulture((PlayerTypes)iI) * iCultureConvertionRatePer10000 / 10000;
+					int iConverted = getCulture((PlayerTypes)iI) * iCultureConversionRatePer10000 / 10000;
 					changeCulture((PlayerTypes)iI, - iConverted); // value near 0 are handled in decay function
 					changeCulture(getOwner(), iConverted);
 					if (iConverted > 0)
 					{
 						bChangeToLog =true;
-						strTemp.Format("\n		Player (ID= %d) lost %d of his %d culture converted (ratePer10000 = %d) to Player (ID= %d)", iI, iConverted, getCulture((PlayerTypes)iI), iCultureConvertionRatePer10000, getOwner());
+						strTemp.Format("\n		Player (ID= %d) lost %d of his %d culture converted (ratePer10000 = %d) to Player (ID= %d)", iI, iConverted, getCulture((PlayerTypes)iI), iCultureConversionRatePer10000, getOwner());
 						redLogMessage += strTemp;
 					}
 				}
@@ -10918,8 +10918,8 @@ void CvPlot::updateCulture()
 		}
 	}
 
-	// Check for culture convertion from improvements
-	if (GC.getCULTURE_IMPROVEMENT_CONVERTION_RATE() > 0) 
+	// Check for culture conversion from improvements
+	if (GC.getCULTURE_IMPROVEMENT_CONVERSION_RATE() > 0) 
 	{
 		ImprovementTypes eImprovement = getImprovementType();
 
@@ -10929,21 +10929,31 @@ void CvPlot::updateCulture()
 
 			if (iCultureYield > 0)
 			{
+				redLogMessage += "\n\n- Converting culture on Improvement";
+				strTemp.Format("\n	iCultureYield = %d, CULTURE_IMPROVEMENT_CONVERSION_RATE = %d", iCultureYield, GC.getCULTURE_IMPROVEMENT_CONVERSION_RATE());
+				redLogMessage += strTemp;
 				for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
 				{
-					if ((PlayerTypes)iI != getOwner() && (PlayerTypes)iI != SEPARATIST_PLAYER) // but separatists are not affected by foreign culture groups convertion
+					if ((PlayerTypes)iI != getOwner() && (PlayerTypes)iI != SEPARATIST_PLAYER) // but separatists are not affected by foreign culture groups conversion
 					{
-						int iConverted = getCulture((PlayerTypes)iI) * GC.getCULTURE_IMPROVEMENT_CONVERTION_RATE() * iCultureYield / 10000;
-						changeCulture((PlayerTypes)iI, - iConverted); // value near 0 are handled in decay function
-						changeCulture(getOwner(), iConverted);
+						int iConverted = getCulture((PlayerTypes)iI) * GC.getCULTURE_IMPROVEMENT_CONVERSION_RATE() * iCultureYield / 10000;
+						if (iConverted > 0)
+						{
+							bChangeToLog =true;
+							strTemp.Format("\n		Player (ID= %d) lost %d of his %d culture converted to Player (ID= %d)", iI, iConverted, getCulture((PlayerTypes)iI), getOwner());
+							redLogMessage += strTemp;
+
+							changeCulture((PlayerTypes)iI, - iConverted); // value near 0 are handled in decay function
+							changeCulture(getOwner(), iConverted);
+						}
 					}
 				}
 			}
 		}
 	}
 
-	// Check for culture convertion/removal from units
-	if (GC.getCULTURE_UNIT_CONVERTION_RATE() > 0)
+	// Check for culture conversion/removal from units
+	if (GC.getCULTURE_UNIT_CONVERSION_RATE() > 0)
 	{
 		const IDInfo* pUnitNode;
 		const UnitHandle pLoopUnit;
@@ -10959,32 +10969,54 @@ void CvPlot::updateCulture()
 			{
 				// great writers convert to their culture
 				if (pLoopUnit->getUnitInfo().GetBaseCultureTurnsToCount() > 0)
-				{
+				{					
+					redLogMessage += "\n\n- Converting culture from Great Writer";
+					strTemp.Format("\n	CultureTurnsToCount = %d, CULTURE_UNIT_CONVERSION_RATE = %d", pLoopUnit->getUnitInfo().GetBaseCultureTurnsToCount(), GC.getCULTURE_UNIT_CONVERSION_RATE());
+					redLogMessage += strTemp;
+
 					int iCultureValue = /*8*/ pLoopUnit->getUnitInfo().GetBaseCultureTurnsToCount();
 					for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
 					{
-						if ((PlayerTypes)iI != pLoopUnit->getOwner() && (PlayerTypes)iI != SEPARATIST_PLAYER) // but separatists are not affected by foreign culture groups convertion
+						if ((PlayerTypes)iI != pLoopUnit->getOwner() && (PlayerTypes)iI != SEPARATIST_PLAYER) // but separatists are not affected by foreign culture groups conversion
 						{
-							int iConverted = getCulture((PlayerTypes)iI) * GC.getCULTURE_UNIT_CONVERTION_RATE() * iCultureValue / 10000;
-							changeCulture((PlayerTypes)iI, - iConverted); // value near 0 are handled in decay function
-							changeCulture(pLoopUnit->getOwner(), iConverted);
+							int iConverted = getCulture((PlayerTypes)iI) * GC.getCULTURE_UNIT_CONVERSION_RATE() * iCultureValue / 10000;
+							if (iConverted > 0)
+							{
+								bChangeToLog =true;
+								strTemp.Format("\n		Player (ID= %d) lost %d of his %d culture converted to Player (ID= %d)", iI, iConverted, getCulture((PlayerTypes)iI), getOwner());
+								redLogMessage += strTemp;
+
+								changeCulture((PlayerTypes)iI, - iConverted); // value near 0 are handled in decay function
+								changeCulture(pLoopUnit->getOwner(), iConverted);
+							}
 						}
 					}
 				}
 
 				// inquisitors remove heretiques
 				if (pLoopUnit->getUnitInfo().IsRemoveHeresy())
-				{
+				{					
+					redLogMessage += "\n\n- Removing heretics culture by Inquisitor";
+					strTemp.Format("\n	ReligiousStrength*2 = %d, CULTURE_UNIT_CONVERSION_RATE = %d", pLoopUnit->getUnitInfo().GetReligiousStrength()*2, GC.getCULTURE_UNIT_CONVERSION_RATE());
+					redLogMessage += strTemp;
+
 					for (int iI = 0; iI < MAX_PLAYERS; iI++) // only "real" players
 					{
 						if ((PlayerTypes)iI != pLoopUnit->getOwner())
 						{
 							// check if that Player is following the right path for this Inquisitor, else...
 							if (!GET_PLAYER((PlayerTypes)iI).GetReligions()->HasReligionInMostCities(pLoopUnit->GetReligionData()->GetReligion()))
-							{
+							{		
 								// ... pyres, pyres everywhere !
-								int iBurned = getCulture((PlayerTypes)iI) * GC.getCULTURE_UNIT_CONVERTION_RATE() * /*1250x2/1000=2.5*/ pLoopUnit->getUnitInfo().GetReligiousStrength()*2/1000 / 10000;
-								changeCulture((PlayerTypes)iI, - iBurned); // value near 0 are handled in decay function
+								int iBurned = getCulture((PlayerTypes)iI) * GC.getCULTURE_UNIT_CONVERSION_RATE() * /*1250x2/1000=2.5*/ pLoopUnit->getUnitInfo().GetReligiousStrength()*2/1000 / 10000;
+								if (iBurned > 0)
+								{
+									bChangeToLog =true;
+									strTemp.Format("\n		Player (ID= %d) lost %d of his %d culture removed by Inquisitor of Player (ID= %d)", iI, iBurned, getCulture((PlayerTypes)iI), getOwner());
+									redLogMessage += strTemp;
+
+									changeCulture((PlayerTypes)iI, - iBurned); // value near 0 are handled in decay function
+								}
 							}
 						}
 					}
@@ -11307,22 +11339,32 @@ void CvPlot::diffuseCulture()
 			iPlotMax = min(iPlotMax, iCultureValue * GC.getCULTURE_MAX_ADJACENT_PERCENT() / 100);
 
 			// Make sure we do not end with more than iPlotMax after addition of the diffused culture
-			int iDiffusedCulture = (iCultureValue * (iDiffusionRatePer1000 + (iDiffusionRatePer1000 * iBonus / 100))) / (1000 + (1000 * iMalus / 100)); // the parenthesis order is important here, yep, still learning simple operations and truncations...
+			//int iDiffusedCulture = (iCultureValue * (iDiffusionRatePer1000 + (iDiffusionRatePer1000 * iBonus / 100))) / (1000 + (1000 * iMalus / 100)); // the parenthesis order is important here, yep, still learning simple operations and truncations...
 			
-			int iPreviousCulture = pAdjacentPlot->getTotalCulture();
-			int iNextculture = min(iPlotMax, iPreviousCulture + iDiffusedCulture);
+			//int iPreviousCulture = pAdjacentPlot->getTotalCulture();
+			//int iNextculture = min(iPlotMax, iPreviousCulture + iDiffusedCulture);
 			
-			strTemp.Format("\n		Final values: iBonus = %d, iMalus = %d, iDiffusedCulture = %d, iPreviousCulture = %d, iNextculture = %d, iPlotMax = %d)", iBonus, iMalus, iDiffusedCulture, iPreviousCulture, iNextculture, iPlotMax);
+			strTemp.Format("\n		Final values: iBonus = %d, iMalus = %d, iPlotMax = %d)", iBonus, iMalus, iPlotMax);
 			redLogMessage += strTemp;
 
-			iDiffusedCulture = iNextculture - iPreviousCulture;
+			//iDiffusedCulture = iNextculture - iPreviousCulture;
 
-			if (iDiffusedCulture > 0) // can be < 0 when a plot try to diffuse to another with a culture value already > at the calculated iPlotMax...
+			// Apply Culture diffusion to all culture groups
+			for (int iJ = 0; iJ < MAX_PLAYERS; iJ++) // only "real" players
 			{
-				// Apply Culture diffusion to all groups
-				for (int iJ = 0; iJ < MAX_PLAYERS; iJ++) // only "real" players
+				int iPlayerPlotMax = iPlotMax * getCulturePercent((PlayerTypes)iJ) / 100;
+				int iPlayerDiffusedCulture = (getCulture((PlayerTypes)iJ) * (iDiffusionRatePer1000 + (iDiffusionRatePer1000 * iBonus / 100))) / (1000 + (1000 * iMalus / 100)); // the parenthesis order is important here, yep, still learning simple operations and truncations...
+				
+				int iPreviousCulture = pAdjacentPlot->getCulture((PlayerTypes)iJ);
+				int iNextculture = min(iPlayerPlotMax, iPreviousCulture + iPlayerDiffusedCulture);
+
+				//iPlayerDiffusedCulture = iNextculture - iPreviousCulture;
+
+				if (iPlayerDiffusedCulture > 0) // can be < 0 when a plot try to diffuse to another with a culture value already > at the calculated iPlayerPlotMax...
 				{
-					int iPlayerDiffusedCulture = iDiffusedCulture * getCulturePercent((PlayerTypes)iJ) / 100;
+					strTemp.Format("\n				Diffusion for Player (ID = %d) with %d culture: iPlayerDiffusedCulture = %d, iPreviousCulture = %d, iNextculture = %d, iPlayerPlotMax = %d)", iJ, getCulture((PlayerTypes)iJ), iPlayerDiffusedCulture, iPreviousCulture, iNextculture, iPlayerPlotMax);
+					redLogMessage += strTemp;
+
 					pAdjacentPlot->changeCulture((PlayerTypes)iJ, iPlayerDiffusedCulture);
 				}
 			}

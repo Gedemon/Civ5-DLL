@@ -2090,20 +2090,20 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 				int iTotalCultureLoss = 0;
 				for (iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
 				{
-					int iCultureLoss = pLoopPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_CITY_LOST_CONQUEST() / 100;
+					int iCultureLoss = pLoopPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_LOST_CITY_CONQUEST() / 100;
 					if (iCultureLoss > 0)
 					{
-						strTemp.Format("\n	Player (ID= %d) lose %d of his %d culture (CULTURE_CITY_LOST_CONQUEST = %d)", iI, iCultureLoss, pLoopPlot->getCulture((PlayerTypes)iI), GC.getCULTURE_CITY_LOST_CONQUEST());
+						strTemp.Format("\n	Player (ID= %d) lose %d of his %d culture (CULTURE_LOST_CITY_CONQUEST = %d)", iI, iCultureLoss, pLoopPlot->getCulture((PlayerTypes)iI), GC.getCULTURE_LOST_CITY_CONQUEST());
 						redLogMessage += strTemp;
 						pLoopPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
 						iTotalCultureLoss += iCultureLoss;
 					}
 				}
 			
-				int iConverted = iTotalCultureLoss * GC.getCULTURE_CITY_GAIN_CONQUEST() / 100;
+				int iConverted = iTotalCultureLoss * GC.getCULTURE_GAIN_CITY_CONQUEST() / 100;
 				pLoopPlot->changeCulture(GetID(), iConverted);
 				
-				strTemp.Format("\n	Player (ID= %d) gain %d culture from iTotalCultureLoss = %d (CULTURE_CITY_GAIN_CONQUEST = %d) ", GetID(), iConverted, iTotalCultureLoss, GC.getCULTURE_CITY_GAIN_CONQUEST());
+				strTemp.Format("\n	Player (ID= %d) gain %d culture from iTotalCultureLoss = %d (CULTURE_GAIN_CITY_CONQUEST = %d) ", GetID(), iConverted, iTotalCultureLoss, GC.getCULTURE_GAIN_CITY_CONQUEST());
 				redLogMessage += strTemp;
 
 				pLog->Msg(redLogMessage);

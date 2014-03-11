@@ -21284,7 +21284,7 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 			FILogFile* pLog = LOGFILEMGR.GetLog("red_capture_plot_culture_debug.log", FILogFile::kDontTimeStamp);
 
 			redLogMessage += "---------------------------------------------------------------------------\n";
-			strTemp.Format("Possible plot capture at (%d,%d) on turn %d)", pPlot->getX(), pPlot->getY(), GC.getGame().getElapsedGameTurns());
+			strTemp.Format("Test possible plot capture at (%d,%d) on turn %d)", pPlot->getX(), pPlot->getY(), GC.getGame().getElapsedGameTurns());
 			redLogMessage += strTemp;
 
 			// to do: check for liberation here
@@ -21310,12 +21310,21 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 					int iTotalCultureLoss = 0;
 					for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
 					{
-						int iCultureLoss = pPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_PLOT_LOST_CONQUEST() / 100;
-						pPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
-						iTotalCultureLoss += iCultureLoss;
+						int iCultureLoss = pPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_LOST_PLOT_CONQUEST() / 100;
+						if (iCultureLoss > 0)
+						{
+							strTemp.Format("\n	Player (ID= %d) lose %d of his %d culture (CULTURE_LOST_PLOT_CONQUEST = %d)", iI, iCultureLoss, pPlot->getCulture((PlayerTypes)iI), GC.getCULTURE_LOST_PLOT_CONQUEST());
+							redLogMessage += strTemp;
+							pPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
+							iTotalCultureLoss += iCultureLoss;
+						}
 					}
 			
-					int iConverted = iTotalCultureLoss * GC.getCULTURE_PLOT_GAIN_CONQUEST() / 100;
+					int iConverted = iTotalCultureLoss * GC.getCULTURE_GAIN_PLOT_CONQUEST() / 100;
+
+					strTemp.Format("\n\n	Player (ID= %d) gain %d culture from iTotalCultureLoss = %d (CULTURE_GAIN_PLOT_CONQUEST = %d) \n", getOwner(), iConverted, iTotalCultureLoss, GC.getCULTURE_GAIN_PLOT_CONQUEST());
+					redLogMessage += strTemp;
+
 					pPlot->changeCulture(eUnitOwner, iConverted);
 					pPlot->setOwner(eUnitOwner, pNearestCity->GetID(), /*bCheckUnits*/ true);
 
@@ -21336,11 +21345,22 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 										int iTotalCultureLoss = 0;
 										for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
 										{
-											int iCultureLoss = pAdjacentPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_PLOT_LOST_CONQUEST() / 100;
-											pAdjacentPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
-											iTotalCultureLoss += iCultureLoss;
+											int iCultureLoss = pAdjacentPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_LOST_PLOT_CONQUEST() / 100;
+
+											if (iCultureLoss>0)
+											{
+												strTemp.Format("\n			Player (ID= %d) lose %d of his %d culture (CULTURE_LOST_PLOT_CONQUEST = %d) on citadel's adjacent plot (%d,%d)", iI, iCultureLoss, pAdjacentPlot->getCulture((PlayerTypes)iI), GC.getCULTURE_LOST_PLOT_CONQUEST(),  pAdjacentPlot->getX(),  pAdjacentPlot->getY());
+												redLogMessage += strTemp;
+
+												pAdjacentPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
+												iTotalCultureLoss += iCultureLoss;
+											}
 										}			
-										int iConverted = iTotalCultureLoss * GC.getCULTURE_PLOT_GAIN_CONQUEST() / 100;
+										int iConverted = iTotalCultureLoss * GC.getCULTURE_GAIN_PLOT_CONQUEST() / 100;
+
+										strTemp.Format("\n\n				Player (ID= %d) gain %d culture from iTotalCultureLoss = %d (CULTURE_GAIN_PLOT_CONQUEST = %d) \n", getOwner(), iConverted, iTotalCultureLoss, GC.getCULTURE_GAIN_PLOT_CONQUEST());
+										redLogMessage += strTemp;
+
 										pAdjacentPlot->changeCulture(eUnitOwner, iConverted);
 									}									
 									pAdjacentPlot->setOwner(eUnitOwner, pNearestCity->GetID(), /*bCheckUnits*/ true);
