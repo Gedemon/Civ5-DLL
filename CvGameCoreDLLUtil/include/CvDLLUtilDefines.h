@@ -35,7 +35,20 @@
 #define CVHEADER_VERSIONING_STARTED							7		/// The version of CvSavedGameHeader where we added versions to CvPreGame data.
 
 // RED <<<<<
+#ifndef RED_MODS_H
+#define RED_MODS_H
+
 #define SEPARATIST_PLAYER									((PlayerTypes)(MAX_CIV_PLAYERS + 1)) // fake player for Revolutions
+
+// GlobalDefines (GD) wrappers
+#define GD_INT_DECL(name)       int m_i##name
+#define GD_INT_DEF(name)        inline int get##name() { return m_i##name; }
+#define GD_INT_INIT(name, def)  m_i##name(def)
+#define GD_INT_CACHE(name)      m_i##name = getDefineINT(#name)
+#define GD_INT_GET(name)        GC.get##name()
+
+
+#endif
 // RED >>>>>
 
 // don't use -1 since that is a valid wrap coordinate

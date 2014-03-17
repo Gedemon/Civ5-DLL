@@ -3639,6 +3639,7 @@ CvUnit* CvUnitCombat::GetFireSupportUnit(PlayerTypes ePlayer, int iSupportX, int
 {
 	VALIDATE_OBJECT
 
+	// to do: cache option value
 	if(eSupport == FIRE_SUPPORT_OFFENSIVE && !GC.getGame().isOption("GAMEOPTION_OFFENSIVE_SUPPORT_FIRE"))
 		return NULL;
 	

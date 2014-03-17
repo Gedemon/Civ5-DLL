@@ -414,7 +414,10 @@ bool CvGame::init2()
 
 		int iSettingFactor = 1;
 		int iStandardTurns = 500;
-		int iTurnsFactor = (iStandardTurns * 100 / getMaxTurns());
+		int iTurnsFactor = 1;
+		if (getEstimateEndTurn() - getGameTurn()>0)
+			iTurnsFactor = (iStandardTurns * 100 / (getEstimateEndTurn() - getGameTurn()));
+
 		iSettingFactor *= iTurnsFactor;
 
 		int iStandardSize = 80 * 52;

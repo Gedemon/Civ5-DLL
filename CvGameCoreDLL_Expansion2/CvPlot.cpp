@@ -10971,15 +10971,15 @@ void CvPlot::updateCulture()
 				if (pLoopUnit->getUnitInfo().GetBaseCultureTurnsToCount() > 0)
 				{					
 					redLogMessage += "\n\n- Converting culture from Great Writer";
-					strTemp.Format("\n	CultureTurnsToCount = %d, CULTURE_UNIT_CONVERSION_RATE = %d", pLoopUnit->getUnitInfo().GetBaseCultureTurnsToCount(), GC.getCULTURE_UNIT_CONVERSION_RATE());
+					strTemp.Format("\n	CultureTurnsToCount = %d, CULTURE_UNIT_CONVERSION_RATE = %d per 10,000", pLoopUnit->getUnitInfo().GetBaseCultureTurnsToCount(), GC.getCULTURE_UNIT_CONVERSION_RATE());
 					redLogMessage += strTemp;
 
-					int iCultureValue = /*8*/ pLoopUnit->getUnitInfo().GetBaseCultureTurnsToCount();
+					int iUnitConversionFactor = /*8*/ pLoopUnit->getUnitInfo().GetBaseCultureTurnsToCount();
 					for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
 					{
 						if ((PlayerTypes)iI != pLoopUnit->getOwner() && (PlayerTypes)iI != SEPARATIST_PLAYER) // but separatists are not affected by foreign culture groups conversion
 						{
-							int iConverted = getCulture((PlayerTypes)iI) * GC.getCULTURE_UNIT_CONVERSION_RATE() * iCultureValue / 10000;
+							int iConverted = getCulture((PlayerTypes)iI) * GC.getCULTURE_UNIT_CONVERSION_RATE() * iUnitConversionFactor / 10000;
 							if (iConverted > 0)
 							{
 								bChangeToLog =true;
@@ -10997,7 +10997,7 @@ void CvPlot::updateCulture()
 				if (pLoopUnit->getUnitInfo().IsRemoveHeresy())
 				{					
 					redLogMessage += "\n\n- Removing heretics culture by Inquisitor";
-					strTemp.Format("\n	ReligiousStrength*2 = %d, CULTURE_UNIT_CONVERSION_RATE = %d", pLoopUnit->getUnitInfo().GetReligiousStrength()*2, GC.getCULTURE_UNIT_CONVERSION_RATE());
+					strTemp.Format("\n	ReligiousStrength*2 = %d, CULTURE_UNIT_CONVERSION_RATE = %d per 10,000", pLoopUnit->getUnitInfo().GetReligiousStrength()*2, GC.getCULTURE_UNIT_CONVERSION_RATE());
 					redLogMessage += strTemp;
 
 					for (int iI = 0; iI < MAX_PLAYERS; iI++) // only "real" players
@@ -11060,29 +11060,6 @@ void CvPlot::updateOwnership()
 			if (GC.getImprovementInfo(eImprovement)->GetDefenseModifier() > 0)
 				return;
 		}
-
-		// Check adjacent plots for citadel
-		CvPlot* pAdjacentPlot;
-		for(int iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
-		{
-			pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
-
-			if(pAdjacentPlot != NULL && !pAdjacentPlot->isWater())
-			{
-				eImprovement = pAdjacentPlot->getImprovementType();
-				/*
-				if (eImprovement == (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_CITADEL") && !pAdjacentPlot->IsImprovementPillaged())
-					return;
-				*/
-				// less explicit, but faster ?
-				if (eImprovement != NO_IMPROVEMENT && !pAdjacentPlot->IsImprovementPillaged())
-				{
-					if (GC.getImprovementInfo(eImprovement)->GetNearbyEnemyDamage() > 0)
-						return;
-				}
-				//*/
-			}
-		}
 	}
 
 	// Get potential owner
@@ -11095,6 +11072,10 @@ void CvPlot::updateOwnership()
 		{
 			if (getCulture((PlayerTypes)iI) > iBestValue)
 			{
+				// Do we allow non-adjacent flipping ?
+				if (!isAdjacentPlayer((PlayerTypes)iI, /*LandOnly*/ true) && GC.getCULTURE_FLIPPING_ONLY_ADJACENT() > 0)
+					continue;
+
 				iBestValue = getCulture((PlayerTypes)iI);
 				eBestPlayer = (PlayerTypes)iI;
 			}
@@ -11103,13 +11084,40 @@ void CvPlot::updateOwnership()
 
 	if (eBestPlayer != NO_PLAYER && eBestPlayer != getOwner() && iBestValue > GC.getCULTURE_MINIMUM_FOR_ACQUISITION()) // we have a potential new owner
 	{
-		// Do we allow non-adjacent flipping ?
-		if (!isAdjacentPlayer(eBestPlayer, /*LandOnly*/ true) && GC.getCULTURE_FLIPPING_ONLY_ADJACENT() > 0)
+		// Do we allow tile flipping when at war ?		
+		if (GC.getCULTURE_LOCK_FLIPPING_ON_WAR() > 0 && getOwner() != NO_PLAYER && GET_TEAM(GET_PLAYER(eBestPlayer).getTeam()).isAtWar(GET_PLAYER(getOwner()).getTeam()))
 			return;
 
-		// Do we allow tile flipping when at war ?		
-		if (GC.getCULTURE_LOCK_FLIPPING_ON_WAR() > 0 && GET_TEAM(GET_PLAYER(eBestPlayer).getTeam()).isAtWar(GET_PLAYER(getOwner()).getTeam()))
-			return;
+		// check if a citadel can prevent tile flipping...
+		if (GC.getCULTURE_NO_FORTIFICATION_FLIPPING() > 0) 
+		{
+			CvPlot* pAdjacentPlot;
+			ImprovementTypes eImprovement;
+
+			for(int iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
+			{
+				pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
+
+				if(pAdjacentPlot != NULL)
+				{
+					if (pAdjacentPlot->isWater() && pAdjacentPlot->getOwner() == eBestPlayer ) // no need to check water plots, and a citadel owner is allowed to acquire adjacent plot using culture
+						continue;
+
+					eImprovement = pAdjacentPlot->getImprovementType();
+					/*
+					if (eImprovement == (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_CITADEL") && !pAdjacentPlot->IsImprovementPillaged())
+						return;
+					*/
+					// less explicit, but faster ?
+					if (eImprovement != NO_IMPROVEMENT && !pAdjacentPlot->IsImprovementPillaged())
+					{
+						if (GC.getImprovementInfo(eImprovement)->GetNearbyEnemyDamage() > 0)
+							return;
+					}
+					//*/
+				}
+			}
+		}
 
 		// case 1: the tile was not owned and tile acquisition is allowed
 		bool bAcquireNewPlot = (getOwner() == NO_PLAYER && GC.getCULTURE_ALLOW_TILE_ACQUISITION() > 0);
@@ -11120,6 +11128,9 @@ void CvPlot::updateOwnership()
 		if (bAcquireNewPlot || bConvertPlot)
 		{
 			CvCity* pNearestCity = GC.getMap().findCity(getX(), getY(), eBestPlayer);
+			if (pNearestCity == NULL)
+				return;
+
 			int iDistance = plotDistance(getX(), getY(), pNearestCity->getX(), pNearestCity->getY());
 
 			// Is the plot too far away ?
@@ -11249,9 +11260,14 @@ void CvPlot::diffuseCulture()
 			// Malus : crossing a river
 			if (isRiverCrossing((DirectionTypes)iI))
 			{
-				TeamTypes ePlotTeam = GET_PLAYER(getOwner()).getTeam();
-				CvTeam& kPlotTeam = GET_TEAM(ePlotTeam);
-				if (!(kPlotTeam.isBridgeBuilding() && bIsRoute)) // no penalty from rivers if there is a bridge here...
+				bool bIsBridge = false;
+				if (getOwner() != NO_PLAYER)
+				{
+					TeamTypes ePlotTeam = GET_PLAYER(getOwner()).getTeam();
+					CvTeam& kPlotTeam = GET_TEAM(ePlotTeam);
+					bIsBridge = (kPlotTeam.isBridgeBuilding() && bIsRoute);
+				}
+				if (!bIsBridge) // add penalty only if there is no bridge here...
 				{
 					if (iCultureValue > GC.getCULTURE_CROSS_RIVER_THRESHOLD() * iBaseThreshold / 100)
 					{
@@ -11358,7 +11374,7 @@ void CvPlot::diffuseCulture()
 				int iPreviousCulture = pAdjacentPlot->getCulture((PlayerTypes)iJ);
 				int iNextculture = min(iPlayerPlotMax, iPreviousCulture + iPlayerDiffusedCulture);
 
-				//iPlayerDiffusedCulture = iNextculture - iPreviousCulture;
+				iPlayerDiffusedCulture = iNextculture - iPreviousCulture;
 
 				if (iPlayerDiffusedCulture > 0) // can be < 0 when a plot try to diffuse to another with a culture value already > at the calculated iPlayerPlotMax...
 				{

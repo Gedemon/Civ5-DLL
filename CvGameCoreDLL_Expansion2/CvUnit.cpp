@@ -21284,8 +21284,25 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 			FILogFile* pLog = LOGFILEMGR.GetLog("red_capture_plot_culture_debug.log", FILogFile::kDontTimeStamp);
 
 			redLogMessage += "---------------------------------------------------------------------------\n";
-			strTemp.Format("Test possible plot capture at (%d,%d) on turn %d)", pPlot->getX(), pPlot->getY(), GC.getGame().getElapsedGameTurns());
+			strTemp.Format("Unit moving on hostile territory at (%d,%d) on turn %d)", pPlot->getX(), pPlot->getY(), GC.getGame().getElapsedGameTurns());
 			redLogMessage += strTemp;
+
+			// an army is passing on enemy land, local population is affected...
+			// to do: influence of policies, cultural relations, ...
+			int iTotalCultureLoss = 0;
+			for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
+			{
+				if (iI == eUnitOwner)
+					continue;
+				int iCultureLoss = pPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_LOST_PLOT_CONQUEST() / 100;
+				if (iCultureLoss > 0)
+				{
+					strTemp.Format("\n	Player (ID= %d) lose %d of his %d culture (CULTURE_LOST_PLOT_CONQUEST = %d)", iI, iCultureLoss, pPlot->getCulture((PlayerTypes)iI), GC.getCULTURE_LOST_PLOT_CONQUEST());
+					redLogMessage += strTemp;
+					pPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
+					iTotalCultureLoss += iCultureLoss;
+				}
+			}
 
 			// to do: check for liberation here
 			// if ( check to liberate a captured plot)
@@ -21305,21 +21322,8 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 					// Is the plot too far away ?
 					if (GC.getCULTURE_FLIPPING_MAX_DISTANCE() > 0 && iDistance > GC.getCULTURE_FLIPPING_MAX_DISTANCE())
 						return;
-
-					// All green, calculate culture loss/gain and change owner...
-					int iTotalCultureLoss = 0;
-					for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
-					{
-						int iCultureLoss = pPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_LOST_PLOT_CONQUEST() / 100;
-						if (iCultureLoss > 0)
-						{
-							strTemp.Format("\n	Player (ID= %d) lose %d of his %d culture (CULTURE_LOST_PLOT_CONQUEST = %d)", iI, iCultureLoss, pPlot->getCulture((PlayerTypes)iI), GC.getCULTURE_LOST_PLOT_CONQUEST());
-							redLogMessage += strTemp;
-							pPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
-							iTotalCultureLoss += iCultureLoss;
-						}
-					}
 			
+					// Give ownership to the conquering player and convert some of the loss culture to his own
 					int iConverted = iTotalCultureLoss * GC.getCULTURE_GAIN_PLOT_CONQUEST() / 100;
 
 					strTemp.Format("\n\n	Player (ID= %d) gain %d culture from iTotalCultureLoss = %d (CULTURE_GAIN_PLOT_CONQUEST = %d) \n", getOwner(), iConverted, iTotalCultureLoss, GC.getCULTURE_GAIN_PLOT_CONQUEST());
@@ -21340,8 +21344,14 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 								pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
 								if(pAdjacentPlot != NULL)
 								{
-									if (!pAdjacentPlot->isWater())
+									if (!pAdjacentPlot->isWater()  && !pAdjacentPlot->isCity() && GET_TEAM(GET_PLAYER(eUnitOwner).getTeam()).isAtWar(GET_PLAYER(pAdjacentPlot->getOwner()).getTeam()))
 									{
+										// don't convert another citadel !
+										ImprovementTypes eAdjacentImprovement = pAdjacentPlot->getImprovementType();
+										if (eAdjacentImprovement != NO_IMPROVEMENT && !pAdjacentPlot->IsImprovementPillaged())
+											if (GC.getImprovementInfo(eAdjacentImprovement)->GetNearbyEnemyDamage() > 0)
+												continue;
+
 										int iTotalCultureLoss = 0;
 										for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
 										{
