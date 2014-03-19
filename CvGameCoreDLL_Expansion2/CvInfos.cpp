@@ -6281,6 +6281,12 @@ CvEraInfo::CvEraInfo() :
 	m_bNoGoodies(false),
 	m_bNoBarbUnits(false),
 	m_bNoReligion(false),
+	// RED <<<<<
+	m_iCultureMinimumForAcquisitionMod(0),
+	m_iCultureDiffusionThresholdMod(0),
+	m_iCultureFlippingMaxDistance(0),
+	m_bCultureConquestEnabled(false),
+	// RED >>>>>
 	m_uiCityBombardEffectTagHash(0)
 {
 }
@@ -6504,6 +6510,29 @@ const char* CvEraInfo::getAbbreviation() const
 	return m_strAbbreviation.c_str();
 }
 
+// RED <<<<<
+//------------------------------------------------------------------------------
+int CvEraInfo::getCultureMinimumForAcquisitionMod() const
+{
+	return m_iCultureMinimumForAcquisitionMod;
+}
+//------------------------------------------------------------------------------
+int CvEraInfo::getCultureDiffusionThresholdMod() const
+{
+	return m_iCultureDiffusionThresholdMod;
+}
+//------------------------------------------------------------------------------
+int CvEraInfo::getCultureFlippingMaxDistance() const
+{
+	return m_iCultureFlippingMaxDistance;
+}
+//------------------------------------------------------------------------------
+bool CvEraInfo::canCultureConquest() const
+{
+	return m_bCultureConquestEnabled;
+}
+// RED >>>>>
+
 //------------------------------------------------------------------------------
 bool CvEraInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility)
 {
@@ -6553,6 +6582,13 @@ bool CvEraInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& kUt
 
 	m_strShortDesc = kResults.GetText("ShortDescription");
 	m_strAbbreviation = kResults.GetText("Abbreviation");
+
+	// RED <<<<<
+	INF_INT_DEF(CultureMinimumForAcquisitionMod);
+	INF_INT_DEF(CultureDiffusionThresholdMod);
+	INF_INT_DEF(CultureFlippingMaxDistance);
+	INF_BOL_DEF(CultureConquestEnabled);
+	// RED >>>>>
 
 	//City Names
 	{

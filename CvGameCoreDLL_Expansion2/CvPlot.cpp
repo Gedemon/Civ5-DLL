@@ -314,6 +314,7 @@ void CvPlot::reset(int iX, int iY, bool bConstructorCall)
 		for(int iI = 0; iI < REALLY_MAX_PLAYERS; ++iI)
 		{
 			m_aiCulture[iI] = 0;
+			m_aiPreviousCulture[iI] = 0;
 		}
 		// RED >>>>>
 	}
@@ -414,7 +415,7 @@ void CvPlot::doTurn()
 	}
 
 	// RED <<<<<
-	if(GC.getCULTURE_DIFFUSION_ENABLED() > 0)
+	if(GC.getGame().isOptionCultureDiffusionEnabled())
 	{
 		updateCulture();
 	}
@@ -9638,8 +9639,11 @@ void CvPlot::read(FDataStream& kStream)
 	// RED <<<<<
 
 	for(uint i = 0; i < REALLY_MAX_PLAYERS; i++)
+	{
 		kStream >> m_aiCulture[i];
-	
+		kStream >> m_aiPreviousCulture[i];
+	}
+
 	kStream >> m_iConquestCountDown;
 
 	// RED >>>>>
@@ -9799,7 +9803,10 @@ void CvPlot::write(FDataStream& kStream) const
 	// RED <<<<<
 	
 	for(uint i = 0; i < REALLY_MAX_PLAYERS; i++)
+	{
 		kStream << m_aiCulture[i];
+		kStream << m_aiPreviousCulture[i];
+	}
 
 	kStream << m_iConquestCountDown;
 
@@ -10722,6 +10729,19 @@ void CvPlot::changeCulture(PlayerTypes eIndex, int iChange)
 }
 
 //	---------------------------------------------------------------------------
+int CvPlot::getPreviousCulture(PlayerTypes eIndex) const
+{
+	return m_aiPreviousCulture[eIndex];
+}
+
+//	---------------------------------------------------------------------------
+void CvPlot::setPreviousCulture(PlayerTypes eIndex, int iNewValue)
+{
+	if (getPreviousCulture(eIndex) != iNewValue)
+		m_aiPreviousCulture[eIndex] = iNewValue;
+}
+
+//	---------------------------------------------------------------------------
 int CvPlot::getCulturePercent(PlayerTypes eIndex) const
 {
 	int iTotalCulture = getTotalCulture();
@@ -10750,6 +10770,65 @@ int CvPlot::getTotalCulture() const
 }
 
 //	---------------------------------------------------------------------------
+PlayerTypes CvPlot::getHighestCulturePlayer() const
+{
+	PlayerTypes eBestPlayer = NO_PLAYER;
+	int iHighestculture = 0;
+
+	for (int iI = 0; iI < MAX_PLAYERS; iI++) // only "real" players
+	{
+		if (getCulture((PlayerTypes)iI) > iHighestculture && GET_PLAYER((PlayerTypes)iI).isEverAlive())
+		{
+			eBestPlayer = (PlayerTypes)iI;
+			iHighestculture = getCulture((PlayerTypes)iI);
+		}
+	}
+
+	return eBestPlayer;
+}
+
+//	---------------------------------------------------------------------------
+int CvPlot::getTotalPreviousCulture() const
+{
+	int iTotalCulture;
+
+	iTotalCulture = 0;
+
+	for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // to include "fake" players (like separatists faction for Revolutions)
+	{
+		iTotalCulture += getPreviousCulture((PlayerTypes)iI);
+	}
+
+	return iTotalCulture;
+}
+
+//	---------------------------------------------------------------------------
+int CvPlot::getCulturePer10000(PlayerTypes eIndex) const
+{
+	int iTotalCulture = getTotalCulture();
+
+	if (iTotalCulture > 0)
+	{
+		return ((getCulture(eIndex) * 10000) / iTotalCulture);
+	}
+
+	return 0;
+}
+
+//	---------------------------------------------------------------------------
+int CvPlot::getPreviousCulturePer10000(PlayerTypes eIndex) const
+{
+	int iTotalCulture = getTotalPreviousCulture();
+
+	if (iTotalCulture > 0)
+	{
+		return ((getPreviousCulture(eIndex) * 10000) / iTotalCulture);
+	}
+
+	return 0;
+}
+
+//	---------------------------------------------------------------------------
 void CvPlot::updateCulture()
 {
 	// Logging
@@ -10771,7 +10850,11 @@ void CvPlot::updateCulture()
 	// to do: scale by territory (friendly, neutral, foreign, enemy)
 	for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
 	{
+		// Before any change are made, save the actual culture value for variation display...
 		int iCultureValue = getCulture((PlayerTypes)iI);
+		setPreviousCulture((PlayerTypes)iI, iCultureValue);
+
+		// apply decay
 		if (iCultureValue > 0)
 		{
 			redLogMessage += "\n\n- Decay applied";
@@ -11082,7 +11165,7 @@ void CvPlot::updateOwnership()
 		}
 	}
 
-	if (eBestPlayer != NO_PLAYER && eBestPlayer != getOwner() && iBestValue > GC.getCULTURE_MINIMUM_FOR_ACQUISITION()) // we have a potential new owner
+	if (eBestPlayer != NO_PLAYER && eBestPlayer != getOwner() && iBestValue > GET_PLAYER(eBestPlayer).getCultureMinimumForAcquisition()) // we have a potential new owner // GC.getCULTURE_MINIMUM_FOR_ACQUISITION()
 	{
 		// Do we allow tile flipping when at war ?		
 		if (GC.getCULTURE_LOCK_FLIPPING_ON_WAR() > 0 && getOwner() != NO_PLAYER && GET_TEAM(GET_PLAYER(eBestPlayer).getTeam()).isAtWar(GET_PLAYER(getOwner()).getTeam()))
@@ -11134,7 +11217,7 @@ void CvPlot::updateOwnership()
 			int iDistance = plotDistance(getX(), getY(), pNearestCity->getX(), pNearestCity->getY());
 
 			// Is the plot too far away ?
-			if (GC.getCULTURE_FLIPPING_MAX_DISTANCE() > 0 && iDistance > GC.getCULTURE_FLIPPING_MAX_DISTANCE())
+			if (GET_PLAYER(eBestPlayer).getCultureFlippingMaxDistance() > 0 && iDistance >  GET_PLAYER(eBestPlayer).getCultureFlippingMaxDistance()) // GC.getCULTURE_FLIPPING_MAX_DISTANCE()
 				return;
 
 			// All test passed succesfully, notify the players and change owner...
@@ -11185,7 +11268,7 @@ void CvPlot::diffuseCulture()
 			int iDiffusionRatePer1000 = GC.getGame().getCultureDiffusionRatePer1000();
 			int iCultureValue =  getTotalCulture();
 			int iBaseThreshold = GC.getCULTURE_DIFFUSION_THRESHOLD();
-			int iPlotMax = iCultureValue * GC.getCULTURE_NORMAL_MAX() / 100;
+			int iPlotMax = iCultureValue * GC.getCULTURE_NORMAL_MAX_PERCENT() / 100;
 
 			// Logging
 			CvString redLogMessage;
@@ -11352,19 +11435,11 @@ void CvPlot::diffuseCulture()
 				}
 			}
 
-			iPlotMax = min(iPlotMax, iCultureValue * GC.getCULTURE_MAX_ADJACENT_PERCENT() / 100);
+			iPlotMax = min(iPlotMax, iCultureValue * GC.getCULTURE_ABSOLUTE_MAX_PERCENT() / 100);
 
-			// Make sure we do not end with more than iPlotMax after addition of the diffused culture
-			//int iDiffusedCulture = (iCultureValue * (iDiffusionRatePer1000 + (iDiffusionRatePer1000 * iBonus / 100))) / (1000 + (1000 * iMalus / 100)); // the parenthesis order is important here, yep, still learning simple operations and truncations...
-			
-			//int iPreviousCulture = pAdjacentPlot->getTotalCulture();
-			//int iNextculture = min(iPlotMax, iPreviousCulture + iDiffusedCulture);
-			
 			strTemp.Format("\n		Final values: iBonus = %d, iMalus = %d, iPlotMax = %d)", iBonus, iMalus, iPlotMax);
 			redLogMessage += strTemp;
-
-			//iDiffusedCulture = iNextculture - iPreviousCulture;
-
+			
 			// Apply Culture diffusion to all culture groups
 			for (int iJ = 0; iJ < MAX_PLAYERS; iJ++) // only "real" players
 			{

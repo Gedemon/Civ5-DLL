@@ -377,6 +377,19 @@ void CvGame::init(HandicapTypes eHandicap)
 	CvGoodyHuts::Reset();
 
 	doUpdateCacheOnTurn();
+
+	// RED <<<<<
+	if(GC.getGame().isOption("GAMEOPTION_CULTURE_DIFFUSION") || GC.getCULTURE_DIFFUSION_ENABLED() > 0)
+	{
+		setIsOptionCultureDiffusionEnabled(true);
+	}
+
+	if(isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") )
+	{
+
+	}
+
+	// RED >>>>>
 }
 
 //	--------------------------------------------------------------------------------
@@ -404,7 +417,7 @@ bool CvGame::init2()
 	//
 	// Set Culture Diffusion Rate From Game Setting
 	//
-	if (GC.getCULTURE_DIFFUSION_ENABLED() > 0)
+	if (GC.getGame().isOption("GAMEOPTION_CULTURE_DIFFUSION") || GC.getCULTURE_DIFFUSION_ENABLED() > 0) // GC.getGame().isCultureDiffusionEnabled() <- is it defined already here ?
 	{
 		// Logging
 		CvString redLogMessage;
@@ -1094,6 +1107,18 @@ void CvGame::uninit()
 	m_iLastMouseoverUnitID = 0;
 
 	// RED <<<<<
+	m_bIsOptionCultureDiffusionEnabled = false;
+	m_bIsOptionRevolutionsEnabled = false;
+
+	OPT_BOL_INIT(OptionCanRebaseInFriendlyCity);
+	OPT_BOL_INIT(OptionCanStackInCity);
+	OPT_BOL_INIT(OptionCanEnterForeignCity);
+	OPT_BOL_INIT(OptionCivilianCanMoveThrough);
+	OPT_BOL_INIT(OptionBestDefenderByHealth);
+	OPT_BOL_INIT(OptionDefensiveSupportFire);
+	OPT_BOL_INIT(OptionOffensiveSupportFire);
+	OPT_BOL_INIT(OptionCounterFire);
+
 	m_iCultureDiffusionRatePer1000 = 0;
 	// RED >>>>>
 
@@ -9465,6 +9490,18 @@ void CvGame::Read(FDataStream& kStream)
 	kStream >> *m_pGameTrade;
 
 	// RED <<<<<
+	kStream >> m_bIsOptionCultureDiffusionEnabled;
+	kStream >> m_bIsOptionRevolutionsEnabled;
+
+	OPT_BOL_READ(OptionCanRebaseInFriendlyCity);
+	OPT_BOL_READ(OptionCanStackInCity);
+	OPT_BOL_READ(OptionCanEnterForeignCity);
+	OPT_BOL_READ(OptionCivilianCanMoveThrough);
+	OPT_BOL_READ(OptionBestDefenderByHealth);
+	OPT_BOL_READ(OptionDefensiveSupportFire);
+	OPT_BOL_READ(OptionOffensiveSupportFire);
+	OPT_BOL_READ(OptionCounterFire);
+
 	kStream >> m_iCultureDiffusionRatePer1000;
 	// RED >>>>>
 
@@ -9645,6 +9682,18 @@ void CvGame::Write(FDataStream& kStream) const
 	kStream << *m_pGameTrade;
 
 	// RED <<<<<
+	kStream << m_bIsOptionCultureDiffusionEnabled;
+	kStream << m_bIsOptionRevolutionsEnabled;
+
+	OPT_BOL_WRITE(OptionCanRebaseInFriendlyCity);
+	OPT_BOL_WRITE(OptionCanStackInCity);
+	OPT_BOL_WRITE(OptionCanEnterForeignCity);
+	OPT_BOL_WRITE(OptionCivilianCanMoveThrough);
+	OPT_BOL_WRITE(OptionBestDefenderByHealth);
+	OPT_BOL_WRITE(OptionDefensiveSupportFire);
+	OPT_BOL_WRITE(OptionOffensiveSupportFire);
+	OPT_BOL_WRITE(OptionCounterFire);
+
 	kStream << m_iCultureDiffusionRatePer1000;
 	// RED >>>>>
 
@@ -11722,6 +11771,19 @@ void CvGame::SetLastTurnAICivsProcessed()
 
 // RED <<<<<
 
+// Game Options
+OPT_BOL_GET(OptionCultureDiffusionEnabled);
+OPT_BOL_GET(OptionRevolutionsEnabled);
+OPT_BOL_GET(OptionCanRebaseInFriendlyCity);
+OPT_BOL_GET(OptionCanStackInCity);
+OPT_BOL_GET(OptionCanEnterForeignCity);
+OPT_BOL_GET(OptionCivilianCanMoveThrough);
+OPT_BOL_GET(OptionBestDefenderByHealth);
+OPT_BOL_GET(OptionDefensiveSupportFire);
+OPT_BOL_GET(OptionOffensiveSupportFire);
+OPT_BOL_GET(OptionCounterFire);
+
+// Cached
 //	--------------------------------------------------------------------------------
 int CvGame::getCultureDiffusionRatePer1000() const
 {

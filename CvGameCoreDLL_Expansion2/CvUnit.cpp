@@ -2190,7 +2190,7 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 				return true;
 			}
 
-			if(bIsCity && bIsDeclareWarMove && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
+			if(bIsCity && bIsDeclareWarMove && !GC.getGame().isOptionCanEnterForeignCity())
 			{
 				return false;
 			}
@@ -2214,6 +2214,18 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 			}
 		}
 	}
+
+	// RED <<<<<
+	// to do: option or toggle via CS menu
+	if(kMyTeam.isMinorCiv() && !kTheirTeam.isMinorCiv())
+	{
+		CvMinorCivAI* pMinorAI = GET_PLAYER(kMyTeam.getLeaderID()).GetMinorCivAI();
+		if (pMinorAI->IsAllies(kTheirTeam.getLeaderID()))
+		{
+			return true;
+		}
+	}
+	// RED >>>>>
 
 	if(!bIgnoreRightOfPassage)
 	{
@@ -13544,7 +13556,7 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 	}
 
 	// RED <<<<<
-	if (GC.getCULTURE_CONQUEST_ENABLED() > 0)
+	if (GC.getGame().isOptionCultureDiffusionEnabled() && GET_PLAYER(getOwner()).canCultureConquest())
 		capturePlot(pNewPlot);
 
 	// RED >>>>>
@@ -21264,6 +21276,9 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 	if (pPlot == NULL)
 		return;
 
+	if (!GET_PLAYER(getOwner()).canCultureConquest())
+		return;
+
 	if (pPlot->isCity() || pPlot->isWater())
 		return;
 
@@ -21312,11 +21327,33 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 			{
 				if (pPlot->getCulture(eUnitOwner) > GC.getCULTURE_MINIMAL_FOR_CONQUEST() || GC.getCULTURE_CONQUEST_EVEN_NONE() > 0) // above minimal culture needed (or none needed)
 				{
-					// Do we allow non-adjacent capture ?
-					if (!pPlot->isAdjacentPlayer(eUnitOwner, /*LandOnly*/ true) && GC.getCULTURE_CONQUEST_ONLY_ADJACENT() > 0)
+					// Have we captured a Citadel ?
+					ImprovementTypes eImprovement = pPlot->getImprovementType();
+					bool bIsCitadel = false;
+					bool bIsFortification = false;
+					bool bAlwaysCapture = false;
+
+					if (eImprovement != NO_IMPROVEMENT ) // && !pPlot->IsImprovementPillaged() <- we don't care if it's pillaged here...
+					{
+						if (GC.getImprovementInfo(eImprovement)->GetNearbyEnemyDamage() > 0)
+							bIsCitadel = true;
+
+						if (GC.getImprovementInfo(eImprovement)->GetDefenseModifier() > 0)
+							bIsFortification = true;
+					}
+
+					bAlwaysCapture = (bIsCitadel || bIsFortification);
+
+					// Do we allow non-adjacent capture ? (but Fortifications and Citadel are always captured)
+					if (!pPlot->isAdjacentPlayer(eUnitOwner, /*LandOnly*/ true) && GC.getCULTURE_CONQUEST_ONLY_ADJACENT() > 0 &&!bAlwaysCapture)
 						return;
 
-					CvCity* pNearestCity = GC.getMap().findCity(pPlot->getX(), pPlot->getY(), eUnitOwner);					
+					CvCity* pNearestCity = GC.getMap().findCity(pPlot->getX(), pPlot->getY(), eUnitOwner);
+
+					// Abort if we can't find a city near that plot...
+					if (pNearestCity == NULL)
+						return;
+
 					int iDistance = plotDistance(pPlot->getX(), pPlot->getY(), pNearestCity->getX(), pNearestCity->getY());
 
 					// Is the plot too far away ?
@@ -21333,50 +21370,47 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 					pPlot->setOwner(eUnitOwner, pNearestCity->GetID(), /*bCheckUnits*/ true);
 
 					// If we've just captured a citadel, convert all plots around
-					ImprovementTypes eImprovement = pPlot->getImprovementType();
-					if (eImprovement != NO_IMPROVEMENT && !pPlot->IsImprovementPillaged())
+					if (bIsCitadel)
 					{
-						if (GC.getImprovementInfo(eImprovement)->GetNearbyEnemyDamage() > 0)
-						{	
-							CvPlot* pAdjacentPlot;
-							for(int iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
+						CvPlot* pAdjacentPlot;
+						for(int iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
+						{
+							pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
+							if(pAdjacentPlot != NULL)
 							{
-								pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
-								if(pAdjacentPlot != NULL)
+								if (!pAdjacentPlot->isWater()  && !pAdjacentPlot->isCity() && GET_TEAM(GET_PLAYER(eUnitOwner).getTeam()).isAtWar(GET_PLAYER(pAdjacentPlot->getOwner()).getTeam()))
 								{
-									if (!pAdjacentPlot->isWater()  && !pAdjacentPlot->isCity() && GET_TEAM(GET_PLAYER(eUnitOwner).getTeam()).isAtWar(GET_PLAYER(pAdjacentPlot->getOwner()).getTeam()))
+									// don't convert another citadel !
+									ImprovementTypes eAdjacentImprovement = pAdjacentPlot->getImprovementType();
+									if (eAdjacentImprovement != NO_IMPROVEMENT && !pAdjacentPlot->IsImprovementPillaged())
+										if (GC.getImprovementInfo(eAdjacentImprovement)->GetNearbyEnemyDamage() > 0)
+											continue;
+
+									int iTotalCultureLoss = 0;
+									for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
 									{
-										// don't convert another citadel !
-										ImprovementTypes eAdjacentImprovement = pAdjacentPlot->getImprovementType();
-										if (eAdjacentImprovement != NO_IMPROVEMENT && !pAdjacentPlot->IsImprovementPillaged())
-											if (GC.getImprovementInfo(eAdjacentImprovement)->GetNearbyEnemyDamage() > 0)
-												continue;
+										int iCultureLoss = pAdjacentPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_LOST_PLOT_CONQUEST() / 100;
 
-										int iTotalCultureLoss = 0;
-										for (int iI = 0; iI < REALLY_MAX_PLAYERS; iI++) // including "fake" players
+										if (iCultureLoss>0)
 										{
-											int iCultureLoss = pAdjacentPlot->getCulture((PlayerTypes)iI) * GC.getCULTURE_LOST_PLOT_CONQUEST() / 100;
+											strTemp.Format("\n			Player (ID= %d) lose %d of his %d culture (CULTURE_LOST_PLOT_CONQUEST = %d) on citadel's adjacent plot (%d,%d)", iI, iCultureLoss, pAdjacentPlot->getCulture((PlayerTypes)iI), GC.getCULTURE_LOST_PLOT_CONQUEST(),  pAdjacentPlot->getX(),  pAdjacentPlot->getY());
+											redLogMessage += strTemp;
 
-											if (iCultureLoss>0)
-											{
-												strTemp.Format("\n			Player (ID= %d) lose %d of his %d culture (CULTURE_LOST_PLOT_CONQUEST = %d) on citadel's adjacent plot (%d,%d)", iI, iCultureLoss, pAdjacentPlot->getCulture((PlayerTypes)iI), GC.getCULTURE_LOST_PLOT_CONQUEST(),  pAdjacentPlot->getX(),  pAdjacentPlot->getY());
-												redLogMessage += strTemp;
+											pAdjacentPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
+											iTotalCultureLoss += iCultureLoss;
+										}
+									}			
+									int iConverted = iTotalCultureLoss * GC.getCULTURE_GAIN_PLOT_CONQUEST() / 100;
 
-												pAdjacentPlot->changeCulture((PlayerTypes)iI, - iCultureLoss);
-												iTotalCultureLoss += iCultureLoss;
-											}
-										}			
-										int iConverted = iTotalCultureLoss * GC.getCULTURE_GAIN_PLOT_CONQUEST() / 100;
+									strTemp.Format("\n\n				Player (ID= %d) gain %d culture from iTotalCultureLoss = %d (CULTURE_GAIN_PLOT_CONQUEST = %d) \n", getOwner(), iConverted, iTotalCultureLoss, GC.getCULTURE_GAIN_PLOT_CONQUEST());
+									redLogMessage += strTemp;
 
-										strTemp.Format("\n\n				Player (ID= %d) gain %d culture from iTotalCultureLoss = %d (CULTURE_GAIN_PLOT_CONQUEST = %d) \n", getOwner(), iConverted, iTotalCultureLoss, GC.getCULTURE_GAIN_PLOT_CONQUEST());
-										redLogMessage += strTemp;
-
-										pAdjacentPlot->changeCulture(eUnitOwner, iConverted);
-									}									
-									pAdjacentPlot->setOwner(eUnitOwner, pNearestCity->GetID(), /*bCheckUnits*/ true);
-								}
+									pAdjacentPlot->changeCulture(eUnitOwner, iConverted);
+								}									
+								pAdjacentPlot->setOwner(eUnitOwner, pNearestCity->GetID(), /*bCheckUnits*/ true);
 							}
 						}
+						
 					}
 				}
 			}

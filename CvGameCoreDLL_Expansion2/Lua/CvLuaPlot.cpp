@@ -273,6 +273,8 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(GetCulture);
 	Method(GetTotalCulture);
 	Method(GetCulturePercent);
+	Method(GetCulturePer10000);
+	Method(GetPreviousCulturePer10000);
 	// RED >>>>>
 }
 //------------------------------------------------------------------------------
@@ -1860,6 +1862,32 @@ int CvLuaPlot::lGetCulturePercent(lua_State* L)
 	const PlayerTypes ePlayer = (PlayerTypes)lua_tointeger(L, 2);
 
 	const int iResult = kPlot->getCulturePercent(ePlayer);
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//int getCulturePer10000();
+int CvLuaPlot::lGetCulturePer10000(lua_State* L)
+{
+	CvPlot* kPlot = GetInstance(L);	
+	const PlayerTypes ePlayer = (PlayerTypes)lua_tointeger(L, 2);
+
+	const int iResult = kPlot->getCulturePer10000(ePlayer);
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//int getPreviousCulturePer10000();
+int CvLuaPlot::lGetPreviousCulturePer10000(lua_State* L)
+{
+	CvPlot* kPlot = GetInstance(L);	
+	const PlayerTypes ePlayer = (PlayerTypes)lua_tointeger(L, 2);
+
+	const int iResult = kPlot->getPreviousCulturePer10000(ePlayer);
 
 	lua_pushinteger(L, iResult);
 	return 1;

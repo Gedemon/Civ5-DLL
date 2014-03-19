@@ -5643,6 +5643,13 @@ void CvMinorCivAI::SetAlly(PlayerTypes eNewAlly)
 			{
 				pPlot->changeAdjacentSight(GET_PLAYER(eOldAlly).getTeam(), iPlotVisRange, false, NO_INVISIBLE, NO_DIRECTION, false);
 			}
+			// RED <<<<<
+			// no more visibility on my old ally territory...
+			if(pPlot->getOwner() == eOldAlly)
+			{
+				pPlot->changeAdjacentSight(m_pPlayer->getTeam(), iPlotVisRange, false, NO_INVISIBLE, NO_DIRECTION, false);
+			}
+			// RED >>>>>
 		}
 		if(eOldAlly == GC.getGame().getActivePlayer())
 		{
@@ -5666,6 +5673,13 @@ void CvMinorCivAI::SetAlly(PlayerTypes eNewAlly)
 			{
 				pPlot->changeAdjacentSight(kNewAlly.getTeam(), iPlotVisRange, true, NO_INVISIBLE, NO_DIRECTION, false);
 			}
+			// RED <<<<<
+			// get visibility on my ally territory so I can (hopefuly) help him during war (if the enter allied territory option is ON)...
+			if(pPlot->getOwner() == eNewAlly)
+			{
+				pPlot->changeAdjacentSight(m_pPlayer->getTeam(), iPlotVisRange, true, NO_INVISIBLE, NO_DIRECTION, false);
+			}
+			// RED >>>>>
 		}
 
 		for(int iPolicyLoop = 0; iPolicyLoop < GC.getNumPolicyInfos(); iPolicyLoop++)

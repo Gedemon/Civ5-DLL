@@ -567,6 +567,21 @@ public:
 
 	// RED <<<<<	
 
+	void setIsOptionCultureDiffusionEnabled(bool bNewValue);
+	bool isOptionCultureDiffusionEnabled() const;
+
+	void setIsOptionRevolutionsEnabled(bool bNewValue);
+	bool isOptionRevolutionsEnabled() const;
+	
+	OPT_BOL_DEF(OptionCanRebaseInFriendlyCity);
+	OPT_BOL_DEF(OptionCanStackInCity);
+	OPT_BOL_DEF(OptionCanEnterForeignCity);
+	OPT_BOL_DEF(OptionCivilianCanMoveThrough);
+	OPT_BOL_DEF(OptionBestDefenderByHealth);
+	OPT_BOL_DEF(OptionDefensiveSupportFire);
+	OPT_BOL_DEF(OptionOffensiveSupportFire);
+	OPT_BOL_DEF(OptionCounterFire);
+
 	void setCultureDiffusionRatePer1000(int iNewValue);
 	int getCultureDiffusionRatePer1000() const;
 
@@ -777,9 +792,19 @@ protected:
 	void SpawnArchaeologySitesHistorically();
 
 	// RED <<<<<
+	bool m_bIsOptionCultureDiffusionEnabled;
+	bool m_bIsOptionRevolutionsEnabled;
 
-	int m_iCultureDiffusionRatePer1000;
-
+	OPT_BOL_DECL(OptionCanRebaseInFriendlyCity);
+	OPT_BOL_DECL(OptionCanStackInCity);
+	OPT_BOL_DECL(OptionCanEnterForeignCity);
+	OPT_BOL_DECL(OptionCivilianCanMoveThrough);
+	OPT_BOL_DECL(OptionBestDefenderByHealth);
+	OPT_BOL_DECL(OptionDefensiveSupportFire);
+	OPT_BOL_DECL(OptionOffensiveSupportFire);
+	OPT_BOL_DECL(OptionCounterFire);
+	
+	int m_iCultureDiffusionRatePer1000;	
 	// RED >>>>>
 };
 

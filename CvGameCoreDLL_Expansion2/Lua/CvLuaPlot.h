@@ -290,6 +290,8 @@ protected:
 	static int lGetCulture(lua_State* L);
 	static int lGetTotalCulture(lua_State* L);
 	static int lGetCulturePercent(lua_State* L);
+	static int lGetCulturePer10000(lua_State* L);
+	static int lGetPreviousCulturePer10000(lua_State* L);
 	// RED >>>>>
 };
 #endif

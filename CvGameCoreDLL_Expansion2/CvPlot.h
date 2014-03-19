@@ -703,6 +703,7 @@ public:
 	void changeCulture(PlayerTypes eIndex, int iChange);
 	int getCulturePercent(PlayerTypes eIndex) const;
 	int getTotalCulture() const;
+	PlayerTypes getHighestCulturePlayer() const;
 	void doConquestCountDown();
 	int getConquestCountDown() const;
 	void setConquestCountDown();
@@ -710,6 +711,12 @@ public:
 	void updateCulture();	
 	void updateOwnership();
 	void diffuseCulture();
+	
+	int getPreviousCulture(PlayerTypes eIndex) const;
+	void setPreviousCulture(PlayerTypes eIndex, int iNewValue);
+	int getPreviousCulturePer10000(PlayerTypes eIndex) const;
+	int getCulturePer10000(PlayerTypes eIndex) const;
+	int getTotalPreviousCulture() const;
 
 	// RED >>>>>
 
@@ -871,6 +878,7 @@ protected:
 
 	// RED <<<<<
 	int m_aiCulture[REALLY_MAX_PLAYERS];
+	int m_aiPreviousCulture[REALLY_MAX_PLAYERS];
 	int m_iConquestCountDown;
 	// RED >>>>>
 

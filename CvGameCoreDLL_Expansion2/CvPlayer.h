@@ -1504,6 +1504,18 @@ public:
 	CvPlayerAchievements& GetPlayerAchievements(){return m_kPlayerAchievements;}
 
 	bool hasTurnTimerExpired();
+	
+	// RED <<<<<
+	int getCultureMinimumForAcquisition() const;
+	int getCultureDiffusionThreshold() const;
+	int getCultureFlippingMaxDistance() const;
+	bool canCultureConquest() const;
+	
+	void setCultureMinimumForAcquisition(int iMinimumForAcquisition);
+	void setCultureDiffusionThreshold(int iDiffusionThreshold);
+	void setCultureFlippingMaxDistance(int iFlippingDistance);
+	void setCanCultureConquest(bool bCultureConquest);
+	// RED >>>>>
 
 protected:
 	class ConqueredByBoolField
@@ -1975,6 +1987,13 @@ protected:
 	friend const CvUnit* GetPlayerUnit(const IDInfo& unit);
 
 	CvPlayerAchievements m_kPlayerAchievements;
+
+	// RED <<<<<
+	int m_iCultureMinimumForAcquisition;
+	int m_iCultureDiffusionThreshold;
+	int m_iCultureFlippingMaxDistance;
+	bool m_bCultureConquest;
+	// RED >>>>>
 };
 
 extern bool CancelActivePlayerEndTurn();

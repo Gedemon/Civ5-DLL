@@ -403,6 +403,12 @@ CvPlayer::CvPlayer() :
 	, m_iFaithPurchaseIndex(0)
 	, m_bProcessedAutoMoves(false)
 	, m_kPlayerAchievements(*this)
+	// RED <<<<<
+	,m_iCultureMinimumForAcquisition(0)
+	,m_iCultureDiffusionThreshold(0)
+	,m_iCultureFlippingMaxDistance(0)
+	,m_bCultureConquest(false)
+	// RED >>>>>
 {
 	m_pPlayerPolicies = FNEW(CvPlayerPolicies, c_eCiv5GameplayDLL, 0);
 	m_pEconomicAI = FNEW(CvEconomicAI, c_eCiv5GameplayDLL, 0);
@@ -629,6 +635,23 @@ void CvPlayer::init(PlayerTypes eID)
 		}
 
 		SetGreatGeneralCombatBonus(GC.getGREAT_GENERAL_STRENGTH_MOD());
+
+		// RED <<<<<
+		if (GC.getCULTURE_DIFFUSION_VARIATION_BY_ERA() > 0)
+		{
+			setCultureMinimumForAcquisition(GC.getEraInfo(GetCurrentEra())->getCultureMinimumForAcquisitionMod()*GC.getCULTURE_MINIMUM_FOR_ACQUISITION()/100);
+			setCultureDiffusionThreshold(GC.getEraInfo(GetCurrentEra())->getCultureDiffusionThresholdMod()*GC.getCULTURE_DIFFUSION_THRESHOLD()/100);
+			setCultureFlippingMaxDistance(GC.getEraInfo(GetCurrentEra())->getCultureFlippingMaxDistance());
+			setCanCultureConquest(GC.getEraInfo(GetCurrentEra())->canCultureConquest());
+		}
+		else
+		{
+			setCultureMinimumForAcquisition(GC.getCULTURE_MINIMUM_FOR_ACQUISITION());
+			setCultureDiffusionThreshold(GC.getCULTURE_DIFFUSION_THRESHOLD());
+			setCultureFlippingMaxDistance(GC.getCULTURE_FLIPPING_MAX_DISTANCE());
+			setCanCultureConquest((GC.getCULTURE_CONQUEST_ENABLED()>0));
+		}
+		// RED >>>>>
 	}
 
 	m_aiPlots.clear();
@@ -964,6 +987,13 @@ void CvPlayer::uninit()
 	m_bHasAdoptedStateReligion = false;
 	m_bAlliesGreatPersonBiasApplied = false;
 	m_lastGameTurnInitialAIProcessed = -1;
+	
+	// RED <<<<<
+	m_iCultureMinimumForAcquisition = 0;
+	m_iCultureDiffusionThreshold = 0;
+	m_iCultureFlippingMaxDistance = 0;
+	m_bCultureConquest = false;
+	// RED >>>>>
 
 	m_eID = NO_PLAYER;
 }
@@ -2081,7 +2111,7 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 			bWasCityPlot = true;
 		} 
 
-		if (GC.getCULTURE_DIFFUSION_ENABLED() > 0 && (bWasCityPlot || (pLoopPlot && pLoopPlot->getOwner() == GetID() && plotDistance(pLoopPlot->getX(), pLoopPlot->getY(), pOldCity->getX(), pOldCity->getY()) < 4)))
+		if (GC.getGame().isOptionCultureDiffusionEnabled() && (bWasCityPlot || (pLoopPlot && (pLoopPlot->getOwner() == GetID() || pLoopPlot->getHighestCulturePlayer() == eOldOwner) && plotDistance(pLoopPlot->getX(), pLoopPlot->getY(), pOldCity->getX(), pOldCity->getY()) < 4)))
 		{							
 			// Logging
 			CvString redLogMessage;
@@ -4121,7 +4151,7 @@ void CvPlayer::doTurn()
 				GetGrandStrategyAI()->DoTurn();
 				if(GC.getGame().isHotSeat() && !isHuman())
 				{
-					// In Hotseat, AIs only do their diplomacy pass for other AIs on their turn
+					// In Hotseat, AIs only do their diplomacy pass for other AIs on their turn // RED <<<<< todo: find how to do that in normal and sequential MP game
 					// Diplomacy toward a human is done at the beginning of the humans turn.
 					GetDiplomacyAI()->DoTurn((PlayerTypes)CvDiplomacyAI::DIPLO_AI_PLAYERS);		// Do diplomacy for toward everyone
 				}
@@ -22239,6 +22269,14 @@ void CvPlayer::Read(FDataStream& kStream)
 	if(m_bTurnActive)
 		GC.getGame().changeNumGameTurnActive(1, std::string("setTurnActive() [loading save game] for player ") + getName());
 
+	
+	// RED <<<<<
+	kStream >> m_iCultureMinimumForAcquisition;
+	kStream >> m_iCultureDiffusionThreshold;
+	kStream >> m_iCultureFlippingMaxDistance;
+	kStream >> m_bCultureConquest;
+	// RED >>>>>
+
 }
 
 //	--------------------------------------------------------------------------------
@@ -22651,6 +22689,13 @@ void CvPlayer::Write(FDataStream& kStream) const
 	kStream << m_strEmbarkedGraphicOverride;
 
 	m_kPlayerAchievements.Write(kStream);
+	
+	// RED <<<<<
+	kStream << m_iCultureMinimumForAcquisition;
+	kStream << m_iCultureDiffusionThreshold;
+	kStream << m_iCultureFlippingMaxDistance;
+	kStream << m_bCultureConquest;
+	// RED >>>>>
 }
 
 //	--------------------------------------------------------------------------------
@@ -22818,7 +22863,15 @@ void CvPlayer::invalidateYieldRankCache(YieldTypes)
 //	--------------------------------------------------------------------------------
 void CvPlayer::doUpdateCacheOnTurn()
 {
-
+	// RED <<<<<
+	if (GC.getCULTURE_DIFFUSION_VARIATION_BY_ERA() > 0)
+	{
+		setCultureMinimumForAcquisition(GC.getEraInfo(GetCurrentEra())->getCultureMinimumForAcquisitionMod()*GC.getCULTURE_MINIMUM_FOR_ACQUISITION()/100);
+		setCultureDiffusionThreshold(GC.getEraInfo(GetCurrentEra())->getCultureDiffusionThresholdMod()*GC.getCULTURE_DIFFUSION_THRESHOLD()/100);
+		setCultureFlippingMaxDistance(GC.getEraInfo(GetCurrentEra())->getCultureFlippingMaxDistance());
+		setCanCultureConquest(GC.getEraInfo(GetCurrentEra())->canCultureConquest());
+	}
+	// RED >>>>>
 }
 
 //	--------------------------------------------------------------------------------
@@ -24766,3 +24819,50 @@ bool CancelActivePlayerEndTurn()
 	}
 	return true;
 }
+
+// RED <<<<<
+//	--------------------------------------------------------------------------------
+int CvPlayer::getCultureMinimumForAcquisition() const
+{
+	return m_iCultureMinimumForAcquisition;
+}
+//	--------------------------------------------------------------------------------
+int CvPlayer::getCultureDiffusionThreshold() const
+{
+	return m_iCultureDiffusionThreshold;
+}//	--------------------------------------------------------------------------------
+int CvPlayer::getCultureFlippingMaxDistance() const
+{
+	return m_iCultureFlippingMaxDistance;
+}//	--------------------------------------------------------------------------------
+bool CvPlayer::canCultureConquest() const
+{
+	return m_bCultureConquest;
+}
+
+//	---------------------------------------------------------------------------
+void CvPlayer::setCultureMinimumForAcquisition(int iNewValue)
+{
+	if (getCultureMinimumForAcquisition() != iNewValue)
+		m_iCultureMinimumForAcquisition = iNewValue;
+}
+//	---------------------------------------------------------------------------
+void CvPlayer::setCultureDiffusionThreshold(int iNewValue)
+{
+	if (getCultureDiffusionThreshold() != iNewValue)
+		m_iCultureDiffusionThreshold = iNewValue;
+}
+//	---------------------------------------------------------------------------
+void CvPlayer::setCultureFlippingMaxDistance(int iNewValue)
+{
+	if (getCultureFlippingMaxDistance() != iNewValue)
+		m_iCultureFlippingMaxDistance = iNewValue;
+}
+//	---------------------------------------------------------------------------
+void CvPlayer::setCanCultureConquest(bool bNewValue)
+{
+	if (canCultureConquest() != bNewValue)
+		m_bCultureConquest = bNewValue;
+}
+
+// RED >>>>>

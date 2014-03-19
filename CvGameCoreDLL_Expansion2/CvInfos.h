@@ -2082,6 +2082,16 @@ public:
 	bool isNoBarbUnits() const;
 	bool isNoReligion() const;
 
+	// RED <<<<<
+
+	int getCultureMinimumForAcquisitionMod() const;
+	int getCultureDiffusionThresholdMod() const;
+	int getCultureFlippingMaxDistance() const;
+
+	bool canCultureConquest() const;
+
+	// RED >>>>>
+
 	// Arrays
 
 
@@ -2130,6 +2140,16 @@ protected:
 	bool m_bNoGoodies;
 	bool m_bNoBarbUnits;
 	bool m_bNoReligion;
+
+	// RED <<<<<
+
+	int m_iCultureMinimumForAcquisitionMod;
+	int m_iCultureDiffusionThresholdMod;
+	int m_iCultureFlippingMaxDistance;
+
+	bool m_bCultureConquestEnabled;
+
+	// RED >>>>>
 
 	std::vector<CvString> m_vEraVOs;
 
