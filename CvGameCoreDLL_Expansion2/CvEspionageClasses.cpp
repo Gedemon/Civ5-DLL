@@ -322,12 +322,12 @@ void CvPlayerEspionage::ProcessSpy(uint uiSpyIndex)
 #if defined(MOD_API_ESPIONAGE)
 				if (!pSpy->m_bPassive) {
 #endif
-					pSpy->m_eSpyState = SPY_STATE_RIG_ELECTION;
-					pCityEspionage->ResetProgress(ePlayer);
-					int iRate = CalcPerTurn(SPY_STATE_RIG_ELECTION, pCity, uiSpyIndex);
-					int iGoal = CalcRequired(SPY_STATE_RIG_ELECTION, pCity, uiSpyIndex);
-					pCityEspionage->SetActivity(ePlayer, 0, iRate, iGoal);
-					pCityEspionage->SetLastProgress(ePlayer, iRate);
+				pSpy->m_eSpyState = SPY_STATE_RIG_ELECTION;
+				pCityEspionage->ResetProgress(ePlayer);
+				int iRate = CalcPerTurn(SPY_STATE_RIG_ELECTION, pCity, uiSpyIndex);
+				int iGoal = CalcRequired(SPY_STATE_RIG_ELECTION, pCity, uiSpyIndex);
+				pCityEspionage->SetActivity(ePlayer, 0, iRate, iGoal);
+				pCityEspionage->SetLastProgress(ePlayer, iRate);
 #if defined(MOD_API_ESPIONAGE)
 				}
 #endif
@@ -337,26 +337,26 @@ void CvPlayerEspionage::ProcessSpy(uint uiSpyIndex)
 #if defined(MOD_API_ESPIONAGE)
 				if (!pSpy->m_bPassive) {
 #endif
-					BuildStealableTechList(eCityOwner);
-					// moved rate out here to set the potential
-					int iBasePotentialRate = CalcPerTurn(SPY_STATE_GATHERING_INTEL, pCity, -1);
-					pCityEspionage->SetLastBasePotential(ePlayer, iBasePotentialRate);
+				BuildStealableTechList(eCityOwner);
+				// moved rate out here to set the potential
+				int iBasePotentialRate = CalcPerTurn(SPY_STATE_GATHERING_INTEL, pCity, -1);
+				pCityEspionage->SetLastBasePotential(ePlayer, iBasePotentialRate);
 
-					if(m_aaPlayerStealableTechList[eCityOwner].size() > 0)
-					{
-						// TODO: need to proclaim surveillance somehow
-						pSpy->m_eSpyState = SPY_STATE_GATHERING_INTEL;
-						pCityEspionage->ResetProgress(ePlayer);
-						int iPotentialRate = CalcPerTurn(SPY_STATE_GATHERING_INTEL, pCity, uiSpyIndex);
-						int iGoal = CalcRequired(SPY_STATE_GATHERING_INTEL, pCity, uiSpyIndex);
-						pCityEspionage->SetActivity(ePlayer, 0, iPotentialRate, iGoal);
-						pCityEspionage->SetLastProgress(ePlayer, iPotentialRate);
-						pCityEspionage->SetLastPotential(ePlayer, iPotentialRate);
-					}
-					else
-					{
-						// if this is the first time they crossed the threshold
-						if(!bLastQualified)
+				if(m_aaPlayerStealableTechList[eCityOwner].size() > 0)
+				{
+					// TODO: need to proclaim surveillance somehow
+					pSpy->m_eSpyState = SPY_STATE_GATHERING_INTEL;
+					pCityEspionage->ResetProgress(ePlayer);
+					int iPotentialRate = CalcPerTurn(SPY_STATE_GATHERING_INTEL, pCity, uiSpyIndex);
+					int iGoal = CalcRequired(SPY_STATE_GATHERING_INTEL, pCity, uiSpyIndex);
+					pCityEspionage->SetActivity(ePlayer, 0, iPotentialRate, iGoal);
+					pCityEspionage->SetLastProgress(ePlayer, iPotentialRate);
+					pCityEspionage->SetLastPotential(ePlayer, iPotentialRate);
+				}
+				else
+				{
+					// if this is the first time they crossed the threshold
+					if(!bLastQualified)
 					{
 						CvNotifications* pNotifications = m_pPlayer->GetNotifications();
 						if(pNotifications)
@@ -368,21 +368,21 @@ void CvPlayerEspionage::ProcessSpy(uint uiSpyIndex)
 							strNotification << m_pPlayer->getCivilizationInfo().getSpyNames(pSpy->m_iName);
 							strNotification << GET_PLAYER(eCityOwner).getCivilizationInfo().getShortDescriptionKey();
 							pNotifications->Add(NOTIFICATION_SPY_CANT_STEAL_TECH, strNotification.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
-							}
 						}
-						int iRate = CalcPerTurn(SPY_STATE_SURVEILLANCE, pCity, uiSpyIndex);
-						pCityEspionage->SetLastProgress(ePlayer, iRate);
-						pCityEspionage->SetLastPotential(ePlayer, -1); // set the last potential back to zero so that 
-						pSpy->m_bEvaluateReassignment = true; // flag to re-evaluate because we can't steal
-						if(GC.getLogging())
-						{
-							CvString strMsg;
-							strMsg.Format("Re-eval: can't steal research, %d,", uiSpyIndex);
-							strMsg += GetLocalizedText(m_pPlayer->getCivilizationInfo().getSpyNames(pSpy->m_iName));
-							LogEspionageMsg(strMsg);
-						}
-
 					}
+					int iRate = CalcPerTurn(SPY_STATE_SURVEILLANCE, pCity, uiSpyIndex);
+					pCityEspionage->SetLastProgress(ePlayer, iRate);
+					pCityEspionage->SetLastPotential(ePlayer, -1); // set the last potential back to zero so that 
+					pSpy->m_bEvaluateReassignment = true; // flag to re-evaluate because we can't steal
+					if(GC.getLogging())
+					{
+						CvString strMsg;
+						strMsg.Format("Re-eval: can't steal research, %d,", uiSpyIndex);
+						strMsg += GetLocalizedText(m_pPlayer->getCivilizationInfo().getSpyNames(pSpy->m_iName));
+						LogEspionageMsg(strMsg);
+					}
+
+				}
 #if defined(MOD_API_ESPIONAGE)
 				}
 #endif
@@ -1814,6 +1814,7 @@ int CvPlayerEspionage::GetCoupChanceOfSuccess(uint uiSpyIndex)
 	//float fSpyLevelDeltaZero = 0.0f;
 	//float fSpyLevelDeltaOne = 1.5f;
 	//float fSpyLevelDeltaTwo = 2.25;
+	//float fSpyLevelDeltaThree = 3.0f;
 
 	float fNobodyBonus = GC.getESPIONAGE_COUP_NOBODY_BONUS();
 	float fMultiplyConstant = GC.getESPIONAGE_COUP_MULTIPLY_CONSTANT();

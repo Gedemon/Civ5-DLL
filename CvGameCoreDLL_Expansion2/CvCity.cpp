@@ -364,7 +364,7 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 		static BuildTypes eBuildRemoveForest = (BuildTypes)GC.getInfoTypeForString("BUILD_REMOVE_FOREST");
 
 		// Only for major civs building on a forest
-		if(MOD_GLOBAL_CITY_FOREST_BONUS && !owningPlayer.isMinorCiv() && pPlot->getFeatureType() == FEATURE_FOREST)
+		if(MOD_GLOBAL_CITY_FOREST_BONUS && eBuildRemoveForest != -1 && !owningPlayer.isMinorCiv() && pPlot->getFeatureType() == FEATURE_FOREST)
 		{
 			// Don't do this for the AI capitals - it's just too much of an initial boost!
 			if (owningPlayer.isHuman() || owningPlayer.getCapitalCity() != NULL) {
@@ -589,6 +589,10 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 			if(!isHuman())
 			{
 				changeOverflowProduction(GC.getINITIAL_AI_CITY_PRODUCTION());
+#if defined(ACHIEVEMENT_HACKS)
+			} else {
+				CvAchievementUnlocker::UnlockFromDatabase();
+#endif
 			}
 		}
 	}
@@ -7400,6 +7404,11 @@ void CvCity::setPopulation(int iNewValue, bool bReassignPop /* = true */)
 {
 	VALIDATE_OBJECT
 	int iOldPopulation;
+	
+#if defined(MOD_BUGFIX_CITY_CENTRE_WORKING)
+	// To fix the "not working the centre tile" bug always call GetCityCitizens()->SetWorkingPlot(plot(), true, false); here
+	GetCityCitizens()->SetWorkingPlot(plot(), true, false);
+#endif
 
 	iOldPopulation = getPopulation();
 	int iPopChange = iNewValue - iOldPopulation;
@@ -11899,9 +11908,22 @@ void CvCity::DoUpdateCheapestPlotInfluence()
 			pLoopPlot = plotXYWithRangeCheck(getX(), getY(), iDX, iDY, iMaxRange);
 			if(pLoopPlot != NULL)
 			{
+#if defined(MOD_BUGFIX_MINOR)
+				// If the plot's owned by anyone, we can't acquire it, so it doesn't matter
+#else
 				// If the plot's not owned by us, it doesn't matter
+#endif
 				if(pLoopPlot->getOwner() != NO_PLAYER)
 					continue;
+					
+#if defined(MOD_EVENTS_CITY_BORDERS)
+				// If we can't acquire it, it also doesn't matter
+				if (MOD_EVENTS_CITY_BORDERS) {
+					if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CityCanAcquirePlot, getOwner(), GetID(), pLoopPlot->getX(), pLoopPlot->getY()) == GAMEEVENTRETURN_FALSE) {
+						continue;
+					}
+				}
+#endif				
 
 				// we can use the faster, but slightly inaccurate pathfinder here - after all we are using a rand in the equation
 				int iInfluenceCost = thisMap.calculateInfluenceDistance(pThisPlot, pLoopPlot, iMaxRange, false);
@@ -12907,6 +12929,36 @@ bool CvCity::CanPlaceUnitHere(UnitTypes eUnitType)
 	return true;
 }
 
+#if defined(MOD_AI_SMART_GOLD_PURCHASE)
+/// AMS: Check oout if can purchase based on Order.
+bool CvCity::IsCanGoldPurchase(OrderData* pOrder)
+{
+	UnitTypes eUnitType = NO_UNIT;
+	BuildingTypes eBuildingType = NO_BUILDING;
+	ProjectTypes eProjectType = NO_PROJECT;
+
+	switch(pOrder->eOrderType)
+	{
+		case ORDER_TRAIN:
+			eUnitType = ((UnitTypes)(pOrder->iData1));
+			break;
+
+		case ORDER_CONSTRUCT:
+			eBuildingType = ((BuildingTypes)(pOrder->iData1));
+			break;
+
+		case ORDER_CREATE:
+			eProjectType = ((ProjectTypes)(pOrder->iData1));
+			break;
+
+		default:
+			return false;
+	}
+
+	return IsCanPurchase(true, true, eUnitType, eBuildingType, eProjectType, YIELD_GOLD);
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 // Is this city allowed to purchase something right now?
 bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectTypes eProjectType, YieldTypes ePurchaseYield)
@@ -13155,6 +13207,40 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 
 	return true;
 }
+
+#if defined(MOD_AI_SMART_GOLD_PURCHASE)
+/// AMS: Purchase what is being built on a city.
+void CvCity::PurchaseCurrentOrder()
+{
+	UnitTypes eUnitType = NO_UNIT;
+	BuildingTypes eBuildingType = NO_BUILDING;
+	ProjectTypes eProjectType = NO_PROJECT;
+	OrderData* pOrder = getOrderFromQueue(0);
+
+	if (pOrder)
+	{
+		switch(pOrder->eOrderType)
+		{
+			case ORDER_TRAIN:
+				eUnitType = ((UnitTypes)(pOrder->iData1));
+				break;
+
+			case ORDER_CONSTRUCT:
+				eBuildingType = ((BuildingTypes)(pOrder->iData1));
+				break;
+
+			case ORDER_CREATE:
+				eProjectType = ((ProjectTypes)(pOrder->iData1));
+				break;
+
+			default:
+				return;
+		}
+	}
+
+	Purchase(eUnitType, eBuildingType, eProjectType, YIELD_GOLD);
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 // purchase something at the city

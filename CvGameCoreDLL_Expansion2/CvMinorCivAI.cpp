@@ -745,7 +745,7 @@ bool CvMinorCivQuest::IsRevoked()
 			return true;
 #endif
 	}
-
+	
 	return false;
 }
 

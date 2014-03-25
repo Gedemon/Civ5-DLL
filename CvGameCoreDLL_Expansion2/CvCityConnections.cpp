@@ -227,8 +227,11 @@ void CvCityConnections::UpdateRouteInfo(void)
 	int iLoop;
 
 #if defined(MOD_EVENTS_CITY_CONNECTIONS)
-	bool bAllowDomesticRoutes = (eBestRouteType != NO_ROUTE);
-	bool bAllowInternationalRoutes = false;
+	bool bAllowDirectRoutes = (eBestRouteType != NO_ROUTE);
+	bool bAllowIndirectRoutes = false;
+	
+	bool bCallDirectEvents = false;
+	bool bCallIndirectEvents = false;
 #else
 	bool bAllowWaterRoutes = false;
 #endif
@@ -251,7 +254,7 @@ void CvCityConnections::UpdateRouteInfo(void)
 				pLoopCity->SetRouteToCapitalConnected(false);
 
 #if defined(MOD_EVENTS_CITY_CONNECTIONS)
-				if(!bAllowInternationalRoutes)
+				if(!bAllowIndirectRoutes)
 #else
 				if(!bAllowWaterRoutes)
 #endif
@@ -261,7 +264,7 @@ void CvCityConnections::UpdateRouteInfo(void)
 						if(pLoopCity->GetCityBuildings()->GetNumActiveBuilding(m_aBuildingsAllowWaterRoutes[uiBuildingTypes]) > 0)
 						{
 #if defined(MOD_EVENTS_CITY_CONNECTIONS)
-							bAllowInternationalRoutes = true;
+							bAllowIndirectRoutes = true;
 #else
 							bAllowWaterRoutes = true;
 #endif
@@ -288,20 +291,22 @@ void CvCityConnections::UpdateRouteInfo(void)
 	
 #if defined(MOD_EVENTS_CITY_CONNECTIONS)
 	if (MOD_EVENTS_CITY_CONNECTIONS) {
-		// Events to determine if we support alternative domestic an/or international route types
-		if (!bAllowDomesticRoutes && GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CityConnections, m_pPlayer->GetID(), true) == GAMEEVENTRETURN_TRUE) {
-			bAllowDomesticRoutes = true;
+		// Events to determine if we support alternative direct and/or indirect route types
+		if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CityConnections, m_pPlayer->GetID(), true) == GAMEEVENTRETURN_TRUE) {
+			bAllowDirectRoutes = true;
+			bCallDirectEvents = true;
 		}
-		
-		if (!bAllowInternationalRoutes && GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CityConnections, m_pPlayer->GetID(), false) == GAMEEVENTRETURN_TRUE) {
-			bAllowInternationalRoutes = true;
+
+		if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CityConnections, m_pPlayer->GetID(), false) == GAMEEVENTRETURN_TRUE) {
+			bAllowIndirectRoutes = true;
+			bCallIndirectEvents = true;
 		}
 	}
 #endif
 
 	// if the player can't build any routes, then we don't need to check this
 #if defined(MOD_EVENTS_CITY_CONNECTIONS)
-	if(!bAllowDomesticRoutes && !bAllowInternationalRoutes)
+	if(!(bAllowDirectRoutes || bAllowIndirectRoutes))
 #else
 	if(eBestRouteType == NO_ROUTE && !bAllowWaterRoutes)
 #endif
@@ -314,7 +319,7 @@ void CvCityConnections::UpdateRouteInfo(void)
 	for(int iPass = 0; iPass < 2; iPass++)
 	{
 #if defined(MOD_EVENTS_CITY_CONNECTIONS)
-		if(iPass == 0 && !bAllowInternationalRoutes)  // if in the first pass and we can't create off-area routes, skip
+		if(iPass == 0 && !bAllowIndirectRoutes)  // if in the first pass and we can't create indirect routes, skip
 #else
 		if(iPass == 0 && !bAllowWaterRoutes)  // if in the first pass, we can't embark, skip
 #endif
@@ -322,7 +327,7 @@ void CvCityConnections::UpdateRouteInfo(void)
 			continue;
 		}
 #if defined(MOD_EVENTS_CITY_CONNECTIONS)
-		else if(iPass == 1 && !bAllowDomesticRoutes)  // if in the second pass and we can't create in-area routes, skip
+		else if(iPass == 1 && !bAllowDirectRoutes)  // if in the second pass and we can't create direct routes, skip
 #else
 		else if(iPass == 1 && eBestRouteType == NO_ROUTE)  // if in the second pass, we can't build a road, skip
 #endif
@@ -407,16 +412,20 @@ void CvCityConnections::UpdateRouteInfo(void)
 					{
 						if(GC.GetWaterRouteFinder().GeneratePath(pFirstCity->getX(), pFirstCity->getY(), pSecondCity->getX(), pSecondCity->getY(), m_pPlayer->GetID(), true))
 						{
+#if defined(MOD_EVENTS_CITY_CONNECTIONS)
+							pRouteInfo->m_cRouteState |= HAS_ANY_ROUTE | HAS_INDIRECT_ROUTE;
+#else
 							pRouteInfo->m_cRouteState |= HAS_ANY_ROUTE | HAS_WATER_ROUTE;
+#endif
 						}
 					}
 
 #if defined(MOD_EVENTS_CITY_CONNECTIONS)
-					else if (MOD_EVENTS_CITY_CONNECTIONS)
+					if (!(pRouteInfo->m_cRouteState & HAS_ANY_ROUTE) && bCallIndirectEvents)
 					{
-						// Event to determine if pFirstCity is connected to pSecondCity by an alternative international route type
+						// Event to determine if pFirstCity is connected to pSecondCity by an alternative indirect route type
 						if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CityConnected, m_pPlayer->GetID(), pFirstCity->getX(), pFirstCity->getY(), pSecondCity->getX(), pSecondCity->getY(), false) == GAMEEVENTRETURN_TRUE) {
-							pRouteInfo->m_cRouteState |= HAS_ANY_ROUTE | HAS_WATER_ROUTE;
+							pRouteInfo->m_cRouteState |= HAS_ANY_ROUTE | HAS_INDIRECT_ROUTE;
 						}
 					}
 #endif
@@ -426,7 +435,6 @@ void CvCityConnections::UpdateRouteInfo(void)
 					bool bAnyRouteFound = false;
 #if !defined(MOD_EVENTS_CITY_CONNECTIONS)
 					bool bBestRouteFound = false;
-#endif
 
 					// assuming that there are fewer than 256 players
 					int iRouteValue = eBestRouteType + 1;
@@ -435,25 +443,12 @@ void CvCityConnections::UpdateRouteInfo(void)
 					if(pkLandRouteFinder->GeneratePath(pFirstCity->getX(), pFirstCity->getY(), pSecondCity->getX(), pSecondCity->getY(), iPathfinderFlags | m_pPlayer->GetID(), true))
 					{
 						bAnyRouteFound = true;
-#if !defined(MOD_EVENTS_CITY_CONNECTIONS)
 						bBestRouteFound = true;
-#endif
-					}
-
-#if defined(MOD_EVENTS_CITY_CONNECTIONS)
-					else if (MOD_EVENTS_CITY_CONNECTIONS)
-					{
-						// Event to determine if pFirstCity is connected to pSecondCity by an alternative domestic route type
-						if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CityConnected, m_pPlayer->GetID(), pFirstCity->getX(), pFirstCity->getY(), pSecondCity->getX(), pSecondCity->getY(), true) == GAMEEVENTRETURN_TRUE) {
-							bAnyRouteFound = true;
-						}
 					}
 #endif
 
-#if defined(MOD_EVENTS_CITY_CONNECTIONS)
+#if !defined(MOD_EVENTS_CITY_CONNECTIONS)
 					if(!bAnyRouteFound)
-#else
-					if(!bBestRouteFound)
 #endif
 					{
 						if(pkLandRouteFinder->GeneratePath(pFirstCity->getX(), pFirstCity->getY(), pSecondCity->getX(), pSecondCity->getY(), MOVE_ANY_ROUTE | m_pPlayer->GetID(), true))
@@ -461,6 +456,16 @@ void CvCityConnections::UpdateRouteInfo(void)
 							bAnyRouteFound = true;
 						}
 					}
+
+#if defined(MOD_EVENTS_CITY_CONNECTIONS)
+					if (!bAnyRouteFound && bCallDirectEvents)
+					{
+						// Event to determine if pFirstCity is connected to pSecondCity by an alternative direct route type
+						if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CityConnected, m_pPlayer->GetID(), pFirstCity->getX(), pFirstCity->getY(), pSecondCity->getX(), pSecondCity->getY(), true) == GAMEEVENTRETURN_TRUE) {
+							bAnyRouteFound = true;
+						}
+					}
+#endif
 
 #if !defined(MOD_EVENTS_CITY_CONNECTIONS)
 					if(bBestRouteFound)
@@ -470,7 +475,7 @@ void CvCityConnections::UpdateRouteInfo(void)
 					else if(bAnyRouteFound)
 #else
 					if(bAnyRouteFound)
-#endif	
+#endif
 					{
 						pRouteInfo->m_cRouteState |= HAS_ANY_ROUTE;
 					}

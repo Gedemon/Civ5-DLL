@@ -3172,6 +3172,22 @@ bool CvPlayerPolicies::CanUnlockPolicyBranch(PolicyBranchTypes eBranchType)
 	return true;
 }
 
+#if defined(MOD_AI_SMART_POLICY_CHOICE)
+/// can the player unlock eBranchType right now?
+bool CvPlayerPolicies::IsEraPrereqBranch(PolicyBranchTypes eBranchType)
+{
+	bool methodResult = false;
+	CvPolicyBranchEntry* pkBranchEntry = m_pPolicies->GetPolicyBranchEntry(eBranchType);
+
+	if(pkBranchEntry->GetEraPrereq() > 0)
+	{
+		methodResult = true;
+	}
+
+	return methodResult;
+}
+#endif
+
 /// Accessor: has a player unlocked eBranchType to pick Policies from?
 bool CvPlayerPolicies::IsPolicyBranchUnlocked(PolicyBranchTypes eBranchType) const
 {
@@ -3475,7 +3491,7 @@ void CvPlayerPolicies::DoSwitchIdeologies(PolicyBranchTypes eNewBranchType)
 			args->Push(eNewBranchType);
 
 			bool bResult = false;
-			LuaSupport::CallHook(pkScriptSystem, "PlayerAdoptPolicyBranch", args.get(), bResult);
+			LuaSupport::CallHook(pkScriptSystem, "PlayerCanAdoptPolicyBranch", args.get(), bResult);
 		}
 	}
 #endif
@@ -4114,6 +4130,14 @@ void CvPlayerPolicies::AddFlavorAsStrategies(int iPropagatePercent)
 
 //		NEW WAY: use PERSONALITY flavors (since policy choices are LONG-TERM)
 //		EVEN NEWER WAY: add in a modifier for the Grand Strategy we are running (since these are also long term)
+#if defined(MOD_AI_SMART_GRAND_STRATEGY)
+		//		AMS: EVEN NEWER!!! not add grand strategy factor before medieval era, the AI still doesn't know if the Grand Strategy is solid.
+		if (MOD_AI_SMART_GRAND_STRATEGY && m_pPlayer->GetCurrentEra() < 2)
+		{
+			iFlavorValue = m_pPlayer->GetFlavorManager()->GetPersonalityIndividualFlavor((FlavorTypes) iFlavor);
+		}
+		else
+#endif
 		iFlavorValue = m_pPlayer->GetGrandStrategyAI()->GetPersonalityAndGrandStrategy((FlavorTypes) iFlavor);
 
 //		Boost flavor even further based on in-game conditions

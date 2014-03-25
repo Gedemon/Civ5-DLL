@@ -897,6 +897,12 @@ private:
 	void ExecuteEscortEmbarkedMoves();
 
 	// Internal low-level utility routines
+#if defined(MOD_AI_SMART_HELPERS)
+	void GetBestPlot(CvPlot*& outputPlot, vector<CvPlot*> plotsToCheck);
+	bool ContainsPlot(vector<CvPlot*> plotData, CvPlot* plotXy);
+	public: int SamePlotFound(vector<CvPlot*> plotData, CvPlot* plotXy);
+	CvPlot* GetBestRepositionPlot(UnitHandle unitH, CvPlot* plotTarget);
+#endif
 	void TurnOffMove(TacticalAIMoveTypes eType);
 	bool FindUnitsForThisMove(TacticalAIMoveTypes eMove, CvPlot* pTargetPlot, int iNumTurnsAway=0, bool bRangedOnly=false);
 	bool FindUnitsWithinStrikingDistance(CvPlot *pTargetPlot, int iNumTurnsAway, int iPreferredDamageLevel, bool bNoRangedUnits=false, bool bNavalOnly=false, bool bMustMoveThrough=false, bool bIncludeBlockedUnits=false, bool bWillPillage=false, bool bTargetUndefended=false);
@@ -905,6 +911,9 @@ private:
 	bool FindClosestUnit(CvPlot* pTargetPlot, int iNumTurnsAway, bool bMustHaveHalfHP, bool bMustBeRangedUnit=false, int iRangeRequired=2, bool bNeedsIgnoreLOS=false, bool bMustBeMeleeUnit=false, bool bIgnoreUnits=false, CvPlot* pRangedAttackTarget=NULL);
 	bool FindClosestOperationUnit(CvPlot* pTargetPlot, bool bSafeForRanged, bool bMustBeRangedUnit);
 	bool FindClosestNavalOperationUnit(CvPlot* pTargetPlot, bool bEscortedUnits);
+#if defined(MOD_AI_SMART_AIR_SWEEPS)
+	bool FindAirUnitsToAirSweep(CvPlot* pTarget);
+#endif
 	int ComputeTotalExpectedDamage(CvTacticalTarget* target, CvPlot* pTargetPlot);
 	int ComputeTotalExpectedBombardDamage(UnitHandle pTarget);
 	bool IsExpectedToDamageWithRangedAttack(UnitHandle pAttacker, CvPlot* pTarget);
@@ -949,6 +958,9 @@ private:
 	CvPlayer* m_pPlayer;
 	CvTacticalAnalysisMap* m_pMap;
 	list<int> m_CurrentTurnUnits;
+#if defined(MOD_AI_SMART_AIR_SWEEPS)
+	std::vector<CvTacticalUnit> m_CurrentAirUnits;
+#endif
 	std::vector<CvTacticalUnit> m_CurrentMoveUnits;
 	std::vector<CvTacticalUnit> m_CurrentMoveHighPriorityUnits;
 	std::vector<CvTacticalCity> m_CurrentMoveCities;

@@ -999,10 +999,22 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveWriter(CvUnit* pGreatWriter)
 	{
 		eDirective = GREAT_PEOPLE_DIRECTIVE_USE_POWER;
 	}
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+	else if (!MOD_AI_SMART_GREAT_PEOPLE || (GC.getGame().getGameTurn() - pGreatWriter->getGameTurnCreated()) >= GC.getAI_HOMELAND_GREAT_PERSON_TURNS_TO_WAIT())
+#else
 	else
+#endif
 	{
 		eDirective = GREAT_PEOPLE_DIRECTIVE_CULTURE_BLAST;
 	}
+
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+	//AMS: If still no directive, defaults at building great work.
+	if (MOD_AI_SMART_GREAT_PEOPLE && eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE)
+	{
+		eDirective = GREAT_PEOPLE_DIRECTIVE_USE_POWER;
+	}
+#endif
 
 	return eDirective;
 }
@@ -1036,7 +1048,12 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveArtist(CvUnit* pGreatArtist)
 	}
 
 	// If Brazil and we're closing in on Culture Victory
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+	int iInfluentialOn = MOD_AI_SMART_GREAT_PEOPLE ? (GC.getGame().GetGameCulture()->GetNumCivsInfluentialForWin() / 4) : 0;
+	if (eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE && GetPlayerTraits()->GetGoldenAgeTourismModifier() > 0 && GetCulture()->GetNumCivsInfluentialOn() > iInfluentialOn)
+#else
 	if (eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE && GetPlayerTraits()->GetGoldenAgeTourismModifier() > 0 && GetCulture()->GetNumCivsInfluentialOn() > 0)
+#endif
 	{
 		eDirective = GREAT_PEOPLE_DIRECTIVE_GOLDEN_AGE;
 	}
@@ -1048,10 +1065,22 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveArtist(CvUnit* pGreatArtist)
 		eDirective = GREAT_PEOPLE_DIRECTIVE_USE_POWER;
 	}
 
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+	if (eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE && !isGoldenAge() && (!MOD_AI_SMART_GREAT_PEOPLE || (GC.getGame().getGameTurn() - pGreatArtist->getGameTurnCreated()) >= GC.getAI_HOMELAND_GREAT_PERSON_TURNS_TO_WAIT()))
+#else
 	if (eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE && !isGoldenAge())
+#endif
 	{
 		eDirective = GREAT_PEOPLE_DIRECTIVE_GOLDEN_AGE;
 	}
+
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+	//AMS: If still no directive, defaults at building great work.
+	if (MOD_AI_SMART_GREAT_PEOPLE && eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE)
+	{
+		eDirective = GREAT_PEOPLE_DIRECTIVE_USE_POWER;
+	}
+#endif
 
 	return eDirective;
 }
@@ -1082,7 +1111,11 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveMusician(CvUnit* pGreatMusicia
 	{
 		eDirective = GREAT_PEOPLE_DIRECTIVE_USE_POWER;
 	}
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+	else if (!MOD_AI_SMART_GREAT_PEOPLE || (GC.getGame().getGameTurn() - pGreatMusician->getGameTurnCreated()) >= GC.getAI_HOMELAND_GREAT_PERSON_TURNS_TO_WAIT())
+#else
 	else
+#endif
 	{
 		CvPlot* pTarget = FindBestMusicianTargetPlot(pGreatMusician, true);
 		if(pTarget)
@@ -1090,6 +1123,14 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveMusician(CvUnit* pGreatMusicia
 			eDirective = GREAT_PEOPLE_DIRECTIVE_TOURISM_BLAST;
 		}
 	}
+
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+	//AMS: If still no directive, defaults at building great work.
+	if (MOD_AI_SMART_GREAT_PEOPLE && eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE)
+	{
+		eDirective = GREAT_PEOPLE_DIRECTIVE_USE_POWER;
+	}
+#endif
 
 	return eDirective;
 }
@@ -1156,6 +1197,16 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveMerchant(CvUnit* pGreatMerchan
 		}
 	}
 
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+	if (MOD_AI_SMART_GREAT_PEOPLE && eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE && GC.getGame().getGameTurn() <= ((GC.getGame().getEstimateEndTurn() * 1) / 4))
+	{
+		if (!bTheVeniceException)
+		{
+			eDirective = GREAT_PEOPLE_DIRECTIVE_CONSTRUCT_IMPROVEMENT;
+		}	
+	}
+#endif
+
 	// Attempt a run to a minor civ
 	if(eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE && IsSafe(this))
 	{
@@ -1184,12 +1235,27 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveScientist(CvUnit* /*pGreatScie
 		eDirective = GREAT_PEOPLE_DIRECTIVE_USE_POWER;
 	}
 
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+	int iDivisor = MOD_AI_SMART_GREAT_PEOPLE ? 3 : 4;
+	if(eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE && GC.getGame().getGameTurn() <= ((GC.getGame().getEstimateEndTurn() * 1) / iDivisor))
+#else
 	if(eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE && GC.getGame().getGameTurn() <= ((GC.getGame().getEstimateEndTurn() * 1) / 4))
+#endif
 	{
 		if(GetDiplomacyAI()->IsGoingForSpaceshipVictory())
 		{
 			eDirective = GREAT_PEOPLE_DIRECTIVE_CONSTRUCT_IMPROVEMENT;
 		}
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+		else if (MOD_AI_SMART_GREAT_PEOPLE)
+		{
+			//AMS: Even if not going spaceship right now, build academy 66% of times.
+			if ((GC.getGame().getGameTurn()) % 3 != 0)
+			{
+				eDirective = GREAT_PEOPLE_DIRECTIVE_CONSTRUCT_IMPROVEMENT;
+			}
+		}
+#endif
 	}
 
 	if (eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE)
@@ -1242,8 +1308,25 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveProphet(CvUnit*)
 	// CASE 1: I have an enhanced religion
 	if (pMyReligion && pMyReligion->m_bEnhanced)
 	{
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+		bool bSpreadReligion = GetReligionAI()->ChooseProphetConversionCity(false/*bOnlyBetterThanEnhancingReligion*/);
+		
+		// If gets a phophet very early in the game progress, holy site is a great option.
+		if(MOD_AI_SMART_GREAT_PEOPLE && GC.getGame().getGameTurn() <= ((GC.getGame().getEstimateEndTurn() * 1) / 5))
+		{
+			if ((GC.getGame().getGameTurn()) % 3 != 0)
+			{
+				bSpreadReligion = false;
+			}
+		}
+#endif
+
 		// Spread religion if there is any city that needs it
+#if defined(MOD_AI_SMART_GREAT_PEOPLE)
+		if (bSpreadReligion)
+#else
 		if (GetReligionAI()->ChooseProphetConversionCity(false/*bOnlyBetterThanEnhancingReligion*/))
+#endif
 		{
 			eDirective = GREAT_PEOPLE_DIRECTIVE_SPREAD_RELIGION;
 		}

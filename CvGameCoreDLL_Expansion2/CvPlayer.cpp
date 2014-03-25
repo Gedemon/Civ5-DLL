@@ -2213,7 +2213,6 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 		GET_PLAYER(eOldOwner).disassembleSpaceship();
 #endif
 		GET_PLAYER(eOldOwner).findNewCapital();
-
 		GET_TEAM(getTeam()).resetVictoryProgress();
 	}
 
@@ -3454,12 +3453,14 @@ CvUnit* CvPlayer::initUnit(UnitTypes eUnit, int iX, int iY, UnitAITypes eUnitAI,
 	{
 		pUnit->init(pUnit->GetID(), eUnit, ((eUnitAI == NO_UNITAI) ? ((UnitAITypes)(pkUnitDef->GetDefaultUnitAIType())) : eUnitAI), GetID(), iX, iY, eFacingDirection, bNoMove, bSetupGraphical, iMapLayer, iNumGoodyHutsPopped);
 
+#if !defined(NO_TUTORIALS)
 		// slewis - added for the tutorial
 		if(pUnit->getUnitInfo().GetWorkRate() > 0 && pUnit->getUnitInfo().GetDomainType() == DOMAIN_LAND)
 		{
 			m_bEverTrainedBuilder = true;
 		}
 		// end added for the tutorial
+#endif
 	}
 
 	m_kPlayerAchievements.AddUnit(pUnit);
@@ -5437,9 +5438,42 @@ int CvPlayer::countCitiesFeatureSurrounded() const
 	return iCount;
 }
 
+#if defined(MOD_AI_SMART_TILE_IMPROVERS)
+/// AMS: Count cities with coastal as half value (beyond first)
+int CvPlayer::countCitiesCoastalLessValue() const
+{
+	const CvCity* pLoopCity;
+	int iCountLandCities = 0;
+	int iCountCoastalCities = 0;
+	int iCount = 0;
+	int iLoop;
+
+	iCount = 0;
+
+	for(pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+	{
+		
+		if(pLoopCity->isCoastal())
+		{
+			iCountCoastalCities ++;
+		}
+		else
+		{
+			iCountLandCities++;
+		}
+	}
+	iCount = iCountLandCities + ((iCountCoastalCities + 1) / 2);
+
+	return iCount;
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 bool CvPlayer::IsCityConnectedToCity(CvCity* pCity1, CvCity* pCity2, RouteTypes eRestrictRoute, bool bIgnoreHarbors)
 {
+#if defined(MOD_API_EXTENSIONS)
+	return IsPlotConnectedToPlot(pCity1->plot(), pCity2->plot(), eRestrictRoute, bIgnoreHarbors);
+#else
 	int iPathfinderFlags = GetID() | MOVE_ROUTE_ALLOW_UNEXPLORED;	// Since we just want to know if we are connected or not, allow the check to search unexplored terrain.
 	if(eRestrictRoute == NO_ROUTE)
 	{
@@ -5469,6 +5503,7 @@ bool CvPlayer::IsCityConnectedToCity(CvCity* pCity1, CvCity* pCity2, RouteTypes 
 	}
 
 	return bReturnValue;
+#endif
 }
 
 //	--------------------------------------------------------------------------------
@@ -5503,8 +5538,10 @@ bool CvPlayer::IsCapitalConnectedToCity(CvCity* pCity, RouteTypes eRestrictRoute
 	return IsPlotConnectedToPlot(pPlayerCapital->plot(), pCity->plot(), eRestrictRoute);
 }
 //	---------------------------------------------------------------------------
-bool CvPlayer::IsPlotConnectedToPlot(CvPlot* pFromPlot, CvPlot* pToPlot, RouteTypes eRestrictRoute)
+bool CvPlayer::IsPlotConnectedToPlot(CvPlot* pFromPlot, CvPlot* pToPlot, RouteTypes eRestrictRoute, bool bIgnoreHarbors)
 {
+	// IMPORTANT NOTE: This is the IsCityConnectedToCity() code from above
+	
 	int iPathfinderFlags = GetID() | MOVE_ROUTE_ALLOW_UNEXPLORED;	// Since we just want to know if we are connected or not, allow the check to search unexplored terrain.
 	if(eRestrictRoute == NO_ROUTE)
 	{
@@ -5517,13 +5554,23 @@ bool CvPlayer::IsPlotConnectedToPlot(CvPlot* pFromPlot, CvPlot* pToPlot, RouteTy
 		iPathfinderFlags |= (iRouteValue << 8);
 	}
 
-	GC.getRouteFinder().ForceReset();
-	if(GC.getRouteFinder().GeneratePath(pFromPlot->getX(), pFromPlot->getY(), pToPlot->getX(), pToPlot->getY(), iPathfinderFlags, false))
+	if (bIgnoreHarbors)
 	{
-		return true;
+		GC.getRouteFinder().SetNumExtraChildrenFunc(NULL);
+		GC.getRouteFinder().SetExtraChildGetterFunc(NULL);
 	}
 
-	return false;
+	GC.getRouteFinder().ForceReset();
+	bool bReturnValue = GC.getRouteFinder().GeneratePath(pFromPlot->getX(), pFromPlot->getY(), pToPlot->getX(), pToPlot->getY(), iPathfinderFlags, false);
+
+	if (bIgnoreHarbors)
+	{
+		// reconnect the land route pathfinder water methods
+		GC.getRouteFinder().SetNumExtraChildrenFunc(RouteGetNumExtraChildren);
+		GC.getRouteFinder().SetExtraChildGetterFunc(RouteGetExtraChild);
+	}
+
+	return bReturnValue;
 }
 #else
 //	---------------------------------------------------------------------------

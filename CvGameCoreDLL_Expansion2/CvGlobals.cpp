@@ -2005,6 +2005,9 @@ CvGlobals::CvGlobals() :
 	m_pLeagueProjects(NULL),
 	m_pLeagueProjectRewards(NULL),
 	m_pResolutions(NULL),
+#if defined(MOD_API_ACHIEVEMENTS) || defined(ACHIEVEMENT_HACKS)
+	m_pAchievements(NULL),
+#endif
 	m_pGameDatabase(NULL)
 {
 }
@@ -2266,6 +2269,9 @@ void CvGlobals::init()
 	m_pLeagueProjectRewards = FNEW(CvLeagueProjectRewardXMLEntries, c_eCiv5GameplayDLL, 0);
 	m_pResolutions = FNEW(CvResolutionXMLEntries, c_eCiv5GameplayDLL, 0);
 	m_pNotifications = FNEW(CvNotificationXMLEntries, c_eCiv5GameplayDLL, 0);
+#if defined(MOD_API_ACHIEVEMENTS) || defined(ACHIEVEMENT_HACKS)
+	m_pAchievements = FNEW(CvAchievementXMLEntries, c_eCiv5GameplayDLL, 0);
+#endif
 
 	auto_ptr<ICvDLLDatabaseUtility1> pkLoader(getDatabaseLoadUtility());
 
@@ -2329,6 +2335,9 @@ void CvGlobals::uninit()
 	SAFE_DELETE(m_pLeagueProjectRewards);
 	SAFE_DELETE(m_pResolutions);
 	SAFE_DELETE(m_pNotifications);
+#if defined(MOD_API_ACHIEVEMENTS) || defined(ACHIEVEMENT_HACKS)
+	SAFE_DELETE(m_pAchievements);
+#endif
 
 	SAFE_DELETE(m_pImprovements); // player uses the improvement count in deallocating.
 	SAFE_DELETE(m_pTechs);        // improvements uses tech to deallocate. arrghh!
@@ -4012,6 +4021,33 @@ CvNotificationXMLEntries* CvGlobals::GetNotificationEntries()
 {
 	return m_pNotifications;
 }
+
+#if defined(MOD_API_ACHIEVEMENTS) || defined(ACHIEVEMENT_HACKS)
+int CvGlobals::getNumAchievementInfos()
+{
+	return m_pAchievements->GetNumAchievements();
+}
+
+std::vector<CvAchievementInfo*>& CvGlobals::getAchievementInfo()
+{
+	return m_pAchievements->GetAchievementEntries();
+}
+
+CvAchievementInfo* CvGlobals::getAchievementInfo(EAchievement eAchievementNum)
+{
+	CvAssert(eAchievementNum > -1);
+	CvAssert(eAchievementNum < GC.getNumAchievementInfos());
+	if(eAchievementNum > -1 && eAchievementNum < GC.getNumAchievementInfos())
+		return m_pAchievements->GetAchievementEntries()[eAchievementNum];
+	else
+		return NULL;
+}
+
+CvAchievementXMLEntries* CvGlobals::GetGameAchievements() const
+{
+	return m_pAchievements;
+}
+#endif
 
 CvString*& CvGlobals::getFootstepAudioTags()
 {

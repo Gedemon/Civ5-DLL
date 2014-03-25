@@ -919,7 +919,11 @@ int PathDestValid(int iToX, int iToY, const void* pointer, CvAStar* finder)
 		}
 	}
 
+#if defined(MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS)
+	if(bToPlotRevealed && (!MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS || pUnit->IsCombatUnit()))
+#else
 	if(bToPlotRevealed)
+#endif
 	{
 		CvCity* pCity = pToPlot->getPlotCity();
 		if(pCity)
@@ -1266,8 +1270,7 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 	int iFinderInfo              = finder->GetInfo();
 	CvPlot* pUnitPlot            = pUnit->plot();
 	int iFinderIgnoreStacking    = iFinderInfo & MOVE_IGNORE_STACKING;
-#if defined(MOD_GLOBAL_STACKING_RULES)
-#else
+#if !defined(MOD_GLOBAL_STACKING_RULES)
 	int iUnitPlotLimit           = GC.getPLOT_UNIT_LIMIT();
 #endif
 	bool bFromPlotOwned          = pFromPlot->isOwned();
@@ -1348,7 +1351,11 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 						}
 					}
 
+#if defined(MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS)
+					if(kNodeCacheData.bIsRevealedToTeam && (!MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS ||bUnitIsCombat))
+#else
 					if(kNodeCacheData.bIsRevealedToTeam)
+#endif
 					{
 						if (kNodeCacheData.bContainsOtherFriendlyTeamCity && !(iFinderIgnoreStacking))
 							return FALSE;
@@ -1414,6 +1421,9 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 		}
 	}
 
+#if defined(MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS)
+	if (!MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS) {
+#endif
 	if(!bUnitIsCombat && unit_domain_type != DOMAIN_AIR)
 	{
 		const PlayerTypes eUnitPlayer = unit_owner;
@@ -1427,6 +1437,9 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 			}
 		}
 	}
+#if defined(MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS)
+	}
+#endif
 
 	// slewis - Added to catch when the unit is adjacent to an enemy unit while it is stacked with a friendly unit.
 	//          The logic above (with bPreviousNodeHostile) catches this problem with a path that's longer than one step
@@ -2332,7 +2345,11 @@ int RouteGetExtraChild(CvAStarNode* node, int iIndex, int& iX, int& iY, CvAStar*
 			continue;
 		}
 
+#if defined(MOD_EVENTS_CITY_CONNECTIONS)
+		if(pRouteInfo->m_cRouteState & CvCityConnections::HAS_INDIRECT_ROUTE)
+#else
 		if(pRouteInfo->m_cRouteState & CvCityConnections::HAS_WATER_ROUTE)
+#endif
 		{
 			if(iValidCount == iIndex)
 			{
@@ -2515,7 +2532,11 @@ int RouteGetNumExtraChildren(CvAStarNode* node,  CvAStar* finder)
 			continue;
 		}
 
+#if defined(MOD_EVENTS_CITY_CONNECTIONS)
+		if(pRouteInfo->m_cRouteState & CvCityConnections::HAS_INDIRECT_ROUTE)
+#else
 		if(pRouteInfo->m_cRouteState & CvCityConnections::HAS_WATER_ROUTE)
+#endif
 		{
 			iResultNum++;
 		}
@@ -3501,7 +3522,11 @@ int TacticalAnalysisMapPathValid(CvAStarNode* parent, CvAStarNode* node, int dat
 						}
 					}
 
+#if defined(MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS)
+					if(kNodeCacheData.bIsRevealedToTeam && (!MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS || bUnitIsCombat))
+#else
 					if(kNodeCacheData.bIsRevealedToTeam)
+#endif
 					{
 						if (kNodeCacheData.bContainsOtherFriendlyTeamCity && !(iFinderIgnoreStacking))
 							return FALSE;
@@ -3568,6 +3593,9 @@ int TacticalAnalysisMapPathValid(CvAStarNode* parent, CvAStarNode* node, int dat
 		}
 	}
 
+#if defined(MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS)
+	if (!MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS) {
+#endif
 	if(!bUnitIsCombat && unit_domain_type != DOMAIN_AIR)
 	{
 		const PlayerTypes eUnitPlayer = unit_owner;
@@ -3581,6 +3609,9 @@ int TacticalAnalysisMapPathValid(CvAStarNode* parent, CvAStarNode* node, int dat
 			}
 		}
 	}
+#if defined(MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS)
+	}
+#endif
 
 	// slewis - Added to catch when the unit is adjacent to an enemy unit while it is stacked with a friendly unit.
 	//          The logic above (with bPreviousNodeHostile) catches this problem with a path that's longer than one step

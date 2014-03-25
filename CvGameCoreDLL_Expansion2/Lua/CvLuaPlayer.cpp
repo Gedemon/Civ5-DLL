@@ -8566,7 +8566,7 @@ int CvLuaPlayer::lDoForceDenounce(lua_State* L)
 	if(GC.getGame().getActivePlayer() == eOtherPlayer)
 	{
 		const char* strText = pkPlayer->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_NO);
-		gDLL->GameplayDiplomacyAILeaderMessage(pkPlayer->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, strText, LEADERHEAD_ANIM_NEGATIVE);
+		MOD_AI_LEADER_MESSAGE(pkPlayer->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, strText, LEADERHEAD_ANIM_NEGATIVE);
 	}
 
 	return 1;

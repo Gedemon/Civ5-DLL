@@ -216,12 +216,15 @@ public:
 	//int countNumCitiesConnectedToCapital() const;
 
 	int countCitiesFeatureSurrounded() const;
+#if defined(MOD_AI_SMART_TILE_IMPROVERS)
+	int countCitiesCoastalLessValue() const;
+#endif
 
 	bool IsCityConnectedToCity(CvCity* pCity1, CvCity* pCity2, RouteTypes eRestrictRouteType = NO_ROUTE, bool bIgnoreHarbors = false);
 	bool IsCapitalConnectedToPlayer(PlayerTypes ePlayer, RouteTypes eRestrictRouteType = NO_ROUTE);
 	bool IsCapitalConnectedToCity(CvCity* pCity, RouteTypes eRestrictRouteType = NO_ROUTE);
 #if defined(MOD_API_EXTENSIONS)
-	bool IsPlotConnectedToPlot(CvPlot* pFromPlot, CvPlot* pToPlot, RouteTypes eRestrictRoute = NO_ROUTE);
+	bool IsPlotConnectedToPlot(CvPlot* pFromPlot, CvPlot* pToPlot, RouteTypes eRestrictRoute = NO_ROUTE, bool bIgnoreHarbors = false);
 #endif
 
 	void findNewCapital();

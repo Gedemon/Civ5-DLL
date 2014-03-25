@@ -51,7 +51,7 @@ bool CvGoodyHuts::IsHasPlayerReceivedGoodyLately(PlayerTypes ePlayer, GoodyTypes
 	FAssert(ePlayer < MAX_MAJOR_CIVS);
 	FAssert(eGoody >= 0);
 	//	FAssert(eGoody < DB.count("GoodyHuts"));
-	
+
 	// Look at all of our Goody slots and see if the requested Goody matches anything
 	for (int iGoodySlotLoop = 0; iGoodySlotLoop < NUM_GOODIES_REMEMBERED; iGoodySlotLoop++)
 	{

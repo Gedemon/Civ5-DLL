@@ -1829,7 +1829,7 @@ int CvLuaGame::lGameplayDiplomacyAILeaderMessage(lua_State* L)
 	const int iPlayer = lua_tointeger(L, 1);
 	const int eMessage = lua_tointeger(L, 2);
 	const int iData1 = lua_tointeger(L, 3);
-	gDLL->GameplayDiplomacyAILeaderMessage((PlayerTypes) iPlayer, DIPLO_UI_STATE_DEFAULT_ROOT, "TEMP", (LeaderheadAnimationTypes) eMessage, iData1);
+	MOD_AI_LEADER_MESSAGE_EXT((PlayerTypes) iPlayer, DIPLO_UI_STATE_DEFAULT_ROOT, "TEMP", (LeaderheadAnimationTypes) eMessage, iData1);
 
 	return 1;
 }

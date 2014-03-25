@@ -767,7 +767,7 @@ int CvLuaCity::lCanTrainTooltip(lua_State* L)
 	return 1;
 }
 //------------------------------------------------------------------------------
-//bool canTrain( int iUnit, bool bContinue, bool bTestVisible, bool bIgnoreCost, bool bIgnoreUpgrades);
+//bool canTrain( int iUnit, bool bContinue, bool bTestVisible, bool bIgnoreCost, bool bWillPurchase);
 int CvLuaCity::lCanTrain(lua_State* L)
 {
 	CvCity* pkCity = GetInstance(L);

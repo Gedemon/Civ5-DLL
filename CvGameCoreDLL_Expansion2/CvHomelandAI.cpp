@@ -17,6 +17,10 @@
 #include "cvStopWatch.h"
 #include "CvTypes.h"
 
+#if defined(MOD_AI_SMART_INTERCEPTIONS)
+#include "CvMilitaryAI.h"
+#endif
+
 // must be included after all other headers
 #include "LintFree.h"
 
@@ -258,6 +262,11 @@ void CvHomelandAI::EstablishHomelandPriorities()
 	m_MovePriorityList.clear();
 	m_MovePriorityTurn = GC.getGame().getGameTurn();
 
+#if defined(MOD_AI_SMART_UPGRADES)
+	// AMS: On even turns upgrade acquire much more priority in order to be able to upgrade air units.
+	int randomUpgradePriority = MOD_AI_SMART_UPGRADES ? (m_MovePriorityTurn % 2) * 50 : 0;
+#endif
+
 	// Find required flavor values
 	for(int iFlavorLoop = 0; iFlavorLoop < GC.getNumFlavorTypes(); iFlavorLoop++)
 	{
@@ -465,7 +474,11 @@ void CvHomelandAI::EstablishHomelandPriorities()
 				break;
 
 			case AI_HOMELAND_MOVE_UPGRADE:
+#if defined(MOD_AI_SMART_UPGRADES)
+				iPriority += (iFlavorMilitaryTraining + randomUpgradePriority);
+#else
 				iPriority += iFlavorMilitaryTraining;
+#endif
 				break;
 
 			case AI_HOMELAND_MOVE_WRITER:
@@ -974,8 +987,26 @@ void CvHomelandAI::PlotHealMoves()
 		UnitHandle pUnit = m_pPlayer->getUnit(*it);
 		if(pUnit && !pUnit->isHuman())
 		{
+#if defined(MOD_AI_SMART_HEALING)
+			int unitHpToHeal = pUnit->GetMaxHitPoints();
+
+			if (MOD_AI_SMART_HEALING) {
+				CvPlot* unitPlot = pUnit->plot();
+				int iDangerLevel = m_pPlayer->GetPlotDanger(*unitPlot);
+
+				if (iDangerLevel > 0)
+				{
+					unitHpToHeal = ((pUnit->GetMaxHitPoints() * 3) / 4);
+				}
+			}
+#endif
+
 			// Am I under 100% health and not at sea or already in a city?
+#if defined(MOD_AI_SMART_HEALING)
+			if(pUnit->GetCurrHitPoints() < unitHpToHeal && !pUnit->isEmbarked() && !pUnit->plot()->isCity())
+#else
 			if(pUnit->GetCurrHitPoints() < pUnit->GetMaxHitPoints() && !pUnit->isEmbarked() && !pUnit->plot()->isCity())
+#endif
 			{
 				// If I'm a naval unit I need to be in friendly territory
 				if(pUnit->getDomainType() != DOMAIN_SEA || pUnit->plot()->IsFriendlyTerritory(m_pPlayer->GetID()))
@@ -1053,9 +1084,25 @@ void CvHomelandAI::PlotMovesToSafety()
 					}
 
 					// Everyone else flees at less than or equal to 50% combat strength
+#if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
+					else if(MOD_AI_SMART_FLEE_FROM_DANGER || pUnit->IsUnderEnemyRangedAttack() || pUnit->GetBaseCombatStrengthConsideringDamage() * 2 <= pUnit->GetBaseCombatStrength())
+#else
 					else if(pUnit->IsUnderEnemyRangedAttack() || pUnit->GetBaseCombatStrengthConsideringDamage() * 2 <= pUnit->GetBaseCombatStrength())
+#endif
 					{
-						bAddUnit = true;
+#if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
+						if (MOD_AI_SMART_FLEE_FROM_DANGER) {
+					// AMS: Now we use the combat modifier as parameter.
+							int iWoundedDamageMultiplier = /*33*/ GC.getWOUNDED_DAMAGE_MULTIPLIER();
+							int alteredCombatStrength = ((pUnit->GetBaseCombatStrengthConsideringDamage() * (100 + iWoundedDamageMultiplier)) / 100);
+							if(pUnit->IsUnderEnemyRangedAttack() || alteredCombatStrength <= pUnit->GetBaseCombatStrength())
+							{
+								bAddUnit = true;
+							}
+						}
+						else
+#endif
+							bAddUnit = true;
 					}
 				}
 
@@ -1480,7 +1527,31 @@ void CvHomelandAI::PlotUpgradeMoves()
 	{
 		// Don't try and upgrade a human player's unit or one already recruited for an operation
 		UnitHandle pUnit = m_pPlayer->getUnit(*it);
+
+#if defined(MOD_AI_SMART_UPGRADES)
+		if(MOD_AI_SMART_UPGRADES && pUnit && !pUnit->isHuman())
+		{
+			int ArmyId = pUnit->getArmyID();
+			if (ArmyId != -1)
+			{
+				CvArmyAI* pThisArmy = m_pPlayer->getArmyAI(ArmyId);
+
+				if (pThisArmy)
+				{
+					if((pThisArmy->GetArmyAIState() == ARMYAISTATE_MOVING_TO_DESTINATION) || (pThisArmy->GetArmyAIState() == ARMYAISTATE_AT_DESTINATION))
+					{
+						continue;
+					}
+				}
+			}
+		}
+#endif
+
+#if defined(MOD_AI_SMART_UPGRADES)
+		if(pUnit && !pUnit->isHuman() && (!MOD_AI_SMART_UPGRADES || pUnit->getArmyID() == -1))
+#else
 		if(pUnit && !pUnit->isHuman() && pUnit->getArmyID() == -1)
+#endif
 		{
 			// Can this unit be upgraded?
 			UnitTypes eUpgradeUnitType = pUnit->GetUpgradeUnitType();
@@ -2156,6 +2227,10 @@ void CvHomelandAI::PlotAircraftMoves()
 
 	if(m_CurrentMoveUnits.size() > 0)
 	{
+#if defined(MOD_AI_SMART_INTERCEPTIONS)
+		if (MOD_AI_SMART_INTERCEPTIONS)
+			ExecuteAircraftInterceptions();
+#endif
 		ExecuteAircraftMoves();
 	}
 }
@@ -3035,6 +3110,9 @@ void CvHomelandAI::ExecuteMovesToSafestPlot()
 					bool bIsInCity = pPlot->isFriendlyCity(*pUnit, false);
 					bool bIsInCover = (pPlot->getNumDefenders(m_pPlayer->GetID()) > 0) && !pUnit->IsCanDefend();
 					bool bIsInTerritory = (pPlot->getTeam() == m_pPlayer->getTeam());
+#if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
+					bool bNeedEmbark = ((pUnit->getDomainType() == DOMAIN_LAND) && (!pUnit->plot()->isWater()) && (pPlot->isWater()));
+#endif
 
 					#define MAX_DANGER_VALUE	100000
 					#define PREFERENCE_LEVEL(x, y) (x * MAX_DANGER_VALUE) + ((MAX_DANGER_VALUE - 1) - y)
@@ -3042,29 +3120,61 @@ void CvHomelandAI::ExecuteMovesToSafestPlot()
 					CvAssert(iDanger < MAX_DANGER_VALUE);
 
 					int iScore;
+#if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
+					// AMS: Lower preference if water and uncovered.
+					if(MOD_AI_SMART_FLEE_FROM_DANGER && bNeedEmbark && !bIsInCover)
+					{
+						iScore = PREFERENCE_LEVEL(0, iDanger);
+					}
+					else
+#endif
 					if(bIsInCity)
 					{
+#if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
+						iScore = PREFERENCE_LEVEL((MOD_AI_SMART_FLEE_FROM_DANGER ? 6 : 5), iDanger);
+#else
 						iScore = PREFERENCE_LEVEL(5, iDanger);
+#endif
 					}
 					else if(bIsZeroDanger)
 					{
 						if (bIsInTerritory)
+#if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
+							iScore = PREFERENCE_LEVEL((MOD_AI_SMART_FLEE_FROM_DANGER ? 5 : 4), iDanger);
+#else
 							iScore = PREFERENCE_LEVEL(4, iDanger);
+#endif
 						else
+#if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
+							iScore = PREFERENCE_LEVEL((MOD_AI_SMART_FLEE_FROM_DANGER ? 4 : 3), iDanger);
+#else
 							iScore = PREFERENCE_LEVEL(3, iDanger);
+#endif
 					}
 					else if(bIsInCover)
 					{
+#if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
+						iScore = PREFERENCE_LEVEL((MOD_AI_SMART_FLEE_FROM_DANGER ? 3 : 2), iDanger);
+#else
 						iScore = PREFERENCE_LEVEL(2, iDanger);
+#endif
 					}
 					else if(bIsInTerritory)
 					{
+#if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
+						iScore = PREFERENCE_LEVEL((MOD_AI_SMART_FLEE_FROM_DANGER ? 2 : 1), iDanger);
+#else
 						iScore = PREFERENCE_LEVEL(1, iDanger);
+#endif
 					}
 					// if we have no good home, head to the lowest danger value
 					else 
 					{
+#if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
+						iScore = PREFERENCE_LEVEL((MOD_AI_SMART_FLEE_FROM_DANGER ? 1 : 0), iDanger);
+#else
 						iScore = PREFERENCE_LEVEL(0, iDanger);
+#endif
 					}
 
 					aBestPlotList.push_back(pPlot, iScore);
@@ -4830,6 +4940,57 @@ void CvHomelandAI::ExecuteTreasureMoves()
 	}
 }
 
+#if defined(MOD_AI_SMART_INTERCEPTIONS)
+//AMS: Similar to interception moves on tacticalAI, grant some interceptions based on number of enemies
+void CvHomelandAI::ExecuteAircraftInterceptions()
+{
+	FStaticVector<CvHomelandUnit, 64, true, c_eCiv5GameplayDLL>::iterator it;
+	std::vector<CvPlot*> checkedPlotList;
+
+	for(it = m_CurrentMoveUnits.begin(); it != m_CurrentMoveUnits.end(); ++it)
+	{
+		UnitHandle pUnit = m_pPlayer->getUnit(it->GetID());
+
+		if(pUnit)
+		{
+			// Am I eligible to intercept?
+			if(pUnit->canAirPatrol(NULL) && !m_pPlayer->GetMilitaryAI()->WillAirUnitRebase(pUnit.pointer()))
+			{
+				CvPlot* pUnitPlot = pUnit->plot();
+				int iNumNearbyBombers = m_pPlayer->GetMilitaryAI()->GetNumEnemyAirUnitsInRange(pUnitPlot, pUnit->GetRange()/*m_iRecruitRange*/, false/*bCountFighters*/, true/*bCountBombers*/);
+				int iNumNearbyFighters = m_pPlayer->GetMilitaryAI()->GetNumEnemyAirUnitsInRange(pUnitPlot, pUnit->GetRange()/*m_iRecruitRange*/, true/*bCountFighters*/, false/*bCountBombers*/);
+				int iNumPlotNumAlreadySet = m_pPlayer->GetTacticalAI()->SamePlotFound(checkedPlotList, pUnitPlot);
+
+				if (iNumNearbyBombers == 1)
+				{
+					//AMS: To at least intercept once if only one bomber found.
+					iNumNearbyBombers++;
+				}
+
+				int maxInterceptorsWanted = ((iNumNearbyBombers / 2) + (iNumNearbyFighters / 4));
+
+				if (iNumPlotNumAlreadySet < maxInterceptorsWanted)
+				{
+					if(GC.getLogging() && GC.getAILogging())
+					{
+						CvString strTemp;
+						strTemp = GC.getUnitInfo(pUnit->getUnitType())->GetDescription();
+						CvString strLogString;
+						strLogString.Format("(%d of %d) - Ready to intercept enemy air units at, X: %d, Y: %d", iNumPlotNumAlreadySet, maxInterceptorsWanted, pUnit->getX(), pUnit->getY());
+						LogHomelandMessage(strLogString);
+					}
+
+					checkedPlotList.push_back(pUnitPlot);
+					pUnit->PushMission(CvTypes::getMISSION_AIRPATROL());
+					pUnit->finishMoves();
+					UnitProcessed(pUnit->GetID());
+				}
+			}
+		}
+	}
+}
+#endif
+
 /// Moves an aircraft into an important city near the front to aid its defense (or offense)
 void CvHomelandAI::ExecuteAircraftMoves()
 {
@@ -5229,6 +5390,10 @@ void CvHomelandAI::ExecuteTradeUnitMoves()
 // Get an archaeologist and send it to an antiquity site
 void CvHomelandAI::ExecuteArchaeologistMoves()
 {
+#if defined(MOD_AI_SMART_ARCHAEOLOGISTS)
+	int unAssignedArchaeologists = 0;
+#endif
+
 	FStaticVector< CvHomelandUnit, 64, true, c_eCiv5GameplayDLL >::iterator it;
 	for(it = m_CurrentMoveUnits.begin(); it != m_CurrentMoveUnits.end(); ++it)
 	{
@@ -5270,7 +5435,39 @@ void CvHomelandAI::ExecuteArchaeologistMoves()
 			// Delete this unit from those we have to move
 			UnitProcessed(pUnit->GetID());
 		}
+#if defined(MOD_AI_SMART_ARCHAEOLOGISTS)
+		else
+		{
+			unAssignedArchaeologists++;
+		}
+#endif
 	}
+
+#if defined(MOD_AI_SMART_ARCHAEOLOGISTS)
+	//AMS: Unassigned archaeologists due to not valid targets, check against the possible targets left and scrap one if there are too much.
+	if (MOD_AI_SMART_ARCHAEOLOGISTS && unAssignedArchaeologists > 0)
+	{
+		int possibleFutureTargetsLeft = ((m_TargetedAntiquitySites.size() / 5) + 1);
+
+		if (unAssignedArchaeologists > possibleFutureTargetsLeft)
+		{
+			int unitId = m_CurrentMoveUnits.end()->GetID();
+			CvUnit* pUnit = m_pPlayer->getUnit(unitId);
+
+			if (pUnit)
+			{
+				if(GC.getLogging() && GC.getAILogging())
+				{
+					CvString strLogString;
+					strLogString.Format("Idle Archaeologist scrapped at, X: %d, Y: %d", pUnit->getX(), pUnit->getY());
+					LogHomelandMessage(strLogString);
+				}
+
+				pUnit->scrap();
+			}
+		}
+	}
+#endif
 }
 
 /// Don't allow adjacent tiles to both be sentry points

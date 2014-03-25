@@ -302,6 +302,9 @@ private:
 	void ExecuteSSPartAdds();
 	void ExecuteSSPartMoves();
 	void ExecuteTreasureMoves();
+#if defined(MOD_AI_SMART_INTERCEPTIONS)
+	void ExecuteAircraftInterceptions();
+#endif
 	void ExecuteAircraftMoves();
 	void ExecuteTradeUnitMoves();
 	void ExecuteArchaeologistMoves();

@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 44)
+#define MOD_DLL_VERSION_NUMBER ((uint) 45)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -31,8 +31,11 @@
 // Comment out this line to include all the achievements code (which don't work in modded games, so we don't need the code!)
 #define NO_ACHIEVEMENTS
 
-// Comment out this line to include all the tutorials code (which is being removed as I come across it)
-// #define NO_TUTORIALS
+// Uncomment this line to include the achievements hack code
+// #define ACHIEVEMENT_HACKS
+
+// Comment out this line to include all the tutorials code
+#define NO_TUTORIALS
 
 // Comment out this line to switch off all custom mod logging
 #define CUSTOMLOGDEBUG "CustomMods.log"
@@ -55,6 +58,8 @@
 #define MOD_API_PLOT_BASED_DAMAGE                   gCustomMods.isAPI_PLOT_BASED_DAMAGE()
 // Enables the Plot Yield tables
 #define MOD_API_PLOT_YIELDS                         gCustomMods.isAPI_PLOT_YIELDS()
+// Enables the Achievements table
+#define MOD_API_ACHIEVEMENTS                        gCustomMods.isAPI_ACHIEVEMENTS()
 // Enables the Extensions API
 #define MOD_API_EXTENSIONS                          gCustomMods.isAPI_EXTENSIONS()
 // Enables the LUA Extensions API
@@ -65,6 +70,11 @@
 
 // Changes the stacking limits based on what the tile is (city, fort, plain, etc) - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_GLOBAL_STACKING_RULES                   gCustomMods.isGLOBAL_STACKING_RULES()
+// This is the "No More Civilian Traffic Jams (NMCTJs) Mod" by Pazyryk - see http://forums.civfanatics.com/showthread.php?t=519754
+#define MOD_GLOBAL_BREAK_CIVILIAN_1UPT              gCustomMods.isGLOBAL_BREAK_CIVILIAN_1UPT()
+#if defined(MOD_GLOBAL_BREAK_CIVILIAN_1UPT)
+#define MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS     (MOD_GLOBAL_BREAK_CIVILIAN_1UPT && gCustomMods.isGLOBAL_BREAK_CIVILIAN_RESTRICTIONS())
+#endif
 // Great Generals and Admirals gained from combat experience spawn in the war-zone and not in a distant city
 #define MOD_GLOBAL_LOCAL_GENERALS                   gCustomMods.isGLOBAL_LOCAL_GENERALS()
 // Permits units to have promotion trees different from their assigned CombatClass
@@ -210,6 +220,47 @@
 #define MOD_AI_SECONDARY_WORKERS                    gCustomMods.isAI_SECONDARY_WORKERS()
 // Fixes the AI's inability to use combat units for founding cities
 #define MOD_AI_SECONDARY_SETTLERS                   gCustomMods.isAI_SECONDARY_SETTLERS()
+
+// Features from the "Smart AI mod" by Ninakoru - see http://forums.civfanatics.com/showthread.php?t=521955
+// #define MOD_AI_SMART                                gCustomMods.isAI_SMART()
+#if defined(MOD_AI_SMART)
+// Various helper methods used by several sub-features - always on
+#define MOD_AI_SMART_HELPERS                        (true)
+// Omit obsolete/no value items as part of a deal if asked to balance things out
+#define MOD_AI_SMART_DEALS                          (MOD_AI_SMART && gCustomMods.isAI_SMART_DEALS())
+// Use Great people more effectively, plant some improvements early, and later use GP powers
+#define MOD_AI_SMART_GREAT_PEOPLE                   (MOD_AI_SMART && gCustomMods.isAI_SMART_GREAT_PEOPLE())
+// Evaluate with a decent importance science grand strategy at renaissance
+#define MOD_AI_SMART_GRAND_STRATEGY                 (MOD_AI_SMART && gCustomMods.isAI_SMART_GRAND_STRATEGY())
+// Make better policy choices ignoring grand strategy until medieval and giving less importance to opening branches vs unlocked branches
+#define MOD_AI_SMART_POLICY_CHOICE                  (MOD_AI_SMART && gCustomMods.isAI_SMART_POLICY_CHOICE())
+// Stop making archaeologists sooner and also disband archaeologists if there are not valid targets
+#define MOD_AI_SMART_ARCHAEOLOGISTS                 (MOD_AI_SMART && gCustomMods.isAI_SMART_ARCHAEOLOGISTS())
+// Disband long obsolete units, eg triremes in industrial era
+#define MOD_AI_SMART_DISBAND                        (MOD_AI_SMART && gCustomMods.isAI_SMART_DISBAND())
+// Emphasize a bit more on workers
+#define MOD_AI_SMART_TILE_IMPROVERS                 (MOD_AI_SMART && gCustomMods.isAI_SMART_TILE_IMPROVERS())
+// Upgrade more units per turn if there are lots of units that can be upgraded. Will also upgrade air units more often
+#define MOD_AI_SMART_UPGRADES                       (MOD_AI_SMART && gCustomMods.isAI_SMART_UPGRADES())
+// Changes AI's priorities for promotions
+#define MOD_AI_SMART_PROMOTIONS                     (MOD_AI_SMART && gCustomMods.isAI_SMART_PROMOTIONS())
+// Units with at least 75% health will avoid healing
+#define MOD_AI_SMART_HEALING                        (MOD_AI_SMART && gCustomMods.isAI_SMART_HEALING())
+// Purchase units and buildings in cities under certain conditions
+#define MOD_AI_SMART_GOLD_PURCHASE                  (MOD_AI_SMART && gCustomMods.isAI_SMART_GOLD_PURCHASE())
+// Units won't randomly embark to water tiles
+#define MOD_AI_SMART_FLEE_FROM_DANGER               (MOD_AI_SMART && gCustomMods.isAI_SMART_FLEE_FROM_DANGER())
+// Ranged units are always able to move AND shoot on the same turn and should not attack over and over a city with 1 HP remaining.
+#define MOD_AI_SMART_RANGED_UNITS                   (MOD_AI_SMART && gCustomMods.isAI_SMART_RANGED_UNITS())
+// Use air sweep missions more consistently
+#define MOD_AI_SMART_AIR_SWEEPS                     (MOD_AI_SMART && gCustomMods.isAI_SMART_AIR_SWEEPS())
+// AI will hold planes back for interceptions if enemy aircraft are nearby
+#define MOD_AI_SMART_INTERCEPTIONS                  (MOD_AI_SMART && gCustomMods.isAI_SMART_INTERCEPTIONS())
+// Changes the AI's calculations of how many carriers are required
+#define MOD_AI_SMART_CARRIERS                       (MOD_AI_SMART && gCustomMods.isAI_SMART_CARRIERS())
+// Improves the AI's melee tactics
+#define MOD_AI_SMART_TACTICS                        (MOD_AI_SMART && gCustomMods.isAI_SMART_TACTICS())
+#endif
 
 // Events sent when terraforming occurs
 //   GameEvents.TerraformingMap.Add(function(iEvent, iLoad) end)
@@ -362,6 +413,8 @@
 
 // Minor bug fixes (missing catch-all else clauses, etc)
 #define MOD_BUGFIX_MINOR 							(true)
+// Fixes the bug where a city doesn't work its centre tile
+#define MOD_BUGFIX_CITY_CENTRE_WORKING              (true)
 // Adds missing policy events when adopting an ideology
 #define MOD_BUGFIX_MISSING_POLICY_EVENTS			(true)
 // Fixes trade routes sticking to coastal water when the player has the EmbarkAllWater trait
@@ -370,6 +423,8 @@
 #define MOD_BUGFIX_VENICE_PUPPETS_CAPITAL			(true)
 // Fixes the bug in the Lua Plot:ChangeVisibilityCount() method where iChange is treated as a boolean and not a signed int
 #define MOD_BUGFIX_LUA_CHANGE_VISIBILITY_COUNT      gCustomMods.isBUGFIX_LUA_CHANGE_VISIBILITY_COUNT()
+// Fixes the bug that excludes spy pressure (Underground Sects) from the city banner tooltip display
+#define MOD_BUGFIX_RELIGIOUS_SPY_PRESSURE           gCustomMods.isBUGFIX_RELIGIOUS_SPY_PRESSURE()
 // Fixes the CanMoveAfterPurchase() bug where it is only tested for at one specific point in the code
 #define MOD_BUGFIX_MOVE_AFTER_PURCHASE              gCustomMods.isBUGFIX_MOVE_AFTER_PURCHASE()
 // Fixes the issues caused by using UNIT_XYZ instead of UNITCLASS_XYZ
@@ -398,6 +453,8 @@
 #define MOD_BUGFIX_UNITS_AWAKE_IN_DANGER            gCustomMods.isBUGFIX_UNITS_AWAKE_IN_DANGER()
 // Fixes workers stopping what they are doing at any hint of danger to only when they can see an enemy unit
 #define MOD_BUGFIX_WORKERS_VISIBLE_DANGER           gCustomMods.isBUGFIX_WORKERS_VISIBLE_DANGER()
+// Fixes the hard-coding of what builds remove which features
+#define MOD_BUGFIX_FEATURE_REMOVAL                  gCustomMods.isBUGFIX_FEATURE_REMOVAL()
 // Fixes the bug in calculating AA interception strength which takes terrain into account
 #define MOD_BUGFIX_INTERCEPTOR_STRENGTH             gCustomMods.isBUGFIX_INTERCEPTOR_STRENGTH()
 // Fixes the very dodgy maths in the calculation of a unit's power
@@ -565,6 +622,17 @@ enum TerraformingEventTypes {
 #define GAMEEVENT_UnitUpgraded				"UnitUpgraded",					"iiib"
 
 
+// AI diplomacy wrappers
+// TODO - WH - MOD_DIPLOMACY_NO_ANNOYING_POPUPS
+#if defined(MOD_DIPLOMACY_NO_ANNOYING_POPUPS)
+#define MOD_AI_LEADER_MESSAGE(player, state, message, anim) if (message) gDLL->GameplayDiplomacyAILeaderMessage(player, state, message, anim)
+#define MOD_AI_LEADER_MESSAGE_EXT(player, state, message, anim, extra) if (message) gDLL->GameplayDiplomacyAILeaderMessage(player, state, message, anim, extra)
+#else
+#define MOD_AI_LEADER_MESSAGE(player, state, message, anim) gDLL->GameplayDiplomacyAILeaderMessage(player, state, message, anim)
+#define MOD_AI_LEADER_MESSAGE_EXT(player, state, message, anim, extra) gDLL->GameplayDiplomacyAILeaderMessage(player, state, message, anim, extra)
+#endif
+
+					
 // Serialization wrappers
 #define MOD_SERIALIZE
 
@@ -638,6 +706,8 @@ public:
 	int getCivOption(const char* szCiv, const char* szName, int defValue = 0);
 
 	MOD_OPT_DECL(GLOBAL_STACKING_RULES);
+	MOD_OPT_DECL(GLOBAL_BREAK_CIVILIAN_1UPT);
+	MOD_OPT_DECL(GLOBAL_BREAK_CIVILIAN_RESTRICTIONS);
 	MOD_OPT_DECL(GLOBAL_LOCAL_GENERALS);
 	MOD_OPT_DECL(GLOBAL_PROMOTION_CLASSES);
 	MOD_OPT_DECL(GLOBAL_PASSABLE_FORTS);
@@ -716,6 +786,25 @@ public:
 	MOD_OPT_DECL(AI_SECONDARY_WORKERS);
 	MOD_OPT_DECL(AI_SECONDARY_SETTLERS);
 
+	MOD_OPT_DECL(AI_SMART);
+	MOD_OPT_DECL(AI_SMART_DEALS);
+	MOD_OPT_DECL(AI_SMART_GREAT_PEOPLE);
+	MOD_OPT_DECL(AI_SMART_GRAND_STRATEGY);
+	MOD_OPT_DECL(AI_SMART_POLICY_CHOICE);
+	MOD_OPT_DECL(AI_SMART_ARCHAEOLOGISTS);
+	MOD_OPT_DECL(AI_SMART_DISBAND);
+	MOD_OPT_DECL(AI_SMART_TILE_IMPROVERS);
+	MOD_OPT_DECL(AI_SMART_UPGRADES);
+	MOD_OPT_DECL(AI_SMART_PROMOTIONS);
+	MOD_OPT_DECL(AI_SMART_HEALING);
+	MOD_OPT_DECL(AI_SMART_GOLD_PURCHASE);
+	MOD_OPT_DECL(AI_SMART_FLEE_FROM_DANGER);
+	MOD_OPT_DECL(AI_SMART_RANGED_UNITS);
+	MOD_OPT_DECL(AI_SMART_AIR_SWEEPS);
+	MOD_OPT_DECL(AI_SMART_INTERCEPTIONS);
+	MOD_OPT_DECL(AI_SMART_CARRIERS);
+	MOD_OPT_DECL(AI_SMART_TACTICS);
+
 	MOD_OPT_DECL(EVENTS_TERRAFORMING);
 	MOD_OPT_DECL(EVENTS_TILE_IMPROVEMENTS);
 	MOD_OPT_DECL(EVENTS_CIRCUMNAVIGATION);
@@ -756,12 +845,14 @@ public:
 	MOD_OPT_DECL(API_RELIGION);
 	MOD_OPT_DECL(API_PLOT_BASED_DAMAGE);
 	MOD_OPT_DECL(API_PLOT_YIELDS);
+	MOD_OPT_DECL(API_ACHIEVEMENTS);
 	MOD_OPT_DECL(API_EXTENSIONS);
 	MOD_OPT_DECL(API_LUA_EXTENSIONS);
 
 	MOD_OPT_DECL(CONFIG_AI_IN_XML);
 
 	MOD_OPT_DECL(BUGFIX_LUA_CHANGE_VISIBILITY_COUNT);
+	MOD_OPT_DECL(BUGFIX_RELIGIOUS_SPY_PRESSURE);
 	MOD_OPT_DECL(BUGFIX_MOVE_AFTER_PURCHASE);
 	MOD_OPT_DECL(BUGFIX_UNITCLASS_NOT_UNIT);
 	MOD_OPT_DECL(BUGFIX_BUILDINGCLASS_NOT_BUILDING);
@@ -775,6 +866,7 @@ public:
 	MOD_OPT_DECL(BUGFIX_REMOVE_GHOST_ROUTES);
 	MOD_OPT_DECL(BUGFIX_UNITS_AWAKE_IN_DANGER);
 	MOD_OPT_DECL(BUGFIX_WORKERS_VISIBLE_DANGER);
+	MOD_OPT_DECL(BUGFIX_FEATURE_REMOVAL);
 	MOD_OPT_DECL(BUGFIX_INTERCEPTOR_STRENGTH);
 	MOD_OPT_DECL(BUGFIX_UNIT_POWER_CALC);
 	MOD_OPT_DECL(BUGFIX_UNIT_POWER_BONUS_VS_DOMAIN_ONLY);

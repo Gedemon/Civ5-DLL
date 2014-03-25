@@ -435,6 +435,9 @@ public:
 	bool hasMoved() const;
 
 	int GetRange() const;
+#if defined(MOD_AI_SMART_HELPERS)
+	int GetRangePlusMoveToshot() const;
+#endif
 	int GetNukeDamageLevel() const;
 
 	bool canBuildRoute() const;
@@ -1152,8 +1155,16 @@ public:
 	bool isPotentialEnemy(TeamTypes eTeam, const CvPlot* pPlot = NULL) const;
 
 	bool canRangeStrike() const;
+#if defined(MOD_AI_SMART_HELPERS)
+	bool canEverRangeStrikeAtFromPlot(int iX, int iY, CvPlot* targetPlot) const;
+#endif
 	bool canEverRangeStrikeAt(int iX, int iY) const;
 	bool canRangeStrikeAt(int iX, int iY, bool bNeedWar = true, bool bNoncombatAllowed = true) const;
+#if defined(MOD_AI_SMART_HELPERS)
+	bool canMoveAndRangedStrike(int iX, int iY);
+
+	void GetMovablePlotListOpt(vector<CvPlot*>& plotData, CvPlot* plotTarget, bool exitOnFound);
+#endif
 
 	bool IsAirSweepCapable() const;
 	int GetAirSweepCapableCount() const;
@@ -1193,6 +1204,9 @@ public:
 	void AI_promote();
 	UnitAITypes AI_getUnitAIType() const;
 	void AI_setUnitAIType(UnitAITypes eNewValue);
+#if defined(MOD_AI_SMART_PROMOTIONS)
+	int GetPromotionValue(int promotionBonus, int unitExtraValue, int matchFlavorValue, int baseValue);
+#endif
 	int AI_promotionValue(PromotionTypes ePromotion);
 
 	GreatPeopleDirectiveTypes GetGreatPeopleDirective() const;

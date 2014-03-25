@@ -801,7 +801,13 @@ public:
 	bool CreateProject(ProjectTypes eProjectType);
 
 	bool CanPlaceUnitHere(UnitTypes eUnitType);
+#if defined(MOD_AI_SMART_GOLD_PURCHASE)
+	bool IsCanGoldPurchase(OrderData* pOrder);
+#endif
 	bool IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectTypes eProjectType, YieldTypes ePurchaseYield);
+#if defined(MOD_AI_SMART_GOLD_PURCHASE)
+	void PurchaseCurrentOrder();
+#endif
 	void Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectTypes eProjectType, YieldTypes ePurchaseYield);
 
 	PlayerTypes getLiberationPlayer() const;
@@ -913,7 +919,7 @@ protected:
 	FAutoVariable<int, CvCity> m_iFreeExperience;
 	FAutoVariable<int, CvCity> m_iCurrAirlift; // unused
 	FAutoVariable<int, CvCity> m_iMaxAirUnits;
-	FAutoVariable<int, CvCity> m_iAirModifier;
+	FAutoVariable<int, CvCity> m_iAirModifier; // unused
 	FAutoVariable<int, CvCity> m_iNukeModifier;
 	int m_iTradeRouteTargetBonus;
 	int m_iTradeRouteRecipientBonus;

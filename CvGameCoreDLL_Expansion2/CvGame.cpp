@@ -5461,7 +5461,11 @@ void CvGame::ChangeNumVotesForTeam(TeamTypes eTeam, int iChange)
 
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_DIPLOMACY_NO_ANNOYING_POPUPS)
+Localization::String CvGame::GetDiploResponse(const char* szLeader, const char* szResponse, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2, bool bAlways)
+#else
 Localization::String CvGame::GetDiploResponse(const char* szLeader, const char* szResponse, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2)
+#endif
 {
 	//cvStopWatch stopWatch("GetDiploResponse");
 
@@ -5471,7 +5475,14 @@ Localization::String CvGame::GetDiploResponse(const char* szLeader, const char* 
 	{
 		//Directly reference Language_en_US is safe here since we're just looking for the tag
 		//and not the actual text.
+#if defined(MOD_DIPLOMACY_NO_ANNOYING_POPUPS)
+		char* szSQL = "select Tag, Bias from Diplomacy_Responses, Language_en_US where (LeaderType = ? or LeaderType = 'GENERIC') and ResponseType = ? and Tag like Response";
+		if (!bAlways && MOD_DIPLOMACY_NO_ANNOYING_POPUPS) {
+			szSQL = "select Tag, Bias from Diplomacy_Responses, Language_en_US where Annoying = 0 and (LeaderType = ? or LeaderType = 'GENERIC') and ResponseType = ? and Tag like Response";
+		}
+#else
 		const char* szSQL = "select Tag, Bias from Diplomacy_Responses, Language_en_US where (LeaderType = ? or LeaderType = 'GENERIC') and ResponseType = ? and Tag like Response";
+#endif
 		m_pDiploResponseQuery = new Database::Results();
 		if(!GC.GetGameDatabase()->Execute(*m_pDiploResponseQuery, szSQL, strlen(szSQL)))
 		{
@@ -5513,7 +5524,11 @@ Localization::String CvGame::GetDiploResponse(const char* szLeader, const char* 
 		response << strOptionalKey1 << strOptionalKey2;
 	}
 
+#if defined(MOD_DIPLOMACY_NO_ANNOYING_POPUPS)
+	if(response && response.IsEmpty())
+#else
 	if(response.IsEmpty())
+#endif
 	{
 		char szMessage[256];
 		sprintf_s(szMessage, "Please send Jon this with your last 5 autosaves and what changelist # you're playing. Could not find diplomacy response. Leader - %s, Response - %s", szLeader, szResponse);

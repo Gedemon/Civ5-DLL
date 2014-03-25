@@ -62,7 +62,6 @@ bool CvCitySiteEvaluator::CanFound(CvPlot* pPlot, const CvPlayer* pPlayer, bool 
 	if(!pPlot)
 		return false;
 
-
 	CvPlot* pLoopPlot(NULL);
 	bool bValid(false);
 	int iRange(0), iDX(0), iDY(0);

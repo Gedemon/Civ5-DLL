@@ -2354,6 +2354,7 @@ void CvPlayerCulture::DoTurn()
 	{
 		if(bCultureVictoryValid)
 		{//This civilization is the first civ to be one civilizations away from getting a cultural victory.  Notify the masses!
+			// TODO - WH - Don't do this is there are only two players left in the game
 			CvString							targCloseOneSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_CULTURE_VICTORY_WITHIN_ONE_ACTIVE_PLAYER");
 			Localization::String	targCloseOneInfo = Localization::Lookup("TXT_KEY_NOTIFICATION_CULTURE_VICTORY_WITHIN_ONE_ACTIVE_PLAYER_TT");
 			CvString							someoneCloseOneSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_CULTURE_VICTORY_WITHIN_ONE");

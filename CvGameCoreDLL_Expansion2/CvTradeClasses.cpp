@@ -3438,7 +3438,7 @@ int CvPlayerTrade::GetTradeRouteSpeed (DomainTypes eDomain)
 uint CvPlayerTrade::GetNumTradeRoutesPossible (void)
 {
 	int iNumRoutes = 0;
-	
+
 	CvAssert(m_pPlayer->getCivilizationType() != NO_CIVILIZATION);
 	if (m_pPlayer->getCivilizationType() == NO_CIVILIZATION)
 		return 0;
@@ -4508,7 +4508,7 @@ void CvTradeAI::PrioritizeTradeRoutes(TradeConnectionList& aTradeConnectionList)
 	{
 		return;
 	}
-	
+
 	// score TR
 	std::vector<TRSortElement> aProductionSortedTR;
 	std::vector<TRSortElement> aFoodSortedTR;

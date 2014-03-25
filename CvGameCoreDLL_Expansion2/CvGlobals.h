@@ -108,6 +108,10 @@ class CvTraitEntry;
 class CvTraitXMLEntries;
 class CvNotificationEntry;
 class CvNotificationXMLEntries;
+#if defined(MOD_API_ACHIEVEMENTS) || defined(ACHIEVEMENT_HACKS)
+class CvAchievementInfo;
+class CvAchievementXMLEntries;
+#endif
 class CvBaseInfo;
 class CvReplayInfo;
 class CvReligionEntry;
@@ -552,6 +556,13 @@ public:
 	_Ret_maybenull_ CvSmallAwardInfo* getSmallAwardInfo(SmallAwardTypes eSmallAwardNum);
 
 	CvNotificationXMLEntries* GetNotificationEntries();
+
+#if defined(MOD_API_ACHIEVEMENTS) || defined(ACHIEVEMENT_HACKS)
+	int getNumAchievementInfos();
+	std::vector<CvAchievementInfo*>& getAchievementInfo();
+	_Ret_maybenull_ CvAchievementInfo* getAchievementInfo(EAchievement eAchievementNum);
+	CvAchievementXMLEntries* GetGameAchievements() const;
+#endif
 
 	//
 	// Global Types
@@ -8183,6 +8194,9 @@ protected:
 	CvLeagueProjectRewardXMLEntries* m_pLeagueProjectRewards;
 	CvResolutionXMLEntries* m_pResolutions;
 	CvNotificationXMLEntries* m_pNotifications;
+#if defined(MOD_API_ACHIEVEMENTS) || defined(ACHIEVEMENT_HACKS)
+	CvAchievementXMLEntries* m_pAchievements;
+#endif
 
 	//////////////////////////////////////////////////////////////////////////
 	// GLOBAL TYPES

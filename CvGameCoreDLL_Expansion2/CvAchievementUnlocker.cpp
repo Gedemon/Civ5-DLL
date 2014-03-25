@@ -103,6 +103,89 @@ void CvAchievementUnlocker::AlexanderConquest(PlayerTypes ePlayer)
 	}
 #endif
 }
+
+#if defined(ACHIEVEMENT_HACKS)
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
+void CvAchievementUnlocker::UnlockFromDatabase()
+{
+	GUID guid;
+
+	ExtractGUID("7459BA32-5764-44ae-8E95-01AD0E0EFD48", guid);
+	bool bDLC_DX = gDLL->IsDLCValid(guid); if (bDLC_DX) CUSTOMLOG("Found DLC Deluxe");
+	ExtractGUID("293C1EE3-1176-44f6-AC1F-59663826DE74", guid);
+	bool bDLC_01 = gDLL->IsDLCValid(guid); if (bDLC_01) CUSTOMLOG("Found DLC 1");
+	ExtractGUID("B685D5DE-7CCA-4e75-81B4-2F60754E6330", guid);
+	bool bDLC_02 = gDLL->IsDLCValid(guid); if (bDLC_02) CUSTOMLOG("Found DLC 2");
+	ExtractGUID("ECF7C605-BA11-4CAC-8D80-D71306AAC471", guid);
+	bool bDLC_03 = gDLL->IsDLCValid(guid); if (bDLC_03) CUSTOMLOG("Found DLC 3");
+	ExtractGUID("B3030D39-C0D8-4bc7-91B1-7AD1CAF585AB", guid);
+	bool bDLC_04 = gDLL->IsDLCValid(guid); if (bDLC_04) CUSTOMLOG("Found DLC 4");
+	ExtractGUID("112C22B2-5308-42b6-B734-171CCAB3037B", guid);
+	bool bDLC_05 = gDLL->IsDLCValid(guid); if (bDLC_05) CUSTOMLOG("Found DLC 5");
+	ExtractGUID("BBB0D085-A0B1-4475-B007-3E549CF3ADC3", guid);
+	bool bDLC_06 = gDLL->IsDLCValid(guid); if (bDLC_06) CUSTOMLOG("Found DLC 6");
+	ExtractGUID("EA67AED5-5859-4875-BF3A-360FE9E55D1B", guid);
+	bool bDLC_07 = gDLL->IsDLCValid(guid); if (bDLC_07) CUSTOMLOG("Found DLC 7");
+	ExtractGUID("0E3751A1-F840-4e1b-9706-519BF484E59D", guid);
+	bool bEXP_01 = gDLL->IsDLCValid(guid); if (bEXP_01) CUSTOMLOG("Found G&K");
+	ExtractGUID("6DA07636-4123-4018-B643-6575B4EC336B", guid);
+	bool bEXP_02 = gDLL->IsDLCValid(guid); if (bEXP_02) CUSTOMLOG("Found BNW");
+
+	for (int iAchievement = 0; iAchievement < NUM_ACHIEVEMENTS; iAchievement++) {
+		EAchievement eAchievement = (EAchievement) iAchievement;
+
+		// Multiplayer achievements - can't have these!
+		if (eAchievement == ACHIEVEMENT_WIN_MULTIPLAYER)
+			continue;
+
+		// Broken achievements - can't have these!
+		if (   eAchievement == ACHIEVEMENT_HUNDRED_WAR
+		    || eAchievement == ACHIEVEMENT_CATFIGHT
+		    || eAchievement == ACHIEVEMENT_MANIFEST_DESTINY
+		    || eAchievement == ACHIEVEMENT_UNIT_20BATTLES
+		    || eAchievement == ACHIEVEMENT_ALL_WAR
+		    || eAchievement == ACHIEVEMENT_PEACEFULPLAY
+		    || eAchievement == ACHIEVEMENT_LOSE_MULTIPLAYER
+		    || eAchievement == ACHIEVEMENT_SIX_DEGREES
+		    || eAchievement == ACHIEVEMENT_DEFPACT
+		    || eAchievement == ACHIEVEMENT_RESEARCHPACT
+		    || eAchievement == ACHIEVEMENT_SPECIAL_ELEPHANTBATTLE
+		    || eAchievement == ACHIEVEMENT_CIVILOPEDIA
+		    || eAchievement == ACHIEVEMENT_SPECIAL_HWATCH_OUT
+		    || eAchievement == ACHIEVEMENT_SCENARIO_05_QING_TAKES_MING
+		    || eAchievement == ACHIEVEMENT_SPECIAL_ANCIENT_WONDERS
+		    || eAchievement == ACHIEVEMENT_XP1_49)
+			continue;
+
+		// DLC/Expansion achievements - can only have these if own the DLC/Expansion
+		if (   (eAchievement >= ACHIEVEMENT_WIN_NEBUCHADNEZZAR && eAchievement <= ACHIEVEMENT_WIN_NEBUCHADNEZZAR && !bDLC_DX)
+		    || (eAchievement >= ACHIEVEMENT_WIN_GENGHIS && eAchievement <= ACHIEVEMENT_LOSE_SCENARIO_01 && !bDLC_01)
+		    || (eAchievement >= ACHIEVEMENT_WIN_ISABELLA && eAchievement <= ACHIEVEMENT_SCENARIO_02_RETURN_TREASURE && !(bDLC_02 || bDLC_07))
+		    || (eAchievement >= ACHIEVEMENT_WIN_KAMEHAMEHA && eAchievement <= ACHIEVEMENT_SCENARIO_03_FIND_NEW_ZEALAND && !bDLC_03)
+		    || (eAchievement >= ACHIEVEMENT_WIN_BLUETOOTH && eAchievement <= ACHIEVEMENT_SCENARIO_04_WIN_DEITY && !bDLC_04)
+		    || (eAchievement >= ACHIEVEMENT_WIN_SEJONG && eAchievement <= ACHIEVEMENT_SCENARIO_05_QING_TAKES_MING && !bDLC_05)
+		    || (eAchievement >= ACHIEVEMENT_SPECIAL_ROME_GETS_ZEUS && eAchievement <= ACHIEVEMENT_SCENARIO_06_ORACLE_CONSULT && !bDLC_06)
+		    || (eAchievement >= ACHIEVEMENT_XP1_01 && eAchievement <= ACHIEVEMENT_XP1_52 && !bEXP_01)
+		    || (eAchievement >= ACHIEVEMENT_XP2_01 && eAchievement <= ACHIEVEMENT_XP2_60 && !bEXP_02))
+			continue;
+
+		CvAchievementInfo* achievementInfo = GC.getAchievementInfo(eAchievement);
+
+		if(achievementInfo == NULL)
+			continue;
+
+		if (achievementInfo->isAchieved()) {
+			if (!gDLL->IsAchievementUnlocked(eAchievement)) {
+				CUSTOMLOG("Unlocking: %i", eAchievement);
+				gDLL->UnlockAchievement(eAchievement);
+			}
+		}
+	}
+}
+#endif
+
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 CvPlayerAchievements::CvPlayerAchievements(const CvPlayer& kPlayer)

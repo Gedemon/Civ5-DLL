@@ -3788,8 +3788,66 @@ bool CvMilitaryAI::WillAirUnitRebase(CvUnit* pUnit) const
 	return false;
 }
 
+#if defined(MOD_AI_SMART_INTERCEPTIONS)
+/// AMS: Get all possible interceptions on that plot, doesn't use visibility to offset AI inability to remember air attacks.
+int CvMilitaryAI::GetMaxPossibleInterceptions(CvPlot* pTargetPlot) const
+{
+	int iRtnValue = 0;
+
+	// Loop through all the players
+	for(int iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iI);
+
+		if(kPlayer.isAlive() && kPlayer.GetID() != m_pPlayer->GetID())
+		{
+			if (atWar(kPlayer.getTeam(), m_pPlayer->getTeam()))
+			{
+				// Loop through their units looking for intercept capable units
+				int iLoopUnit = 0;
+
+				for(CvUnit* pLoopUnit = kPlayer.firstUnit(&iLoopUnit); pLoopUnit != NULL; pLoopUnit = kPlayer.nextUnit(&iLoopUnit))
+				{
+					// Must be able to intercept
+					if(!pLoopUnit->isDelayedDeath() && pLoopUnit->canAirDefend() && !pLoopUnit->isInCombat())
+					{
+						// Must still be able to intercept this turn.
+						if(!pLoopUnit->isOutOfInterceptions())
+						{
+							// Must either be a non-air Unit, or an air Unit that hasn't moved this turn
+							if((pLoopUnit->getDomainType() != DOMAIN_AIR) || !(pLoopUnit->hasMoved()))
+							{
+								// Must either be a non-air Unit or an air Unit on intercept
+								if((pLoopUnit->getDomainType() != DOMAIN_AIR) || (pLoopUnit->GetActivityType() == ACTIVITY_INTERCEPT))
+								{
+									// Test range
+									if(plotDistance(pLoopUnit->getX(), pLoopUnit->getY(), pTargetPlot->getX(), pTargetPlot->getY()) <= pLoopUnit->getUnitInfo().GetAirInterceptRange())
+									{
+										if (pLoopUnit->currInterceptionProbability() > 0)
+										{
+											iRtnValue++;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return iRtnValue;
+}
+#endif
+
 /// Assess nearby enemy air assets
+#if defined(MOD_AI_SMART_INTERCEPTIONS)
+/// AMS add half of unit range to the calculations.
+int CvMilitaryAI::GetNumEnemyAirUnitsInRange(CvPlot* pCenterPlot, int iRange, bool bCountFighters, bool bCountBombers) const
+#else
 int CvMilitaryAI::GetNumEnemyAirUnitsInRange(CvPlot* pCenterPlot, int /*iRange*/, bool bCountFighters, bool bCountBombers) const
+#endif
 {
 	int iRtnValue = 0;
 
@@ -3807,7 +3865,15 @@ int CvMilitaryAI::GetNumEnemyAirUnitsInRange(CvPlot* pCenterPlot, int /*iRange*/
 				{
 					if (pLoopUnit->getDomainType() == DOMAIN_AIR)
 					{
+#if defined(MOD_AI_SMART_INTERCEPTIONS)
+						// AMS: Just to keep fighters closer to high range bombers (stealth bombers)
+						int maxCheckRange = min(pLoopUnit->GetRange(), 12);
+						int acceptableDistance = MOD_AI_SMART_INTERCEPTIONS ? maxCheckRange + (iRange / 2) : 10;
+						// AMS: distance was checked to a fixed 10 value
+						if ( plotDistance(pCenterPlot->getX(), pCenterPlot->getY(), pLoopUnit->getX(), pLoopUnit->getY()) <= acceptableDistance )
+#else
 						if ( plotDistance(pCenterPlot->getX(), pCenterPlot->getY(), pLoopUnit->getX(), pLoopUnit->getY()) <= 10 )
+#endif
 						{
 							// Let's not factor in revealed or visible - As a human I can remember past attacks and intuit whether a bomber could be in range of the city, AIs don't have great intuition...
 							if (pLoopUnit->IsAirSweepCapable() || pLoopUnit->canAirDefend())
@@ -4751,6 +4817,12 @@ bool MilitaryAIHelpers::IsTestStrategy_NeedAirCarriers(CvPlayer* pPlayer)
 {
 	int iNumLoadableAirUnits = 0;
 	int iNumTotalCargoSpace = 0;
+
+#if defined(MOD_AI_SMART_CARRIERS)
+	int iNumCargoUnits = 0;
+	int iNumNavalUnits = 0;
+#endif
+
 	CvUnit* pLoopUnit;
 	int iLoop;
 	SpecialUnitTypes eSpecialUnitPlane = (SpecialUnitTypes) GC.getInfoTypeForString("SPECIALUNIT_FIGHTER");
@@ -4759,6 +4831,13 @@ bool MilitaryAIHelpers::IsTestStrategy_NeedAirCarriers(CvPlayer* pPlayer)
 		// Don't count civilians or exploration units
 		if(pLoopUnit->AI_getUnitAIType() != UNITAI_EXPLORE && pLoopUnit->AI_getUnitAIType() != UNITAI_EXPLORE_SEA)
 		{
+#if defined(MOD_AI_SMART_CARRIERS)
+			if(pLoopUnit->getDomainType() == DOMAIN_SEA)
+			{
+				iNumNavalUnits++;
+			}
+#endif
+
 			if(pLoopUnit->cargoSpace() > 0)
 			{
 				if(pLoopUnit->specialCargo() != NO_SPECIALUNIT)
@@ -4776,6 +4855,9 @@ bool MilitaryAIHelpers::IsTestStrategy_NeedAirCarriers(CvPlayer* pPlayer)
 						continue;
 					}
 				}
+#if defined(MOD_AI_SMART_CARRIERS)
+				iNumCargoUnits++;
+#endif
 				iNumTotalCargoSpace += pLoopUnit->cargoSpace();
 			}
 			else if (pLoopUnit->getSpecialUnitType() == eSpecialUnitPlane)
@@ -4785,12 +4867,17 @@ bool MilitaryAIHelpers::IsTestStrategy_NeedAirCarriers(CvPlayer* pPlayer)
 		}
 	}
 
+#if defined(MOD_AI_SMART_CARRIERS)
+	// AMS: Also return false if there are more cargo units than the 20% of the total naval army.
+	if ((iNumLoadableAirUnits > iNumTotalCargoSpace) && (!MOD_AI_SMART_CARRIERS || (iNumNavalUnits / 5) >= iNumCargoUnits))
+#else
 #if defined(MOD_CONFIG_AI_IN_XML)
 	// Why would we ever want to load EVERY plane onto a carrier?
 	int iFactor = GC.getAI_CONFIG_MILITARY_AIRCRAFT_PER_CARRIER_SPACE();
 	if (iNumLoadableAirUnits > iFactor*iNumTotalCargoSpace)
 #else
 	if (iNumLoadableAirUnits > iNumTotalCargoSpace)
+#endif
 #endif
 	{
 		return true;

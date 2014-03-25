@@ -645,55 +645,55 @@ void CvDllNetMessageHandler::ResponsePlayerDealFinalized(PlayerTypes eFromPlayer
 		CvPlayerAI& kFromPlayer = GET_PLAYER(eFromPlayer);
 		CvPlayerAI& kActivePlayer = GET_PLAYER(eActivePlayer);
 
-			strMessage = Localization::Lookup("TXT_KEY_DEAL_EXPIRED_FROM_YOU");
-			strMessage << kToPlayer.getNickName();
-			kFromPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eToPlayer, -1, -1);
+		strMessage = Localization::Lookup("TXT_KEY_DEAL_EXPIRED_FROM_YOU");
+		strMessage << kToPlayer.getNickName();
+		kFromPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eToPlayer, -1, -1);
 
-			strMessage = Localization::Lookup("TXT_KEY_DEAL_EXPIRED_FROM_THEM");
-			strMessage << kFromPlayer.getNickName();
-			kToPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eFromPlayer, -1, -1);
-		}
+		strMessage = Localization::Lookup("TXT_KEY_DEAL_EXPIRED_FROM_THEM");
+		strMessage << kFromPlayer.getNickName();
+		kToPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eFromPlayer, -1, -1);
+	}
 	else
 	{
 		CvPlayerAI& kToPlayer = GET_PLAYER(eToPlayer);
 		CvPlayerAI& kFromPlayer = GET_PLAYER(eFromPlayer);
-			if(bAccepted)
+		if(bAccepted)
+		{
+			Localization::String strSummary = Localization::Lookup("TXT_KEY_DEAL_ACCEPTED");
+			Localization::String strMessage = Localization::Lookup("TXT_KEY_DEAL_ACCEPTED_BY_THEM");
+			strMessage << kToPlayer.getNickName();
+			kFromPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eToPlayer, -1, -1);
+
+			strSummary = Localization::Lookup("TXT_KEY_DEAL_ACCEPTED");
+			strMessage = Localization::Lookup("TXT_KEY_DEAL_ACCEPTED_BY_YOU");
+			strMessage << kFromPlayer.getNickName();
+			kToPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eFromPlayer, -1, -1);
+		}
+		else
+		{
+			if(eActBy == eFromPlayer)
 			{
-				Localization::String strSummary = Localization::Lookup("TXT_KEY_DEAL_ACCEPTED");
-				Localization::String strMessage = Localization::Lookup("TXT_KEY_DEAL_ACCEPTED_BY_THEM");
+				Localization::String strSummary = Localization::Lookup("TXT_KEY_DEAL_WITHDRAWN");
+				Localization::String strMessage = Localization::Lookup("TXT_KEY_DEAL_WITHDRAWN_BY_YOU");
 				strMessage << kToPlayer.getNickName();
 				kFromPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eToPlayer, -1, -1);
 
-				strSummary = Localization::Lookup("TXT_KEY_DEAL_ACCEPTED");
-				strMessage = Localization::Lookup("TXT_KEY_DEAL_ACCEPTED_BY_YOU");
+				strSummary = Localization::Lookup("TXT_KEY_DEAL_WITHDRAWN");
+				strMessage = Localization::Lookup("TXT_KEY_DEAL_WITHDRAWN_BY_THEM");
 				strMessage << kFromPlayer.getNickName();
 				kToPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eFromPlayer, -1, -1);
 			}
 			else
 			{
-				if(eActBy == eFromPlayer)
-				{
-					Localization::String strSummary = Localization::Lookup("TXT_KEY_DEAL_WITHDRAWN");
-					Localization::String strMessage = Localization::Lookup("TXT_KEY_DEAL_WITHDRAWN_BY_YOU");
-					strMessage << kToPlayer.getNickName();
-					kFromPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eToPlayer, -1, -1);
+				Localization::String strSummary = Localization::Lookup("TXT_KEY_DEAL_REJECTED");
+				Localization::String strMessage = Localization::Lookup("TXT_KEY_DEAL_REJECTED_BY_THEM");
+				strMessage << kToPlayer.getNickName();
+				kFromPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eToPlayer, -1, -1);
 
-					strSummary = Localization::Lookup("TXT_KEY_DEAL_WITHDRAWN");
-					strMessage = Localization::Lookup("TXT_KEY_DEAL_WITHDRAWN_BY_THEM");
-					strMessage << kFromPlayer.getNickName();
-					kToPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eFromPlayer, -1, -1);
-				}
-				else
-				{
-					Localization::String strSummary = Localization::Lookup("TXT_KEY_DEAL_REJECTED");
-					Localization::String strMessage = Localization::Lookup("TXT_KEY_DEAL_REJECTED_BY_THEM");
-					strMessage << kToPlayer.getNickName();
-					kFromPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eToPlayer, -1, -1);
-
-					strSummary = Localization::Lookup("TXT_KEY_DEAL_REJECTED");
-					strMessage = Localization::Lookup("TXT_KEY_DEAL_REJECTED_BY_YOU");
-					strMessage << kFromPlayer.getNickName();
-					kToPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eFromPlayer, -1, -1);
+				strSummary = Localization::Lookup("TXT_KEY_DEAL_REJECTED");
+				strMessage = Localization::Lookup("TXT_KEY_DEAL_REJECTED_BY_YOU");
+				strMessage << kFromPlayer.getNickName();
+				kToPlayer.GetNotifications()->Add(NOTIFICATION_PLAYER_DEAL_RESOLVED, strMessage.toUTF8(), strSummary.toUTF8(), eFromPlayer, -1, -1);
 			}
 		}
 	}

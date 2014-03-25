@@ -1176,14 +1176,14 @@ void CvGameReligions::EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligi
 			notificationText << kPlayer.getCivilizationShortDescriptionKey() << it->GetName();
 		}
 #else
-		Localization::String strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_ENHANCED_S");
-		Localization::String notificationText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_ENHANCED");
-		notificationText << kPlayer.getCivilizationShortDescriptionKey() << it->GetName();
+			Localization::String strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_ENHANCED_S");
+			Localization::String notificationText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_ENHANCED");
+			notificationText << kPlayer.getCivilizationShortDescriptionKey() << it->GetName();
 #endif
 
-		// Message slightly different for active player
+			// Message slightly different for enhancing player
 			if(ePlayer == eNotifyPlayer)
-		{
+			{
 #if defined(MOD_API_RELIGION)
 			Localization::String localizedText;
 			if (eReligion == RELIGION_PANTHEON) {
@@ -1193,21 +1193,21 @@ void CvGameReligions::EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligi
 				localizedText << it->GetName();
 			}
 #else
-			Localization::String localizedText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_ENHANCED_ACTIVE_PLAYER");
-			localizedText << it->GetName();
+				Localization::String localizedText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_ENHANCED_ACTIVE_PLAYER");
+				localizedText << it->GetName();
 #endif
 
-			pNotifications->Add(NOTIFICATION_RELIGION_ENHANCED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
-		}
-		else
-		{
-				CvTeam& kNotifyTeam = GET_TEAM(kNotifyPlayer.getTeam());
-				if(kNotifyTeam.isHasMet(kPlayer.getTeam()))
-			{
-				pNotifications->Add(NOTIFICATION_RELIGION_ENHANCED, notificationText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+				pNotifications->Add(NOTIFICATION_RELIGION_ENHANCED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
 			}
 			else
 			{
+				CvTeam& kNotifyTeam = GET_TEAM(kNotifyPlayer.getTeam());
+				if(kNotifyTeam.isHasMet(kPlayer.getTeam()))
+				{
+					pNotifications->Add(NOTIFICATION_RELIGION_ENHANCED, notificationText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+				}
+				else
+				{
 #if defined(MOD_API_RELIGION)
 				Localization::String unknownText;
 				if (eReligion == RELIGION_PANTHEON) {
@@ -1217,12 +1217,12 @@ void CvGameReligions::EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligi
 					unknownText << it->GetName();
 				}
 #else
-				Localization::String unknownText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_ENHANCED_UNKNOWN");
-				unknownText << it->GetName();
+					Localization::String unknownText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_ENHANCED_UNKNOWN");
+					unknownText << it->GetName();
 #endif
 
-				pNotifications->Add(NOTIFICATION_RELIGION_ENHANCED, unknownText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
-			}
+					pNotifications->Add(NOTIFICATION_RELIGION_ENHANCED, unknownText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+				}
 			}
 		}
 
@@ -1291,7 +1291,7 @@ void CvGameReligions::AddReformationBelief(PlayerTypes ePlayer, ReligionTypes eR
 	UpdateAllCitiesThisReligion(eReligion);
 	kPlayer.UpdateReligion();
 
-	// Send out messaging
+	//Notify the masses
 	for(int iNotifyLoop = 0; iNotifyLoop < MAX_MAJOR_CIVS; ++iNotifyLoop){
 		PlayerTypes eNotifyPlayer = (PlayerTypes) iNotifyLoop;
 		CvPlayerAI& kNotifyPlayer = GET_PLAYER(eNotifyPlayer);
@@ -3319,6 +3319,24 @@ int CvCityReligions::GetPressurePerTurn(ReligionTypes eReligion, int& iNumTradeR
 					iNumTradeRoutesInvolved += iNumTradeRoutes;
 				}
 			}
+
+#if defined(MOD_BUGFIX_RELIGIOUS_SPY_PRESSURE)
+			// Include any pressure from "Underground Sects"
+			if (kPlayer.GetReligions()->GetReligionCreatedByPlayer() == eReligion)
+			{
+				int iSpyPressure = kPlayer.GetReligions()->GetSpyPressure();
+				if (iSpyPressure > 0)
+				{
+					if (kPlayer.GetEspionage()->GetSpyIndexInCity(m_pCity) != -1)
+					{
+						if (GetNumFollowers(eReligion) != 0)
+						{
+							iPressure += iSpyPressure * GC.getGame().getGameSpeedInfo().getReligiousPressureAdjacentCity();
+						}
+					}
+				}
+			}
+#endif
 		}
 	}
 
@@ -3329,7 +3347,7 @@ int CvCityReligions::GetPressurePerTurn(ReligionTypes eReligion, int& iNumTradeR
 		iHolyCityPressure *=  GC.getRELIGION_PER_TURN_FOUNDING_CITY_PRESSURE();
 		iPressure += iHolyCityPressure;
 	}
-
+	
 	return iPressure;
 }
 

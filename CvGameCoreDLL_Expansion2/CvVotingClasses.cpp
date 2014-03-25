@@ -3229,7 +3229,11 @@ int CvLeague::GetNumResolutionsEverEnacted() const
 
 int CvLeague::GetNumProposersPerSession() const
 {
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	int iProposers = MIN((LeagueHelpers::PROPOSERS_PER_SESSION + (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS ? 1 : 0)), GetNumMembers());
+#else
 	int iProposers = MIN(LeagueHelpers::PROPOSERS_PER_SESSION, GetNumMembers());
+#endif
 	return iProposers;
 }
 

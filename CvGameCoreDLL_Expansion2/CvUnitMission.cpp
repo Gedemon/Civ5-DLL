@@ -140,6 +140,64 @@ void CvUnitMission::PushMission(UnitHandle hUnit, MissionTypes eMission, int iDa
 					FeatureTypes eFeature = hUnit->plot()->getFeatureType();
 					if(eFeature != NO_FEATURE && pkBuildInfo->isFeatureRemove(eFeature) && pkBuildInfo->getFeatureTime(eFeature) > 0)
 					{
+#if defined(MOD_BUGFIX_FEATURE_REMOVAL)
+					  if (MOD_BUGFIX_FEATURE_REMOVAL) {
+						// Don't bother looking if this is the build that removes this feature
+						if (!pkBuildInfo->isFeatureRemoveOnly(eFeature)) {
+							CUSTOMLOG("What build removes feature %i?", eFeature);
+						
+							// We need to find the build that will remove eFeature.
+							CvBuildInfo* pRemoveBuild = NULL;
+						
+							// Assumes that the BuildFeatures table has an extra column RemoveOnly
+							for(int iI = 0; iI < GC.getNumBuildInfos(); iI++) {
+								CvBuildInfo* pRemoveBuildInfo = GC.getBuildInfo((BuildTypes) iI);
+								if(pRemoveBuildInfo) {
+									if(pRemoveBuildInfo->isFeatureRemoveOnly(eFeature)) {
+										CUSTOMLOG("  candidate build %i", iI);
+										CvTeamTechs* pTechs = GET_TEAM(GET_PLAYER(hUnit->getOwner()).getTeam()).GetTeamTechs();
+										TechTypes eObsoleteTech = (TechTypes) pRemoveBuildInfo->getFeatureObsoleteTech(eFeature);
+
+										if (eObsoleteTech == NO_TECH || !pTechs->HasTech(eObsoleteTech)) {
+											TechTypes ePrereqTech = (TechTypes) pRemoveBuildInfo->getFeatureTech(eFeature);
+									
+											// We have a candidate build for removing this feature
+											if (ePrereqTech == NO_TECH) {
+												if (pRemoveBuild == NULL) {
+													CUSTOMLOG("  tech'less and no previous candidate so considering it");
+													pRemoveBuild = pRemoveBuildInfo;
+												}
+											} else if (pTechs->HasTech(ePrereqTech)) {
+												if (pRemoveBuild == NULL) {
+													CUSTOMLOG("  tech'ed and no previous candidate so considering it");
+													pRemoveBuild = pRemoveBuildInfo;
+												} else if (GC.getTechInfo(ePrereqTech)->GetGridX() > GC.getTechInfo((TechTypes) pRemoveBuild->getFeatureTech(eFeature))->GetGridX()) {
+													CUSTOMLOG("  tech'ed and better than the previous candidate so considering it");
+													pRemoveBuild = pRemoveBuildInfo;
+												}
+											}
+										}
+									}
+								}
+							}
+						
+							if (pRemoveBuild != NULL) {
+								CUSTOMLOG("To remove feature %i we will use build %i", eFeature, pRemoveBuild->GetID());
+							
+								MissionData removeMission;
+								removeMission.eMissionType = eMission;
+								removeMission.iData1 = pRemoveBuild->GetID();
+								removeMission.iData2 = iData2;
+								removeMission.iFlags = iFlags;
+								removeMission.iPushTurn = GC.getGame().getGameTurn();
+							
+								hUnit->SetMissionAI(eMissionAI, pMissionAIPlot, pMissionAIUnit);
+								InsertAtEndMissionQueue(hUnit, removeMission, !bAppend);
+								bAppend = true;
+							}
+						}
+					  } else {
+#endif
 						CvFeatureInfo* feature = GC.getFeatureInfo(eFeature);
 						MissionData removeMission;
 						removeMission.eMissionType = eMission;
@@ -183,6 +241,9 @@ void CvUnitMission::PushMission(UnitHandle hUnit, MissionTypes eMission, int iDa
 							InsertAtEndMissionQueue(hUnit, removeMission, !bAppend);
 							bAppend = true;
 						}
+#if defined(MOD_BUGFIX_FEATURE_REMOVAL)
+					  }
+#endif
 					}
 				}
 

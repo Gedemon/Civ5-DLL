@@ -233,6 +233,18 @@ int CvPolicyAI::ChooseNextPolicy(CvPlayer* pPlayer)
 
 						iBranchWeight *= (100 - m_iPolicyWeightPercentDropNewBranch);
 						iBranchWeight /= 100;
+						
+#if defined(MOD_AI_SMART_POLICY_CHOICE)
+						if (MOD_AI_SMART_POLICY_CHOICE) {
+							// Rate a bit lower all starting branches as they have policies only useful at the beginning.
+							if (!pPlayer->GetPlayerPolicies()->IsEraPrereqBranch(ePolicyBranch))
+							{
+								iBranchWeight *= 80;
+								iBranchWeight /= 100;
+							}
+						}
+#endif
+
 						if(eCurrentGrandStrategy == eCultureGrandStrategy)
 						{
 							iBranchWeight /= 3;
@@ -560,7 +572,7 @@ void CvPolicyAI::DoChooseIdeology(CvPlayer *pPlayer)
 			args->Push(eChosenBranch);
 
 			bool bResult = false;
-			LuaSupport::CallHook(pkScriptSystem, "PlayerAdoptPolicyBranch", args.get(), bResult);
+			LuaSupport::CallHook(pkScriptSystem, "PlayerCanAdoptPolicyBranch", args.get(), bResult);
 		}
 	}
 #endif
