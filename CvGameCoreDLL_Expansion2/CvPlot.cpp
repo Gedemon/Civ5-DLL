@@ -10704,9 +10704,10 @@ int CvPlot::getConquestCountDown() const
 }
 
 //	--------------------------------------------------------------------------------
-void CvPlot::setConquestCountDown()
+void CvPlot::setConquestCountDown(int iNewValue)
 {
-	m_iConquestCountDown = GC.getCULTURE_LOCK_FLIPPING_ON_WAR();
+	if (m_iConquestCountDown != iNewValue)
+		m_iConquestCountDown = iNewValue;
 }
 
 //	---------------------------------------------------------------------------
@@ -10826,6 +10827,95 @@ int CvPlot::getPreviousCulturePer10000(PlayerTypes eIndex) const
 	}
 
 	return 0;
+}
+
+//	---------------------------------------------------------------------------
+bool CvPlot::isLockedByWarForPlayer(PlayerTypes eIndex) const
+{
+	bool bLocked = false;
+	if (GC.getCULTURE_LOCK_FLIPPING_ON_WAR() > 0 && getOwner() != NO_PLAYER && GET_TEAM(GET_PLAYER(eIndex).getTeam()).isAtWar(GET_PLAYER(getOwner()).getTeam()))
+		bLocked = true;
+	return bLocked;
+}
+
+//	---------------------------------------------------------------------------
+bool CvPlot::isLockedByFortification() const
+{
+	if (GC.getCULTURE_NO_FORTIFICATION_FLIPPING() > 0) 
+	{
+		ImprovementTypes eImprovement;
+
+		// Check for Forts, Kasbah, Feitoria, Chateau...
+		eImprovement = getImprovementType();
+		if (eImprovement != NO_IMPROVEMENT && !IsImprovementPillaged())
+		{
+			if (GC.getImprovementInfo(eImprovement)->GetDefenseModifier() > 0)
+				return true;
+		}
+	}
+	return false;
+}
+
+//	---------------------------------------------------------------------------
+bool CvPlot::isLockedByCitadelForPlayer(PlayerTypes eIndex) const
+{
+	if (GC.getCULTURE_NO_FORTIFICATION_FLIPPING() > 0) 
+	{
+		CvPlot* pAdjacentPlot;
+		ImprovementTypes eImprovement;
+
+		for(int iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
+		{
+			pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
+
+			if(pAdjacentPlot != NULL)
+			{
+				if (pAdjacentPlot->isWater()) // no need to check water plots
+					continue;
+					
+				if (pAdjacentPlot->getOwner() == eIndex ) // a citadel owner is allowed to acquire adjacent plot using culture
+					continue;
+
+				eImprovement = pAdjacentPlot->getImprovementType();
+				/*
+				if (eImprovement == (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_CITADEL") && !pAdjacentPlot->IsImprovementPillaged())
+					return;
+				*/
+				// less explicit, but faster ? (and not hardcoded...)
+				if (eImprovement != NO_IMPROVEMENT && !pAdjacentPlot->IsImprovementPillaged())
+				{
+					if (GC.getImprovementInfo(eImprovement)->GetNearbyEnemyDamage() > 0)
+						return true;
+				}
+				//*/
+			}
+		}
+	}
+	return false;
+}
+
+//	---------------------------------------------------------------------------
+PlayerTypes CvPlot::getPotentialOwner() const
+{
+	PlayerTypes eBestPlayer = NO_PLAYER;
+	int iBestValue = 0;
+
+	for (int iI = 0; iI < MAX_PLAYERS; iI++) // only "real" players
+	{
+		if (GET_PLAYER((PlayerTypes)iI).isAlive())
+		{
+			if (getCulture((PlayerTypes)iI) > iBestValue)
+			{
+				// Do we allow non-adjacent flipping ?
+				if (!isAdjacentPlayer((PlayerTypes)iI, /*LandOnly*/ true) && GC.getCULTURE_FLIPPING_ONLY_ADJACENT() > 0)
+					continue;
+
+				iBestValue = getCulture((PlayerTypes)iI);
+				eBestPlayer = (PlayerTypes)iI;
+			}
+		}
+	}
+	return eBestPlayer;
 }
 
 //	---------------------------------------------------------------------------
@@ -11132,75 +11222,25 @@ void CvPlot::updateOwnership()
 		return;
 		
 	// check if fortifications are preventing tile flipping...
-	if (GC.getCULTURE_NO_FORTIFICATION_FLIPPING() > 0) 
-	{
-		ImprovementTypes eImprovement;
-
-		// Check for Forts, Kasbah, Feitoria, Chateau...
-		eImprovement = getImprovementType();
-		if (eImprovement != NO_IMPROVEMENT && !IsImprovementPillaged())
-		{
-			if (GC.getImprovementInfo(eImprovement)->GetDefenseModifier() > 0)
-				return;
-		}
-	}
+	if (isLockedByFortification())
+		return;
 
 	// Get potential owner
-	PlayerTypes eBestPlayer = NO_PLAYER;
-	int iBestValue = 0;
+	PlayerTypes eBestPlayer = getPotentialOwner();
+	if (eBestPlayer == NO_PLAYER)
+		return;
 
-	for (int iI = 0; iI < MAX_PLAYERS; iI++) // only "real" players
-	{
-		if (GET_PLAYER((PlayerTypes)iI).isAlive())
-		{
-			if (getCulture((PlayerTypes)iI) > iBestValue)
-			{
-				// Do we allow non-adjacent flipping ?
-				if (!isAdjacentPlayer((PlayerTypes)iI, /*LandOnly*/ true) && GC.getCULTURE_FLIPPING_ONLY_ADJACENT() > 0)
-					continue;
+	int iBestValue = getCulture(eBestPlayer);
 
-				iBestValue = getCulture((PlayerTypes)iI);
-				eBestPlayer = (PlayerTypes)iI;
-			}
-		}
-	}
-
-	if (eBestPlayer != NO_PLAYER && eBestPlayer != getOwner() && iBestValue > GET_PLAYER(eBestPlayer).getCultureMinimumForAcquisition()) // we have a potential new owner // GC.getCULTURE_MINIMUM_FOR_ACQUISITION()
+	if (eBestPlayer != NO_PLAYER && eBestPlayer != getOwner() && iBestValue >= GET_PLAYER(eBestPlayer).getCultureMinimumForAcquisition()) // we have a potential new owner // GC.getCULTURE_MINIMUM_FOR_ACQUISITION()
 	{
 		// Do we allow tile flipping when at war ?		
-		if (GC.getCULTURE_LOCK_FLIPPING_ON_WAR() > 0 && getOwner() != NO_PLAYER && GET_TEAM(GET_PLAYER(eBestPlayer).getTeam()).isAtWar(GET_PLAYER(getOwner()).getTeam()))
+		if (isLockedByWarForPlayer(eBestPlayer))
 			return;
 
 		// check if a citadel can prevent tile flipping...
-		if (GC.getCULTURE_NO_FORTIFICATION_FLIPPING() > 0) 
-		{
-			CvPlot* pAdjacentPlot;
-			ImprovementTypes eImprovement;
-
-			for(int iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
-			{
-				pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iI));
-
-				if(pAdjacentPlot != NULL)
-				{
-					if (pAdjacentPlot->isWater() && pAdjacentPlot->getOwner() == eBestPlayer ) // no need to check water plots, and a citadel owner is allowed to acquire adjacent plot using culture
-						continue;
-
-					eImprovement = pAdjacentPlot->getImprovementType();
-					/*
-					if (eImprovement == (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_CITADEL") && !pAdjacentPlot->IsImprovementPillaged())
-						return;
-					*/
-					// less explicit, but faster ?
-					if (eImprovement != NO_IMPROVEMENT && !pAdjacentPlot->IsImprovementPillaged())
-					{
-						if (GC.getImprovementInfo(eImprovement)->GetNearbyEnemyDamage() > 0)
-							return;
-					}
-					//*/
-				}
-			}
-		}
+		if (isLockedByCitadelForPlayer(eBestPlayer))
+			return;
 
 		// case 1: the tile was not owned and tile acquisition is allowed
 		bool bAcquireNewPlot = (getOwner() == NO_PLAYER && GC.getCULTURE_ALLOW_TILE_ACQUISITION() > 0);
@@ -11210,7 +11250,7 @@ void CvPlot::updateOwnership()
 
 		if (bAcquireNewPlot || bConvertPlot)
 		{
-			CvCity* pNearestCity = GC.getMap().findCity(getX(), getY(), eBestPlayer);
+			CvCity* pNearestCity = GC.getMap().findCity(getX(), getY(), eBestPlayer, NO_TEAM, /*bSameArea*/ false); // Natural Wonders are not in the same area on a Continent ?
 			if (pNearestCity == NULL)
 				return;
 

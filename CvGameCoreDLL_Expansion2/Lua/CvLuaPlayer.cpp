@@ -984,6 +984,10 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetWarmongerPreviewString);
 	Method(GetLiberationPreviewString);
 
+	// RED <<<<<	
+	Method(GetCultureMinimumForAcquisition);
+	// RED >>>>>
+
 }
 //------------------------------------------------------------------------------
 void CvLuaPlayer::HandleMissingInstance(lua_State* L)
@@ -10966,3 +10970,18 @@ int CvLuaPlayer::lGetLiberationPreviewString(lua_State* L)
 	lua_pushstring(L, CvDiplomacyAIHelpers::GetLiberationPreviewString(eOriginalOwner));
 	return 1;
 }
+
+// RED <<<<<
+
+//------------------------------------------------------------------------------
+//int getCultureMinimumForAcquisition();
+int CvLuaPlayer::lGetCultureMinimumForAcquisition(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	int iMinimumCulture = pkPlayer->getCultureMinimumForAcquisition();
+
+	lua_pushinteger(L, iMinimumCulture);
+	return 1;
+}
+
+// RED >>>>>

@@ -581,9 +581,15 @@ public:
 	OPT_BOL_DEF(OptionDefensiveSupportFire);
 	OPT_BOL_DEF(OptionOffensiveSupportFire);
 	OPT_BOL_DEF(OptionCounterFire);
+	
+	OPT_BOL_DEF(OptionMinorCanEnterAllyTerritory);
+	OPT_BOL_DEF(OptionGroupedDiploAI);
 
 	void setCultureDiffusionRatePer1000(int iNewValue);
 	int getCultureDiffusionRatePer1000() const;
+
+	void initOptionsForRED();
+	void initDataForRED();
 
 	// RED >>>>>
 
@@ -804,6 +810,9 @@ protected:
 	OPT_BOL_DECL(OptionOffensiveSupportFire);
 	OPT_BOL_DECL(OptionCounterFire);
 	
+	OPT_BOL_DECL(OptionMinorCanEnterAllyTerritory);
+	OPT_BOL_DECL(OptionGroupedDiploAI);
+
 	int m_iCultureDiffusionRatePer1000;	
 	// RED >>>>>
 };

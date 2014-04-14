@@ -991,6 +991,10 @@ protected:
 	// Warmongering
 	static int lGetWarmongerPreviewString(lua_State* L);
 	static int lGetLiberationPreviewString(lua_State* L);
+
+	// RED <<<<<	
+	static int lGetCultureMinimumForAcquisition(lua_State* L);
+	// RED >>>>>
 };
 
 #endif //CVLUAPLAYER_H

@@ -379,16 +379,7 @@ void CvGame::init(HandicapTypes eHandicap)
 	doUpdateCacheOnTurn();
 
 	// RED <<<<<
-	if(GC.getGame().isOption("GAMEOPTION_CULTURE_DIFFUSION") || GC.getCULTURE_DIFFUSION_ENABLED() > 0)
-	{
-		setIsOptionCultureDiffusionEnabled(true);
-	}
-
-	if(isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") )
-	{
-
-	}
-
+	initOptionsForRED();
 	// RED >>>>>
 }
 
@@ -414,43 +405,8 @@ bool CvGame::init2()
 	CheckGenerateArchaeology();
 	
 	// RED <<<<<
-	//
-	// Set Culture Diffusion Rate From Game Setting
-	//
-	if (GC.getGame().isOption("GAMEOPTION_CULTURE_DIFFUSION") || GC.getCULTURE_DIFFUSION_ENABLED() > 0) // GC.getGame().isCultureDiffusionEnabled() <- is it defined already here ?
-	{
-		// Logging
-		CvString redLogMessage;
-		CvString strBuffer;
-		CvString strTemp;
-		FILogFile* pLog = LOGFILEMGR.GetLog("red_debug.log", FILogFile::kDontTimeStamp);
+	initDataForRED();
 
-		int iSettingFactor = 1;
-		int iStandardTurns = 500;
-		int iTurnsFactor = 1;
-		if (getEstimateEndTurn() - getGameTurn()>0)
-			iTurnsFactor = (iStandardTurns * 100 / (getEstimateEndTurn() - getGameTurn()));
-
-		iSettingFactor *= iTurnsFactor;
-
-		int iStandardSize = 80 * 52;
-		int iMapsize = GC.getMap().getGridHeight() * GC.getMap().getGridWidth();
-		int iSizeFactor = 1;
-		if (iMapsize > 0)
-			iSizeFactor = (iMapsize * 100 / iStandardSize);	
-
-		iSettingFactor *= iSizeFactor;
-
-		int iCultureDiffusionRatePer1000 = GC.getCULTURE_DIFFUSION_RATE() * iSettingFactor / 100 / 100;
-
-		redLogMessage += "---------------------------------------------------------------------------\n";
-		strTemp.Format("Updating Culture Diffusion Rate from settings: \n	CULTURE_DIFFUSION_RATE = %d, iTurnsFactor = %d percents, iSizeFactor = %d percents, iSettingFactor = %d, iCultureDiffusionRatePer1000 = %d \n", GC.getCULTURE_DIFFUSION_RATE(), iTurnsFactor, iSizeFactor, iSettingFactor, iCultureDiffusionRatePer1000);
-		redLogMessage += strTemp;
-
-		setCultureDiffusionRatePer1000(iCultureDiffusionRatePer1000);
-
-		pLog->Msg(redLogMessage);
-	}
 	// RED >>>>>
 
 	initScoreCalculation();
@@ -1118,6 +1074,9 @@ void CvGame::uninit()
 	OPT_BOL_INIT(OptionDefensiveSupportFire);
 	OPT_BOL_INIT(OptionOffensiveSupportFire);
 	OPT_BOL_INIT(OptionCounterFire);
+
+	OPT_BOL_INIT(OptionMinorCanEnterAllyTerritory);
+	OPT_BOL_INIT(OptionGroupedDiploAI);
 
 	m_iCultureDiffusionRatePer1000 = 0;
 	// RED >>>>>
@@ -8454,7 +8413,10 @@ void CvGame::updateTimers()
 		}
 	}
 
-	if(isHotSeat())
+	// RED <<<<<
+	//if(isHotSeat())	
+	if(isHotSeat() || isOptionGroupedDiploAI())
+	// RED >>>>>
 	{
 		// For Hot Seat, all the AIs will get a chance to do diplomacy with the active human player
 		PlayerTypes eActivePlayer = getActivePlayer();
@@ -9501,6 +9463,9 @@ void CvGame::Read(FDataStream& kStream)
 	OPT_BOL_READ(OptionDefensiveSupportFire);
 	OPT_BOL_READ(OptionOffensiveSupportFire);
 	OPT_BOL_READ(OptionCounterFire);
+	
+	OPT_BOL_READ(OptionMinorCanEnterAllyTerritory);
+	OPT_BOL_READ(OptionGroupedDiploAI);
 
 	kStream >> m_iCultureDiffusionRatePer1000;
 	// RED >>>>>
@@ -9693,6 +9658,9 @@ void CvGame::Write(FDataStream& kStream) const
 	OPT_BOL_WRITE(OptionDefensiveSupportFire);
 	OPT_BOL_WRITE(OptionOffensiveSupportFire);
 	OPT_BOL_WRITE(OptionCounterFire);
+	
+	OPT_BOL_WRITE(OptionMinorCanEnterAllyTerritory);
+	OPT_BOL_WRITE(OptionGroupedDiploAI);
 
 	kStream << m_iCultureDiffusionRatePer1000;
 	// RED >>>>>
@@ -11782,6 +11750,8 @@ OPT_BOL_GET(OptionBestDefenderByHealth);
 OPT_BOL_GET(OptionDefensiveSupportFire);
 OPT_BOL_GET(OptionOffensiveSupportFire);
 OPT_BOL_GET(OptionCounterFire);
+OPT_BOL_GET(OptionMinorCanEnterAllyTerritory);
+OPT_BOL_GET(OptionGroupedDiploAI);
 
 // Cached
 //	--------------------------------------------------------------------------------
@@ -11795,6 +11765,70 @@ void CvGame::setCultureDiffusionRatePer1000(int iNewValue)
 {
 	if (m_iCultureDiffusionRatePer1000 != iNewValue)
 		m_iCultureDiffusionRatePer1000 = iNewValue;
+}
+
+// Init RED
+//	---------------------------------------------------------------------------
+void CvGame::initOptionsForRED()
+{	
+	if(isOption("GAMEOPTION_CULTURE_DIFFUSION") || GC.getCULTURE_DIFFUSION_ENABLED() > 0)
+	{
+		setIsOptionCultureDiffusionEnabled(true);
+	}
+	
+	if(isOption("GAMEOPTION_MINOR_CAN_ENTER_ALLY_TERRITORY") )
+	{
+		setIsOptionMinorCanEnterAllyTerritory(true);
+	}
+
+	if(isOption("GAMEOPTION_GROUPED_DIPLO_AI") )
+	{
+		setIsOptionGroupedDiploAI(true);
+	}
+
+	if(isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") )
+	{
+		setIsOptionCanRebaseInFriendlyCity(true);
+	}
+}
+//	---------------------------------------------------------------------------
+void CvGame::initDataForRED()
+{	
+	// Set Culture Diffusion Rate From Game Setting
+	if (isOptionCultureDiffusionEnabled()) // (GC.getGame().isOption("GAMEOPTION_CULTURE_DIFFUSION") || GC.getCULTURE_DIFFUSION_ENABLED() > 0) //  is it defined already here ?
+	{
+		// Logging
+		CvString redLogMessage;
+		CvString strBuffer;
+		CvString strTemp;
+		FILogFile* pLog = LOGFILEMGR.GetLog("red_debug.log", FILogFile::kDontTimeStamp);
+
+		int iSettingFactor = 1;
+		int iStandardTurns = 500;
+		int iTurnsFactor = 1;
+		if (getEstimateEndTurn() - getGameTurn()>0)
+			iTurnsFactor = (iStandardTurns * 100 / (getEstimateEndTurn() - getGameTurn()));
+
+		iSettingFactor *= iTurnsFactor;
+
+		int iStandardSize = 80 * 52;
+		int iMapsize = GC.getMap().getGridHeight() * GC.getMap().getGridWidth();
+		int iSizeFactor = 1;
+		if (iMapsize > 0)
+			iSizeFactor = (iMapsize * 100 / iStandardSize);	
+
+		iSettingFactor *= iSizeFactor;
+
+		int iCultureDiffusionRatePer1000 = GC.getCULTURE_DIFFUSION_RATE() * iSettingFactor / 100 / 100;
+
+		redLogMessage += "---------------------------------------------------------------------------\n";
+		strTemp.Format("Updating Culture Diffusion Rate from settings: \n	CULTURE_DIFFUSION_RATE = %d, iTurnsFactor = %d percents, iSizeFactor = %d percents, iSettingFactor = %d, iCultureDiffusionRatePer1000 = %d \n", GC.getCULTURE_DIFFUSION_RATE(), iTurnsFactor, iSizeFactor, iSettingFactor, iCultureDiffusionRatePer1000);
+		redLogMessage += strTemp;
+
+		setCultureDiffusionRatePer1000(iCultureDiffusionRatePer1000);
+
+		pLog->Msg(redLogMessage);
+	}
 }
 
 // RED >>>>>

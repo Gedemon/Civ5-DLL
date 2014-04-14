@@ -275,6 +275,12 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(GetCulturePercent);
 	Method(GetCulturePer10000);
 	Method(GetPreviousCulturePer10000);
+	
+	Method(GetPotentialOwner);
+	Method(GetConquestCountDown);
+	Method(IsLockedByWarForPlayer);
+	Method(IsLockedByFortification);
+	Method(IsLockedByCitadelForPlayer);
 	// RED >>>>>
 }
 //------------------------------------------------------------------------------
@@ -1890,6 +1896,68 @@ int CvLuaPlot::lGetPreviousCulturePer10000(lua_State* L)
 	const int iResult = kPlot->getPreviousCulturePer10000(ePlayer);
 
 	lua_pushinteger(L, iResult);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//int getPotentialOwner();
+int CvLuaPlot::lGetPotentialOwner(lua_State* L)
+{
+	CvPlot* kPlot = GetInstance(L);	
+
+	const int iResult = kPlot->getPotentialOwner();
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//int getConquestCountDown();
+int CvLuaPlot::lGetConquestCountDown(lua_State* L)
+{
+	CvPlot* kPlot = GetInstance(L);	
+
+	const int iResult = kPlot->getConquestCountDown();
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//bool isLockedByWarForPlayer(ePlayer);
+int CvLuaPlot::lIsLockedByWarForPlayer(lua_State* L)
+{
+	CvPlot* kPlot = GetInstance(L);	
+	const PlayerTypes ePlayer = (PlayerTypes)lua_tointeger(L, 2);
+
+	const bool bResult = kPlot->isLockedByWarForPlayer(ePlayer);
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//bool isLockedByFortification();
+int CvLuaPlot::lIsLockedByFortification(lua_State* L)
+{
+	CvPlot* kPlot = GetInstance(L);	
+
+	const bool bResult = kPlot->isLockedByFortification();
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//bool isLockedByCitadelForPlayer(ePlayer);
+int CvLuaPlot::lIsLockedByCitadelForPlayer(lua_State* L)
+{
+	CvPlot* kPlot = GetInstance(L);	
+	const PlayerTypes ePlayer = (PlayerTypes)lua_tointeger(L, 2);
+
+	const bool bResult = kPlot->isLockedByCitadelForPlayer(ePlayer);
+
+	lua_pushboolean(L, bResult);
 	return 1;
 }
 

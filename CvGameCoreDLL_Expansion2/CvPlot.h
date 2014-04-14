@@ -704,9 +704,10 @@ public:
 	int getCulturePercent(PlayerTypes eIndex) const;
 	int getTotalCulture() const;
 	PlayerTypes getHighestCulturePlayer() const;
+	PlayerTypes getPotentialOwner() const;
 	void doConquestCountDown();
 	int getConquestCountDown() const;
-	void setConquestCountDown();
+	void setConquestCountDown(int iNewValue);
 	
 	void updateCulture();	
 	void updateOwnership();
@@ -717,6 +718,10 @@ public:
 	int getPreviousCulturePer10000(PlayerTypes eIndex) const;
 	int getCulturePer10000(PlayerTypes eIndex) const;
 	int getTotalPreviousCulture() const;
+
+	bool isLockedByWarForPlayer(PlayerTypes eIndex) const;
+	bool isLockedByFortification() const;
+	bool isLockedByCitadelForPlayer(PlayerTypes eIndex) const;
 
 	// RED >>>>>
 

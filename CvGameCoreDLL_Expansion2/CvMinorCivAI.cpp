@@ -5645,7 +5645,7 @@ void CvMinorCivAI::SetAlly(PlayerTypes eNewAlly)
 			}
 			// RED <<<<<
 			// no more visibility on my old ally territory...
-			if(pPlot->getOwner() == eOldAlly)
+			if(GC.getGame().isOptionMinorCanEnterAllyTerritory() && pPlot->getOwner() == eOldAlly)
 			{
 				pPlot->changeAdjacentSight(m_pPlayer->getTeam(), iPlotVisRange, false, NO_INVISIBLE, NO_DIRECTION, false);
 			}
@@ -5675,7 +5675,7 @@ void CvMinorCivAI::SetAlly(PlayerTypes eNewAlly)
 			}
 			// RED <<<<<
 			// get visibility on my ally territory so I can (hopefuly) help him during war (if the enter allied territory option is ON)...
-			if(pPlot->getOwner() == eNewAlly)
+			if(GC.getGame().isOptionMinorCanEnterAllyTerritory() && pPlot->getOwner() == eNewAlly)
 			{
 				pPlot->changeAdjacentSight(m_pPlayer->getTeam(), iPlotVisRange, true, NO_INVISIBLE, NO_DIRECTION, false);
 			}

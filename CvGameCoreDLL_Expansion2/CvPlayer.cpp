@@ -4149,14 +4149,33 @@ void CvPlayer::doTurn()
 				GetTrade()->DoTurn();
 				GetMilitaryAI()->ResetCounters();
 				GetGrandStrategyAI()->DoTurn();
-				if(GC.getGame().isHotSeat() && !isHuman())
+				// RED <<<<<
+				//if(GC.getGame().isHotSeat() && !isHuman())
+				if((GC.getGame().isHotSeat() || GC.getGame().isOptionGroupedDiploAI()) && !isHuman())
+				// RED >>>>>
 				{
-					// In Hotseat, AIs only do their diplomacy pass for other AIs on their turn // RED <<<<< todo: find how to do that in normal and sequential MP game
+					// In Hotseat, AIs only do their diplomacy pass for other AIs on their turn
 					// Diplomacy toward a human is done at the beginning of the humans turn.
 					GetDiplomacyAI()->DoTurn((PlayerTypes)CvDiplomacyAI::DIPLO_AI_PLAYERS);		// Do diplomacy for toward everyone
 				}
 				else
 					GetDiplomacyAI()->DoTurn((PlayerTypes)CvDiplomacyAI::DIPLO_ALL_PLAYERS);	// Do diplomacy for toward everyone
+
+				// RED <<<<<
+				/*
+				if(!GC.getGame().isHotSeat() && GC.getGame().isOptionGroupedDiploAI() && isHuman())
+				{
+					for(int iI = 0; iI < MAX_PLAYERS; iI++)
+					{
+						CvPlayer& player = GET_PLAYER((PlayerTypes)iI);
+						if(!player.isHuman() && player.isAlive() && !player.isBarbarian()  && !player.isMinorCiv())
+						{
+							player.GetDiplomacyAI()->DoTurn(GetID());
+						}
+					}
+				}
+				*/
+				// RED >>>>>
 
 				if (!isHuman())
 					bHasActiveDiploRequest = CvDiplomacyRequests::HasActiveDiploRequestWithHuman(GetID());

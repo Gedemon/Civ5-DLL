@@ -41,10 +41,10 @@
 #define SEPARATIST_PLAYER									((PlayerTypes)(MAX_CIV_PLAYERS + 1)) // fake player for Revolutions
 
 // GlobalDefines (GD) wrappers
-#define GD_INT_DECL(name)		int m_i##name
+#define GD_INT_DECL(name)		int m_i##name;
 #define GD_INT_DEF(name)		inline int get##name() { return m_i##name; }
-#define GD_INT_INIT(name, def)	m_i##name(def)
-#define GD_INT_CACHE(name)		m_i##name = getDefineINT(#name)
+#define GD_INT_INIT(name)		m_i##name(0),
+#define GD_INT_CACHE(name)		m_i##name = getDefineINT(#name);
 #define GD_INT_GET(name)		GC.get##name()
 
 // Infos (INF) wrappers

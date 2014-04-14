@@ -2808,10 +2808,11 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::Attack(CvUnit& kAttacker, CvPlot& targ
 
 		// check for defensive first strike		
 		ATTACK_RESULT eDefensiveSupportResult = ATTACK_ABORTED;
+		if (!kAttacker.plot()->isCity()) // don't use defensive fire on a city. to do: allow attacking an unit in a city...
 		{
 			pLog->Msg("      Check for defensive first strike...");
 			
-			// Mark the defending unit to be sure the combat simulation does not pick another unit (with a higher ranged protection) on the tile
+			// Mark the attacking unit to be sure the combat simulation does not pick another unit (with a higher ranged protection) on the tile
 			kAttacker.setMarkedBestDefender(true);
 
 			CvUnit* pFireSupportUnit = GetFireSupportUnit(pDefender->getOwner(), pDefender->getX(), pDefender->getY(), kAttacker.getX(), kAttacker.getY(), FIRE_SUPPORT_DEFENSIVE);

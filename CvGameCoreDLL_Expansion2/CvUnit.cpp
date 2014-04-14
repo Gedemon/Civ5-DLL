@@ -2216,8 +2216,7 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 	}
 
 	// RED <<<<<
-	// to do: option or toggle via CS menu
-	if(kMyTeam.isMinorCiv() && !kTheirTeam.isMinorCiv())
+	if(GC.getGame().isOptionMinorCanEnterAllyTerritory() && kMyTeam.isMinorCiv() && !kTheirTeam.isMinorCiv())
 	{
 		CvMinorCivAI* pMinorAI = GET_PLAYER(kMyTeam.getLeaderID()).GetMinorCivAI();
 		if (pMinorAI->IsAllies(kTheirTeam.getLeaderID()))
@@ -6234,7 +6233,7 @@ bool CvUnit::canRebaseAt(const CvPlot* pPlot, int iX, int iY) const
 
 		// RED <<<<<
 		// Allow air units to rebase in friendly cities.
-		if(GC.getGame().isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") )
+		if(GC.getGame().isOptionCanRebaseInFriendlyCity() )
 		{
 			CvPlayer& pOwnerPlayer = GET_PLAYER(pToPlot->getPlotCity()->getOwner());
 			CvTeam& pOwnerTeam = GET_TEAM(pOwnerPlayer.getTeam());
@@ -21289,6 +21288,7 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 	{
 		PlayerTypes eUnitOwner = getOwner();
 		PlayerTypes ePlotOwner = pPlot->getOwner();
+		PlayerTypes eCultureOwner = pPlot->getHighestCulturePlayer();
 
 		if (GET_TEAM(GET_PLAYER(eUnitOwner).getTeam()).isAtWar(GET_PLAYER(ePlotOwner).getTeam())) // player are at war ?
 		{
@@ -21319,30 +21319,87 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 				}
 			}
 
-			// to do: check for liberation here
-			// if ( check to liberate a captured plot)
-			// ... do some stuff ...
-			// else
-			if (pPlot->getCulture(eUnitOwner) > pPlot->getCulture(ePlotOwner) || GC.getCULTURE_CONQUEST_EVEN_LOWER() > 0) // more culture for the conqueror (or more culture is not needed)
+			// Have we captured a Citadel ?
+			ImprovementTypes eImprovement = pPlot->getImprovementType();
+			bool bIsCitadel = false;
+			bool bIsFortification = false;
+			bool bAlwaysCapture = false;
+
+			if (eImprovement != NO_IMPROVEMENT && !pPlot->IsImprovementPillaged())
+			{
+				if (GC.getImprovementInfo(eImprovement)->GetNearbyEnemyDamage() > 0)
+					bIsCitadel = true;
+
+				if (GC.getImprovementInfo(eImprovement)->GetDefenseModifier() > 0)
+					bIsFortification = true;
+			}
+
+			bAlwaysCapture = (bIsCitadel || bIsFortification);
+
+
+			// Shall we liberate that plot ?
+			// to do : option
+			bool bLiberated = false;
+
+			if (GC.getCULTURE_LIBERATE_PLOT_ENABLED() > 0 && !bAlwaysCapture && eCultureOwner != eUnitOwner && eCultureOwner != ePlotOwner) // The player with most culture is not the unit owner or the curent owner and liberation is allowed
+			{
+				if (GET_TEAM(GET_PLAYER(eCultureOwner).getTeam()).isAtWar(GET_PLAYER(ePlotOwner).getTeam())) // The player with most culture is at war with the curent owner
+				{
+					if (!GET_TEAM(GET_PLAYER(eCultureOwner).getTeam()).isAtWar(GET_PLAYER(eUnitOwner).getTeam()))  // The player with most culture is not at war with the unit owner
+					{
+						if (pPlot->getCulture(eCultureOwner) > GET_PLAYER(eCultureOwner).getCultureMinimumForAcquisition())
+						{
+							if (pPlot->isAdjacentPlayer(eCultureOwner, /*LandOnly*/ true) || GC.getCULTURE_CONQUEST_ONLY_ADJACENT() == 0)
+							{
+								CvCity* pNearestCity = GC.getMap().findCity(pPlot->getX(), pPlot->getY(), eCultureOwner);
+								if (pNearestCity)
+								{
+									int iDistance = plotDistance(pPlot->getX(), pPlot->getY(), pNearestCity->getX(), pNearestCity->getY());
+									if (GC.getCULTURE_FLIPPING_MAX_DISTANCE() == 0 || iDistance > GC.getCULTURE_FLIPPING_MAX_DISTANCE())
+									{
+										if (GET_PLAYER(eCultureOwner).isMinorCiv() && !GET_PLAYER(eUnitOwner).isMinorCiv())
+										{
+											CvMinorCivAI* pMinorAI = GET_PLAYER(eCultureOwner).GetMinorCivAI();
+											if (pMinorAI->IsFriends(eUnitOwner))  // a major civ is liberating a friend minor territory
+											{
+												pMinorAI->ChangeFriendshipWithMajor(eUnitOwner, GC.getCULTURE_LIBERATE_PLOT_CS_BONUS(), /*bFromQuest*/ false);
+												if(eUnitOwner == GC.getGame().getActivePlayer())
+												{
+													CvString strBuffer = GetLocalizedText("TXT_KEY_MISC_LIBERATE_MINOR_PLOT_BONUS", GC.getCULTURE_LIBERATE_PLOT_CS_BONUS(), GET_PLAYER(eCultureOwner).getNameKey());
+													GC.GetEngineUserInterface()->AddMessage(0, eUnitOwner, true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+													bLiberated = true;
+												}
+											}
+										}
+
+										if (!GET_PLAYER(eCultureOwner).isMinorCiv() && !GET_PLAYER(eUnitOwner).isMinorCiv())
+										{
+											if (!GET_TEAM(GET_PLAYER(eCultureOwner).getTeam()).IsAllowsOpenBordersToTeam(GET_PLAYER(eUnitOwner).getTeam())) 
+												bLiberated = true;
+										}
+
+										if (bLiberated)
+										{
+											strTemp.Format("\n\n	Player (ID= %d) do not gain culture from iTotalCultureLoss = %d (Plot was liberated) \n", eCultureOwner, iTotalCultureLoss);
+											redLogMessage += strTemp;
+
+											pPlot->setOwner(eCultureOwner, pNearestCity->GetID(), /*bCheckUnits*/ true);											
+											pPlot->setConquestCountDown(0);
+										}
+
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if (!bLiberated && (pPlot->getCulture(eUnitOwner) > pPlot->getCulture(ePlotOwner) || GC.getCULTURE_CONQUEST_EVEN_LOWER() > 0)) // more culture for the conqueror (or more culture is not needed)
 			{
 				if (pPlot->getCulture(eUnitOwner) > GC.getCULTURE_MINIMAL_FOR_CONQUEST() || GC.getCULTURE_CONQUEST_EVEN_NONE() > 0) // above minimal culture needed (or none needed)
 				{
-					// Have we captured a Citadel ?
-					ImprovementTypes eImprovement = pPlot->getImprovementType();
-					bool bIsCitadel = false;
-					bool bIsFortification = false;
-					bool bAlwaysCapture = false;
 
-					if (eImprovement != NO_IMPROVEMENT ) // && !pPlot->IsImprovementPillaged() <- we don't care if it's pillaged here...
-					{
-						if (GC.getImprovementInfo(eImprovement)->GetNearbyEnemyDamage() > 0)
-							bIsCitadel = true;
-
-						if (GC.getImprovementInfo(eImprovement)->GetDefenseModifier() > 0)
-							bIsFortification = true;
-					}
-
-					bAlwaysCapture = (bIsCitadel || bIsFortification);
 
 					// Do we allow non-adjacent capture ? (but Fortifications and Citadel are always captured)
 					if (!pPlot->isAdjacentPlayer(eUnitOwner, /*LandOnly*/ true) && GC.getCULTURE_CONQUEST_ONLY_ADJACENT() > 0 &&!bAlwaysCapture)
@@ -21368,6 +21425,7 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 
 					pPlot->changeCulture(eUnitOwner, iConverted);
 					pPlot->setOwner(eUnitOwner, pNearestCity->GetID(), /*bCheckUnits*/ true);
+					pPlot->setConquestCountDown(GC.getCULTURE_LOCKED_TURN_ON_CONQUEST());
 
 					// If we've just captured a citadel, convert all plots around
 					if (bIsCitadel)

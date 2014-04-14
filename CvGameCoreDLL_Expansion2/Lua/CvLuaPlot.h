@@ -292,6 +292,12 @@ protected:
 	static int lGetCulturePercent(lua_State* L);
 	static int lGetCulturePer10000(lua_State* L);
 	static int lGetPreviousCulturePer10000(lua_State* L);
+	
+	static int lGetPotentialOwner(lua_State* L);
+	static int lGetConquestCountDown(lua_State* L);
+	static int lIsLockedByWarForPlayer(lua_State* L);
+	static int lIsLockedByFortification(lua_State* L);
+	static int lIsLockedByCitadelForPlayer(lua_State* L);
 	// RED >>>>>
 };
 #endif
