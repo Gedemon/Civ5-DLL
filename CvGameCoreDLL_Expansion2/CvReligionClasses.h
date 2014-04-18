@@ -168,7 +168,7 @@ public:
 	void FoundPantheon(PlayerTypes ePlayer, BeliefTypes eBelief);
 	void FoundReligion(PlayerTypes ePlayer, ReligionTypes eReligion, const char* szCustomName, BeliefTypes eBelief1, BeliefTypes eBelief2, BeliefTypes eBelief3, BeliefTypes eBelief4, CvCity* pkHolyCity);
 #if defined(MOD_API_RELIGION)
-	void EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligion, BeliefTypes eBelief1, BeliefTypes eBelief2=NO_BELIEF);
+	void EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligion, BeliefTypes eBelief1, BeliefTypes eBelief2=NO_BELIEF, bool bNotify=true);
 #else
 	void EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligion, BeliefTypes eBelief1, BeliefTypes eBelief2);
 #endif
@@ -179,7 +179,11 @@ public:
 
 	// General religion information functions
 	const CvReligion* GetReligion(ReligionTypes eReligion, PlayerTypes ePlayer) const;
+#if defined(MOD_TRAITS_ANY_BELIEF)
+	bool IsInSomeReligion(BeliefTypes eBelief, PlayerTypes ePlayer=NO_PLAYER) const;
+#else
 	bool IsInSomeReligion(BeliefTypes eBelief) const;
+#endif
 
 	// Pantheon information functions
 	void SetMinimumFaithNextPantheon(int iMinFaith)
@@ -193,12 +197,16 @@ public:
 	BeliefTypes GetBeliefInPantheon(PlayerTypes ePlayer) const;
 	bool HasCreatedPantheon(PlayerTypes ePlayer) const;
 	int GetNumPantheonsCreated() const;
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined (MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
 	std::vector<BeliefTypes> GetAvailablePantheonBeliefs(PlayerTypes ePlayer=NO_PLAYER);
 #else
 	std::vector<BeliefTypes> GetAvailablePantheonBeliefs();
 #endif
+#if defined(MOD_TRAITS_ANY_BELIEF)
+	bool IsPantheonBeliefAvailable(BeliefTypes eBelief, PlayerTypes ePlayer=NO_PLAYER);
+#else
 	bool IsPantheonBeliefAvailable(BeliefTypes eBelief);
+#endif
 
 	// Main religion information functions
 	int GetNumFollowers(ReligionTypes eReligion) const;
@@ -212,7 +220,7 @@ public:
 	int GetNumReligionsFounded() const;
 	int GetNumReligionsEnhanced() const;
 	int GetNumReligionsStillToFound() const;
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined (MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
 	std::vector<BeliefTypes> GetAvailableFounderBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
 	std::vector<BeliefTypes> GetAvailableFollowerBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
 	std::vector<BeliefTypes> GetAvailableEnhancerBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
@@ -398,6 +406,9 @@ public:
 
 	// Routines to update religious status of citizens
 	void DoPopulationChange(int iChange);
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+	void DoPantheonFounded(ReligionTypes eReligion);
+#endif
 	void DoReligionFounded(ReligionTypes eReligion);
 	void AddProphetSpread(ReligionTypes eReligion, int iPressure, PlayerTypes eResponsiblePlayer);
 	void AddReligiousPressure(CvReligiousFollowChangeReason eReason, ReligionTypes eReligion, int iPressure, PlayerTypes eResponsiblePlayer=NO_PLAYER);

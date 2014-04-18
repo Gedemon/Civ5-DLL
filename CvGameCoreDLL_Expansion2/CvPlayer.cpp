@@ -166,6 +166,10 @@ CvPlayer::CvPlayer() :
 	, m_iExtraLeagueVotes(0)
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	, m_iImprovementLeagueVotes(0)
+	, m_iFaithToVotes(0)
+	, m_iCapitalsToVotes(0)
+	, m_iDoFToVotes(0)
+	, m_iRAToVotes(0)
 #endif
 	, m_iSpecialPolicyBuildingHappiness("CvPlayer::m_iSpecialPolicyBuildingHappiness", m_syncArchive)
 	, m_iWoundedUnitDamageMod("CvPlayer::m_iWoundedUnitDamageMod", m_syncArchive)
@@ -789,6 +793,10 @@ void CvPlayer::uninit()
 	m_iExtraLeagueVotes = 0;
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	m_iImprovementLeagueVotes = 0;
+	m_iFaithToVotes = 0;
+	m_iCapitalsToVotes = 0;
+	m_iDoFToVotes = 0;
+	m_iRAToVotes = 0;
 #endif
 	m_iSpecialPolicyBuildingHappiness = 0;
 	m_iWoundedUnitDamageMod = 0;
@@ -2466,7 +2474,12 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 			{
 				if (eLoopBuilding == pkLoopBuildingInfo->GetID())
 				{
+#if defined(MOD_BUGFIX_BUILDINGCLASS_NOT_BUILDING)
+					BuildingTypes eFreeBuilding = (BuildingTypes)getCivilizationInfo().getCivilizationBuildings(pkLoopBuildingInfo->GetBuildingClassType());
+					pNewCity->GetCityBuildings()->SetNumFreeBuilding(eFreeBuilding, 1);
+#else
 					pNewCity->GetCityBuildings()->SetNumFreeBuilding(eLoopBuilding, 1);
+#endif
 				}
 			}
 		}
@@ -4435,6 +4448,10 @@ void CvPlayer::doTurnPostDiplomacy()
 		ChangeTourismBonusTurns(-1);
 	}
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) DoProcessVotes();
+#endif
+
 	// Golden Age
 	DoProcessGoldenAge();
 
@@ -5276,7 +5293,11 @@ int CvPlayer::GetScoreFromReligion() const
 	int iScore = 0;
 	CvGameReligions *pGameReligions = GC.getGame().GetGameReligions();
 	ReligionTypes eReligion = GetReligions()->GetReligionCreatedByPlayer();
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+	if (eReligion > RELIGION_PANTHEON || (MOD_TRAITS_PANTHEON_IS_RELIGION && eReligion == RELIGION_PANTHEON && GetPlayerTraits()->IsPantheonIsReligion()))
+#else
 	if (eReligion > RELIGION_PANTHEON)
+#endif
 	{
 		const CvReligion *pReligion = pGameReligions->GetReligion(eReligion, GetID());
 		iScore += pReligion->m_Beliefs.GetNumBeliefs() * /*20*/ GC.getSCORE_BELIEF_MULTIPLIER();
@@ -6609,10 +6630,10 @@ void CvPlayer::receiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit)
 			pUnit->SetBeenPromotedFromGoody(true);
 
 #if defined(MOD_EVENTS_UNIT_UPGRADES)
-		// MUST call the event before convert() as that kills the old unit
-		if (MOD_EVENTS_UNIT_UPGRADES) {
-			GAMEEVENTINVOKE_HOOK(GAMEEVENT_UnitUpgraded, GetID(), pUnit->GetID(), pNewUnit->GetID(), true);
-		}
+			// MUST call the event before convert() as that kills the old unit
+			if (MOD_EVENTS_UNIT_UPGRADES) {
+				GAMEEVENTINVOKE_HOOK(GAMEEVENT_UnitUpgraded, GetID(), pUnit->GetID(), pNewUnit->GetID(), true);
+			}
 #endif
 
 			CvAssert(pNewUnit);
@@ -6915,9 +6936,15 @@ void CvPlayer::doGoody(CvPlot* pPlot, CvUnit* pUnit)
 			// Any valid Goodies?
 			if(avValidGoodies.size() > 0)
 			{
+#if defined(MOD_BUGFIX_MINOR)
+				// Fix the bug where the AI won't get anything for Goody Hut pickers!!!
+				if (pUnit && pUnit->isHasPromotion((PromotionTypes)GC.getPROMOTION_GOODY_HUT_PICKER()) && GC.getGame().getActivePlayer() == GetID())
+				{
+#else
 				if (pUnit && pUnit->isHasPromotion((PromotionTypes)GC.getPROMOTION_GOODY_HUT_PICKER()))
 				{
 					if(GC.getGame().getActivePlayer() == GetID())
+#endif
 					{
 						CvPopupInfo kPopupInfo(BUTTONPOPUP_CHOOSE_GOODY_HUT_REWARD, GetID(), pUnit->GetID());
 						GC.GetEngineUserInterface()->AddPopup(kPopupInfo);
@@ -8791,6 +8818,10 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 	}
 
 	ChangeExtraLeagueVotes(pBuildingInfo->GetExtraLeagueVotes() * iChange);
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) DoProcessVotes();
+#endif
 
 	// Loop through Cities
 	int iLoop;
@@ -12368,14 +12399,155 @@ int CvPlayer::GetExtraLeagueVotes() const
 
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 //	--------------------------------------------------------------------------------
-/// Extra league votes
+/// Extra league votes from faith
+int CvPlayer::GetFaithToVotes() const
+{
+	return m_iFaithToVotes;
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from faith
+void CvPlayer::ChangeFaithToVotes(int iChange)
+{
+	m_iFaithToVotes = iChange;
+	CvAssert(m_iFaithToVotes >= 0);
+	if (m_iFaithToVotes < 0)
+	{
+		m_iFaithToVotes = 0;
+	}
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from faith
+int CvPlayer::TestFaithToVotes(int iChange)
+{
+	int iFaithVotes = 0;
+	int iFollowers = 0;
+	int iTotalFaithVotes = 0;
+	CvGameReligions* pReligions = GC.getGame().GetGameReligions();
+
+	// Number of Cities Following Religion
+	ReligionTypes eFoundedReligion = pReligions->GetFounderBenefitsReligion(GetID());
+	if(eFoundedReligion != NO_RELIGION)
+	{
+		if((iFaithVotes + iChange) > 0)
+		{
+			iFaithVotes = iChange;
+			iFollowers = pReligions->GetNumCitiesFollowing(eFoundedReligion);
+			iTotalFaithVotes = (iFollowers / iFaithVotes);
+		}
+	}
+	return iTotalFaithVotes;
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from conquered capitals
+int CvPlayer::GetCapitalsToVotes() const
+{
+	return m_iCapitalsToVotes;
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from conquered capitals
+void CvPlayer::ChangeCapitalsToVotes(int iChange)
+{
+	m_iCapitalsToVotes = iChange;
+	CvAssert(m_iCapitalsToVotes >= 0);
+	if (m_iCapitalsToVotes < 0)
+	{
+		m_iCapitalsToVotes = 0;
+	}
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from conquered capitals
+int CvPlayer::TestCapitalsToVotes(int iChange)
+{
+	int iCapitalVotes = 0;
+
+	if((iCapitalVotes + iChange) > 0)
+	{
+		iCapitalVotes = GetNumCapitalCities();
+	}
+	return iCapitalVotes;
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from DoF
+int CvPlayer::GetDoFToVotes() const
+{
+	return m_iDoFToVotes;
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from DoF
+void CvPlayer::ChangeDoFToVotes(int iChange)
+{
+	m_iDoFToVotes = iChange;
+	CvAssert(m_iDoFToVotes >= 0);
+	if (m_iDoFToVotes < 0)
+	{
+		m_iDoFToVotes = 0;
+	}
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from DoF
+int CvPlayer::TestDoFToVotes(int iChange)
+{
+	int iDoFToVotes = 0;
+	
+	if((iDoFToVotes + iChange) > 0)
+	{
+		iDoFToVotes = GetDiplomacyAI()->GetNumDoF();
+	}
+	
+	return iDoFToVotes;
+
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from RA
+int CvPlayer::GetRAToVotes() const
+{
+	return m_iRAToVotes;
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from RA
+void CvPlayer::ChangeRAToVotes(int iChange)
+{
+	m_iRAToVotes = iChange;
+	CvAssert(m_iRAToVotes >= 0);
+	if (m_iRAToVotes < 0)
+	{
+		m_iRAToVotes = 0;
+	}
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from RA
+int CvPlayer::TestRAToVotes(int iChange)
+{
+	int iRAToVotes = 0;
+	
+	if((iRAToVotes + iChange) > 0)
+	{
+		iRAToVotes = GetDiplomacyAI()->GetNumRA();
+	}
+	
+	return iRAToVotes;
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra league votes from embassy
 int CvPlayer::GetImprovementLeagueVotes() const
 {
 	return m_iImprovementLeagueVotes;
 }
 
 //	--------------------------------------------------------------------------------
-/// Extra league votes
+/// Extra league votes from embassy
 void CvPlayer::ChangeImprovementLeagueVotes(int iChange)
 {
 	m_iImprovementLeagueVotes += iChange;
@@ -12735,6 +12907,57 @@ void CvPlayer::ChangeTourismBonusTurns(int iChange)
 		m_iTourismBonusTurns += iChange;
 	}
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+void CvPlayer::DoProcessVotes()
+{
+	if(GC.getGame().isOption(GAMEOPTION_NO_LEAGUES))
+	{
+		return;
+	}
+
+	// Minors and Barbs don't matter
+	if(!isMinorCiv() && !isBarbarian())
+	{
+		// Loop through Cities
+		int iLoop;
+		CvCity* pLoopCity;
+		for(pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+		{
+			for(int iBuildingLoop = 0; iBuildingLoop < GC.getNumBuildingInfos(); iBuildingLoop++)
+			{
+				const BuildingTypes eBuilding = static_cast<BuildingTypes>(iBuildingLoop);
+				CvBuildingEntry* pkBuildingInfo = GC.getBuildingInfo(eBuilding);
+			
+				// Has this Building
+				if(pLoopCity->GetCityBuildings()->GetNumBuilding(eBuilding) > 0)
+				{
+					if(pkBuildingInfo->GetFaithToVotes() > 0)
+					{
+						int iTestFaith = TestFaithToVotes(pkBuildingInfo->GetFaithToVotes());
+						ChangeFaithToVotes(iTestFaith);
+					}
+					if(pkBuildingInfo->GetCapitalsToVotes() > 0)
+					{
+						int iTestCapital = TestCapitalsToVotes(pkBuildingInfo->GetCapitalsToVotes());
+						ChangeCapitalsToVotes(iTestCapital);	
+					}
+					if(pkBuildingInfo->GetDoFToVotes() > 0)
+					{
+						int iTestDoF = TestDoFToVotes(pkBuildingInfo->GetDoFToVotes());
+						ChangeDoFToVotes(iTestDoF);
+					}
+					if(pkBuildingInfo->GetRAToVotes() > 0)
+					{
+						int iTestRA = TestRAToVotes(pkBuildingInfo->GetRAToVotes());
+						ChangeRAToVotes(iTestRA);
+					}
+				}
+			}
+		}
+	}
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 /// Update all Golden-Age related stuff
@@ -13417,7 +13640,11 @@ void CvPlayer::DoGreatPersonExpended(UnitTypes /*eGreatPersonUnit*/)
 
 	// Faith gained
 	ReligionTypes eReligionFounded = GetReligions()->GetReligionCreatedByPlayer();
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+	if(eReligionFounded >= RELIGION_PANTHEON)
+#else
 	if(eReligionFounded > RELIGION_PANTHEON)
+#endif
 	{
 		const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eReligionFounded, GetID());
 		if(pReligion)
@@ -22323,7 +22550,11 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 										ReligionTypes eReligion = GetReligions()->GetReligionCreatedByPlayer();
 										int iReligionSpreads = pNewUnit->getUnitInfo().GetReligionSpreads();
 										int iReligiousStrength = pNewUnit->getUnitInfo().GetReligiousStrength();
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+										if(iReligionSpreads > 0 && eReligion >= RELIGION_PANTHEON)
+#else
 										if(iReligionSpreads > 0 && eReligion > RELIGION_PANTHEON)
+#endif
 										{
 											pNewUnit->GetReligionData()->SetSpreadsLeft(iReligionSpreads);
 											pNewUnit->GetReligionData()->SetReligiousStrength(iReligiousStrength);
@@ -22727,6 +22958,10 @@ void CvPlayer::Read(FDataStream& kStream)
 	}
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	MOD_SERIALIZE_READ(39, kStream, m_iImprovementLeagueVotes, 0);
+	MOD_SERIALIZE_READ(46, kStream, m_iFaithToVotes, 0);
+	MOD_SERIALIZE_READ(46, kStream, m_iCapitalsToVotes, 0);
+	MOD_SERIALIZE_READ(46, kStream, m_iDoFToVotes, 0);
+	MOD_SERIALIZE_READ(46, kStream, m_iRAToVotes, 0);
 #endif
 	kStream >> m_iSpecialPolicyBuildingHappiness;
 	kStream >> m_iWoundedUnitDamageMod;
@@ -23294,6 +23529,10 @@ void CvPlayer::Write(FDataStream& kStream) const
 	kStream << m_iExtraLeagueVotes;
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	MOD_SERIALIZE_WRITE(kStream, m_iImprovementLeagueVotes);
+	MOD_SERIALIZE_WRITE(kStream, m_iFaithToVotes);
+	MOD_SERIALIZE_WRITE(kStream, m_iCapitalsToVotes);
+	MOD_SERIALIZE_WRITE(kStream, m_iDoFToVotes);
+	MOD_SERIALIZE_WRITE(kStream, m_iRAToVotes);
 #endif
 	kStream << m_iSpecialPolicyBuildingHappiness;
 	kStream << m_iWoundedUnitDamageMod;
@@ -24523,6 +24762,26 @@ int CvPlayer::GetNumPuppetCities() const
 
 	return iNum;
 }
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+//	--------------------------------------------------------------------------------
+// How many other Capital Cities does this player own
+int CvPlayer::GetNumCapitalCities() const
+{
+	int iNum = 0;
+
+	const CvCity* pLoopCity;
+	int iLoop;
+	for(pLoopCity = firstCity(&iLoop); pLoopCity != NULL; pLoopCity = nextCity(&iLoop))
+	{
+		if(pLoopCity->IsOriginalMajorCapital() && !pLoopCity->isCapital())
+		{
+			iNum++;
+		}
+	}
+
+	return iNum;
+}
+#endif
 //	--------------------------------------------------------------------------------
 // How many Cities does this player have for policy/tech cost purposes?
 int CvPlayer::GetMaxEffectiveCities(bool bIncludePuppets)

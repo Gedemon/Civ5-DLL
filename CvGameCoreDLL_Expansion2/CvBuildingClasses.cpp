@@ -128,6 +128,12 @@ CvBuildingEntry::CvBuildingEntry(void):
 	m_iXBuiltTriggersIdeologyChoice(0),
 	m_iGreatScientistBeakerModifier(0),
 	m_iExtraLeagueVotes(0),
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	m_iFaithToVotesBase(0),
+	m_iCapitalsToVotesBase(0),
+	m_iDoFToVotesBase(0),
+	m_iRAToVotesBase(0),
+#endif
 	m_iPreferredDisplayPosition(0),
 	m_iPortraitIndex(-1),
 	m_bTeamShare(false),
@@ -378,6 +384,14 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	m_iXBuiltTriggersIdeologyChoice = kResults.GetInt("XBuiltTriggersIdeologyChoice");
 	m_iGreatScientistBeakerModifier = kResults.GetInt("GreatScientistBeakerModifier");
 	m_iExtraLeagueVotes = kResults.GetInt("ExtraLeagueVotes");
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) {
+		m_iFaithToVotesBase = kResults.GetInt("FaithToVotes");
+		m_iCapitalsToVotesBase = kResults.GetInt("CapitalsToVotes");
+		m_iDoFToVotesBase = kResults.GetInt("DoFToVotes");
+		m_iRAToVotesBase = kResults.GetInt("RAToVotes");
+	}
+#endif
 	m_iPreferredDisplayPosition = kResults.GetInt("DisplayPosition");
 	m_iPortraitIndex = kResults.GetInt("PortraitIndex");
 
@@ -1362,6 +1376,29 @@ int CvBuildingEntry::GetExtraLeagueVotes() const
 {
 	return m_iExtraLeagueVotes;
 }
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+/// Extra votes from faith generation
+int CvBuildingEntry::GetFaithToVotes() const
+{
+	return m_iFaithToVotesBase;
+}
+/// Extra votes from captured capitals
+int CvBuildingEntry::GetCapitalsToVotes() const
+{
+	return m_iCapitalsToVotesBase;
+}
+/// Extra votes from DoFs
+int CvBuildingEntry::GetDoFToVotes() const
+{
+	return m_iDoFToVotesBase;
+}
+
+/// Extra votes from Research Agreements
+int CvBuildingEntry::GetRAToVotes() const
+{
+	return m_iRAToVotesBase;
+}
+#endif
 
 #if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 /// Modifier to chance of conversion against this city

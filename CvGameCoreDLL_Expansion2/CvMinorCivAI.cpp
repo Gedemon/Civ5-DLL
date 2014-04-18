@@ -1610,7 +1610,6 @@ void CvMinorCivQuest::DoStartQuestUsingExistingData(CvMinorCivQuest* pExistingQu
 	} 
 #endif
 
-
 	// Personal quests - Should not be started from an existing quest's data!!
 	else
 	{

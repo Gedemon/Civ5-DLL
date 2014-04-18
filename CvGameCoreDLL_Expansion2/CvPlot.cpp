@@ -5464,6 +5464,12 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 						}
 					}
 				}
+
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+				if (MOD_EVENTS_TILE_IMPROVEMENTS) {
+					GAMEEVENTINVOKE_HOOK(GAMEEVENT_TileOwnershipChanged, getX(), getY(), getOwner(), eOldOwner);
+				}
+#endif
 			}
 
 			pUnitNode = headUnitNode();
@@ -7112,7 +7118,6 @@ void CvPlot::SetPlayerThatClearedDigHere(PlayerTypes eNewValue)
 {
 	m_ePlayerThatClearedDigHere = eNewValue;
 }
-
 #endif
 
 //	--------------------------------------------------------------------------------

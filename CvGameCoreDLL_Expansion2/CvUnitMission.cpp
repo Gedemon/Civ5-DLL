@@ -32,6 +32,29 @@
 // include this after all other headers
 #include "LintFree.h"
 
+#if defined(MOD_EVENTS_CUSTOM_MISSIONS)
+// There are three types of mission -
+//  - instantaneous (eg MISSION_FOUND_RELIGION)
+//  - duration (eg MISSION_ROUTE_TO)
+//  - open (eg MISSION_FORTIFY) 
+// and the events (eventually) need to cope with all types
+// (although for the moment we only care about instantaneous ones)
+
+#define CUSTOM_MISSION_NO_ACTION        0
+#define CUSTOM_MISSION_ACTION           1
+#define CUSTOM_MISSION_DONE             2
+#define CUSTOM_MISSION_ACTION_AND_DONE  3
+
+// ANY: CustomMissionPossible(iPlayer, iUnit, iMission, iData1, iData2, iFlags=0, iTurn=-1, iPlotX, iPlotY, bTestVisible)
+// ACC: CustomMissionStart(iPlayer, iUnit, iMission, iData1, iData2, iFlags, iTurn) = CUSTOM_MISSION_ACTION
+// ACC: CustomMissionSetActivity(iPlayer, iUnit, iMission, iData1, iData2, iFlags, iTurn) = CUSTOM_MISSION_ACTION_AND_DONE
+// ACC: CustomMissionDoStep(iPlayer, iUnit, iMission, iData1, iData2, iFlags, iTurn) = CUSTOM_MISSION_ACTION_AND_DONE
+// ANY: CustomMissionCompleted(iPlayer, iUnit, iMission, iData1, iData2, iFlags, iTurn)
+// ACC: CustomMissionTargetPlot(iPlayer, iUnit, iMission, iData1, iData2, iFlags, iTurn) = iPlotIndex
+// ACC: CustomMissionCycleTime(iPlayer, iUnit, iMission, iData1, iData2, iFlags, iTurn) = iCameraTime (0, 1, 5 or 10)
+// ACC: CustomMissionTimerInc(iPlayer, iUnit, iMission, iData1, iData2, iFlags, iTurn) = iTimerInc
+#endif
+
 //	---------------------------------------------------------------------------
 /// Perform automated mission
 void CvUnitMission::AutoMission(UnitHandle hUnit)
@@ -738,6 +761,22 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 					bDone = true;
 				}
 			}
+
+#if defined(MOD_EVENTS_CUSTOM_MISSIONS)
+			else if (MOD_EVENTS_CUSTOM_MISSIONS) {
+				int iValue = 0;
+				if (GAMEEVENTINVOKE_VALUE(iValue, GAMEEVENT_CustomMissionDoStep, hUnit->getOwner(), hUnit->GetID(), kMissionData.eMissionType, kMissionData.iData1, kMissionData.iData2, kMissionData.iFlags, kMissionData.iPushTurn) == GAMEEVENTRETURN_VALUE) {
+					if (iValue == CUSTOM_MISSION_ACTION ) {
+						bAction = true;
+					} else if (iValue == CUSTOM_MISSION_DONE ) {
+						bDone = true;
+					} else if (iValue == CUSTOM_MISSION_ACTION_AND_DONE ) {
+						bAction = true;
+						bDone = true;
+					}
+				}
+			}
+#endif
 		}
 
 		// check to see if mission is done
@@ -833,6 +872,14 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 					hUnit->ChangeMissionTimer(1);
 				}
 			}
+
+#if defined(MOD_EVENTS_CUSTOM_MISSIONS)
+			else if (MOD_EVENTS_CUSTOM_MISSIONS) {
+				if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CustomMissionCompleted, hUnit->getOwner(), hUnit->GetID(), kMissionData.eMissionType, kMissionData.iData1, kMissionData.iData2, kMissionData.iFlags, kMissionData.iPushTurn) == GAMEEVENTRETURN_TRUE) {
+					bDone = true;
+				}
+			}
+#endif
 		}
 
 		if(HeadMissionQueueNode(kMissionQueue) != NULL)
@@ -887,6 +934,20 @@ void CvUnitMission::ContinueMission(UnitHandle hUnit, int iSteps, int iETA)
 
 							GC.GetEngineUserInterface()->changeCycleSelectionCounter(iCameraTime);
 						}
+#if defined(MOD_EVENTS_CUSTOM_MISSIONS)
+						else if (MOD_EVENTS_CUSTOM_MISSIONS) {
+							int iCameraTime = 0;
+							if (GAMEEVENTINVOKE_VALUE(iCameraTime, GAMEEVENT_CustomMissionCameraTime, hUnit->getOwner(), hUnit->GetID(), kMissionData.eMissionType, kMissionData.iData1, kMissionData.iData2, kMissionData.iFlags, kMissionData.iPushTurn) == GAMEEVENTRETURN_VALUE) {
+								if (iCameraTime > 0 && iCameraTime <= 10) {
+									if(GET_PLAYER(hUnit->getOwner()).isOption(PLAYEROPTION_QUICK_MOVES)) {
+										iCameraTime = 1;
+									}
+
+									GC.GetEngineUserInterface()->changeCycleSelectionCounter(iCameraTime);
+								}
+							}
+						}
+#endif
 					}
 
 					if(hUnit->m_unitMoveLocs.size() > 0)
@@ -1303,6 +1364,13 @@ bool CvUnitMission::CanStartMission(UnitHandle hUnit, int iMission, int iData1, 
 			return true;
 		}
 	}
+#if defined(MOD_EVENTS_CUSTOM_MISSIONS)
+	else if (MOD_EVENTS_CUSTOM_MISSIONS) {
+		if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CustomMissionPossible, hUnit->getOwner(), hUnit->GetID(), iMission, iData1, iData2, 0, -1, pPlot->getX(), pPlot->getY(), bTestVisible) == GAMEEVENTRETURN_TRUE) {
+			return true;
+		}
+	}
+#endif
 
 	return false;
 }
@@ -1408,6 +1476,21 @@ void CvUnitMission::StartMission(UnitHandle hUnit)
 			bDelete = true;
 		}
 
+#if defined(MOD_EVENTS_CUSTOM_MISSIONS)
+		else if (MOD_EVENTS_CUSTOM_MISSIONS) {
+			int iValue = 0;
+			if (GAMEEVENTINVOKE_VALUE(iValue, GAMEEVENT_CustomMissionSetActivity, hUnit->getOwner(), hUnit->GetID(), pkQueueData->eMissionType, pkQueueData->iData1, pkQueueData->iData2, pkQueueData->iFlags, pkQueueData->iPushTurn) == GAMEEVENTRETURN_VALUE) {
+				if (iValue == CUSTOM_MISSION_ACTION ) {
+					bNotify = true;
+				} else if (iValue == CUSTOM_MISSION_DONE ) {
+					bDelete = true;
+				} else if (iValue == CUSTOM_MISSION_ACTION_AND_DONE ) {
+					bNotify = true;
+					bDelete = true;
+				}
+			}
+		}
+#endif
 
 		if(bNotify)
 		{
@@ -1758,6 +1841,17 @@ void CvUnitMission::StartMission(UnitHandle hUnit)
 					bAction = true;
 				}
 			}
+
+#if defined(MOD_EVENTS_CUSTOM_MISSIONS)
+			else if (MOD_EVENTS_CUSTOM_MISSIONS) {
+				int iValue = 0;
+				if (GAMEEVENTINVOKE_VALUE(iValue, GAMEEVENT_CustomMissionStart, hUnit->getOwner(), hUnit->GetID(), pkQueueData->eMissionType, pkQueueData->iData1, pkQueueData->iData2, pkQueueData->iFlags, pkQueueData->iPushTurn) == GAMEEVENTRETURN_VALUE) {
+					if (iValue == CUSTOM_MISSION_ACTION) {
+						bAction = true;
+					}
+				}
+			}
+#endif
 		}
 	}
 
@@ -1821,6 +1915,21 @@ CvPlot* CvUnitMission::LastMissionPlot(UnitHandle hUnit)
 			}
 		}
 
+#if defined(MOD_EVENTS_CUSTOM_MISSIONS)
+		else if (MOD_EVENTS_CUSTOM_MISSIONS) {
+			int iPlotIndex = -1;
+			if (GAMEEVENTINVOKE_VALUE(iPlotIndex, GAMEEVENT_CustomMissionTargetPlot, hUnit->getOwner(), hUnit->GetID(), pMissionNode->eMissionType, pMissionNode->iData1, pMissionNode->iData2, pMissionNode->iFlags, pMissionNode->iPushTurn) == GAMEEVENTRETURN_VALUE) {
+				if (iPlotIndex >= 0 ) {
+					CvPlot* pPlot = GC.getMap().plotByIndex(iPlotIndex);
+
+					if (pPlot) {
+						return pPlot;
+					}
+				}
+			}
+		}
+#endif
+
 		pMissionNode = PrevMissionQueueNode(hUnit->m_missionQueue, pMissionNode);
 	}
 
@@ -1883,6 +1992,16 @@ int CvUnitMission::CalculateMissionTimer(UnitHandle hUnit, int iSteps)
 				iTime = std::min(iTime, 2);
 			}
 		}
+#if defined(MOD_EVENTS_CUSTOM_MISSIONS)
+		else if (MOD_EVENTS_CUSTOM_MISSIONS) {
+			int iValue = 0;
+			if (GAMEEVENTINVOKE_VALUE(iValue, GAMEEVENT_CustomMissionTimerInc, hUnit->getOwner(), hUnit->GetID(), kMissionData.eMissionType, kMissionData.iData1, kMissionData.iData2, kMissionData.iFlags, kMissionData.iPushTurn) == GAMEEVENTRETURN_VALUE) {
+				if (iValue != 0) {
+					iTime += iValue;
+				}
+			}
+		}
+#endif
 
 		if(hUnit->isHuman() && (hUnit->IsAutomated() /*|| (GET_PLAYER((GC.getGame().isNetworkMultiPlayer()) ? hUnit->getOwner() : GC.getGame().getActivePlayer()).isOption(PLAYEROPTION_QUICK_MOVES))*/))
 		{
@@ -2170,6 +2289,13 @@ bool CvUnitMission::HasCompletedMoveMission(UnitHandle hUnit)
 				return true;
 			}
 		}
+#if defined(MOD_EVENTS_CUSTOM_MISSIONS)
+		else if (MOD_EVENTS_CUSTOM_MISSIONS) {
+			if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CustomMissionCompleted, hUnit->getOwner(), hUnit->GetID(), kMissionData.eMissionType, kMissionData.iData1, kMissionData.iData2, kMissionData.iFlags, kMissionData.iPushTurn) == GAMEEVENTRETURN_TRUE) {
+				return true;
+			}
+		}
+#endif
 	}
 
 	return false;

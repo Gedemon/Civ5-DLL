@@ -30,6 +30,9 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 {
 	Method(IsNone);
 	Method(Convert);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(Upgrade);
+#endif
 	Method(Kill);
 
 	Method(IsActionRecommended);
@@ -272,6 +275,11 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(ExtraTerrainDamage);
 	Method(ExtraFeatureDamage);
 #endif
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+	Method(GetNearbyImprovementCombatBonus);
+	Method(GetNearbyImprovementBonusRange);
+	Method(GetCombatBonusImprovement);
+#endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 	Method(CanCrossMountains);
 #endif
@@ -491,6 +499,9 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(IsHasPromotion);
 	Method(SetHasPromotion);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(SetActivityType);
+#endif
 	Method(GetActivityType);
 	Method(IsReadyToMove);
 	Method(IsBusy);
@@ -556,8 +567,26 @@ int CvLuaUnit::lConvert(lua_State* L)
 	bool bIsUpgrade = lua_toboolean(L, 3);
 
 	pkUnit->convert(pkUnitToConvert, bIsUpgrade);
+#if defined(MOD_BUGFIX_MINOR)
+	pkUnit->setupGraphical();
+#endif
+
 	return 0;
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//void DoUpgrade;
+int CvLuaUnit::lUpgrade(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	bool bIsFree = luaL_optbool(L, 2, false);
+	
+	CvUnit* pkNewUnit = pkUnit->DoUpgrade(bIsFree);
+
+	CvLuaUnit::Push(L, pkNewUnit);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //void kill(bool bDelay, PlayerTypes ePlayer = NO_PLAYER);
 int CvLuaUnit::lKill(lua_State* L)
@@ -588,6 +617,7 @@ int CvLuaUnit::lIsBetterDefenderThan(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+
 //------------------------------------------------------------------------------
 //bool canDoCommand(CommandTypes eCommand, int iData1, int iData2, bool bTestVisible = false, bool bTestBusy = true);
 int CvLuaUnit::lCanDoCommand(lua_State* L)
@@ -2739,6 +2769,35 @@ int CvLuaUnit::lExtraFeatureDamage(lua_State* L)
 	return 1;
 }
 #endif
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+//------------------------------------------------------------------------------
+int CvLuaUnit::lGetNearbyImprovementCombatBonus(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const int iResult = pkUnit->GetNearbyImprovementCombatBonus();
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+int CvLuaUnit::lGetNearbyImprovementBonusRange(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const int iResult = pkUnit->GetNearbyImprovementBonusRange();
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+int CvLuaUnit::lGetCombatBonusImprovement(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const int iResult = (int) pkUnit->GetCombatBonusImprovement();
+
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+#endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 //------------------------------------------------------------------------------
 //bool canCrossMountains();
@@ -4731,6 +4790,25 @@ int CvLuaUnit::lGetUnitPortraitOffset(lua_State* L)
 
 	return 1;
 }
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//void SetActivityType;
+int CvLuaUnit::lSetActivityType(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const ActivityTypes eActivity = (ActivityTypes)lua_tointeger(L, 2);
+#if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
+	const bool bClearFortify = luaL_optint(L, 3, 1);		//defaults to true
+
+	pkUnit->SetActivityType(eActivity, bClearFortify);
+#else
+	pkUnit->SetActivityType(eActivity);
+#endif
+
+	return 0;
+}
+#endif
 
 //------------------------------------------------------------------------------
 //

@@ -44,6 +44,9 @@ protected:
 	static int lKillCities(lua_State* L);
 
 	static int lGetNewCityName(lua_State* L);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(IsCityNameValid);
+#endif
 
 	static int lInitUnit(lua_State* L);
 	static int lInitUnitWithNameOffset(lua_State* L);
@@ -912,6 +915,12 @@ protected:
 	static int lGetTraitCityStateCombatModifier(lua_State* L);
 	static int lGetTraitGreatGeneralExtraBonus(lua_State* L);
 	static int lGetTraitGreatScientistRateModifier(lua_State* L);
+#if defined(MOD_TRAITS_ANY_BELIEF)
+	LUAAPIEXTN(IsTraitAnyBelief);
+#endif
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+	LUAAPIEXTN(IsTraitPantheonIsReligion);
+#endif
 	static int lIsTraitBonusReligiousBelief(lua_State* L);
 	static int lGetHappinessFromLuxury(lua_State* L);
 	static int lIsAbleToAnnexCityStates(lua_State* L);

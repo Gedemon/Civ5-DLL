@@ -532,6 +532,18 @@ public:
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	int GetImprovementLeagueVotes() const;
 	void ChangeImprovementLeagueVotes(int iChange);
+	int GetFaithToVotes() const;
+	void ChangeFaithToVotes(int iChange);
+	int TestFaithToVotes(int iChange);
+	int GetCapitalsToVotes() const;
+	void ChangeCapitalsToVotes(int iChange);
+	int TestCapitalsToVotes(int iChange);
+	int GetDoFToVotes() const;
+	void ChangeDoFToVotes(int iChange);
+	int TestDoFToVotes(int iChange);
+	int GetRAToVotes() const;
+	void ChangeRAToVotes(int iChange);
+	int TestRAToVotes(int iChange);
 #endif
 
 	void ChangeExtraLeagueVotes(int iChange);
@@ -593,6 +605,10 @@ public:
 	void ChangeTourismBonusTurns(int iChange);
 
 	// Golden Age Stuff
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	void DoProcessVotes();
+#endif
 
 	void DoProcessGoldenAge();
 
@@ -1385,6 +1401,9 @@ public:
 	CvCity* GetClosestFriendlyCity(CvPlot& plot, int iSearchRadius);
 
 	int GetNumPuppetCities() const;
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	int GetNumCapitalCities() const;
+#endif
 	int GetMaxEffectiveCities(bool bIncludePuppets = false);
 
 	int GetNumNaturalWondersDiscoveredInArea() const;
@@ -1690,6 +1709,10 @@ protected:
 	int m_iExtraLeagueVotes;
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	int m_iImprovementLeagueVotes;
+	int m_iFaithToVotes;
+	int m_iCapitalsToVotes;
+	int m_iDoFToVotes;
+	int m_iRAToVotes;
 #endif
 	FAutoVariable<int, CvPlayer> m_iAdvancedStartPoints;
 	FAutoVariable<int, CvPlayer> m_iAttackBonusTurns;

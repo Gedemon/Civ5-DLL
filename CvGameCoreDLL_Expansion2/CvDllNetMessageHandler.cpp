@@ -293,7 +293,11 @@ void CvDllNetMessageHandler::ResponseFoundPantheon(PlayerTypes ePlayer, BeliefTy
 			CvGameReligions::FOUNDING_RESULT eResult = pkGameReligions->CanCreatePantheon(ePlayer, true);
 			if(eResult == CvGameReligions::FOUNDING_OK)
 			{
+#if defined(MOD_TRAITS_ANY_BELIEF)
+				if(pkGameReligions->IsPantheonBeliefAvailable(eBelief, ePlayer))
+#else
 				if(pkGameReligions->IsPantheonBeliefAvailable(eBelief))
+#endif
 				{
 					pkGameReligions->FoundPantheon(ePlayer, eBelief);
 				}

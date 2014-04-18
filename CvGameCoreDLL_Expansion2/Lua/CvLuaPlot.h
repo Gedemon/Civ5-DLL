@@ -88,6 +88,10 @@ protected:
 	static int lIsRiverConnection(lua_State* L);
 	static int lIsRiverCrossingFlowClockwise(lua_State* L);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(IsNaturalWonder);
+#endif
+
 	static int lGetInlandCorner(lua_State* L);
 	static int lGetNearestLandArea(lua_State* L);
 	static int lSeeFromLevel(lua_State* L);
@@ -121,6 +125,9 @@ protected:
 	static int lHasBarbarianCamp(lua_State* L);
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
 	static int lHasDig(lua_State* L);
+#if !defined(MOD_API_LUA_EXTENSIONS)
+	static int lGetPlayerThatBuiltImprovement(lua_State* L);
+#endif
 #endif
 	static int lIsVisible(lua_State* L);
 	static int lIsActiveVisible(lua_State* L);

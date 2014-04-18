@@ -193,6 +193,8 @@ CvResolutionEffects::CvResolutionEffects(void)
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 	bRaiseCityStateInfluenceToAlly = false;
 	bRaiseCityStateInfluenceToFriend = false;
+	iLimitSpaceshipProduction = 0;
+	iLimitSpaceshipPurchase = 0;
 #endif
 	eLeagueProjectEnabled = NO_LEAGUE_PROJECT;
 	iGoldPerTurn = 0;
@@ -234,6 +236,8 @@ CvResolutionEffects::CvResolutionEffects(ResolutionTypes eType)
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 		bRaiseCityStateInfluenceToAlly		= pInfo->IsRaiseCityStateInfluenceToAlly();
 		bRaiseCityStateInfluenceToFriend	= pInfo->IsRaiseCityStateInfluenceToFriend();
+		iLimitSpaceshipProduction			= pInfo->GetSpaceShipProductionMod();
+		iLimitSpaceshipPurchase				= pInfo->GetSpaceShipPurchaseMod();
 #endif
 		eLeagueProjectEnabled				= pInfo->GetLeagueProjectEnabled();
 		iGoldPerTurn						= pInfo->GetGoldPerTurn();
@@ -330,6 +334,13 @@ bool CvResolutionEffects::HasOngoingEffects() const
 		return true;
 #endif
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS && iLimitSpaceshipProduction != 0)
+		return true;
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS && iLimitSpaceshipPurchase != 0)
+		return true;
+#endif
+
 	return false;
 }
 
@@ -360,6 +371,11 @@ void CvResolutionEffects::AddOngoingEffects(const CvResolutionEffects* pOtherEff
 	iScienceyGreatPersonRateMod				+= pOtherEffects->iScienceyGreatPersonRateMod;
 	iGreatPersonTileImprovementCulture		+= pOtherEffects->iGreatPersonTileImprovementCulture;
 	iLandmarkCulture						+= pOtherEffects->iLandmarkCulture;
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	iLimitSpaceshipProduction				+= pOtherEffects->iLimitSpaceshipProduction; //Global
+	iLimitSpaceshipPurchase					+= pOtherEffects->iLimitSpaceshipPurchase; //Global
+#endif
 
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	if (MOD_DIPLOMACY_CIV4_FEATURES) {
@@ -462,6 +478,12 @@ FDataStream& operator>>(FDataStream& loadFrom, CvResolutionEffects& writeTo)
 		writeTo.iArtsyGreatPersonRateMod = 0;
 		writeTo.iScienceyGreatPersonRateMod = 0;
 	}
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	MOD_SERIALIZE_READ(46, loadFrom, writeTo.iLimitSpaceshipProduction, 0);
+	MOD_SERIALIZE_READ(46, loadFrom, writeTo.iLimitSpaceshipPurchase, 0);
+#endif
+
 	if (uiVersion >= 8)
 	{
 		loadFrom >> writeTo.iGreatPersonTileImprovementCulture;
@@ -513,6 +535,10 @@ FDataStream& operator<<(FDataStream& saveTo, const CvResolutionEffects& readFrom
 	saveTo << readFrom.iOtherIdeologyRebellionMod;
 	saveTo << readFrom.iArtsyGreatPersonRateMod;
 	saveTo << readFrom.iScienceyGreatPersonRateMod;
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	MOD_SERIALIZE_WRITE(saveTo, readFrom.iLimitSpaceshipProduction);
+	MOD_SERIALIZE_WRITE(saveTo, readFrom.iLimitSpaceshipPurchase);
+#endif
 	saveTo << readFrom.iGreatPersonTileImprovementCulture;
 	saveTo << readFrom.iLandmarkCulture;
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
@@ -1567,6 +1593,16 @@ void CvActiveResolution::DoEffects(PlayerTypes ePlayer)
 	if (GetEffects()->iScienceyGreatPersonRateMod != 0)
 	{
 	}
+	
+#if defined (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS && GetEffects()->iLimitSpaceshipProduction != 0)
+	{
+	}
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS && GetEffects()->iLimitSpaceshipPurchase != 0)
+	{
+	}
+#endif
+
 	if (GetEffects()->iGreatPersonTileImprovementCulture != 0)
 	{
 		// Loop through all Great Person tile improvements
@@ -1774,6 +1810,15 @@ void CvActiveResolution::RemoveEffects(PlayerTypes ePlayer)
 		}
 		// Refresh yield
 	}
+	
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS && GetEffects()->iLimitSpaceshipProduction != 0)
+	{
+	}
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS &&GetEffects()->iLimitSpaceshipPurchase != 0)
+	{
+	}
+#endif
 
 	m_iTurnEnacted = -1;
 }
@@ -2880,7 +2925,14 @@ bool CvLeague::IsResolutionEffectsValid(ResolutionTypes eResolution, int iPropos
 	}
 
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
-	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS && (pInfo->IsRaiseCityStateInfluenceToAlly() || pInfo->IsRaiseCityStateInfluenceToFriend() || pInfo->IsRaiseCityStateInfluenceToNeutral()))
+	bool bRaise = pInfo->IsRaiseCityStateInfluenceToNeutral();
+	
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS) bRaise = (pInfo->IsRaiseCityStateInfluenceToAlly() || pInfo->IsRaiseCityStateInfluenceToFriend());
+	
+	if (bRaise)
+#else
+	if (pInfo->IsRaiseCityStateInfluenceToNeutral())
+#endif
 	{
 		if (GC.getGame().GetNumMinorCivsEver() <= 0)
 		{
@@ -2912,7 +2964,6 @@ bool CvLeague::IsResolutionEffectsValid(ResolutionTypes eResolution, int iPropos
 			}
 		}
 	}
-#endif
 
 	return true;
 }
@@ -3230,7 +3281,7 @@ int CvLeague::GetNumResolutionsEverEnacted() const
 int CvLeague::GetNumProposersPerSession() const
 {
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
-	int iProposers = MIN((LeagueHelpers::PROPOSERS_PER_SESSION + (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS ? 1 : 0)), GetNumMembers());
+	int iProposers = MIN(GC.getLEAGUE_PROPOSERS_PER_SESSION(), GetNumMembers());
 #else
 	int iProposers = MIN(LeagueHelpers::PROPOSERS_PER_SESSION, GetNumMembers());
 #endif
@@ -3505,10 +3556,27 @@ int CvLeague::CalculateStartingVotesForMember(PlayerTypes ePlayer, bool bForceUp
 		iVotes += iWonderVotes;
 
 #if defined(MOD_DIPLOMACY_CITYSTATES)
-		// Improvements
 		int iImprovementVotes = GET_PLAYER(ePlayer).GetImprovementLeagueVotes();
+		int iFaithVotes = GET_PLAYER(ePlayer).GetFaithToVotes();
+		int iGetDoFToVotes = GET_PLAYER(ePlayer).GetDoFToVotes();
+		int iCapitalsToVotes = GET_PLAYER(ePlayer).GetCapitalsToVotes();
+		int iRAToVotes = GET_PLAYER(ePlayer).GetRAToVotes();
+
 		if (MOD_DIPLOMACY_CITYSTATES) {
+			// Improvements
 			iVotes += iImprovementVotes;
+
+			// Religion Founder
+			iVotes += iFaithVotes;
+
+			// Freedom Follower
+			iVotes += iGetDoFToVotes;
+
+			// Autocracy Follower
+			iVotes += iCapitalsToVotes;
+
+			// Order Follower
+			iVotes += iRAToVotes;
 		}
 #endif
 
@@ -3567,6 +3635,30 @@ int CvLeague::CalculateStartingVotesForMember(PlayerTypes ePlayer, bool bForceUp
 			{
 				Localization::String sTemp = Localization::Lookup("TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_IMPROVEMENT_VOTES");
 				sTemp << iImprovementVotes;
+				pMember->sVoteSources += sTemp.toUTF8();
+			}
+			if (MOD_DIPLOMACY_CITYSTATES && iFaithVotes > 0)
+			{
+				Localization::String sTemp = Localization::Lookup("TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_FAITH_VOTES");
+				sTemp << iFaithVotes;
+				pMember->sVoteSources += sTemp.toUTF8();
+			}
+			if (MOD_DIPLOMACY_CITYSTATES && iCapitalsToVotes > 0)
+			{
+				Localization::String sTemp = Localization::Lookup("TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_CAPITALS_VOTES");
+				sTemp << iCapitalsToVotes;
+				pMember->sVoteSources += sTemp.toUTF8();
+			}
+			if (MOD_DIPLOMACY_CITYSTATES && iGetDoFToVotes > 0)
+			{
+				Localization::String sTemp = Localization::Lookup("TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_DOF_VOTES");
+				sTemp << iGetDoFToVotes;
+				pMember->sVoteSources += sTemp.toUTF8();
+			}
+			if (MOD_DIPLOMACY_CITYSTATES && iRAToVotes > 0)
+			{
+				Localization::String sTemp = Localization::Lookup("TXT_KEY_LEAGUE_OVERVIEW_MEMBER_DETAILS_RA_VOTES");
+				sTemp << iRAToVotes;
 				pMember->sVoteSources += sTemp.toUTF8();
 			}
 #endif
@@ -4169,6 +4261,34 @@ bool CvLeague::IsNoTrainingNuclearWeapons()
 	}
 	return false;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+int CvLeague::GetSpaceShipProductionMod()
+{
+	int iMod = 0;
+	for (ActiveResolutionList::iterator it = m_vActiveResolutions.begin(); it != m_vActiveResolutions.end(); ++it)
+	{
+		if (it->GetEffects()->iLimitSpaceshipProduction != 0)
+		{
+			iMod += it->GetEffects()->iLimitSpaceshipProduction;
+		}
+	}
+	return iMod;
+}
+
+int CvLeague::GetSpaceShipPurchaseMod()
+{
+	int iMod = 0;
+	for (ActiveResolutionList::iterator it = m_vActiveResolutions.begin(); it != m_vActiveResolutions.end(); ++it)
+	{
+		if (it->GetEffects()->iLimitSpaceshipPurchase != 0)
+		{
+			iMod += it->GetEffects()->iLimitSpaceshipPurchase;
+		}
+	}
+	return iMod;
+}
+#endif
 
 int CvLeague::GetExtraVotesForFollowingReligion(PlayerTypes ePlayer)
 {
@@ -5230,7 +5350,20 @@ std::vector<CvString> CvLeague::GetCurrentEffectsSummary(PlayerTypes /*eObserver
 		sTemp << effects.iLandmarkCulture;
 		vsEffects.push_back(sTemp.toUTF8());
 	}
-
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS && effects.iLimitSpaceshipProduction != 0)
+	{
+		Localization::String sTemp = Localization::Lookup("TXT_KEY_LEAGUE_OVERVIEW_EFFECT_SUMMARY_SPACESHIP_LIMIT");
+		sTemp << effects.iLimitSpaceshipProduction;
+		vsEffects.push_back(sTemp.toUTF8());
+	}
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS && effects.iLimitSpaceshipPurchase != 0)
+	{
+		Localization::String sTemp = Localization::Lookup("TXT_KEY_LEAGUE_OVERVIEW_EFFECT_SUMMARY_SPACESHIP_PURCHASE");
+		sTemp << effects.iLimitSpaceshipPurchase;
+		vsEffects.push_back(sTemp.toUTF8());
+	}
+#endif
 	if (vsEffects.empty())
 	{
 		vsEffects.push_back(Localization::Lookup("TXT_KEY_LEAGUE_OVERVIEW_EFFECT_SUMMARY_NONE").toUTF8());
@@ -5684,7 +5817,11 @@ void CvLeague::FinishSession()
 					CvAssertMsg(bChoicesArePlayers, "Trying to give bonus delegates since a resolution failed, but voter decision is unexpected type. Please send Anton your save file and version.");
 					if (bChoicesArePlayers)
 					{
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+						std::vector<int> vBonusVotePlayers = it->GetVoterDecision()->GetTopVotedChoices(GC.getLEAGUE_NUM_LEADERS_FOR_EXTRA_VOTES());
+#else
 						std::vector<int> vBonusVotePlayers = it->GetVoterDecision()->GetTopVotedChoices(LeagueHelpers::NUM_LEADERS_FOR_EXTRA_VOTES);
+#endif
 						for (uint i = 0; i < vBonusVotePlayers.size(); i++)
 						{
 							Member* pMember = GetMember((PlayerTypes)vBonusVotePlayers[i]);
@@ -6041,7 +6178,11 @@ void CvLeague::NotifyProposalResult(CvEnactProposal* pProposal)
 			sSummary += sTemp.toUTF8();
 			
 			sTemp = Localization::Lookup("TXT_KEY_NOTIFICATION_LEAGUE_VOTING_RESULT_WORLD_LEADER_FAIL_DETAILS");
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+			sTemp << GC.getGame().GetVotesNeededForDiploVictory() << GC.getLEAGUE_NUM_LEADERS_FOR_EXTRA_VOTES();
+#else
 			sTemp << GC.getGame().GetVotesNeededForDiploVictory() << LeagueHelpers::NUM_LEADERS_FOR_EXTRA_VOTES;
+#endif
 			sMessage += sTemp.toUTF8();
 		}
 		sMessage += "[NEWLINE]" + pProposal->GetVoterDecision()->GetVotesAsText(this);
@@ -6299,7 +6440,11 @@ void CvLeague::CheckProjectsProgress()
 					int iPercentCompleted = (int) (((float)iTotal / (float)iNeeded) * 100);
 					iPercentCompleted = MIN(100, iPercentCompleted);
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+					if (!it->bProgressWarningSent && iPercentCompleted >= GC.getLEAGUE_PROJECT_PROGRESS_PERCENT_WARNING())
+#else
 					if (!it->bProgressWarningSent && iPercentCompleted >= LeagueHelpers::PROJECT_PROGRESS_PERCENT_WARNING)
+#endif
 					{
 						NotifyProjectProgress(it->eType);
 						it->bProgressWarningSent = true;
@@ -6468,6 +6613,18 @@ void CvLeague::DoProjectReward(PlayerTypes ePlayer, LeagueProjectTypes eLeaguePr
 				}
 			}
 		}
+		
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+		//CSD Project Rewards
+		if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS && pRewardInfo->GetAttackBonusTurns() > 0)
+		{
+			GET_PLAYER(ePlayer).ChangeAttackBonusTurns(pRewardInfo->GetAttackBonusTurns());
+		}
+		if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS && pRewardInfo->GetBaseFreeUnits() > 0)
+		{
+			GET_PLAYER(ePlayer).changeBaseFreeUnits(pRewardInfo->GetBaseFreeUnits());
+		}
+#endif
 	}
 }
 
@@ -7374,6 +7531,41 @@ bool CvGameLeagues::IsNoTrainingNuclearWeapons(PlayerTypes ePlayer)
 	}
 	return false;
 }
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+int CvGameLeagues::GetSpaceShipProductionMod(PlayerTypes ePlayer)
+{
+	int iValue = 0;
+	for (LeagueList::iterator it = m_vActiveLeagues.begin(); it != m_vActiveLeagues.end(); ++it)
+	{
+		if (it->IsMember(ePlayer))
+		{
+			int iMod = it->GetSpaceShipProductionMod();
+			if (iMod != 0)
+			{
+				iValue += iMod;
+			}
+		}
+	}
+	return iValue;
+}
+
+int CvGameLeagues::GetSpaceShipPurchaseMod(PlayerTypes ePlayer)
+{
+	int iValue = 0;
+	for (LeagueList::iterator it = m_vActiveLeagues.begin(); it != m_vActiveLeagues.end(); ++it)
+	{
+		if (it->IsMember(ePlayer))
+		{
+			int iMod = it->GetSpaceShipPurchaseMod();
+			if (iMod != 0)
+			{
+				iValue += iMod;
+			}
+		}
+	}
+	return iValue;
+}
+#endif
 
 int CvGameLeagues::GetCityTourismModifier(PlayerTypes ePlayer, const CvCity* pCity)
 {
@@ -9072,6 +9264,11 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 		LeagueProjectTypes eWorldsFair = (LeagueProjectTypes) GC.getInfoTypeForString("LEAGUE_PROJECT_WORLD_FAIR", true);
 		LeagueProjectTypes eInternationalGames = (LeagueProjectTypes) GC.getInfoTypeForString("LEAGUE_PROJECT_WORLD_GAMES", true);
 		LeagueProjectTypes eInternationalSpaceStation = (LeagueProjectTypes) GC.getInfoTypeForString("LEAGUE_PROJECT_INTERNATIONAL_SPACE_STATION", true);
+		
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		LeagueProjectTypes eTreasureFleet = (LeagueProjectTypes) GC.getInfoTypeForString("LEAGUE_PROJECT_TREASURE_FLEET", true);
+		LeagueProjectTypes eWargames = (LeagueProjectTypes) GC.getInfoTypeForString("LEAGUE_PROJECT_WARGAMES", true);
+#endif
 
 		// Production might
 		int iOurProductionMight = GetPlayer()->calculateProductionMight();
@@ -9160,6 +9357,27 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 				iScore += 10;
 			}
 		}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		else if (MOD_DIPLOMACY_CITYSTATES && ((eTreasureFleet == pProposal->GetEffects()->eLeagueProjectEnabled) || (eWargames == pProposal->GetEffects()->eLeagueProjectEnabled)))
+		{
+			if (GC.getMap().GetAIMapHint() & 5)
+			{
+				iScore += 20;
+			}
+			if (bSeekingConquestVictory && bStrongProduction)
+			{
+				iScore += 50;
+			}
+			else if (bSeekingConquestVictory || bStrongProduction)
+			{
+				iScore += 25;
+			}
+			else
+			{
+				iScore += 10;
+			}
+		}
+#endif
 	}
 	// Embargo City-States
 	if (pProposal->GetEffects()->bEmbargoCityStates)
@@ -9787,7 +10005,6 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 			if(eAlliedPlayer != NO_PLAYER)
 			{
 				TeamTypes eAlliedTeam = GET_PLAYER(eAlliedPlayer).getTeam();
-				ThreatTypes eWarmongerThreat = GetPlayer()->GetDiplomacyAI()->GetWarmongerThreat(eAlliedPlayer);
 				MajorCivOpinionTypes eOpinion = GetPlayer()->GetDiplomacyAI()->GetMajorCivOpinion(eAlliedPlayer);
 				MajorCivApproachTypes eApproach = GetPlayer()->GetDiplomacyAI()->GetMajorCivApproach(eAlliedPlayer, /*bHideTrueFeelings*/ true);
 
@@ -9797,7 +10014,7 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 					{
 						if(pPlayerTeam->isAtWar(eAlliedTeam))
 						{
-							iScore += 15;
+							iScore += 8;
 						}
 						if (GetPlayer()->GetDiplomacyAI()->IsDoFAccepted(eAlliedPlayer))
 						{
@@ -9805,56 +10022,32 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 						}
 						if (eOpinion <= MAJOR_CIV_OPINION_COMPETITOR)
 						{
-							iScore += 11;
+							iScore += 12;
 						}
 						else if (eOpinion >= MAJOR_CIV_OPINION_FAVORABLE)
 						{
-							iScore += -25;
-						}
-						if (eWarmongerThreat >= THREAT_SEVERE)
-						{
-							iScore += 5;
+							iScore += -50;
 						}
 						if (eOpinion < MAJOR_CIV_OPINION_NEUTRAL || eApproach < MAJOR_CIV_APPROACH_GUARDED)
 						{
-							iScore += 5;
+							iScore += 12;
 						}
 						if(bSeekingDiploVictory)
 						{
-							iScore += 10;
-						}
-						if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_FRIENDLY)
-						{
-							iScore += 4;
-						}
-						else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_PROTECTIVE)
-						{
-							iScore += 8;
-						}
-						else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_IGNORE)
-						{
-							iScore += -4;
-						}
-						if(eProximity == PLAYER_PROXIMITY_DISTANT)
-						{
-							iScore += -5;
-						}
-						else if(eProximity == PLAYER_PROXIMITY_FAR)
-						{
-							iScore += -4;
-						}
-						else if(eProximity == PLAYER_PROXIMITY_CLOSE)
-						{
-							iScore += 5;
-						}
-						else if(eProximity == PLAYER_PROXIMITY_NEIGHBORS)
-						{
-							iScore += 7;
+							iScore += 20;
 						}
 					}
-					else if(GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) > 40)
+					else if((GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) >= 40) && (GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) < 60))
 					{
-						iScore += -200;
+						iScore += -25;
+					}
+					else if((GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) >= 60) && (GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) < 100))
+					{
+						iScore += -50;
+					}
+					else if(GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) >= 100)
+					{
+						iScore += -100;
 					}
 				}
 				else if(eAlliedPlayer == ePlayer)
@@ -9862,17 +10055,41 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 					iScore += -500;
 				}
 			}
-			else if(GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) > 40)
+			if (eProximity == PLAYER_PROXIMITY_DISTANT)
 			{
-				iScore += -300;
+				iScore += 0;
 			}
-			else if(GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) < 40)
+			else if(eProximity == PLAYER_PROXIMITY_FAR)
 			{
-				iScore += 15;
+				iScore += 3;
+			}
+			else if(eProximity == PLAYER_PROXIMITY_CLOSE)
+			{
+				iScore += 6;
+			}
+			else if(eProximity == PLAYER_PROXIMITY_NEIGHBORS)
+			{
+				iScore += 9;
+			}
+			if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_FRIENDLY)
+			{
+				iScore += 6;
+			}
+			else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_PROTECTIVE)
+			{
+				iScore += 9;
+			}
+			else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_IGNORE)
+			{
+				iScore += 3;
+			}
+			if(GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) > 40)
+			{
+				iScore += -500;
 			}
 			else
 			{
-				iScore += 5;
+				iScore += 6;
 			}
 		}
 	}
@@ -9896,23 +10113,21 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 			if(eAlliedPlayer != NO_PLAYER)
 			{
 				TeamTypes eAlliedTeam = GET_PLAYER(eAlliedPlayer).getTeam();
-				ThreatTypes eWarmongerThreat = GetPlayer()->GetDiplomacyAI()->GetWarmongerThreat(eAlliedPlayer);
 				MajorCivOpinionTypes eOpinion = GetPlayer()->GetDiplomacyAI()->GetMajorCivOpinion(eAlliedPlayer);
-				MajorCivApproachTypes eApproach = GetPlayer()->GetDiplomacyAI()->GetMajorCivApproach(eAlliedPlayer, /*bHideTrueFeelings*/ true);
 
 				if(eAlliedPlayer != ePlayer)
 				{
 					if (pPlayerTeam->isAtWar(eAlliedTeam))
 					{
-						iScore += 20;
+						iScore += 15;
 					}
 					if (ePlayerTeam == eAlliedTeam)
 					{
-						iScore += -50;
+						iScore += -100;
 					}
 					if (GetPlayer()->GetDiplomacyAI()->IsDoFAccepted(eAlliedPlayer))
 					{
-						iScore += -15;
+						iScore += -50;
 					}
 					if (eOpinion <= MAJOR_CIV_OPINION_COMPETITOR)
 					{
@@ -9921,98 +10136,60 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 
 					if (eOpinion >= MAJOR_CIV_OPINION_FAVORABLE)
 					{
-						iScore += -15;
+						iScore += -50;
 					}
 					if ((GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(eAlliedPlayer) < 150))
 					{
-						if (eOpinion <= MAJOR_CIV_OPINION_COMPETITOR)
+						if ((eOpinion <= MAJOR_CIV_OPINION_COMPETITOR) || bSeekingDiploVictory)
 						{
-							iScore += 42;
+							iScore += 30;
 						}
 						else
 						{
-							iScore += 24;
+							iScore += 15;
 						}
 					}
 					if ((GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(eAlliedPlayer) > 150))
 					{
-						iScore += -5;
-					}
-					if (eWarmongerThreat >= THREAT_SEVERE)
-					{
-						iScore += 5;
-					}
-					if (eOpinion < MAJOR_CIV_OPINION_NEUTRAL || eApproach < MAJOR_CIV_APPROACH_GUARDED)
-					{
-						iScore += -10;
-					}
-					if(bSeekingDiploVictory)
-					{
-						iScore += 15;
+						iScore += -500;
 					}
 				}
 				else if(eAlliedPlayer == ePlayer)
 				{
-
-					if (GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) > 150)
-					{
-						iScore += -500;
-					}
-					else if(GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) < 70)
-					{
-						iScore += 5;
-					}
+					iScore += -500;
 				}
-			}
-			if (GET_PLAYER(eTargetCityState).GetMinorCivAI()->IsFriends(ePlayer))
-			{
-				if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_FRIENDLY)
-				{
-					iScore += 10;
-				}
-				else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_PROTECTIVE)
-				{
-					iScore += 15;
-				}
-				else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_IGNORE)
-				{
-					iScore += 5;
-				}
-			}
-			else if(!GET_PLAYER(eTargetCityState).GetMinorCivAI()->IsFriends(ePlayer))
-			{
-				if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_FRIENDLY)
-				{
-					iScore += -5;
-				}
-				else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_PROTECTIVE)
-				{
-					iScore += -10;
-				}
-				else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_IGNORE)
-				{
-					iScore += 0;
-				}
-			}
-			if(eProximity == PLAYER_PROXIMITY_DISTANT)
-			{
-				iScore += -10;
-			}
-			else if(eProximity == PLAYER_PROXIMITY_FAR)
-			{
-				iScore += -5;
-			}
-			else if(eProximity == PLAYER_PROXIMITY_CLOSE)
-			{
-				iScore += 5;
-			}
-			else if(eProximity == PLAYER_PROXIMITY_NEIGHBORS)
-			{
-				iScore += 10;
 			}
 			else
 			{
-				iScore += 5;
+				iScore += 8;
+			}
+			if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_FRIENDLY)
+			{
+				iScore += 4;
+			}
+			else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_PROTECTIVE)
+			{
+				iScore += 8;
+			}
+			else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_IGNORE)
+			{
+				iScore += 0;
+			}
+			if(eProximity == PLAYER_PROXIMITY_DISTANT)
+			{
+				iScore += -4;
+			}
+			else if(eProximity == PLAYER_PROXIMITY_FAR)
+			{
+				iScore += 0;
+			}
+			else if(eProximity == PLAYER_PROXIMITY_CLOSE)
+			{
+				iScore += 4;
+			}
+			else if(eProximity == PLAYER_PROXIMITY_NEIGHBORS)
+			{
+				iScore += 8;
 			}
 		}
 	}
@@ -10036,7 +10213,6 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 			if(eAlliedPlayer != NO_PLAYER)
 			{
 				TeamTypes eAlliedTeam = GET_PLAYER(eAlliedPlayer).getTeam();
-				ThreatTypes eWarmongerThreat = GetPlayer()->GetDiplomacyAI()->GetWarmongerThreat(eAlliedPlayer);
 				MajorCivOpinionTypes eOpinion = GetPlayer()->GetDiplomacyAI()->GetMajorCivOpinion(eAlliedPlayer);
 				MajorCivApproachTypes eApproach = GetPlayer()->GetDiplomacyAI()->GetMajorCivApproach(eAlliedPlayer, /*bHideTrueFeelings*/ true);
 
@@ -10044,23 +10220,19 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 				{
 					if (pPlayerTeam->isAtWar(eAlliedTeam))
 					{
-						iScore += 25;
+						iScore += 15;
 					}
 					if (GetPlayer()->GetDiplomacyAI()->IsDoFAccepted(eAlliedPlayer) || (ePlayerTeam == eAlliedTeam))
 					{
-						iScore += -60;
+						iScore += -100;
 					}
 					if (eOpinion <= MAJOR_CIV_OPINION_COMPETITOR)
 					{
-						iScore += 35;
+						iScore += 20;
 					}
 					else if (eOpinion >= MAJOR_CIV_OPINION_FAVORABLE)
 					{
-						iScore += -30;
-					}
-					if (eWarmongerThreat >= THREAT_SEVERE)
-					{
-						iScore += 10;
+						iScore += -50;
 					}
 					if (eOpinion < MAJOR_CIV_OPINION_NEUTRAL || eApproach < MAJOR_CIV_APPROACH_GUARDED)
 					{
@@ -10068,11 +10240,7 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 					}
 					if (bSeekingDiploVictory)
 					{
-						iScore += 25;
-					}
-					if (GET_PLAYER(eTargetCityState).GetMinorCivAI()->GetEffectiveFriendshipWithMajor(ePlayer) > 90)
-					{
-						iScore += 15;
+						iScore += 30;
 					}
 				}		
 				else if (eAlliedPlayer == ePlayer)
@@ -10080,56 +10248,84 @@ int CvLeagueAI::ScoreVoteChoiceYesNo(CvProposal* pProposal, int iChoice, bool bE
 					iScore += -500;
 				}
 			}
-			if (GET_PLAYER(eTargetCityState).GetMinorCivAI()->IsFriends(ePlayer))
+			if(eAlliedPlayer == NO_PLAYER)
 			{
-				if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_FRIENDLY)
-				{
-					iScore += 10;
-				}
-				else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_PROTECTIVE)
-				{
-					iScore += 13;
-				}
-				else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_IGNORE)
-				{
-					iScore += 5;
-				}
+				iScore += -500;
 			}
-			else if(!GET_PLAYER(eTargetCityState).GetMinorCivAI()->IsFriends(ePlayer))
+			if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_FRIENDLY)
 			{
-				if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_FRIENDLY)
-				{
-					iScore += -20;
-				}
-				else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_PROTECTIVE)
-				{
-					iScore += -15;
-				}
-				else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_IGNORE)
-				{
-					iScore += -10;
-				}
+				iScore += 4;
+			}
+			else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_PROTECTIVE)
+			{
+				iScore += 8;
+			}
+			else if (GET_PLAYER(ePlayer).GetDiplomacyAI()->GetMinorCivApproach(eTargetCityState) == MINOR_CIV_APPROACH_IGNORE)
+			{
+				iScore += 0;
 			}
 			if(eProximity == PLAYER_PROXIMITY_DISTANT)
 			{
-				iScore += -15;
+				iScore += -4;
 			}
 			else if(eProximity == PLAYER_PROXIMITY_FAR)
 			{
-				iScore += -10;
+				iScore += 0;
 			}
 			else if(eProximity == PLAYER_PROXIMITY_CLOSE)
 			{
-				iScore += 5;
+				iScore += 4;
 			}
 			else if(eProximity == PLAYER_PROXIMITY_NEIGHBORS)
 			{
-				iScore += 10;
+				iScore += 8;
 			}
-			else
+		}
+	}
+	
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS && pProposal->GetEffects()->iLimitSpaceshipProduction)
+	{
+		PlayerTypes ePlayer = GetPlayer()->GetID();
+		// Establish world Tech progress average
+		int iNumPlayersAlive = 0;
+		int iWorldNumTechsAverage = 0;
+		int eMajorScience = 0;
+		TeamTypes eTeam;
+		for (int iTeamLoop = 0; iTeamLoop < MAX_MAJOR_CIVS; iTeamLoop++)	// Looping over all MAJOR teams
+		{
+			eTeam = (TeamTypes) iTeamLoop;
+
+			if (GET_TEAM(eTeam).isAlive())
 			{
-				iScore += 5;
+				iWorldNumTechsAverage += GET_TEAM(eTeam).GetTeamTechs()->GetNumTechsKnown();
+				iNumPlayersAlive++;
 			}
+		}
+		iWorldNumTechsAverage /= iNumPlayersAlive;
+		for(int iMajorLoop = 0; iMajorLoop < MAX_MAJOR_CIVS; iMajorLoop++)
+		{
+			PlayerTypes eOtherMajor = (PlayerTypes)iMajorLoop;
+			PlayerTypes ePlayer = GetPlayer()->GetID();
+			
+
+			if(GET_PLAYER(ePlayer).GetGrandStrategyAI()->GetGuessOtherPlayerSpaceshipPriority(eOtherMajor, iWorldNumTechsAverage))
+			{
+				eMajorScience++;
+			}
+		}
+		if(eMajorScience > 0)
+		{
+			iScore += 10 * eMajorScience;
+		}
+
+		if (GET_PLAYER(ePlayer).GetDiplomacyAI()->IsGoingForSpaceshipVictory())
+		{
+			iScore -= -500;
+		}
+
+		else
+		{
+			iScore += 35;
 		}
 	}
 #endif
@@ -10895,6 +11091,10 @@ CvLeagueProjectRewardEntry::CvLeagueProjectRewardEntry(void)
 	m_iGoldenAgePoints					= 0;
 	m_iCityStateInfluenceBoost			= 0;
 	m_iBaseBeakersTurnsToCount			= 0;
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	m_iGetAttackBonusTurns				= 0;
+	m_iGetBaseFreeUnits					= 0;
+#endif
 	m_eFreeUnitClass					= NO_UNITCLASS;
 }
 
@@ -10917,6 +11117,12 @@ bool CvLeagueProjectRewardEntry::CacheResults(Database::Results& kResults, CvDat
 	m_iGoldenAgePoints					= kResults.GetInt("GoldenAgePoints");
 	m_iCityStateInfluenceBoost			= kResults.GetInt("CityStateInfluenceBoost");
 	m_iBaseBeakersTurnsToCount			= kResults.GetInt("BaseBeakersTurnsToCount");
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS) {
+		m_iGetAttackBonusTurns				= kResults.GetInt("AttackBonusTurns");
+		m_iGetBaseFreeUnits					= kResults.GetInt("BaseFreeUnits");
+	}
+#endif
 	m_eFreeUnitClass					= (UnitClassTypes) GC.getInfoTypeForString(kResults.GetText("FreeUnitClass"), true);
 
 	return true;
@@ -10961,6 +11167,18 @@ int CvLeagueProjectRewardEntry::GetBaseBeakersTurnsToCount() const
 {
 	return m_iBaseBeakersTurnsToCount;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+int CvLeagueProjectRewardEntry::GetAttackBonusTurns() const
+{
+	return m_iGetAttackBonusTurns;
+}
+
+int CvLeagueProjectRewardEntry::GetBaseFreeUnits() const
+{
+	return m_iGetBaseFreeUnits;
+}
+#endif
 
 UnitClassTypes CvLeagueProjectRewardEntry::GetFreeUnitClass() const
 {
@@ -11131,6 +11349,8 @@ CvResolutionEntry::CvResolutionEntry(void)
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 	m_bRaiseCityStateInfluenceToAlly	= false;
 	m_bRaiseCityStateInfluenceToFriend	= false;
+	m_iSpaceshipProductionMod			= 0;
+	m_iSpaceshipPurchaseMod				= 0;
 #endif
 	m_eLeagueProjectEnabled				= NO_LEAGUE_PROJECT;
 	m_iGoldPerTurn						= 0;
@@ -11185,6 +11405,8 @@ bool CvResolutionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtil
 	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS) {
 		m_bRaiseCityStateInfluenceToAlly	= kResults.GetBool("RaiseCityStateInfluenceToAlly");
 		m_bRaiseCityStateInfluenceToFriend	= kResults.GetBool("RaiseCityStateInfluenceToFriend");
+		m_iSpaceshipProductionMod			= kResults.GetInt("SpaceshipProductionMod");
+		m_iSpaceshipPurchaseMod				= kResults.GetInt("SpaceshipPurchaseMod");
 	}
 #endif
 	m_eLeagueProjectEnabled				= (LeagueProjectTypes) GC.getInfoTypeForString(kResults.GetText("LeagueProjectEnabled"), true);
@@ -11393,6 +11615,17 @@ int CvResolutionEntry::GetLandmarkCulture() const
 {
 	return m_iLandmarkCulture;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+int CvResolutionEntry::GetSpaceShipProductionMod() const
+{
+	return m_iSpaceshipProductionMod;
+}
+int CvResolutionEntry::GetSpaceShipPurchaseMod() const
+{
+	return m_iSpaceshipPurchaseMod;
+}
+#endif
 
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
 int CvResolutionEntry::GetVassalMaintenanceGoldPercent() const

@@ -165,12 +165,6 @@ void CvDiplomacyRequests::EndTurn(void)
 /// Adds a new notification to the list
 bool CvDiplomacyRequests::Add(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploType, const char* pszMessage, LeaderheadAnimationTypes eAnimationType, int iExtraGameData /*= -1*/)
 {
-#if defined(MOD_DIPLOMACY_NO_ANNOYING_POPUPS)
-	if (pszMessage == NULL) {
-		return true;
-	}
-#endif
-
 	// Queue it up
 	m_aRequests.push_back(Request());
 	Request& newRequest = m_aRequests.back();
@@ -189,13 +183,7 @@ bool CvDiplomacyRequests::Add(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploT
 //	Send the request immediately
 void CvDiplomacyRequests::Send(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploType, const char* pszMessage, LeaderheadAnimationTypes eAnimationType, int iExtraGameData /*= -1*/)
 {
-#if defined(MOD_DIPLOMACY_NO_ANNOYING_POPUPS)
-	if (pszMessage == NULL) {
-		return;
-	}
-#endif
-
-	MOD_AI_LEADER_MESSAGE_EXT(eFromPlayer, eDiploType, pszMessage, eAnimationType, iExtraGameData);
+	gDLL->GameplayDiplomacyAILeaderMessage(eFromPlayer, eDiploType, pszMessage, eAnimationType, iExtraGameData);
 	m_bRequestActiveFromPlayer = eFromPlayer;
 	m_bRequestActive = true;
 }

@@ -70,6 +70,10 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(IsRiverConnection);
 	Method(IsRiverCrossingFlowClockwise);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(IsNaturalWonder);
+#endif
+
 	Method(GetNearestLandArea);
 	Method(SeeFromLevel);
 	Method(GetNearestLandPlot);
@@ -102,6 +106,9 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(HasBarbarianCamp);
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
 	Method(HasDig);
+#if !defined(MOD_API_LUA_EXTENSIONS)
+	Method(GetPlayerThatBuiltImprovement);
+#endif
 #endif
 	Method(IsVisible);
 	Method(IsActiveVisible);
@@ -571,6 +578,16 @@ int CvLuaPlot::lIsRiverCrossingFlowClockwise(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaPlot::lIsNaturalWonder(lua_State* L)
+{
+	CvPlot* pkPlot = GetInstance(L);
+	const bool bResult = pkPlot->IsNaturalWonder();
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //int getNearestLandArea();
 int CvLuaPlot::lGetNearestLandArea(lua_State* L)
@@ -753,6 +770,13 @@ int CvLuaPlot::lHasDig(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlot::HasDig);
 }
+#if !defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaPlot::lGetPlayerThatBuiltImprovement(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::GetPlayerThatBuiltImprovement);
+}
+#endif
 #endif
 
 //------------------------------------------------------------------------------

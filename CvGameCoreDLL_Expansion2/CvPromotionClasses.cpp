@@ -120,6 +120,11 @@ CvPromotionEntry::CvPromotionEntry():
 	m_bExtraTerrainDamage(false),
 	m_bExtraFeatureDamage(false),
 #endif
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+	m_iNearbyImprovementCombatBonus(0),
+	m_iNearbyImprovementBonusRange(0),
+	m_eCombatBonusImprovement(NO_IMPROVEMENT),
+#endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 	m_bCanCrossMountains(false),
 #endif
@@ -182,6 +187,9 @@ CvPromotionEntry::CvPromotionEntry():
 	m_pbFeatureImpassable(NULL),
 	m_pbUnitCombat(NULL),
 	m_pbCivilianUnitType(NULL),
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	m_pbUnitName(NULL),
+#endif
 	m_pbPostCombatRandomPromotion(NULL)
 {
 }
@@ -210,6 +218,9 @@ CvPromotionEntry::~CvPromotionEntry(void)
 	SAFE_DELETE_ARRAY(m_pbFeatureImpassable);
 	SAFE_DELETE_ARRAY(m_pbUnitCombat);
 	SAFE_DELETE_ARRAY(m_pbCivilianUnitType);
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	SAFE_DELETE_ARRAY(m_pbUnitName);
+#endif
 	SAFE_DELETE_ARRAY(m_pbPostCombatRandomPromotion);
 }
 //------------------------------------------------------------------------------
@@ -243,14 +254,30 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 	m_bExtraTerrainDamage = kResults.GetBool("ExtraTerrainDamage");
 	m_bExtraFeatureDamage = kResults.GetBool("ExtraFeatureDamage");
 #endif
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+	if (MOD_PROMOTIONS_IMPROVEMENT_BONUS) {
+		m_iNearbyImprovementCombatBonus = kResults.GetInt("NearbyImprovementCombatBonus");
+		m_iNearbyImprovementBonusRange = kResults.GetInt("NearbyImprovementBonusRange");
+		const char* szTextVal = kResults.GetText("CombatBonusImprovement");
+		if (szTextVal) {
+			m_eCombatBonusImprovement = (ImprovementTypes)GC.getInfoTypeForString(szTextVal, true);
+		}
+	}
+#endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
-	m_bCanCrossMountains = kResults.GetBool("CanCrossMountains");
+	if (MOD_PROMOTIONS_CROSS_MOUNTAINS) {
+		m_bCanCrossMountains = kResults.GetBool("CanCrossMountains");
+	}
 #endif
 #if defined(MOD_PROMOTIONS_CROSS_OCEANS)
-	m_bCanCrossOceans = kResults.GetBool("CanCrossOceans");
+	if (MOD_PROMOTIONS_CROSS_OCEANS) {
+		m_bCanCrossOceans = kResults.GetBool("CanCrossOceans");
+	}
 #endif
 #if defined(MOD_PROMOTIONS_CROSS_ICE)
-	m_bCanCrossIce = kResults.GetBool("CanCrossIce");
+	if (MOD_PROMOTIONS_CROSS_ICE) {
+		m_bCanCrossIce = kResults.GetBool("CanCrossIce");
+	}
 #endif
 	m_bRoughTerrainEndsTurn = kResults.GetBool("RoughTerrainEndsTurn");
 	m_bHoveringUnit = kResults.GetBool("HoveringUnit");
@@ -661,6 +688,19 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 
 		pResults->Reset();
 	}
+
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	if (MOD_PROMOTIONS_UNIT_NAMING)
+	{
+		// We don't store the unit names, only if the promotion gives a name, we will look-up the actual name as it's needed
+		kUtility.PopulateArrayByExistence(m_pbUnitName,
+			"Units",
+			"UnitPromotions_UnitName",
+			"UnitType",
+			"PromotionType",
+			szPromotionType);
+	}
+#endif
 
 	kUtility.PopulateArrayByExistence(m_pbPostCombatRandomPromotion,
 		"UnitPromotions",
@@ -1348,6 +1388,22 @@ bool CvPromotionEntry::IsExtraFeatureDamage() const
 }
 #endif
 
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+/// Accessor: Can cross mountains (but we'd rather they left them nice and straight!)
+int CvPromotionEntry::GetNearbyImprovementCombatBonus() const
+{
+	return m_iNearbyImprovementCombatBonus;
+}
+int CvPromotionEntry::GetNearbyImprovementBonusRange() const
+{
+	return m_iNearbyImprovementBonusRange;
+}
+ImprovementTypes CvPromotionEntry::GetCombatBonusImprovement() const
+{
+	return m_eCombatBonusImprovement;
+}
+#endif
+
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 /// Accessor: Can cross mountains (but we'd rather they left them nice and straight!)
 bool CvPromotionEntry::CanCrossMountains() const
@@ -1835,6 +1891,30 @@ bool CvPromotionEntry::GetCivilianUnitType(int i) const
 
 	return false;
 }
+
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+/// If this a promotion that names a unit
+bool CvPromotionEntry::IsUnitNaming(int i) const
+{
+	CvAssertMsg(i < GC.getNumPromotionInfos(), "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_pbUnitName ? m_pbUnitName[i] : false;
+}
+
+void CvPromotionEntry::GetUnitName(UnitTypes eUnit, CvString& sUnitName) const
+{
+	Database::Results kDBResults;
+	char szQuery[512] = {0};
+	sprintf_s(szQuery, "select Name from UnitPromotions_UnitName n, UnitPromotions p, Units u where n.PromotionType = p.Type and n.UnitType = u.Type and p.ID = %i and u.ID = %i;", GetID(), eUnit);
+	if(DB.Execute(kDBResults, szQuery))
+	{
+		while(kDBResults.Step())
+		{
+			sUnitName = kDBResults.GetText("Name");
+		}
+	}
+}
+#endif
 
 /// If this a promotion that can randomly turn into other c
 bool CvPromotionEntry::IsPostCombatRandomPromotion(int i) const

@@ -327,8 +327,9 @@ void CvCityConnections::UpdateRouteInfo(void)
 			continue;
 		}
 #if defined(MOD_EVENTS_CITY_CONNECTIONS)
-		else if(iPass == 1 && !bAllowDirectRoutes)  // if in the second pass and we can't create direct routes, skip
+		else if(iPass == 1 && !(bAllowDirectRoutes || bAllowIndirectRoutes))  // if in the second pass and we can't create any routes (this allows for harbour to harbour connections without The Wheel), skip
 #else
+		// TODO - WH - bug fix !(eBestRouteType != NO_ROUTE || bAllowWaterRoutes) will solve the "Harbour to Harbour needs The Wheel" oddity!
 		else if(iPass == 1 && eBestRouteType == NO_ROUTE)  // if in the second pass, we can't build a road, skip
 #endif
 		{

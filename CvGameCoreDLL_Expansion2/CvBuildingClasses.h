@@ -214,6 +214,12 @@ public:
 	int GetCityStateTradeRouteProductionModifier() const;
 	int GetGreatScientistBeakerModifier() const;
 	int GetExtraLeagueVotes() const;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int GetFaithToVotes() const;
+	int GetCapitalsToVotes() const;
+	int GetDoFToVotes() const;
+	int GetRAToVotes() const;
+#endif
 	int GetPreferredDisplayPosition() const;
 	int GetPortraitIndex() const;
 	bool IsTeamShare() const;
@@ -443,6 +449,12 @@ private:
 	int m_iCityStateTradeRouteProductionModifier;
 	int m_iGreatScientistBeakerModifier;
 	int m_iExtraLeagueVotes;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int m_iFaithToVotesBase;
+	int m_iCapitalsToVotesBase;
+	int m_iDoFToVotesBase;
+	int m_iRAToVotesBase;
+#endif
 	int m_iPreferredDisplayPosition;
 	int m_iPortraitIndex;
 

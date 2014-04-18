@@ -4726,6 +4726,17 @@ int CvCity::GetPurchaseCost(UnitTypes eUnit)
 	iCost *= (100 + GET_PLAYER(getOwner()).GetUnitPurchaseCostModifier());
 	iCost /= 100;
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS) {
+		int iLimitSpaceshipPurchase = GC.getGame().GetGameLeagues()->GetSpaceShipPurchaseMod(getOwner());
+		if(bIsSpaceshipPart && iLimitSpaceshipPurchase != 0)
+		{
+			iCost *= (100 + GC.getGame().GetGameLeagues()->GetSpaceShipPurchaseMod(getOwner()));
+			iCost /= 100;
+		}
+	}
+#endif
+
 	// Make the number not be funky
 	int iDivisor = /*10*/ GC.getGOLD_PURCHASE_VISIBLE_DIVISOR();
 	iCost /= iDivisor;
@@ -4873,7 +4884,11 @@ int CvCity::GetFaithPurchaseCost(UnitTypes eUnit, bool bIncludeBeliefDiscounts)
 	{
 		CvGameReligions* pReligions = GC.getGame().GetGameReligions();
 		ReligionTypes eMajority = GetCityReligions()->GetReligiousMajority();
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+		if(eMajority >= RELIGION_PANTHEON)
+#else
 		if(eMajority > RELIGION_PANTHEON)
+#endif
 		{
 			const CvReligion* pReligion = pReligions->GetReligion(eMajority, getOwner());
 			if(pReligion)
@@ -4888,6 +4903,17 @@ int CvCity::GetFaithPurchaseCost(UnitTypes eUnit, bool bIncludeBeliefDiscounts)
 			}
 		}
 	}
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS) {
+		//Modify for Resolution
+		int iGetSpaceShipPurchaseMod = GC.getGame().GetGameLeagues()->GetSpaceShipPurchaseMod(getOwner());
+		if((pkUnitInfo->GetBaseHurry() > 0) && (iGetSpaceShipPurchaseMod != 0))
+		{
+			iCost *= (100 + iGetSpaceShipPurchaseMod);
+			iCost /= 100;
+		}
+	}
+#endif
 
 	// Make the number not be funky
 	int iDivisor = /*10*/ GC.getGOLD_PURCHASE_VISIBLE_DIVISOR();
@@ -5252,6 +5278,16 @@ int CvCity::getProductionModifier(UnitTypes eUnit, CvString* toolTipSink) const
 		}
 
 		iTempMod = thisPlayer.getSpaceProductionModifier();
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		if (MOD_DIPLOMACY_CITYSTATES) {
+			int iLimitSpaceshipProduction = GC.getGame().GetGameLeagues()->GetSpaceShipProductionMod(getOwner());
+			if(iLimitSpaceshipProduction != 0)
+			{
+				iTempMod += iLimitSpaceshipProduction;
+			}
+		}
+#endif
 		iMultiplier += iTempMod;
 		if(toolTipSink && iTempMod)
 		{
@@ -13059,7 +13095,17 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 
 		// Does this city have a majority religion?
 		ReligionTypes eReligion = GetCityReligions()->GetReligiousMajority();
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+		bool bCanFaithPurchase = (eReligion > RELIGION_PANTHEON);
+		
+		if (MOD_TRAITS_PANTHEON_IS_RELIGION) {
+			bCanFaithPurchase = bCanFaithPurchase || (eReligion == RELIGION_PANTHEON && GET_PLAYER(getOwner()).GetPlayerTraits()->IsPantheonIsReligion());
+		}
+		
+		if(!bCanFaithPurchase)
+#else
 		if(eReligion <= RELIGION_PANTHEON)
+#endif
 		{
 			return false;
 		}
@@ -13076,7 +13122,11 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 			CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eUnitType);
 			if(pkUnitInfo)
 			{
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+				if (pkUnitInfo->IsRequiresEnhancedReligion() && !(GC.getGame().GetGameReligions()->GetReligion(eReligion, m_eOwner)->m_bEnhanced))
+#else
 				if (pkUnitInfo->IsRequiresEnhancedReligion() && !(GC.getGame().GetGameReligions()->GetReligion(eReligion, NO_PLAYER)->m_bEnhanced))
+#endif
 				{
 					return false;
 				}
@@ -13118,6 +13168,17 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 						}
 					}
 				}
+#if defined(MOD_BUGFIX_MINOR)
+				else
+				{
+					// Missionaries, Inquisitors and Prophets
+					// We need to test that the player can build the unit, specifically the check for civ specific versions unit
+					if(!canTrain(eUnitType, false, !bTestTrainable, true /*bIgnoreCost*/, true /*bWillPurchase*/))
+					{
+						return false;
+					}
+				}
+#endif
 			}
 		}
 		// Building
@@ -13129,7 +13190,11 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 			if(pkBuildingInfo && pkBuildingInfo->IsUnlockedByBelief())
 			{
 				ReligionTypes eMajority = GetCityReligions()->GetReligiousMajority();
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+				if(eMajority < RELIGION_PANTHEON)
+#else
 				if(eMajority <= RELIGION_PANTHEON)
+#endif
 				{
 					return false;
 				}
@@ -13386,7 +13451,11 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 			int iReligiousStrength = pUnit->getUnitInfo().GetReligiousStrength();
 
 			// Missionary strength
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+			if(iReligionSpreads > 0 && eReligion >= RELIGION_PANTHEON)
+#else
 			if(iReligionSpreads > 0 && eReligion > RELIGION_PANTHEON)
+#endif
 			{
 				pUnit->GetReligionData()->SetSpreadsLeft(iReligionSpreads + GetCityBuildings()->GetMissionaryExtraSpreads());
 				pUnit->GetReligionData()->SetReligiousStrength(iReligiousStrength);

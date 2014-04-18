@@ -225,6 +225,11 @@ CvUnit::CvUnit() :
 	, m_iExtraTerrainDamageCount("CvUnit::m_iExtraTerrainDamageCount", m_syncArchive)
 	, m_iExtraFeatureDamageCount("CvUnit::m_iExtraFeatureDamageCount", m_syncArchive)
 #endif
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+	, m_iNearbyImprovementCombatBonus("CvUnit::m_iNearbyImprovementCombatBonus", m_syncArchive)
+	, m_iNearbyImprovementBonusRange("CvUnit::m_iNearbyImprovementBonusRange", m_syncArchive)
+	, m_eCombatBonusImprovement("CvUnit::m_eCombatBonusImprovement", m_syncArchive)
+#endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 	, m_iCanCrossMountainsCount("CvUnit::m_iCanCrossMountainsCount", m_syncArchive)
 #endif
@@ -281,6 +286,9 @@ CvUnit::CvUnit() :
 	, m_iReligiousStrengthLossRivalTerritory(0)
 	, m_iTradeMissionInfluenceModifier(0)
 	, m_iTradeMissionGoldModifier(0)
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	, m_strUnitName("")
+#endif
 	, m_strName("")
 	, m_eGreatWork(NO_GREAT_WORK)
 	, m_iTourismBlastStrength(0)
@@ -623,7 +631,11 @@ void CvUnit::initWithNameOffset(int iID, UnitTypes eUnit, int iNameOffset, UnitA
 		if (pPlotCity)
 		{
 			ReligionTypes eReligion = pPlotCity->GetCityReligions()->GetReligiousMajority();
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+			if (eReligion >= RELIGION_PANTHEON)
+#else
 			if (eReligion > RELIGION_PANTHEON)
+#endif
 			{
 				GetReligionData()->SetReligion(eReligion);
 				GetReligionData()->SetSpreadsLeft(getUnitInfo().GetReligionSpreads() + pPlotCity->GetCityBuildings()->GetMissionaryExtraSpreads());
@@ -752,7 +764,12 @@ void CvUnit::initWithNameOffset(int iID, UnitTypes eUnit, int iNameOffset, UnitA
 
 	if(bSetupGraphical)
 		setupGraphical();
-
+		
+#if defined(MOD_EVENTS_UNIT_CREATED)
+	if (MOD_EVENTS_UNIT_CREATED) {
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_UnitCreated, getOwner(), GetID(), getUnitType(), getX(), getY());
+	}
+#endif
 }
 
 
@@ -883,6 +900,11 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	m_iExtraTerrainDamageCount = 0;
 	m_iExtraFeatureDamageCount = 0;
 #endif
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+	m_iNearbyImprovementCombatBonus = 0;
+	m_iNearbyImprovementBonusRange = 0;
+	m_eCombatBonusImprovement = NO_IMPROVEMENT;
+#endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 	m_iCanCrossMountainsCount = 0;
 #endif
@@ -980,6 +1002,9 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 		m_extraDomainModifiers.push_back(0);
 	}
 
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	m_strUnitName = "";
+#endif
 	m_strName = "";
 	m_eGreatWork = NO_GREAT_WORK;
 	m_iTourismBlastStrength = 0;
@@ -1577,6 +1602,9 @@ bool CvUnit::getCaptureDefinition(CvUnitCaptureDefinition* pkCaptureDef, PlayerT
 	kCaptureDef.eCapturingPlayer = (eCapturingPlayer != NO_PLAYER) ? eCapturingPlayer : getCapturingPlayer();
 	kCaptureDef.bEmbarked = m_bEmbarked;
 	kCaptureDef.eCaptureUnitType = NO_UNIT;
+#if defined(MOD_API_EXTENSIONS)
+	kCaptureDef.iScenarioData = m_iScenarioData;
+#endif
 	if (GetReligionData())
 	{
 		kCaptureDef.eReligion = GetReligionData()->GetReligion();
@@ -1654,6 +1682,10 @@ bool CvUnit::getCaptureDefinition(CvUnitCaptureDefinition* pkCaptureDef, PlayerT
 					pkCapturedUnit->GetReligionData()->SetSpreadsLeft(kCaptureDef.iSpreadsLeft);
 
 					pkCapturedUnit->SetOriginalOwner(kCaptureDef.eOriginalOwner);
+
+#if defined(MOD_API_EXTENSIONS)
+					pkCapturedUnit->setScenarioData(kCaptureDef.iScenarioData);
+#endif
 
 					if(GC.getLogging() && GC.getAILogging())
 					{
@@ -2072,6 +2104,14 @@ bool CvUnit::canDoCommand(CommandTypes eCommand, int iData1, int iData2, bool bT
 
 	if (GetAutomateType() == AUTOMATE_TRADE)
 		return false;	// No commands for this type.
+		
+#if defined(MOD_EVENTS_COMMAND)
+	if (MOD_EVENTS_COMMAND) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CanDoCommand, getOwner(), GetID(), eCommand, iData1, iData2, getX(), getY(), bTestVisible) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
+	}
+#endif
 
 	switch(eCommand)
 	{
@@ -4559,7 +4599,7 @@ bool CvUnit::canEmbarkOnto(const CvPlot& originPlot, const CvPlot& targetPlot, b
 	if(!IsHasEmbarkAbility() && !IsEmbarkDeepWater())
 #else
 #if defined(MOD_BUGFIX_EMBARKING_PATHFINDER)
-	// Not really a bug, but bloody irratating if you're searching for the getter!
+	// Not really a bug, but bloody irritating if you're searching for the getter!
 	if(!IsHasEmbarkAbility())
 #else
 	if(m_iEmbarkAbilityCount <= 0)
@@ -4766,6 +4806,12 @@ void CvUnit::setEmbarked(bool bValue)
 /// Does this Unit have the ability to embark?
 bool CvUnit::IsHasEmbarkAbility() const
 {
+#if defined(MOD_GLOBAL_CANNOT_EMBARK)
+	if (MOD_GLOBAL_CANNOT_EMBARK && getUnitInfo().CannotEmbark()) {
+		return false;
+	}
+#endif
+
 	return GetEmbarkAbilityCount() > 0;
 }
 
@@ -7577,7 +7623,19 @@ bool CvUnit::CanSpreadReligion(const CvPlot* pPlot) const
 		return false;
 	}
 
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+    bool bCanSpread = GetReligionData()->GetReligion() > RELIGION_PANTHEON;
+	
+	if (MOD_TRAITS_PANTHEON_IS_RELIGION) {
+		if (GetReligionData()->GetReligion() == RELIGION_PANTHEON && GET_PLAYER(getOwner()).GetPlayerTraits()->IsPantheonIsReligion()) {
+			bCanSpread = true;
+		}
+	}
+	
+	if(!bCanSpread)
+#else
 	if(GetReligionData()->GetReligion() == NO_RELIGION)
+#endif
 	{
 		return false;
 	}
@@ -7602,6 +7660,14 @@ bool CvUnit::CanSpreadReligion(const CvPlot* pPlot) const
 	{
 		return false;
 	}
+	
+#if defined(MOD_EVENTS_RELIGION)
+	if (MOD_EVENTS_RELIGION) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanSpreadReligion, getOwner(), GetID(), plot()->getX(), plot()->getY()) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
+	}
+#endif
 
 	return true;
 }
@@ -7624,7 +7690,11 @@ bool CvUnit::DoSpreadReligion()
 #endif
 			CvGameReligions* pReligions = GC.getGame().GetGameReligions();
 			ReligionTypes eReligion = GetReligionData()->GetReligion();
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+			if(eReligion >= RELIGION_PANTHEON)
+#else
 			if(eReligion > RELIGION_PANTHEON)
+#endif
 			{
 				const CvReligion* pReligion = pReligions->GetReligion(eReligion, getOwner());
 				if(pReligion)
@@ -7751,7 +7821,19 @@ bool CvUnit::CanRemoveHeresy(const CvPlot* pPlot) const
 		return false;
 	}
 
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+    bool bCanSpread = GetReligionData()->GetReligion() > RELIGION_PANTHEON;
+	
+	if (MOD_TRAITS_PANTHEON_IS_RELIGION) {
+		if (GetReligionData()->GetReligion() == RELIGION_PANTHEON && GET_PLAYER(getOwner()).GetPlayerTraits()->IsPantheonIsReligion()) {
+			bCanSpread = true;
+		}
+	}
+	
+	if(!bCanSpread)
+#else
 	if(GetReligionData()->GetReligion() == NO_RELIGION)
+#endif
 	{
 		return false;
 	}
@@ -7779,6 +7861,14 @@ bool CvUnit::CanRemoveHeresy(const CvPlot* pPlot) const
 	{
 		return false;
 	}
+
+#if defined(MOD_EVENTS_RELIGION)
+	if (MOD_EVENTS_RELIGION) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanRemoveHeresy, getOwner(), GetID(), plot()->getX(), plot()->getY()) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
+	}
+#endif
 
 	return true;
 }
@@ -7908,7 +7998,11 @@ int CvUnit::GetConversionStrength() const
 	int iReligiousStrength = GC.getRELIGION_MISSIONARY_PRESSURE_MULTIPLIER() * GetReligionData()->GetReligiousStrength();
 	CvGameReligions* pReligions = GC.getGame().GetGameReligions();
 	ReligionTypes eReligion = GetReligionData()->GetReligion();
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+	if(eReligion >= RELIGION_PANTHEON)
+#else
 	if(eReligion > RELIGION_PANTHEON)
+#endif
 	{
 		const CvReligion* pReligion = pReligions->GetReligion(eReligion, getOwner());
 		if(pReligion)
@@ -8898,7 +8992,7 @@ void CvUnit::PerformCultureBomb(int iRadius)
 
 					DLLUI->SetForceDiscussionModeQuitOnBack(true);		// Set force quit so that when discuss mode pops up the Back button won't go to leader root
 					const char* strText = pPlayer->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_CULTURE_BOMBED);
-					MOD_AI_LEADER_MESSAGE(pPlayer->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+					gDLL->GameplayDiplomacyAILeaderMessage(pPlayer->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
 				}
 			}
 		}
@@ -9269,6 +9363,7 @@ bool CvUnit::canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestVisible,
 	{
 		if (GetReligionData()->GetReligion() != NO_RELIGION && GetReligionData()->GetSpreadsLeft() < m_pUnitInfo->GetReligionSpreads())
 		{
+			CUSTOMLOG("Can't build as started spreading religion (spreads=%i, left=%i)", m_pUnitInfo->GetReligionSpreads(), GetReligionData()->GetSpreadsLeft());
 			return false;
 		}
 	}
@@ -9398,6 +9493,12 @@ bool CvUnit::build(BuildTypes eBuild)
 
 	bFinished = pPlot->changeBuildProgress(eBuild, workRate(false), getOwner());
 
+#if defined(MOD_EVENTS_PLOT)
+	if (MOD_EVENTS_PLOT) {
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_PlayerBuilding, getOwner(), GetID(), getX(), getY(), eBuild, (iStartedYet == 0));
+	}
+#endif
+
 	finishMoves(); // needs to be at bottom because movesLeft() can affect workRate()...
 
 	if(bFinished)
@@ -9499,6 +9600,12 @@ bool CvUnit::build(BuildTypes eBuild)
 				LogWorkerEvent(eBuild, false);
 			}
 		}
+
+#if defined(MOD_EVENTS_PLOT)
+		if (MOD_EVENTS_PLOT) {
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_PlayerBuilt, getOwner(), GetID(), getX(), getY(), eBuild);
+		}
+#endif
 	}
 	else // we are not done doing this
 	{
@@ -9918,15 +10025,15 @@ bool CvUnit::CanUpgradeRightNow(bool bOnlyTestVisible) const
 				return false;
 			}
 		}
-		
-#if defined(MOD_EVENTS_UNIT_UPGRADES)
-		if (MOD_EVENTS_UNIT_UPGRADES) {
-			if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CanHaveAnyUpgrade, getOwner(), GetID()) == GAMEEVENTRETURN_FALSE) {
-				return false;
-			}
-		}
-#endif
 	}
+
+#if defined(MOD_EVENTS_UNIT_UPGRADES)
+	if (MOD_EVENTS_UNIT_UPGRADES) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CanHaveAnyUpgrade, getOwner(), GetID()) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
+	}
+#endif
 
 	return true;
 }
@@ -10004,7 +10111,7 @@ int CvUnit::upgradePrice(UnitTypes eUnit) const
 {
 	VALIDATE_OBJECT
 	int iPrice = 0;
-
+	
 	CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eUnit);
 	if(pkUnitInfo == NULL)
 	{
@@ -10065,7 +10172,11 @@ int CvUnit::upgradePrice(UnitTypes eUnit) const
 
 //	--------------------------------------------------------------------------------
 /// Upgrades this Unit - returns a pointer to the newly created unit
+#if defined(MOD_API_LUA_EXTENSIONS)
+CvUnit* CvUnit::DoUpgrade(bool bFree)
+#else
 CvUnit* CvUnit::DoUpgrade()
+#endif
 {
 	VALIDATE_OBJECT
 
@@ -10074,8 +10185,15 @@ CvUnit* CvUnit::DoUpgrade()
 	// Gold Cost
 	int iUpgradeCost = upgradePrice(eUnitType);
 	CvPlayerAI& thisPlayer = GET_PLAYER(getOwner());
+#if defined(MOD_API_LUA_EXTENSIONS)
+	if (!bFree) {
+#endif
 	thisPlayer.GetTreasury()->LogExpenditure(getUnitInfo().GetText(), iUpgradeCost, 3);
 	thisPlayer.GetTreasury()->ChangeGold(-iUpgradeCost);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	}
+#endif
+
 #if defined(MOD_GLOBAL_CS_UPGRADES)
 	if (MOD_GLOBAL_CS_UPGRADES) {
 		// Is this plot owned by an allied militaristic City State
@@ -10119,8 +10237,21 @@ CvUnit* CvUnit::DoUpgrade()
 #endif
 		pNewUnit->convert(this, true);
 		pNewUnit->setupGraphical();
-
+		
 		// Can't move after upgrading
+#if defined(MOD_GLOBAL_MOVE_AFTER_UPGRADE)
+		if (MOD_GLOBAL_MOVE_AFTER_UPGRADE && pNewUnit->getUnitInfo().CanMoveAfterUpgrade()) {
+			pNewUnit->setSetUpForRangedAttack(isSetUpForRangedAttack());
+			pNewUnit->m_iAttacksMade = m_iAttacksMade;
+			pNewUnit->m_iMadeInterceptionCount = m_iMadeInterceptionCount;
+			pNewUnit->m_eActivityType = m_eActivityType;
+			if (IsFortifiedThisTurn()) {
+				pNewUnit->SetFortifiedThisTurn(true);
+			} else {
+				pNewUnit->setFortifyTurns(getFortifyTurns());
+			}
+		} else 
+#endif
 		pNewUnit->finishMoves();
 
 		kill(true);
@@ -10196,6 +10327,18 @@ UnitTypes CvUnit::getCaptureUnitType(CivilizationTypes eCivilization) const
 	{
 		return NO_UNIT;
 	}
+	
+#if defined(MOD_EVENTS_UNIT_CAPTURE)
+	if (MOD_EVENTS_UNIT_CAPTURE) {
+		int iValue = 0;
+		if (GAMEEVENTINVOKE_VALUE(iValue, GAMEEVENT_UnitCaptureType, getOwner(), GetID(), getUnitType(), eCivilization) == GAMEEVENTRETURN_VALUE) {
+			// Defend against modder stupidity!
+			if (iValue >= NO_UNIT && (iValue == NO_UNIT || GC.getUnitInfo((UnitTypes) iValue) != NULL)) {
+				return (UnitTypes) iValue;
+			}
+		}
+	}
+#endif
 
 	return ((m_pUnitInfo->GetUnitCaptureClassType() == NO_UNITCLASS) ? NO_UNIT : (UnitTypes)pkCivilizationInfo->getCivilizationUnits(getUnitInfo().GetUnitCaptureClassType()));
 }
@@ -12757,6 +12900,38 @@ void CvUnit::changeExtraFeatureDamageCount(int iValue)
 }
 #endif
 
+
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+int CvUnit::GetNearbyImprovementCombatBonus() const
+{
+	return m_iNearbyImprovementCombatBonus;
+}
+
+void CvUnit::SetNearbyImprovementCombatBonus(int iCombatBonus)
+{
+	m_iNearbyImprovementCombatBonus = iCombatBonus;
+}
+
+int CvUnit::GetNearbyImprovementBonusRange() const
+{
+	return m_iNearbyImprovementBonusRange;
+}
+
+void CvUnit::SetNearbyImprovementBonusRange(int iBonusRange)
+{
+	m_iNearbyImprovementBonusRange = iBonusRange;
+}
+
+ImprovementTypes CvUnit::GetCombatBonusImprovement() const
+{
+	return m_eCombatBonusImprovement;
+}
+
+void CvUnit::SetCombatBonusImprovement(ImprovementTypes eImprovement)
+{
+	m_eCombatBonusImprovement = eImprovement;
+}
+#endif
 
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 //	--------------------------------------------------------------------------------
@@ -16920,6 +17095,10 @@ int CvUnit::GetReverseGreatGeneralModifier()const
 	CvPlot* pLoopPlot;
 	IDInfo* pUnitNode;
 	CvUnit* pLoopUnit;
+	
+#if defined(MOD_BUGFIX_MINOR)
+	int iMaxMod = 0;
+#endif
 
 	// Look around this Unit to see if there's a Great General nearby
 	for(int iX = -iGreatGeneralRange; iX <= iGreatGeneralRange; iX++)
@@ -16954,28 +17133,63 @@ int CvUnit::GetReverseGreatGeneralModifier()const
 									int iRange = pLoopUnit->getNearbyEnemyCombatRange();
 									if(plotDistance(getX(), getY(), pLoopPlot->getX(), pLoopPlot->getY()) <= iRange)
 									{
+#if defined(MOD_BUGFIX_MINOR)
+										// Don't assume the first one found is the worst!
+										// Combat modifiers are negative, as applied against the defender (and not for the attacker)
+										if (iMod < iMaxMod) {
+											iMaxMod = iMod;
+										}
+#else
 										return iMod;
+#endif
 									}
 								}
 							}
 						}
 					}
 				}
-
 			}
 		}
 	}
 
+#if defined(MOD_BUGFIX_MINOR)
+	return iMaxMod;
+#else
 	return 0;
+#endif
 }
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
 int CvUnit::GetNearbyImprovementModifier()const
 {
+	return std::max(GetNearbyImprovementModifierFromTraits(), GetNearbyImprovementModifierFromPromotions());
+}
+
+int CvUnit::GetNearbyImprovementModifierFromTraits()const
+{
+	CvPlayer& kPlayer = GET_PLAYER(m_eOwner);
+	CvPlayerTraits* playerTraits = kPlayer.GetPlayerTraits();
+
+	return GetNearbyImprovementModifier(playerTraits->GetCombatBonusImprovementType(), playerTraits->GetNearbyImprovementBonusRange(), playerTraits->GetNearbyImprovementCombatBonus());
+}
+
+int CvUnit::GetNearbyImprovementModifierFromPromotions()const
+{
+	return GetNearbyImprovementModifier(GetCombatBonusImprovement(), GetNearbyImprovementBonusRange(), GetNearbyImprovementCombatBonus());
+}
+
+int CvUnit::GetNearbyImprovementModifier(ImprovementTypes eBonusImprovement, int iImprovementRange, int iImprovementModifier)const
+#else
+int CvUnit::GetNearbyImprovementModifier()const
+#endif
+{
 	VALIDATE_OBJECT
+#if !defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
 	CvPlayer& kPlayer = GET_PLAYER(m_eOwner);
 	int iImprovementRange = kPlayer.GetPlayerTraits()->GetNearbyImprovementBonusRange();
 	int iImprovementModifier = kPlayer.GetPlayerTraits()->GetNearbyImprovementCombatBonus();
+#endif
 
 	if(iImprovementModifier != 0)
 	{
@@ -16991,7 +17205,11 @@ int CvUnit::GetNearbyImprovementModifier()const
 				if(pLoopPlot != NULL)
 				{
 					// Is the right improvement here?
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+					if(pLoopPlot->getImprovementType() == eBonusImprovement)
+#else
 					if(pLoopPlot->getImprovementType() == kPlayer.GetPlayerTraits()->GetCombatBonusImprovementType())
+#endif
 					{
 						return iImprovementModifier;
 					}
@@ -17986,11 +18204,21 @@ const CvString CvUnit::getName() const
 
 	if(m_strName.IsEmpty())
 	{
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+		// For units, getUnitInfo().GetTextKey() (ie getNameKey()) and getUnitInfo().GetDescription() are the same
+		return getNameKey();
+#else
 		return getUnitInfo().GetDescription();
+#endif
 	}
 
 	Localization::String name = Localization::Lookup(m_strName);
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+		// For units, getUnitInfo().GetTextKey() (ie getNameKey()) and getUnitInfo().GetDescription() are the same
+	strBuffer.Format("%s (%s)", name.toUTF8(), getNameKey());
+#else
 	strBuffer.Format("%s (%s)", name.toUTF8(), getUnitInfo().GetDescription());
+#endif
 
 	return strBuffer;
 }
@@ -18000,9 +18228,34 @@ const CvString CvUnit::getName() const
 const char* CvUnit::getNameKey() const
 {
 	VALIDATE_OBJECT
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	if (MOD_PROMOTIONS_UNIT_NAMING) {
+		if (!m_strUnitName.IsEmpty()) {
+			return m_strUnitName.c_str();
+		}
+	}
+#endif
+
 	return getUnitInfo().GetTextKey();
 }
 
+
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+//	--------------------------------------------------------------------------------
+const CvString CvUnit::getUnitName() const
+{
+	VALIDATE_OBJECT
+	return m_strUnitName.GetCString();
+}
+//	--------------------------------------------------------------------------------
+void CvUnit::setUnitName(const CvString strNewValue)
+{
+	VALIDATE_OBJECT
+
+	m_strUnitName = strNewValue;
+	DLLUI->setDirty(UnitInfo_DIRTY_BIT, true);
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 const CvString CvUnit::getNameNoDesc() const
@@ -18666,6 +18919,18 @@ void CvUnit::setHasPromotion(PromotionTypes eIndex, bool bNewValue)
 	{
 		CvPromotionEntry& thisPromotion = *GC.getPromotionInfo(eIndex);
 
+#if defined(MOD_GLOBAL_CANNOT_EMBARK)
+		if (MOD_GLOBAL_CANNOT_EMBARK && getUnitInfo().CannotEmbark()) {
+			if (thisPromotion.IsAllowsEmbarkation() || thisPromotion.IsEmbarkedAllWater()) {
+				return;
+#if defined(MOD_PROMOTIONS_DEEP_WATER_EMBARKATION)
+			} else if (MOD_PROMOTIONS_DEEP_WATER_EMBARKATION && thisPromotion.IsEmbarkedDeepWater()) {
+				return;
+#endif
+			}
+		}
+#endif
+
 		m_Promotions.SetPromotion(eIndex, bNewValue);
 		iChange = ((isHasPromotion(eIndex)) ? 1 : -1);
 
@@ -18696,14 +18961,29 @@ void CvUnit::setHasPromotion(PromotionTypes eIndex, bool bNewValue)
 		changeExtraTerrainDamageCount((thisPromotion.IsExtraTerrainDamage()) ? iChange : 0);
 		changeExtraFeatureDamageCount((thisPromotion.IsExtraFeatureDamage()) ? iChange : 0);
 #endif
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+		if (MOD_PROMOTIONS_IMPROVEMENT_BONUS) {
+			if (thisPromotion.GetNearbyImprovementCombatBonus() > 0) {
+				SetNearbyImprovementCombatBonus(thisPromotion.GetNearbyImprovementCombatBonus());
+				SetNearbyImprovementBonusRange(thisPromotion.GetNearbyImprovementBonusRange());
+				SetCombatBonusImprovement(thisPromotion.GetCombatBonusImprovement());
+			}
+		}
+#endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
-		changeCanCrossMountainsCount((thisPromotion.CanCrossMountains()) ? iChange : 0);
+		if (MOD_PROMOTIONS_CROSS_MOUNTAINS) {
+			changeCanCrossMountainsCount((thisPromotion.CanCrossMountains()) ? iChange : 0);
+		}
 #endif
 #if defined(MOD_PROMOTIONS_CROSS_OCEANS)
-		changeCanCrossOceansCount((thisPromotion.CanCrossOceans()) ? iChange : 0);
+		if (MOD_PROMOTIONS_CROSS_OCEANS) {
+			changeCanCrossOceansCount((thisPromotion.CanCrossOceans()) ? iChange : 0);
+		}
 #endif
 #if defined(MOD_PROMOTIONS_CROSS_ICE)
-		changeCanCrossIceCount((thisPromotion.CanCrossIce()) ? iChange : 0);
+		if (MOD_PROMOTIONS_CROSS_ICE) {
+			changeCanCrossIceCount((thisPromotion.CanCrossIce()) ? iChange : 0);
+		}
 #endif
 		ChangeRoughTerrainEndsTurnCount((thisPromotion.IsRoughTerrainEndsTurn()) ? iChange : 0);
 		ChangeHoveringUnitCount((thisPromotion.IsHoveringUnit()) ? iChange : 0);
@@ -18808,6 +19088,14 @@ void CvUnit::setHasPromotion(PromotionTypes eIndex, bool bNewValue)
 		changeUpgradeDiscount(thisPromotion.GetUpgradeDiscount() * iChange);
 		changeExperiencePercent(thisPromotion.GetExperiencePercent() * iChange);
 		changeCargoSpace(thisPromotion.GetCargoChange() * iChange);
+
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+		if (MOD_PROMOTIONS_UNIT_NAMING) {
+			if (thisPromotion.IsUnitNaming(getUnitType())) {
+				thisPromotion.GetUnitName(getUnitType(), m_strUnitName);
+			}
+		}
+#endif
 
 		for(iI = 0; iI < GC.getNumTerrainInfos(); iI++)
 		{
@@ -19147,6 +19435,9 @@ void CvUnit::read(FDataStream& kStream)
 
 	kStream >> m_iGreatAdmiralCount;
 
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	MOD_SERIALIZE_READ(46, kStream, m_strUnitName, getNameKey());
+#endif
 	kStream >> m_strName;
 
 	kStream >> m_iScenarioData;
@@ -19274,6 +19565,9 @@ void CvUnit::write(FDataStream& kStream) const
 	kStream << m_iCaptureDefeatedEnemyCount;
 	kStream << m_iGreatAdmiralCount;
 
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	MOD_SERIALIZE_WRITE(kStream, m_strUnitName);
+#endif
 	kStream << m_strName;
 
 	kStream << m_iScenarioData;

@@ -49,6 +49,9 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(KillCities);
 
 	Method(GetNewCityName);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(IsCityNameValid);
+#endif
 
 	Method(InitUnit);
 	Method(InitUnitWithNameOffset);
@@ -768,7 +771,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetBuyPlotCost);
 	Method(GetPlotDanger);
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
+	#if defined(MOD_GLOBAL_CITY_WORKING)
 	Method(GetBuyPlotDistance);
 	Method(GetWorkPlotDistance);
 #endif
@@ -910,6 +913,12 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetTraitCityStateCombatModifier);
 	Method(GetTraitGreatGeneralExtraBonus);
 	Method(GetTraitGreatScientistRateModifier);
+#if defined(MOD_TRAITS_ANY_BELIEF)
+	Method(IsTraitAnyBelief);
+#endif
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+	Method(IsTraitPantheonIsReligion);
+#endif
 	Method(IsTraitBonusReligiousBelief);
 	Method(GetHappinessFromLuxury);
 	Method(IsAbleToAnnexCityStates);
@@ -1131,6 +1140,20 @@ int CvLuaPlayer::lGetNewCityName(lua_State* L)
 	}
 	return 0;
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaPlayer::lIsCityNameValid(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+
+	CvString strName = lua_tostring(L, 2);
+	const bool bTestDestroyed = luaL_optint(L, 3, 0);
+	
+	const bool bResult = pkPlayer->isCityNameValid(strName, bTestDestroyed);
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //CvUnit* initUnit(UnitTypes eUnit, int iX, int iY, UnitAITypes eUnitAI = NO_UNITAI, DirectionTypes eFacingDirection = NO_DIRECTION);
 int CvLuaPlayer::lInitUnit(lua_State* L)
@@ -8566,7 +8589,7 @@ int CvLuaPlayer::lDoForceDenounce(lua_State* L)
 	if(GC.getGame().getActivePlayer() == eOtherPlayer)
 	{
 		const char* strText = pkPlayer->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_NO);
-		MOD_AI_LEADER_MESSAGE(pkPlayer->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, strText, LEADERHEAD_ANIM_NEGATIVE);
+		gDLL->GameplayDiplomacyAILeaderMessage(pkPlayer->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, strText, LEADERHEAD_ANIM_NEGATIVE);
 	}
 
 	return 1;
@@ -9386,6 +9409,30 @@ int CvLuaPlayer::lGetTraitGreatScientistRateModifier(lua_State* L)
 	}
 	return 1;
 }
+#if defined(MOD_TRAITS_ANY_BELIEF)
+//------------------------------------------------------------------------------
+int CvLuaPlayer::lIsTraitAnyBelief(lua_State* L)
+{
+	CvPlayer* pkPlayer = GetInstance(L);
+	if(pkPlayer)
+	{
+		lua_pushboolean(L, pkPlayer->GetPlayerTraits()->IsAnyBelief());
+	}
+	return 1;
+}
+#endif
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+//------------------------------------------------------------------------------
+int CvLuaPlayer::lIsTraitPantheonIsReligion(lua_State* L)
+{
+	CvPlayer* pkPlayer = GetInstance(L);
+	if(pkPlayer)
+	{
+		lua_pushboolean(L, pkPlayer->GetPlayerTraits()->IsPantheonIsReligion());
+	}
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lIsTraitBonusReligiousBelief(lua_State* L)
 {

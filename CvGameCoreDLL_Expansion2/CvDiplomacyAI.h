@@ -636,15 +636,9 @@ public:
 	void DoBeginDiploWithHumanEspionageResult();
 	void DoBeginDiploWithHumanInDiscuss();
 
-#if defined(MOD_DIPLOMACY_NO_ANNOYING_POPUPS)
-	const char* GetDiploStringForMessage(DiploMessageTypes eDiploMessage, PlayerTypes eForPlayer = NO_PLAYER, bool bAlways = true);
-	const char* GetDiploStringForMessage(DiploMessageTypes eDiploMessage, PlayerTypes eForPlayer, const Localization::String& strOptionalKey1, bool bAlways = true);
-	const char* GetDiploStringForMessage(DiploMessageTypes eDiploMessage, PlayerTypes eForPlayer, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2, bool bAlways = true);
-#else
 	const char* GetDiploStringForMessage(DiploMessageTypes eDiploMessage, PlayerTypes eForPlayer = NO_PLAYER);
 	const char* GetDiploStringForMessage(DiploMessageTypes eDiploMessage, PlayerTypes eForPlayer, const Localization::String& strOptionalKey1);
 	const char* GetDiploStringForMessage(DiploMessageTypes eDiploMessage, PlayerTypes eForPlayer, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2);
-#endif
 	
 	void DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEventTypes eEvent, int iArg1, int iArg2);
 
@@ -657,15 +651,9 @@ public:
 	const char* GetEndDoFMessage(PlayerTypes ePlayer);
 	const char* GetEndWorkAgainstSomeoneMessage(PlayerTypes ePlayer, const Localization::String& strAgainstPlayerKey);
 
-#if defined(MOD_DIPLOMACY_NO_ANNOYING_POPUPS)
-	const char* GetDiploTextFromTag(const char* strTag, bool bAlways = true);
-	const char* GetDiploTextFromTag(const char* strTag, const Localization::String& strOptionalKey1, bool bAlways = true);
-	const char* GetDiploTextFromTag(const char* strTag, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2, bool bAlways = true);
-#else
 	const char* GetDiploTextFromTag(const char* strTag);
 	const char* GetDiploTextFromTag(const char* strTag, const Localization::String& strOptionalKey1);
 	const char* GetDiploTextFromTag(const char* strTag, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2);
-#endif
 
 	/////////////////////////////////////////////////////////
 	// Things a player has told this AI
@@ -750,6 +738,9 @@ public:
 	void ChangeDoFCounter(PlayerTypes ePlayer, int iChange);
 
 	int GetNumDoF();
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	int GetNumRA();
+#endif
 
 	bool IsDenounceFriendAcceptable(PlayerTypes ePlayer);
 

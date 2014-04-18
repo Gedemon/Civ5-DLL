@@ -263,11 +263,7 @@ public:
 	void ChangeNumVotesForTeam(TeamTypes eTeam, int iChange);
 	// End DEPRECATED
 
-#if defined(MOD_DIPLOMACY_NO_ANNOYING_POPUPS)
-	Localization::String GetDiploResponse(const char* szLeader, const char* szResponse, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2, bool bAlways = true);
-#else
 	Localization::String GetDiploResponse(const char* szLeader, const char* szResponse, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2);
-#endif
 
 	bool isDebugMode() const;
 	void setDebugMode(bool bDebugMode);

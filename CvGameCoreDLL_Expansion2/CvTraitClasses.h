@@ -137,6 +137,12 @@ public:
 	bool IsTechBoostFromCapitalScienceBuildings() const;
 	bool IsStaysAliveZeroCities() const;
 	bool IsFaithFromUnimprovedForest() const;
+#if defined(MOD_TRAITS_ANY_BELIEF)
+	bool IsAnyBelief() const;
+#endif
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+	bool IsPantheonIsReligion() const;
+#endif
 	bool IsBonusReligiousBelief() const;
 	bool IsAbleToAnnexCityStates() const;
 	bool IsCrossesMountainsAfterGreatGeneral() const;
@@ -267,6 +273,12 @@ protected:
 	bool m_bTechBoostFromCapitalScienceBuildings;
 	bool m_bStaysAliveZeroCities;
 	bool m_bFaithFromUnimprovedForest;
+#if defined(MOD_TRAITS_ANY_BELIEF)
+	bool m_bAnyBelief;
+#endif
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+	bool m_bPantheonIsReligion;
+#endif
 	bool m_bBonusReligiousBelief;
 	bool m_bAbleToAnnexCityStates;
 	bool m_bCrossesMountainsAfterGreatGeneral;
@@ -667,6 +679,18 @@ public:
 	{
 		return m_bFaithFromUnimprovedForest;
 	};
+#if defined(MOD_TRAITS_ANY_BELIEF)
+	bool IsAnyBelief() const
+	{
+		return m_bAnyBelief;
+	};
+#endif
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+	bool IsPantheonIsReligion() const
+	{
+		return m_bPantheonIsReligion;
+	};
+#endif
 	bool IsBonusReligiousBelief() const
 	{
 		return m_bBonusReligiousBelief;
@@ -887,6 +911,12 @@ private:
 	bool m_bTechBoostFromCapitalScienceBuildings;
 	bool m_bStaysAliveZeroCities;
 	bool m_bFaithFromUnimprovedForest;
+#if defined(MOD_TRAITS_ANY_BELIEF)
+	bool m_bAnyBelief;
+#endif
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+	bool m_bPantheonIsReligion;
+#endif
 	bool m_bBonusReligiousBelief;
 	bool m_bAbleToAnnexCityStates;
 	bool m_bCrossesMountainsAfterGreatGeneral;

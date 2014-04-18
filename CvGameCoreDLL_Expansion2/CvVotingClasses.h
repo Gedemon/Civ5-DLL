@@ -76,10 +76,17 @@ namespace LeagueHelpers
 
 	const int AI_CHOOSE_PROPOSAL_FROM_TOP = 6;
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	// Moved to xml, use
+	// GC.getLEAGUE_PROPOSERS_PER_SESSION()
+	// GC.getLEAGUE_NUM_LEADERS_FOR_EXTRA_VOTES()
+	// GC.getLEAGUE_PROJECT_PROGRESS_PERCENT_WARNING()
+#else
 	//antonjs: todo: xml
 	const int PROPOSERS_PER_SESSION = 2;
 	const int NUM_LEADERS_FOR_EXTRA_VOTES = 2;
 	const int PROJECT_PROGRESS_PERCENT_WARNING = 33;
+#endif
 }
 
 
@@ -107,6 +114,8 @@ struct CvResolutionEffects
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 	bool bRaiseCityStateInfluenceToAlly;
 	bool bRaiseCityStateInfluenceToFriend;
+	int iLimitSpaceshipProduction;
+	int iLimitSpaceshipPurchase;
 #endif
 	LeagueProjectTypes eLeagueProjectEnabled;
 	int iGoldPerTurn;
@@ -566,6 +575,10 @@ public:
 	int GetFeatureYieldChange(FeatureTypes eFeature, YieldTypes eYield);
 	int GetWorldWonderYieldChange(YieldTypes eYield);
 	bool IsNoTrainingNuclearWeapons();
+#if defined(MOD_DIPLOMACY_CITYSTATES) 
+	int GetSpaceShipProductionMod();
+	int GetSpaceShipPurchaseMod();
+#endif
 	int GetExtraVotesForFollowingReligion(PlayerTypes ePlayer);
 	int GetCityTourismModifier(const CvCity* pCity);
 	int GetReligionSpreadStrengthModifier(ReligionTypes eReligion);
@@ -716,6 +729,10 @@ public:
 	int GetFeatureYieldChange(PlayerTypes ePlayer, FeatureTypes eFeature, YieldTypes eYield);
 	int GetWorldWonderYieldChange(PlayerTypes ePlayer, YieldTypes eYield);
 	bool IsNoTrainingNuclearWeapons(PlayerTypes ePlayer);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int GetSpaceShipProductionMod(PlayerTypes ePlayer);
+	int GetSpaceShipPurchaseMod(PlayerTypes ePlayer);
+#endif
 	int GetCityTourismModifier(PlayerTypes ePlayer, const CvCity* pCity);
 	int GetReligionSpreadStrengthModifier(PlayerTypes ePlayer, ReligionTypes eReligion);
 	int GetPressureForIdeology(PlayerTypes ePlayer, PolicyBranchTypes eIdeology);
@@ -1079,6 +1096,10 @@ public:
 	int GetGoldenAgePoints() const;
 	int GetCityStateInfluenceBoost() const;
 	int GetBaseBeakersTurnsToCount() const;
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	int GetAttackBonusTurns() const;
+	int GetBaseFreeUnits() const;
+#endif
 	UnitClassTypes GetFreeUnitClass() const;
 
 protected:
@@ -1090,6 +1111,10 @@ protected:
 	int m_iGoldenAgePoints;
 	int m_iCityStateInfluenceBoost;
 	int m_iBaseBeakersTurnsToCount;
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	int m_iGetAttackBonusTurns;
+	int m_iGetBaseFreeUnits;
+#endif
 	UnitClassTypes m_eFreeUnitClass;
 
 
@@ -1220,6 +1245,8 @@ public:
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 	bool IsRaiseCityStateInfluenceToAlly() const;
 	bool IsRaiseCityStateInfluenceToFriend() const;
+	int GetSpaceShipProductionMod() const;
+	int GetSpaceShipPurchaseMod() const;
 #endif
 	LeagueProjectTypes GetLeagueProjectEnabled() const;
 	int GetGoldPerTurn() const;
@@ -1263,6 +1290,8 @@ protected:
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 	bool m_bRaiseCityStateInfluenceToAlly;
 	bool m_bRaiseCityStateInfluenceToFriend;
+	int m_iSpaceshipProductionMod;
+	int m_iSpaceshipPurchaseMod;
 #endif
 	LeagueProjectTypes m_eLeagueProjectEnabled;
 	int m_iGoldPerTurn;

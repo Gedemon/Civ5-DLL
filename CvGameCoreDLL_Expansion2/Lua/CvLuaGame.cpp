@@ -1829,7 +1829,7 @@ int CvLuaGame::lGameplayDiplomacyAILeaderMessage(lua_State* L)
 	const int iPlayer = lua_tointeger(L, 1);
 	const int eMessage = lua_tointeger(L, 2);
 	const int iData1 = lua_tointeger(L, 3);
-	MOD_AI_LEADER_MESSAGE_EXT((PlayerTypes) iPlayer, DIPLO_UI_STATE_DEFAULT_ROOT, "TEMP", (LeaderheadAnimationTypes) eMessage, iData1);
+	gDLL->GameplayDiplomacyAILeaderMessage((PlayerTypes) iPlayer, DIPLO_UI_STATE_DEFAULT_ROOT, "TEMP", (LeaderheadAnimationTypes) eMessage, iData1);
 
 	return 1;
 }
@@ -2173,8 +2173,15 @@ int CvLuaGame::lSetMinimumFaithNextPantheon(lua_State* L)
 int CvLuaGame::lIsInSomeReligion(lua_State* L)
 {
 	BeliefTypes eBelief = (BeliefTypes)luaL_optint(L, 1, NO_BELIEF);
+#if defined(MOD_TRAITS_ANY_BELIEF)
+	PlayerTypes ePlayer = (PlayerTypes)luaL_optint(L, 2, NO_PLAYER);
+#endif
 
+#if defined(MOD_TRAITS_ANY_BELIEF)
+	const bool bResult = GC.getGame().GetGameReligions()->IsInSomeReligion(eBelief, ePlayer);
+#else
 	const bool bResult = GC.getGame().GetGameReligions()->IsInSomeReligion(eBelief);
+#endif
 	lua_pushboolean(L, bResult);
 
 	return 1;
@@ -2435,7 +2442,7 @@ int CvLuaGame::lGetReligionName(lua_State* L)
 		lua_pushstring(L, pkReligion->m_szCustomName);
 		return 1;
 	}
-
+	
 	CvReligionEntry* pkEntry = GC.getReligionInfo(eReligion);
 	if(pkEntry != NULL)
 	{
@@ -2469,8 +2476,9 @@ int CvLuaGame::lEnhancePantheon(lua_State* L)
 {
 	const PlayerTypes ePlayer = static_cast<PlayerTypes>(luaL_checkint(L, 1));
 	const BeliefTypes eBelief = static_cast<BeliefTypes>(luaL_checkint(L, 2));
+	const bool bNotify = luaL_optbool(L, 3, true);
 
-	GC.getGame().GetGameReligions()->EnhanceReligion(ePlayer, RELIGION_PANTHEON, eBelief, NO_BELIEF);
+	GC.getGame().GetGameReligions()->EnhanceReligion(ePlayer, RELIGION_PANTHEON, eBelief, NO_BELIEF, bNotify);
 
 	return 0;
 }

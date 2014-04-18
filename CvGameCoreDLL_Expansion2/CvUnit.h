@@ -51,9 +51,13 @@ struct CvUnitCaptureDefinition
 	int iY;
 	bool bEmbarked;
 	bool bAsIs;
+#if defined(MOD_API_EXTENSIONS)
+	int iScenarioData;
+#endif
 	ReligionTypes eReligion;
 	int iReligiousStrength;
 	int iSpreadsLeft;
+
 	CvUnitCaptureDefinition()
 		: eOriginalOwner(NO_PLAYER)
 		, eOldPlayer(NO_PLAYER)
@@ -64,6 +68,9 @@ struct CvUnitCaptureDefinition
 		, iY(-1)
 		, bEmbarked(false)
 		, bAsIs(false)
+#if defined(MOD_API_EXTENSIONS)
+		, iScenarioData(0)
+#endif
 		, eReligion(NO_RELIGION)
 		, iReligiousStrength(0)
 		, iSpreadsLeft(0) { }
@@ -399,7 +406,11 @@ public:
 #endif
 	UnitTypes GetUpgradeUnitType() const;
 	int upgradePrice(UnitTypes eUnit) const;
+#if defined(MOD_API_LUA_EXTENSIONS)
+	CvUnit* DoUpgrade(bool bFree = false);
+#else
 	CvUnit* DoUpgrade();
+#endif
 
 	HandicapTypes getHandicapType() const;
 	CvCivilizationInfo& getCivilizationInfo() const;
@@ -547,6 +558,15 @@ public:
 	bool extraFeatureDamage() const;
 	int getExtraFeatureDamageCount() const;
 	void changeExtraFeatureDamageCount(int iValue);
+#endif
+
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+	int GetNearbyImprovementCombatBonus() const;
+	void SetNearbyImprovementCombatBonus(int iCombatBonus);
+	int GetNearbyImprovementBonusRange() const;
+	void SetNearbyImprovementBonusRange(int iBonusRange);
+	ImprovementTypes GetCombatBonusImprovement() const;
+	void SetCombatBonusImprovement(ImprovementTypes eImprovement);
 #endif
 
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
@@ -940,6 +960,11 @@ public:
 	int GetGreatGeneralStackMovement() const;
 	int GetReverseGreatGeneralModifier() const;
 	int GetNearbyImprovementModifier() const;
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+	int GetNearbyImprovementModifierFromTraits() const;
+	int GetNearbyImprovementModifierFromPromotions() const;
+	int GetNearbyImprovementModifier(ImprovementTypes eBonusImprovement, int iImprovementRange, int iImprovementModifier) const;
+#endif
 
 	bool IsGreatGeneral() const;
 	int GetGreatGeneralCount() const;
@@ -1077,6 +1102,10 @@ public:
 
 	const CvString getName() const;
 	const char* getNameKey() const;
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	const CvString getUnitName() const;
+	void setUnitName(const CvString strNewValue);
+#endif
 	const CvString getNameNoDesc() const;
 	void setName(const CvString strNewValue);
 	GreatWorkType GetGreatWork() const;
@@ -1459,6 +1488,11 @@ protected:
 	FAutoVariable<int, CvUnit> m_iExtraTerrainDamageCount;
 	FAutoVariable<int, CvUnit> m_iExtraFeatureDamageCount;
 #endif
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+	FAutoVariable<int, CvUnit> m_iNearbyImprovementCombatBonus;
+	FAutoVariable<int, CvUnit> m_iNearbyImprovementBonusRange;
+	FAutoVariable<ImprovementTypes, CvUnit> m_eCombatBonusImprovement;
+#endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 	FAutoVariable<int, CvUnit> m_iCanCrossMountainsCount;
 #endif
@@ -1589,6 +1623,9 @@ protected:
 	int m_iNumGoodyHutsPopped;
 	int m_iLastGameTurnAtFullHealth;
 		
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	CvString m_strUnitName;
+#endif
 	CvString m_strName;
 	GreatWorkType m_eGreatWork;
 	int m_iTourismBlastStrength;

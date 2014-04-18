@@ -16,8 +16,17 @@ CvUnitEntry::CvUnitEntry(void) :
 	m_iProductionCost(0),
 	m_iFaithCost(0),
 	m_bRequiresFaithPurchaseEnabled(false),
+#if defined(MOD_GLOBAL_EXCLUDE_FROM_GIFTS)
+	m_bNoMinorGifts(false),
+#endif
 	m_bPurchaseOnly(false),
 	m_bMoveAfterPurchase(false),
+#if defined(MOD_GLOBAL_MOVE_AFTER_UPGRADE)
+	m_bMoveAfterUpgrade(false),
+#endif
+#if defined(MOD_GLOBAL_CANNOT_EMBARK)
+	m_bCannotEmbark(false),
+#endif
 	m_iHurryCostModifier(0),
 	m_iAdvancedStartCost(0),
 	m_iMinAreaSize(0),
@@ -163,8 +172,23 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	m_iProductionCost = kResults.GetInt("Cost");
 	m_iFaithCost = kResults.GetInt("FaithCost");
 	m_bRequiresFaithPurchaseEnabled = kResults.GetBool("RequiresFaithPurchaseEnabled");
+#if defined(MOD_GLOBAL_EXCLUDE_FROM_GIFTS)
+	if (MOD_GLOBAL_EXCLUDE_FROM_GIFTS) {
+		m_bNoMinorGifts = kResults.GetBool("NoMinorGifts");
+	}
+#endif
 	m_bPurchaseOnly = kResults.GetBool("PurchaseOnly");
 	m_bMoveAfterPurchase = kResults.GetBool("MoveAfterPurchase");
+#if defined(MOD_GLOBAL_MOVE_AFTER_UPGRADE)
+	if (MOD_GLOBAL_MOVE_AFTER_UPGRADE) {
+		m_bMoveAfterUpgrade = kResults.GetBool("MoveAfterUpgrade");
+	}
+#endif
+#if defined(MOD_GLOBAL_CANNOT_EMBARK)
+	if (MOD_GLOBAL_CANNOT_EMBARK) {
+		m_bCannotEmbark = kResults.GetBool("CannotEmbark");
+	}
+#endif
 	m_iHurryCostModifier = kResults.GetInt("HurryCostModifier");
 	m_iAdvancedStartCost = kResults.GetInt("AdvancedStartCost");
 	m_iMinAreaSize = kResults.GetInt("MinAreaSize");
@@ -462,6 +486,14 @@ bool CvUnitEntry::IsRequiresFaithPurchaseEnabled() const
 	return m_bRequiresFaithPurchaseEnabled;
 }
 
+#if defined(MOD_GLOBAL_EXCLUDE_FROM_GIFTS)
+/// Can City States gift this unit?
+bool CvUnitEntry::IsNoMinorGifts() const
+{
+	return m_bNoMinorGifts;
+}
+#endif
+
 /// Do we need to purchase this unit (i.e. can't be built)?
 bool CvUnitEntry::IsPurchaseOnly() const
 {
@@ -473,6 +505,22 @@ bool CvUnitEntry::CanMoveAfterPurchase() const
 {
 	return m_bMoveAfterPurchase;
 }
+
+#if defined(MOD_GLOBAL_MOVE_AFTER_UPGRADE)
+/// Can this unit move after being upgraded?
+bool CvUnitEntry::CanMoveAfterUpgrade() const
+{
+	return m_bMoveAfterUpgrade;
+}
+#endif
+
+#if defined(MOD_GLOBAL_CANNOT_EMBARK)
+/// Can this unit embark?
+bool CvUnitEntry::CannotEmbark() const
+{
+	return m_bCannotEmbark;
+}
+#endif
 
 /// Does it cost extra to hurry this init?
 int CvUnitEntry::GetHurryCostModifier() const

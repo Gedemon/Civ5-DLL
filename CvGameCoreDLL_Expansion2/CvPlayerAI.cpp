@@ -495,6 +495,11 @@ void CvPlayerAI::AI_chooseFreeGreatPerson()
 void CvPlayerAI::AI_chooseFreeTech()
 {
 	TechTypes eBestTech = NO_TECH;
+	
+#if defined(MOD_BUGFIX_MINOR)
+	if(GC.getGame().isOption(GAMEOPTION_NO_SCIENCE))
+		return;
+#endif
 
 	clearResearchQueue();
 

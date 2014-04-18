@@ -150,6 +150,11 @@ public:
 	bool IsExtraTerrainDamage() const;
 	bool IsExtraFeatureDamage() const;
 #endif
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+	int GetNearbyImprovementCombatBonus() const;
+	int GetNearbyImprovementBonusRange() const;
+	ImprovementTypes GetCombatBonusImprovement() const;
+#endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 	bool CanCrossMountains() const;
 #endif
@@ -218,6 +223,10 @@ public:
 	bool GetFeatureImpassable(int i) const;
 	bool GetUnitCombatClass(int i) const;
 	bool GetCivilianUnitType(int i) const;
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	bool IsUnitNaming(int i) const;
+	void GetUnitName(UnitTypes eUnit, CvString& sUnitName) const;
+#endif
 	bool IsPostCombatRandomPromotion(int i) const;
 
 protected:
@@ -328,6 +337,11 @@ protected:
 	bool m_bExtraTerrainDamage;
 	bool m_bExtraFeatureDamage;
 #endif
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+	int m_iNearbyImprovementCombatBonus;
+	int m_iNearbyImprovementBonusRange;
+	ImprovementTypes m_eCombatBonusImprovement;
+#endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 	bool m_bCanCrossMountains;
 #endif
@@ -397,6 +411,9 @@ protected:
 	bool* m_pbFeatureImpassable;
 	bool* m_pbUnitCombat;
 	bool* m_pbCivilianUnitType;
+#if defined(MOD_PROMOTIONS_UNIT_NAMING)
+	bool* m_pbUnitName;
+#endif
 	bool* m_pbPostCombatRandomPromotion;
 };
 

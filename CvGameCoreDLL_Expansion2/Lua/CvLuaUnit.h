@@ -28,6 +28,9 @@ protected:
 
 	static int lIsNone(lua_State* L);
 	static int lConvert(lua_State* L);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(Upgrade);
+#endif
 	static int lKill(lua_State* L);
 
 	static int lIsActionRecommended(lua_State* L);
@@ -282,6 +285,11 @@ protected:
 	LUAAPIEXTN(ExtraTerrainDamage);
 	LUAAPIEXTN(ExtraFeatureDamage);
 #endif
+#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+	LUAAPIEXTN(GetNearbyImprovementCombatBonus);
+	LUAAPIEXTN(GetNearbyImprovementBonusRange);
+	LUAAPIEXTN(GetCombatBonusImprovement);
+#endif
 #if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 	LUAAPIEXTN(CanCrossMountains);
 #endif
@@ -500,6 +508,9 @@ protected:
 	static int lIsHasPromotion(lua_State* L);
 	static int lSetHasPromotion(lua_State* L);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(SetActivityType);
+#endif
 	static int lGetActivityType(lua_State* L);
 	static int lIsReadyToMove(lua_State* L);
 	static int lIsBusy(lua_State* L);

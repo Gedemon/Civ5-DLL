@@ -2354,7 +2354,10 @@ void CvPlayerCulture::DoTurn()
 	{
 		if(bCultureVictoryValid)
 		{//This civilization is the first civ to be one civilizations away from getting a cultural victory.  Notify the masses!
-			// TODO - WH - Don't do this is there are only two players left in the game
+#if defined(MOD_BUGFIX_MINOR)
+		  // but don't notify if there are only two players left in the game!
+		  if (GC.getGame().countMajorCivsAlive() > 2) {
+#endif
 			CvString							targCloseOneSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_CULTURE_VICTORY_WITHIN_ONE_ACTIVE_PLAYER");
 			Localization::String	targCloseOneInfo = Localization::Lookup("TXT_KEY_NOTIFICATION_CULTURE_VICTORY_WITHIN_ONE_ACTIVE_PLAYER_TT");
 			CvString							someoneCloseOneSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_CULTURE_VICTORY_WITHIN_ONE");
@@ -2386,6 +2389,9 @@ void CvPlayerCulture::DoTurn()
 					kCurPlayer.GetNotifications()->Add(NOTIFICATION_CULTURE_VICTORY_WITHIN_ONE, strInfo, strSummary, -1, -1, m_pPlayer->GetID());
 				}
 			}
+#if defined(MOD_BUGFIX_MINOR)
+		  }
+#endif
 		}
 
 		m_bReportedOneCivAway = true;
@@ -3484,6 +3490,14 @@ void CvPlayerCulture::DoPublicOpinion()
 		// Compute effects of dissatisfaction
 		int iPerCityUnhappy = 1;
 		int iUnhappyPerXPop = 10;
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		if (MOD_DIPLOMACY_CITYSTATES) {
+			iPerCityUnhappy = GC.getIDEOLOGY_PER_CITY_UNHAPPY();
+			iUnhappyPerXPop = GC.getIDEOLOGY_POP_PER_UNHAPPY();
+		}
+#endif
+		
 		if (m_eOpinion != PUBLIC_OPINION_CONTENT)
 		{
 			if (iDissatisfaction < 3)
@@ -3690,6 +3704,13 @@ int CvPlayerCulture::ComputeHypotheticalPublicOpinionUnhappiness(PolicyBranchTyp
 	int iPerCityUnhappy = 1;
 	int iUnhappyPerXPop = 10;
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) {
+		iPerCityUnhappy = GC.getIDEOLOGY_PER_CITY_UNHAPPY();
+		iUnhappyPerXPop = GC.getIDEOLOGY_POP_PER_UNHAPPY();
+	}
+#endif
+
 	if (iDissatisfaction == 0)
 	{
 		return 0;
@@ -3796,18 +3817,40 @@ int CvPlayerCulture::ComputePublicOpinionUnhappiness(int iDissatisfaction, int &
 	{
 		iPerCityUnhappy = 1;
 		iUnhappyPerXPop = 10;
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		if (MOD_DIPLOMACY_CITYSTATES) {
+			iPerCityUnhappy = GC.getIDEOLOGY_PER_CITY_UNHAPPY();
+			iUnhappyPerXPop = GC.getIDEOLOGY_POP_PER_UNHAPPY();
+		}
+#endif
 	}
 	else if (iDissatisfaction < 5)
 	{
 		iPerCityUnhappy = 2;
 		iUnhappyPerXPop = 5;
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		if (MOD_DIPLOMACY_CITYSTATES) {
+			iPerCityUnhappy = GC.getIDEOLOGY_PER_CITY_UNHAPPY() * 2;
+			iUnhappyPerXPop = (int) ((GC.getIDEOLOGY_POP_PER_UNHAPPY() / 2.0) + 1.0);
+		}
+#endif
 	}
 	else
 	{
 		iPerCityUnhappy = 4;
 		iUnhappyPerXPop = 3;
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		if (MOD_DIPLOMACY_CITYSTATES) {
+			iPerCityUnhappy = GC.getIDEOLOGY_PER_CITY_UNHAPPY() * 4;
+			iUnhappyPerXPop = (int) ((GC.getIDEOLOGY_POP_PER_UNHAPPY() / 4.0) + 1.0);
+		}
+#endif
 	}
 
+	CUSTOMLOG("ComputePublicOpinionUnhappiness: dissatisfaction=%i, perCity=%i, perPop=%i", iDissatisfaction, iPerCityUnhappy, iUnhappyPerXPop);
 	return max(m_pPlayer->getNumCities() * iPerCityUnhappy, m_pPlayer->getTotalPopulation() / iUnhappyPerXPop);
 }
 

@@ -31,8 +31,17 @@ public:
 	int GetProductionCost() const;
 	int GetFaithCost() const;
 	bool IsRequiresFaithPurchaseEnabled() const;
+#if defined(MOD_GLOBAL_EXCLUDE_FROM_GIFTS)
+	bool IsNoMinorGifts() const;
+#endif
 	bool IsPurchaseOnly() const;
 	bool CanMoveAfterPurchase() const;
+#if defined(MOD_GLOBAL_MOVE_AFTER_UPGRADE)
+	bool CanMoveAfterUpgrade() const;
+#endif
+#if defined(MOD_GLOBAL_CANNOT_EMBARK)
+	bool CannotEmbark() const;
+#endif
 	int GetHurryCostModifier() const;
 	int GetAdvancedStartCost() const;
 	int GetMinAreaSize() const;
@@ -172,8 +181,17 @@ private:
 	int m_iProductionCost;
 	int m_iFaithCost;
 	bool m_bRequiresFaithPurchaseEnabled;
+#if defined(MOD_GLOBAL_EXCLUDE_FROM_GIFTS)
+	bool m_bNoMinorGifts;
+#endif
 	bool m_bPurchaseOnly;
 	bool m_bMoveAfterPurchase;
+#if defined(MOD_GLOBAL_MOVE_AFTER_UPGRADE)
+	bool m_bMoveAfterUpgrade;
+#endif
+#if defined(MOD_GLOBAL_CANNOT_EMBARK)
+	bool m_bCannotEmbark;
+#endif
 	int m_iHurryCostModifier;
 	int m_iAdvancedStartCost;
 	int m_iMinAreaSize;
