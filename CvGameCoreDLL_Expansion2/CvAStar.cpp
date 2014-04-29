@@ -2440,6 +2440,14 @@ int RouteValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poi
 
 	if(finder->GetInfo() & MOVE_ANY_ROUTE)
 	{
+#if defined(MOD_EVENTS_CITY_CONNECTIONS)
+		// Cities always have the best route, which permits "harbour to harbour" connections before The Wheel
+		if(pNewPlot->isCity())
+		{
+			return TRUE;
+		}
+#endif
+
 		// if the player can't build
 		if(kPlayer.getBestRoute() == NO_ROUTE)
 		{

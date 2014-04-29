@@ -84,7 +84,11 @@ public:
 	void addFreeUnitAI(UnitAITypes eUnitAI, int iCount);
 	CvPlot* addFreeUnit(UnitTypes eUnit, UnitAITypes eUnitAI = NO_UNITAI);
 
+#if defined(MOD_API_EXTENSIONS)
+	CvCity* initCity(int iX, int iY, bool bBumpUnits = true, bool bInitialFounding = true, const char* szName = NULL);
+#else
 	CvCity* initCity(int iX, int iY, bool bBumpUnits = true, bool bInitialFounding = true);
+#endif
 #if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)
 	void acquireCity(CvCity* pCity, bool bConquest, bool bGift, bool bVenice = false);
 #else

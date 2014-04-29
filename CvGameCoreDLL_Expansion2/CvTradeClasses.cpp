@@ -4641,7 +4641,7 @@ void CvTradeAI::PrioritizeTradeRoutes(TradeConnectionList& aTradeConnectionList)
 							
 								if (bAddCity) {
 									apWonderTargetCities.push_back(pCity);
-									CUSTOMLOG("%s is a potential destination for a Wonder Resource trade route", pCity->getName().c_str());
+									// CUSTOMLOG("%s is a potential destination for a Wonder Resource trade route", pCity->getName().c_str());
 								}
 							}
 						}

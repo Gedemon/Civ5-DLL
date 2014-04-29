@@ -289,7 +289,11 @@ CvCity::~CvCity()
 
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_API_EXTENSIONS)
+void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, bool bInitialFounding, const char* szName)
+#else
 void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, bool bInitialFounding)
+#endif
 {
 	VALIDATE_OBJECT
 	//CvPlot* pAdjacentPlot;
@@ -357,32 +361,23 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	// this is a list of plot that are owned by the player
 	owningPlayer.UpdatePlots();
 
+#if defined(MOD_GLOBAL_CITY_FOREST_BONUS)
+	static BuildTypes eBuildRemoveForest = (BuildTypes)GC.getInfoTypeForString("BUILD_REMOVE_FOREST");
+	bool bClearedForest = false;
+	FeatureTypes eFeature = pPlot->getFeatureType();
+#endif
+
 	//SCRIPT call ' bool citiesDestroyFeatures(iX, iY);'
 	if(pPlot->getFeatureType() != NO_FEATURE)
 	{
 #if defined(MOD_GLOBAL_CITY_FOREST_BONUS)
-		static BuildTypes eBuildRemoveForest = (BuildTypes)GC.getInfoTypeForString("BUILD_REMOVE_FOREST");
-
 		// Only for major civs building on a forest
-		if(MOD_GLOBAL_CITY_FOREST_BONUS && eBuildRemoveForest != -1 && !owningPlayer.isMinorCiv() && pPlot->getFeatureType() == FEATURE_FOREST)
+		if(MOD_GLOBAL_CITY_FOREST_BONUS && eBuildRemoveForest != -1 && !owningPlayer.isMinorCiv() && eFeature == FEATURE_FOREST)
 		{
 			// Don't do this for the AI capitals - it's just too much of an initial boost!
 			if (owningPlayer.isHuman() || owningPlayer.getCapitalCity() != NULL) {
-				CvCity* pLogCity = NULL;
-				int iProduction = pPlot->getFeatureProduction(eBuildRemoveForest, getOwner(), &pLogCity);
-
-				if(iProduction > 0)
-				{
-					iProduction = (int) (1.25 * iProduction); // Make the production higher than a "ring-1 chop"
-					changeFeatureProduction(iProduction);
-					CUSTOMLOG("Founding of %s on a forest created %d initial production", getName().GetCString(), iProduction);
-
-					if(getOwner() == GC.getGame().getActivePlayer())
-					{
-						CvString strBuffer = GetLocalizedText("TXT_KEY_MISC_CLEARING_FEATURE_RESOURCE", GC.getFeatureInfo(pPlot->getFeatureType())->GetTextKey(), iProduction, getNameKey());
-						GC.GetEngineUserInterface()->AddCityMessage(0, GetIDInfo(), getOwner(), false, GC.getEVENT_MESSAGE_TIME(), strBuffer);
-					}
-				}
+				TechTypes iRequiredTech = (TechTypes) gCustomMods.getOption("GLOBAL_CITY_FOREST_BONUS_TECH", -1);
+				bClearedForest = (iRequiredTech == -1 || GET_TEAM(owningPlayer.getTeam()).GetTeamTechs()->HasTech(iRequiredTech));
 			}
 		}
 #endif
@@ -450,6 +445,13 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	changePopulation(GC.getINITIAL_CITY_POPULATION() + GC.getGame().getStartEraInfo().getFreePopulation());
 	// Free population from things (e.g. Policies)
 	changePopulation(GET_PLAYER(getOwner()).GetNewCityExtraPopulation());
+
+#if defined(MOD_API_EXTENSIONS)
+	// We do this here as changePopulation() sends a game event we may have caught to do funky renaming things
+	if (szName) {
+		setName(szName);
+	}
+#endif
 
 	// Free food from things (e.g. Policies)
 	int iFreeFood = growthThreshold() * GET_PLAYER(getOwner()).GetFreeFoodBox();
@@ -624,6 +626,39 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	{
 		ChangeJONSCulturePerTurnFromPolicies(GET_PLAYER(getOwner()).GetPlayerPolicies()->GetNumericModifier(POLICYMOD_CULTURE_FROM_GARRISON));
 	}
+
+#if defined(MOD_GLOBAL_CITY_FOREST_BONUS)
+	if (bClearedForest) {
+		int iProduction;
+
+		// Base value
+		if (GET_PLAYER(getOwner()).GetAllFeatureProduction() > 0) {
+			iProduction = GET_PLAYER(getOwner()).GetAllFeatureProduction();
+		} else {
+			iProduction = GC.getBuildInfo(eBuildRemoveForest)->getFeatureProduction(FEATURE_FOREST);
+		}
+
+		iProduction *= std::max(0, (GET_PLAYER(getOwner()).getFeatureProductionModifier() + 100));
+		iProduction /= 100;
+
+		iProduction *= GC.getGame().getGameSpeedInfo().getFeatureProductionPercent();
+		iProduction /= 100;
+
+		if (iProduction > 0) {
+			// Make the production higher than a "ring-1 chop"
+			iProduction *= gCustomMods.getOption("GLOBAL_CITY_FOREST_BONUS_PERCENT", 125);
+			iProduction /= 100;
+
+			changeFeatureProduction(iProduction);
+			CUSTOMLOG("Founding of %s on a forest created %d initial production", getName().GetCString(), iProduction);
+
+			if (getOwner() == GC.getGame().getActivePlayer()) {
+				CvString strBuffer = GetLocalizedText("TXT_KEY_MISC_CLEARING_FEATURE_RESOURCE", GC.getFeatureInfo(eFeature)->GetTextKey(), iProduction, getNameKey());
+				GC.GetEngineUserInterface()->AddCityMessage(0, GetIDInfo(), getOwner(), false, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+			}
+		}
+	}
+#endif
 
 	AI_init();
 

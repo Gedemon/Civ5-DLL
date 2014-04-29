@@ -1161,6 +1161,16 @@ bool CvPlot::isFreshWater() const
 				}
 
 #if defined(MOD_API_EXTENSIONS)
+				ImprovementTypes improvement_type = pLoopPlot->getImprovementType();
+
+				if(improvement_type != NO_IMPROVEMENT)
+				{
+					if(GC.getImprovementInfo(improvement_type)->IsAddsFreshWater())
+					{
+						return true;
+					}
+				}
+
 				if (pLoopPlot->isCity() && pLoopPlot->getPlotCity()->isAddsFreshWater())
 				{
 					return true;

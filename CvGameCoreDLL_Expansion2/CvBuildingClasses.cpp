@@ -270,7 +270,9 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	m_bRiver = kResults.GetBool("River");
 	m_bFreshWater = kResults.GetBool("FreshWater");
 #if defined(MOD_API_EXTENSIONS)
-	m_bAddsFreshWater = kResults.GetBool("AddsFreshWater");
+	if (MOD_API_EXTENSIONS) {
+		m_bAddsFreshWater = kResults.GetBool("AddsFreshWater");
+	}
 #endif
 	m_bMountain = kResults.GetBool("Mountain");
 	m_bHill = kResults.GetBool("Hill");

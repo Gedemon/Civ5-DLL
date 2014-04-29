@@ -7408,7 +7408,7 @@ bool CvUnit::DoFoundReligion()
 					pNotifications->Add(NOTIFICATION_FOUND_RELIGION, strBuffer, strSummary, pkPlot->getX(), pkPlot->getY(), -1, pkCity->GetID());
 				}
 				kOwner.GetReligions()->SetFoundingReligion(true);
-#if defined (MOD_EVENTS_GREAT_PEOPLE)
+#if defined(MOD_EVENTS_GREAT_PEOPLE)
 				kOwner.DoGreatPersonExpended(getUnitType(), this);
 #else
 				kOwner.DoGreatPersonExpended(getUnitType());
@@ -9363,7 +9363,6 @@ bool CvUnit::canBuild(const CvPlot* pPlot, BuildTypes eBuild, bool bTestVisible,
 	{
 		if (GetReligionData()->GetReligion() != NO_RELIGION && GetReligionData()->GetSpreadsLeft() < m_pUnitInfo->GetReligionSpreads())
 		{
-			CUSTOMLOG("Can't build as started spreading religion (spreads=%i, left=%i)", m_pUnitInfo->GetReligionSpreads(), GetReligionData()->GetSpreadsLeft());
 			return false;
 		}
 	}
@@ -10194,11 +10193,14 @@ CvUnit* CvUnit::DoUpgrade()
 	}
 #endif
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	if (!bFree) {
+#endif
 #if defined(MOD_GLOBAL_CS_UPGRADES)
 	if (MOD_GLOBAL_CS_UPGRADES) {
 		// Is this plot owned by an allied militaristic City State
 		const CvPlot* pPlot = plot();
-		if(pPlot->getOwner() != getOwner()) {
+		if(pPlot->getOwner() != getOwner() && pPlot->getOwner() != NO_PLAYER) {
 			const CvPlayer& pPlotOwner = GET_PLAYER(pPlot->getOwner());
 			if (pPlotOwner.isMinorCiv()) {
 				CvMinorCivAI* kMinor = pPlotOwner.GetMinorCivAI();
@@ -10215,6 +10217,9 @@ CvUnit* CvUnit::DoUpgrade()
 				}
 			}
 		}
+	}
+#endif
+#if defined(MOD_API_LUA_EXTENSIONS)
 	}
 #endif
 
@@ -11008,7 +11013,11 @@ int CvUnit::GetUnhappinessCombatPenalty() const
 	CvPlayer &kPlayer = GET_PLAYER(getOwner());
 	int iPenalty = 0;
 
-	if (kPlayer.IsEmpireUnhappy())
+#if defined(MOD_GLOBAL_CS_RAZE_RARELY)
+	if((!kPlayer.isMinorCiv() && kPlayer.IsEmpireUnhappy()) || (kPlayer.isMinorCiv() && kPlayer.IsEmpireVeryUnhappy()))
+#else
+	if(kPlayer.IsEmpireUnhappy())
+#endif
 	{
 		iPenalty = (-1 * kPlayer.GetExcessHappiness()) * GC.getVERY_UNHAPPY_COMBAT_PENALTY_PER_UNHAPPY();
 		iPenalty = max(iPenalty, GC.getVERY_UNHAPPY_MAX_COMBAT_PENALTY());
@@ -11073,7 +11082,11 @@ int CvUnit::GetGenericMaxStrengthModifier(const CvUnit* pOtherUnit, const CvPlot
 	ReligionTypes eFoundedReligion = pReligions->GetFounderBenefitsReligion(kPlayer.GetID());
 
 	// If the empire is unhappy, then Units get a combat penalty
+#if defined(MOD_GLOBAL_CS_RAZE_RARELY)
+	if((!kPlayer.isMinorCiv() && kPlayer.IsEmpireUnhappy()) || (kPlayer.isMinorCiv() && kPlayer.IsEmpireVeryUnhappy()))
+#else
 	if(kPlayer.IsEmpireUnhappy())
+#endif
 	{
 		iModifier += GetUnhappinessCombatPenalty();
 	}
@@ -11689,7 +11702,11 @@ int CvUnit::GetMaxRangedCombatStrength(const CvUnit* pOtherUnit, const CvCity* p
 		iModifier += getKamikazePercent();
 
 	// If the empire is unhappy, then Units get a combat penalty
+#if defined(MOD_GLOBAL_CS_RAZE_RARELY)
+	if((!kPlayer.isMinorCiv() && kPlayer.IsEmpireUnhappy()) || (kPlayer.isMinorCiv() && kPlayer.IsEmpireVeryUnhappy()))
+#else
 	if(kPlayer.IsEmpireUnhappy())
+#endif
 	{
 		iModifier += GetUnhappinessCombatPenalty();
 	}

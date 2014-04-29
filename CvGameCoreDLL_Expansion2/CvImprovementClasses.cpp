@@ -102,6 +102,9 @@ CvImprovementEntry::CvImprovementEntry(void):
 	m_bFreshWaterMakesValid(false),
 	m_bRiverSideMakesValid(false),
 	m_bNoFreshWater(false),
+#if defined(MOD_API_EXTENSIONS)
+	m_bAddsFreshWater(false),
+#endif
 	m_bRequiresFlatlands(false),
 	m_bRequiresFlatlandsOrFreshWater(false),
 	m_bRequiresFeature(false),
@@ -224,6 +227,11 @@ bool CvImprovementEntry::CacheResults(Database::Results& kResults, CvDatabaseUti
 	m_bFreshWaterMakesValid = kResults.GetBool("FreshWaterMakesValid");
 	m_bRiverSideMakesValid = kResults.GetBool("RiverSideMakesValid");
 	m_bNoFreshWater = kResults.GetBool("NoFreshWater");
+#if defined(MOD_API_EXTENSIONS)
+	if (MOD_API_EXTENSIONS) {
+		m_bAddsFreshWater = kResults.GetBool("AddsFreshWater");
+	}
+#endif
 	m_bRequiresFlatlands = kResults.GetBool("RequiresFlatlands");
 	m_bRequiresFlatlandsOrFreshWater = kResults.GetBool("RequiresFlatlandsOrFreshWater");
 	m_bRequiresFeature = kResults.GetBool("RequiresFeature");
@@ -694,6 +702,14 @@ bool CvImprovementEntry::IsNoFreshWater() const
 {
 	return m_bNoFreshWater;
 }
+
+#if defined(MOD_API_EXTENSIONS)
+/// Adds fresh water to the plot
+bool CvImprovementEntry::IsAddsFreshWater() const
+{
+	return m_bAddsFreshWater;
+}
+#endif
 
 /// Requires that it must be built on something other than a hill
 bool CvImprovementEntry::IsRequiresFlatlands() const

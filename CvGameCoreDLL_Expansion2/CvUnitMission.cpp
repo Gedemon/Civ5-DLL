@@ -167,7 +167,6 @@ void CvUnitMission::PushMission(UnitHandle hUnit, MissionTypes eMission, int iDa
 					  if (MOD_BUGFIX_FEATURE_REMOVAL) {
 						// Don't bother looking if this is the build that removes this feature
 						if (!pkBuildInfo->isFeatureRemoveOnly(eFeature)) {
-							CUSTOMLOG("What build removes feature %i?", eFeature);
 						
 							// We need to find the build that will remove eFeature.
 							CvBuildInfo* pRemoveBuild = NULL;
@@ -177,7 +176,6 @@ void CvUnitMission::PushMission(UnitHandle hUnit, MissionTypes eMission, int iDa
 								CvBuildInfo* pRemoveBuildInfo = GC.getBuildInfo((BuildTypes) iI);
 								if(pRemoveBuildInfo) {
 									if(pRemoveBuildInfo->isFeatureRemoveOnly(eFeature)) {
-										CUSTOMLOG("  candidate build %i", iI);
 										CvTeamTechs* pTechs = GET_TEAM(GET_PLAYER(hUnit->getOwner()).getTeam()).GetTeamTechs();
 										TechTypes eObsoleteTech = (TechTypes) pRemoveBuildInfo->getFeatureObsoleteTech(eFeature);
 
@@ -187,15 +185,12 @@ void CvUnitMission::PushMission(UnitHandle hUnit, MissionTypes eMission, int iDa
 											// We have a candidate build for removing this feature
 											if (ePrereqTech == NO_TECH) {
 												if (pRemoveBuild == NULL) {
-													CUSTOMLOG("  tech'less and no previous candidate so considering it");
 													pRemoveBuild = pRemoveBuildInfo;
 												}
 											} else if (pTechs->HasTech(ePrereqTech)) {
 												if (pRemoveBuild == NULL) {
-													CUSTOMLOG("  tech'ed and no previous candidate so considering it");
 													pRemoveBuild = pRemoveBuildInfo;
 												} else if (GC.getTechInfo(ePrereqTech)->GetGridX() > GC.getTechInfo((TechTypes) pRemoveBuild->getFeatureTech(eFeature))->GetGridX()) {
-													CUSTOMLOG("  tech'ed and better than the previous candidate so considering it");
 													pRemoveBuild = pRemoveBuildInfo;
 												}
 											}
@@ -205,8 +200,6 @@ void CvUnitMission::PushMission(UnitHandle hUnit, MissionTypes eMission, int iDa
 							}
 						
 							if (pRemoveBuild != NULL) {
-								CUSTOMLOG("To remove feature %i we will use build %i", eFeature, pRemoveBuild->GetID());
-							
 								MissionData removeMission;
 								removeMission.eMissionType = eMission;
 								removeMission.iData1 = pRemoveBuild->GetID();

@@ -44,7 +44,11 @@ public:
 	CvCity();
 	virtual ~CvCity();
 
+#if defined(MOD_API_EXTENSIONS)
+	void init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits = true, bool bInitialFounding = true, const char* szName = NULL);
+#else
 	void init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits = true, bool bInitialFounding = true);
+#endif
 	void uninit();
 	void reset(int iID = 0, PlayerTypes eOwner = NO_PLAYER, int iX = 0, int iY = 0, bool bConstructorCall = false);
 	void setupGraphical();

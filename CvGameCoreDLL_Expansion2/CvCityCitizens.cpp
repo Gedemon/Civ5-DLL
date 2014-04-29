@@ -2580,6 +2580,9 @@ void CvCityCitizens::DoSpawnGreatPerson(UnitTypes eUnit, bool bIncrementCount, b
 	}
 	if(bCountAsProphet || newUnit->getUnitInfo().IsFoundReligion())
 	{
+#if defined(MOD_BUGFIX_MINOR)
+		if (bIncrementCount)
+#endif
 		kPlayer.GetReligions()->ChangeNumProphetsSpawned(1);
 	}
 

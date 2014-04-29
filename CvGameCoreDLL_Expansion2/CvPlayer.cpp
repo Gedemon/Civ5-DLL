@@ -1691,7 +1691,11 @@ CvPlot* CvPlayer::addFreeUnit(UnitTypes eUnit, UnitAITypes eUnitAI)
 
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_API_EXTENSIONS)
+CvCity* CvPlayer::initCity(int iX, int iY, bool bBumpUnits, bool bInitialFounding, const char* szName)
+#else
 CvCity* CvPlayer::initCity(int iX, int iY, bool bBumpUnits, bool bInitialFounding)
+#endif
 {
 	CvCity* pCity = addCity();
 
@@ -1699,7 +1703,11 @@ CvCity* CvPlayer::initCity(int iX, int iY, bool bBumpUnits, bool bInitialFoundin
 	if(pCity != NULL)
 	{
 		CvAssertMsg(!(GC.getMap().plot(iX, iY)->isCity()), "No city is expected at this plot when initializing new city");
+#if defined(MOD_API_EXTENSIONS)
+		pCity->init(pCity->GetID(), GetID(), iX, iY, bBumpUnits, bInitialFounding, szName);
+#else
 		pCity->init(pCity->GetID(), GetID(), iX, iY, bBumpUnits, bInitialFounding);
+#endif
 		pCity->GetCityStrategyAI()->UpdateFlavorsForNewCity();
 	}
 
@@ -2227,7 +2235,11 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 	GC.GetEngineUserInterface()->setDirty(NationalBorders_DIRTY_BIT, true);
 	// end adapted from PostKill()
 
+#if defined(MOD_API_EXTENSIONS)
+	pNewCity = initCity(pCityPlot->getX(), pCityPlot->getY(), !bConquest, (!bConquest && !bGift), strName.c_str());
+#else
 	pNewCity = initCity(pCityPlot->getX(), pCityPlot->getY(), !bConquest, (!bConquest && !bGift));
+#endif
 
 	CvAssertMsg(pNewCity != NULL, "NewCity is not assigned a valid value");
 
@@ -9942,7 +9954,11 @@ int CvPlayer::GetCulturePerTurnFromReligion() const
 	ReligionTypes eFoundedReligion = pReligions->GetFounderBenefitsReligion(GetID());
 	if(eFoundedReligion != NO_RELIGION)
 	{
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, GetID());
+#else
 		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, NO_PLAYER);
+#endif
 		if(pReligion)
 		{
 			iReligionCulturePerTurn += pReligion->m_Beliefs.GetHolyCityYieldChange(YIELD_CULTURE);
@@ -10600,7 +10616,11 @@ int CvPlayer::GetFaithPerTurnFromReligion() const
 	ReligionTypes eFoundedReligion = pReligions->GetFounderBenefitsReligion(GetID());
 	if(eFoundedReligion != NO_RELIGION)
 	{
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, GetID());
+#else
 		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, NO_PLAYER);
+#endif
 		if(pReligion)
 		{
 			iFaithPerTurn += pReligion->m_Beliefs.GetHolyCityYieldChange(YIELD_FAITH);
@@ -11482,7 +11502,11 @@ int CvPlayer::GetHappinessFromReligion()
 	ReligionTypes eFoundedReligion = pReligions->GetFounderBenefitsReligion(GetID());
 	if(eFoundedReligion != NO_RELIGION)
 	{
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, GetID());
+#else
 		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, NO_PLAYER);
+#endif
 		if(pReligion)
 		{
 			bool bAtPeace = GET_TEAM(getTeam()).getAtWarCount(false) == 0;
@@ -18395,7 +18419,11 @@ void CvPlayer::DoCivilianReturnLogic(bool bReturn, PlayerTypes eToPlayer, int iU
 					ReligionTypes eReligion = pUnit->GetReligionData()->GetReligion();
 
 					if (eReligion > RELIGION_PANTHEON) {
+#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
+						const CvReligion* pkReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, GetID());
+#else
 						const CvReligion* pkReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, NO_PLAYER);
+#endif
 
 						if (pkReligion) {
 							CvPlot* pPlot = GC.getMap().plot(pkReligion->m_iHolyCityX, pkReligion->m_iHolyCityY);
@@ -25288,7 +25316,11 @@ void CvPlayer::DoAnnounceReligionAdoption()
 				localizedText = Localization::Lookup("TXT_KEY_MISC_RELIGION_ADOPTED_UNKNOWN");
 			}
 
+#if defined(MOD_API_EXTENSIONS)
+			thisPlayer.GetNotifications()->Add(NOTIFICATION_RELIGION_RACE, localizedText.toUTF8(), localizedText.toUTF8(), iX, iY, GetReligions()->GetReligionCreatedByPlayer(), -1);
+#else
 			thisPlayer.GetNotifications()->Add(NOTIFICATION_RELIGION_RACE, localizedText.toUTF8(), localizedText.toUTF8(), iX, iY, -1);
+#endif
 		}
 	}
 }

@@ -153,7 +153,38 @@ int CustomMods::eventAccumulator(int &iValue, const char* szName, CvLuaArgsHandl
 }
 
 
+// Update CustomModOptions table from references in CustomModPostDefines
+// Based on code in CvDllDatabaseUtility::PerformDatabasePostProcessing()
+void CustomMods::prefetchCache() {
+	Database::Connection* db = GC.GetGameDatabase();
+	db->BeginTransaction();
+
+	Database::Results kInsert;
+	db->Execute(kInsert, "INSERT OR REPLACE INTO CustomModOptions(Name, Value) VALUES(?, ?)");
+
+	Database::Results kPostDefines;
+	db->SelectAll(kPostDefines, "CustomModPostDefines");
+	while (kPostDefines.Step()) {
+		Database::Results kLookup;
+		char szSQL[512];
+		sprintf_s(szSQL, "select ROWID from %s where Type = '%s' LIMIT 1", kPostDefines.GetText("Table"), kPostDefines.GetText("Type"));
+
+		if (db->Execute(kLookup, szSQL)) {
+			if (kLookup.Step()) {
+				kInsert.Bind(1, kPostDefines.GetText("Name"));
+				kInsert.Bind(2, kLookup.GetInt(0));
+				kInsert.Step();
+				kInsert.Reset();
+			}
+		}
+	}
+
+	db->EndTransaction();
+}
+
 void CustomMods::preloadCache() {
+	prefetchCache();
+
 	(void) getOption("EVENTS_CIRCUMNAVIGATION");
 }
 
