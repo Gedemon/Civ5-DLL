@@ -288,6 +288,8 @@ protected:
 	
 	// RED <<<<<
 	static int lGetCulture(lua_State* L);
+	static int lSetCulture(lua_State* L);
+	static int lChangeCulture(lua_State* L);
 	static int lGetTotalCulture(lua_State* L);
 	static int lGetCulturePercent(lua_State* L);
 	static int lGetCulturePer10000(lua_State* L);

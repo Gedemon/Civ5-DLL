@@ -264,7 +264,9 @@ bool CvDllDatabaseUtility::PerformDatabasePostProcessing()
 		InsertGameDefine(kInsertDefine, "CITY_HOME_PLOT", CITY_HOME_PLOT);
 		InsertGameDefine(kInsertDefine, "CITY_PLOTS_RADIUS", CITY_PLOTS_RADIUS);
 		InsertGameDefine(kInsertDefine, "CITY_PLOTS_DIAMETER", CITY_PLOTS_DIAMETER);
-
+		
+		InsertGameDefine(kInsertDefine, "REALLY_MAX_PLAYERS", REALLY_MAX_PLAYERS);
+		InsertGameDefine(kInsertDefine, "SEPARATIST_PLAYER", SEPARATIST_PLAYER);
 		InsertGameDefine(kInsertDefine, "DLL_RED_BNW", 8); // RED
 	}
 
