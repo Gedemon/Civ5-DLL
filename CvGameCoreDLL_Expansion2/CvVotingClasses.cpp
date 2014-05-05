@@ -3154,7 +3154,11 @@ std::vector<int> CvLeague::GetChoicesForDecision(ResolutionDecisionTypes eDecisi
 		for (uint i = 0; i < MAX_MAJOR_CIVS; i++)
 		{
 			PlayerTypes e = (PlayerTypes) i;
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+			if (GET_PLAYER(e).isAlive() && GET_PLAYER(e).GetReligions()->HasCreatedReligion(true))
+#else
 			if (GET_PLAYER(e).isAlive() && GET_PLAYER(e).GetReligions()->HasCreatedReligion())
+#endif
 			{
 				vChoices.push_back(GET_PLAYER(e).GetReligions()->GetReligionCreatedByPlayer());
 			}

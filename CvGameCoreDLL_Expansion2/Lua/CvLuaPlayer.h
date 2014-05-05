@@ -918,9 +918,6 @@ protected:
 #if defined(MOD_TRAITS_ANY_BELIEF)
 	LUAAPIEXTN(IsTraitAnyBelief);
 #endif
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	LUAAPIEXTN(IsTraitPantheonIsReligion);
-#endif
 	static int lIsTraitBonusReligiousBelief(lua_State* L);
 	static int lGetHappinessFromLuxury(lua_State* L);
 	static int lIsAbleToAnnexCityStates(lua_State* L);

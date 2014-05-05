@@ -30,12 +30,20 @@ public:
 	
 	CvString GetIconString() const;
 
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	bool IsLocalReligion() const;
+#endif
+
 protected:
 	CvString m_strIconString;
 
 private:
 	CvReligionEntry(const CvReligionEntry&);
 	CvReligionEntry& operator=(const CvReligionEntry&);
+
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	int m_iLocalReligion;
+#endif
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -211,15 +219,27 @@ public:
 	// Main religion information functions
 	int GetNumFollowers(ReligionTypes eReligion) const;
 	int GetNumCitiesFollowing(ReligionTypes eReligion) const;
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	bool HasCreatedReligion(PlayerTypes ePlayer, bool bIgnoreLocal = false) const;
+#else
 	bool HasCreatedReligion(PlayerTypes ePlayer) const;
+#endif
 	bool HasAddedReformationBelief(PlayerTypes ePlayer) const;
 	bool IsEligibleForFounderBenefits(ReligionTypes eReligion, PlayerTypes ePlayer) const;
 	bool IsCityStateFriendOfReligionFounder(ReligionTypes eReligion, PlayerTypes ePlayer);
 	ReligionTypes GetReligionCreatedByPlayer(PlayerTypes ePlayer) const;
 	ReligionTypes GetFounderBenefitsReligion(PlayerTypes ePlayer) const;
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	int GetNumReligionsFounded(bool bIgnoreLocal = false) const;
+#else
 	int GetNumReligionsFounded() const;
+#endif
 	int GetNumReligionsEnhanced() const;
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	int GetNumReligionsStillToFound(bool bIgnoreLocal = false) const;
+#else
 	int GetNumReligionsStillToFound() const;
+#endif
 #if defined (MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
 	std::vector<BeliefTypes> GetAvailableFounderBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
 	std::vector<BeliefTypes> GetAvailableFollowerBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
@@ -317,7 +337,11 @@ public:
 
 	// State information
 	bool HasCreatedPantheon() const;
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	bool HasCreatedReligion(bool bIgnoreLocal = false) const;
+#else
 	bool HasCreatedReligion() const;
+#endif
 	bool HasAddedReformationBelief() const;
 	ReligionTypes GetReligionCreatedByPlayer() const;
 #if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
@@ -406,9 +430,6 @@ public:
 
 	// Routines to update religious status of citizens
 	void DoPopulationChange(int iChange);
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	void DoPantheonFounded(ReligionTypes eReligion);
-#endif
 	void DoReligionFounded(ReligionTypes eReligion);
 	void AddProphetSpread(ReligionTypes eReligion, int iPressure, PlayerTypes eResponsiblePlayer);
 	void AddReligiousPressure(CvReligiousFollowChangeReason eReason, ReligionTypes eReligion, int iPressure, PlayerTypes eResponsiblePlayer=NO_PLAYER);

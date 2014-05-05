@@ -432,11 +432,7 @@ int CvTreasury::GetGoldPerTurnFromReligion() const
 	ReligionTypes eFoundedReligion = pReligions->GetFounderBenefitsReligion(m_pPlayer->GetID());
 	if(eFoundedReligion != NO_RELIGION)
 	{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, m_pPlayer->GetID());
-#else
 		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, NO_PLAYER);
-#endif
 		if(pReligion)
 		{
 			int iGoldPerFollowingCity = pReligion->m_Beliefs.GetGoldPerFollowingCity();

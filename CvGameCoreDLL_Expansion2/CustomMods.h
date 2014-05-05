@@ -23,8 +23,8 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 47)
-#define MOD_DLL_VERSION_STATUS "b"			// a (alpha), b (beta) or blank (released)
+#define MOD_DLL_VERSION_NUMBER ((uint) 48)
+#define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
 
@@ -169,8 +169,6 @@
 #define MOD_TRAITS_CITY_WORKING                     gCustomMods.isTRAITS_CITY_WORKING()
 // Enables any belief to be selected, even if already taken (v46)
 #define MOD_TRAITS_ANY_BELIEF                       gCustomMods.isTRAITS_ANY_BELIEF()
-// Enables a pantheon to be treated as a religion (v47)
-#define MOD_TRAITS_PANTHEON_IS_RELIGION             gCustomMods.isTRAITS_PANTHEON_IS_RELIGION()
 
 // Permits cities to work more rings - AFFECTS SAVE GAME DATA FORMAT
 #define MOD_POLICIES_CITY_WORKING                   gCustomMods.isPOLICIES_CITY_WORKING()
@@ -231,6 +229,8 @@
 #if defined(MOD_API_PLOT_YIELDS)
 #define MOD_RELIGION_PLOT_YIELDS                    (gCustomMods.isRELIGION_PLOT_YIELDS() && MOD_API_PLOT_YIELDS)
 #endif
+// Adds support for "local" religions (ie ones that only have influence within the civ's own territory) (v48)
+#define MOD_RELIGION_LOCAL_RELIGIONS                gCustomMods.isRELIGION_LOCAL_RELIGIONS()
 
 // Enables production to be stockpiled (v28)
 #define MOD_PROCESS_STOCKPILE                       gCustomMods.isPROCESS_STOCKPILE()
@@ -820,7 +820,6 @@ public:
 	MOD_OPT_DECL(TRAITS_CROSSES_ICE);
 	MOD_OPT_DECL(TRAITS_CITY_WORKING);
 	MOD_OPT_DECL(TRAITS_ANY_BELIEF);
-	MOD_OPT_DECL(TRAITS_PANTHEON_IS_RELIGION);
 
 	MOD_OPT_DECL(POLICIES_CITY_WORKING);
 
@@ -854,6 +853,7 @@ public:
 	MOD_OPT_DECL(RELIGION_KEEP_PROPHET_OVERFLOW);
 	MOD_OPT_DECL(RELIGION_RECURRING_PURCHASE_NOTIFIY);
 	MOD_OPT_DECL(RELIGION_PLOT_YIELDS);
+	MOD_OPT_DECL(RELIGION_LOCAL_RELIGIONS);
 
 	MOD_OPT_DECL(PROCESS_STOCKPILE);
 

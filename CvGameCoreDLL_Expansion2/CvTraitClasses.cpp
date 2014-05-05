@@ -103,9 +103,6 @@ CvTraitEntry::CvTraitEntry() :
 #if defined(MOD_TRAITS_ANY_BELIEF)
 	m_bAnyBelief(false),
 #endif
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	m_bPantheonIsReligion(false),
-#endif
 	m_bBonusReligiousBelief(false),
 	m_bAbleToAnnexCityStates(false),
 	m_bCrossesMountainsAfterGreatGeneral(false),
@@ -620,14 +617,6 @@ bool CvTraitEntry::IsAnyBelief() const
 }
 #endif
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-/// Accessor: can this civ purchase pantheon units
-bool CvTraitEntry::IsPantheonIsReligion() const
-{
-	return m_bPantheonIsReligion;
-}
-#endif
-
 /// Accessor: does this civ get a bonus religious belief?
 bool CvTraitEntry::IsBonusReligiousBelief() const
 {
@@ -1021,11 +1010,6 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 #if defined(MOD_TRAITS_ANY_BELIEF)
 	if (MOD_TRAITS_ANY_BELIEF) {
 		m_bAnyBelief = kResults.GetBool("AnyBelief");
-	}
-#endif
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	if (MOD_TRAITS_PANTHEON_IS_RELIGION) {
-		m_bPantheonIsReligion = kResults.GetBool("PantheonIsReligion");
 	}
 #endif
 	m_bBonusReligiousBelief = kResults.GetBool("BonusReligiousBelief");
@@ -1493,12 +1477,6 @@ void CvPlayerTraits::InitPlayerTraits()
 				m_bAnyBelief = true;
 			}
 #endif
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			if(trait->IsPantheonIsReligion())
-			{
-				m_bPantheonIsReligion = true;
-			}
-#endif
 			if(trait->IsBonusReligiousBelief())
 			{
 				m_bBonusReligiousBelief = true;
@@ -1731,9 +1709,6 @@ void CvPlayerTraits::Reset()
 	m_bFaithFromUnimprovedForest = false;
 #if defined(MOD_TRAITS_ANY_BELIEF)
 	m_bAnyBelief = false;
-#endif
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	m_bPantheonIsReligion = false;
 #endif
 	m_bBonusReligiousBelief = false;
 	m_bAbleToAnnexCityStates = false;
@@ -2878,9 +2853,6 @@ void CvPlayerTraits::Read(FDataStream& kStream)
 #if defined(MOD_TRAITS_ANY_BELIEF)
 	MOD_SERIALIZE_READ(46, kStream, m_bAnyBelief, false);
 #endif
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	MOD_SERIALIZE_READ(46, kStream, m_bPantheonIsReligion, false);
-#endif
 	kStream >> m_bBonusReligiousBelief;
 
 	kStream >> m_bAbleToAnnexCityStates;
@@ -3137,9 +3109,6 @@ void CvPlayerTraits::Write(FDataStream& kStream)
 	kStream << m_bFaithFromUnimprovedForest;
 #if defined(MOD_TRAITS_ANY_BELIEF)
 	MOD_SERIALIZE_WRITE(kStream, m_bAnyBelief);
-#endif
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	MOD_SERIALIZE_WRITE(kStream, m_bPantheonIsReligion);
 #endif
 	kStream << m_bBonusReligiousBelief;
 	kStream << m_bAbleToAnnexCityStates;

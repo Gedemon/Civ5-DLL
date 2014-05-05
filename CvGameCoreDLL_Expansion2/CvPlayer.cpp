@@ -1692,7 +1692,7 @@ CvPlot* CvPlayer::addFreeUnit(UnitTypes eUnit, UnitAITypes eUnitAI)
 
 //	--------------------------------------------------------------------------------
 #if defined(MOD_API_EXTENSIONS)
-CvCity* CvPlayer::initCity(int iX, int iY, bool bBumpUnits, bool bInitialFounding, const char* szName)
+CvCity* CvPlayer::initCity(int iX, int iY, bool bBumpUnits, bool bInitialFounding, ReligionTypes eInitialReligion, const char* szName)
 #else
 CvCity* CvPlayer::initCity(int iX, int iY, bool bBumpUnits, bool bInitialFounding)
 #endif
@@ -1704,7 +1704,7 @@ CvCity* CvPlayer::initCity(int iX, int iY, bool bBumpUnits, bool bInitialFoundin
 	{
 		CvAssertMsg(!(GC.getMap().plot(iX, iY)->isCity()), "No city is expected at this plot when initializing new city");
 #if defined(MOD_API_EXTENSIONS)
-		pCity->init(pCity->GetID(), GetID(), iX, iY, bBumpUnits, bInitialFounding, szName);
+		pCity->init(pCity->GetID(), GetID(), iX, iY, bBumpUnits, bInitialFounding, eInitialReligion, szName);
 #else
 		pCity->init(pCity->GetID(), GetID(), iX, iY, bBumpUnits, bInitialFounding);
 #endif
@@ -2236,7 +2236,7 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 	// end adapted from PostKill()
 
 #if defined(MOD_API_EXTENSIONS)
-	pNewCity = initCity(pCityPlot->getX(), pCityPlot->getY(), !bConquest, (!bConquest && !bGift), strName.c_str());
+	pNewCity = initCity(pCityPlot->getX(), pCityPlot->getY(), !bConquest, (!bConquest && !bGift), NO_RELIGION, strName.c_str());
 #else
 	pNewCity = initCity(pCityPlot->getX(), pCityPlot->getY(), !bConquest, (!bConquest && !bGift));
 #endif
@@ -5305,11 +5305,7 @@ int CvPlayer::GetScoreFromReligion() const
 	int iScore = 0;
 	CvGameReligions *pGameReligions = GC.getGame().GetGameReligions();
 	ReligionTypes eReligion = GetReligions()->GetReligionCreatedByPlayer();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	if (eReligion > RELIGION_PANTHEON || (MOD_TRAITS_PANTHEON_IS_RELIGION && eReligion == RELIGION_PANTHEON && GetPlayerTraits()->IsPantheonIsReligion()))
-#else
 	if (eReligion > RELIGION_PANTHEON)
-#endif
 	{
 		const CvReligion *pReligion = pGameReligions->GetReligion(eReligion, GetID());
 		iScore += pReligion->m_Beliefs.GetNumBeliefs() * /*20*/ GC.getSCORE_BELIEF_MULTIPLIER();
@@ -7059,7 +7055,11 @@ bool CvPlayer::canFound(int iX, int iY, bool bTestVisible) const
 
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+void CvPlayer::found(int iX, int iY, ReligionTypes eReligion)
+#else
 void CvPlayer::found(int iX, int iY)
+#endif
 {
 	if(!canFound(iX, iY))
 	{
@@ -7068,7 +7068,11 @@ void CvPlayer::found(int iX, int iY)
 
 	SetTurnsSinceSettledLastCity(0);
 
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS) && defined(MOD_API_EXTENSIONS)
+	CvCity* pCity = initCity(iX, iY, true, true, eReligion);
+#else
 	CvCity* pCity = initCity(iX, iY);
+#endif
 	CvAssertMsg(pCity != NULL, "City is not assigned a valid value");
 	if(pCity == NULL)
 		return;
@@ -9954,11 +9958,7 @@ int CvPlayer::GetCulturePerTurnFromReligion() const
 	ReligionTypes eFoundedReligion = pReligions->GetFounderBenefitsReligion(GetID());
 	if(eFoundedReligion != NO_RELIGION)
 	{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, GetID());
-#else
 		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, NO_PLAYER);
-#endif
 		if(pReligion)
 		{
 			iReligionCulturePerTurn += pReligion->m_Beliefs.GetHolyCityYieldChange(YIELD_CULTURE);
@@ -10616,11 +10616,7 @@ int CvPlayer::GetFaithPerTurnFromReligion() const
 	ReligionTypes eFoundedReligion = pReligions->GetFounderBenefitsReligion(GetID());
 	if(eFoundedReligion != NO_RELIGION)
 	{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, GetID());
-#else
 		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, NO_PLAYER);
-#endif
 		if(pReligion)
 		{
 			iFaithPerTurn += pReligion->m_Beliefs.GetHolyCityYieldChange(YIELD_FAITH);
@@ -11502,11 +11498,7 @@ int CvPlayer::GetHappinessFromReligion()
 	ReligionTypes eFoundedReligion = pReligions->GetFounderBenefitsReligion(GetID());
 	if(eFoundedReligion != NO_RELIGION)
 	{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, GetID());
-#else
 		const CvReligion* pReligion = pReligions->GetReligion(eFoundedReligion, NO_PLAYER);
-#endif
 		if(pReligion)
 		{
 			bool bAtPeace = GET_TEAM(getTeam()).getAtWarCount(false) == 0;
@@ -13664,11 +13656,7 @@ void CvPlayer::DoGreatPersonExpended(UnitTypes /*eGreatPersonUnit*/)
 
 	// Faith gained
 	ReligionTypes eReligionFounded = GetReligions()->GetReligionCreatedByPlayer();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	if(eReligionFounded >= RELIGION_PANTHEON)
-#else
 	if(eReligionFounded > RELIGION_PANTHEON)
-#endif
 	{
 		const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eReligionFounded, GetID());
 		if(pReligion)
@@ -18419,11 +18407,7 @@ void CvPlayer::DoCivilianReturnLogic(bool bReturn, PlayerTypes eToPlayer, int iU
 					ReligionTypes eReligion = pUnit->GetReligionData()->GetReligion();
 
 					if (eReligion > RELIGION_PANTHEON) {
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-						const CvReligion* pkReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, GetID());
-#else
 						const CvReligion* pkReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, NO_PLAYER);
-#endif
 
 						if (pkReligion) {
 							CvPlot* pPlot = GC.getMap().plot(pkReligion->m_iHolyCityX, pkReligion->m_iHolyCityY);
@@ -22578,11 +22562,7 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 										ReligionTypes eReligion = GetReligions()->GetReligionCreatedByPlayer();
 										int iReligionSpreads = pNewUnit->getUnitInfo().GetReligionSpreads();
 										int iReligiousStrength = pNewUnit->getUnitInfo().GetReligiousStrength();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-										if(iReligionSpreads > 0 && eReligion >= RELIGION_PANTHEON)
-#else
 										if(iReligionSpreads > 0 && eReligion > RELIGION_PANTHEON)
-#endif
 										{
 											pNewUnit->GetReligionData()->SetSpreadsLeft(iReligionSpreads);
 											pNewUnit->GetReligionData()->SetReligiousStrength(iReligiousStrength);
@@ -22642,7 +22622,11 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 	}
 
 	// Add a Reformation belief if eligible
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	if (isHuman() && pPolicy->IsAddReformationBelief() && GetReligions()->HasCreatedReligion(true) && !GetReligions()->HasAddedReformationBelief())
+#else
 	if (isHuman() && pPolicy->IsAddReformationBelief() && GetReligions()->HasCreatedReligion() && !GetReligions()->HasAddedReformationBelief())
+#endif
 	{
 		pNotifications = GetNotifications();
 		if(pNotifications)

@@ -4669,7 +4669,12 @@ bool CvMinorCivAI::IsValidQuestForPlayer(PlayerTypes ePlayer, MinorCivQuestTypes
 			return false;
 
 		// Player must have founded a religion
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+		// but not a local one
+		if(!GC.getGame().GetGameReligions()->HasCreatedReligion(ePlayer, true))
+#else
 		if(!GC.getGame().GetGameReligions()->HasCreatedReligion(ePlayer))
+#endif
 			return false;
 
 		// Minor must not already share player's religion

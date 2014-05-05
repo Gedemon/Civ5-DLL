@@ -85,7 +85,7 @@ public:
 	CvPlot* addFreeUnit(UnitTypes eUnit, UnitAITypes eUnitAI = NO_UNITAI);
 
 #if defined(MOD_API_EXTENSIONS)
-	CvCity* initCity(int iX, int iY, bool bBumpUnits = true, bool bInitialFounding = true, const char* szName = NULL);
+	CvCity* initCity(int iX, int iY, bool bBumpUnits = true, bool bInitialFounding = true, ReligionTypes eInitialReligion = NO_RELIGION, const char* szName = NULL);
 #else
 	CvCity* initCity(int iX, int iY, bool bBumpUnits = true, bool bInitialFounding = true);
 #endif
@@ -244,7 +244,11 @@ public:
 
 	void AwardFreeBuildings(CvCity* pCity); // slewis - broken out so that Venice can get free buildings when they purchase something
 	bool canFound(int iX, int iY, bool bTestVisible = false) const;
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+	void found(int iX, int iY, ReligionTypes eReligion = NO_RELIGION);
+#else
 	void found(int iX, int iY);
+#endif
 
 	bool canTrain(UnitTypes eUnit, bool bContinue = false, bool bTestVisible = false, bool bIgnoreCost = false, bool bIgnoreUniqueUnitStatus = false, CvString* toolTipSink = NULL) const;
 	bool canConstruct(BuildingTypes eBuilding, bool bContinue = false, bool bTestVisible = false, bool bIgnoreCost = false, CvString* toolTipSink = NULL) const;

@@ -631,11 +631,7 @@ void CvUnit::initWithNameOffset(int iID, UnitTypes eUnit, int iNameOffset, UnitA
 		if (pPlotCity)
 		{
 			ReligionTypes eReligion = pPlotCity->GetCityReligions()->GetReligiousMajority();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			if (eReligion >= RELIGION_PANTHEON)
-#else
 			if (eReligion > RELIGION_PANTHEON)
-#endif
 			{
 				GetReligionData()->SetReligion(eReligion);
 				GetReligionData()->SetSpreadsLeft(getUnitInfo().GetReligionSpreads() + pPlotCity->GetCityBuildings()->GetMissionaryExtraSpreads());
@@ -7184,22 +7180,22 @@ bool CvUnit::found()
 	CvPlayerAI& kActivePlayer = GET_PLAYER(eActivePlayer);
 #endif
 
-	kPlayer.found(getX(), getY());
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+	if (MOD_GLOBAL_RELIGIOUS_SETTLERS && GetReligionData()->GetReligion() > RELIGION_PANTHEON)
+	{
+		kPlayer.found(getX(), getY(), GetReligionData()->GetReligion());
+	} else {
+#endif
+		kPlayer.found(getX(), getY());
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+	}
+#endif
+
 #if defined(MOD_AI_SECONDARY_SETTLERS)
 	if (IsCombatUnit()) {
 		CUSTOMLOG("  ... success!  They founded %s", plot()->getPlotCity()->getName().c_str());
 	}
 #endif	
-
-#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
-	if (MOD_GLOBAL_RELIGIOUS_SETTLERS && GetReligionData()->GetReligion() > RELIGION_PANTHEON)
-	{
-		CvCity *pNewCity = pPlot->getPlotCity();
-		if (pNewCity) {
-			pNewCity->GetCityReligions()->AdoptReligionFully(GetReligionData()->GetReligion());
-		}
-	}
-#endif
 
 	if(pPlot->isActiveVisible(false))
 	{
@@ -7623,19 +7619,7 @@ bool CvUnit::CanSpreadReligion(const CvPlot* pPlot) const
 		return false;
 	}
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-    bool bCanSpread = GetReligionData()->GetReligion() > RELIGION_PANTHEON;
-	
-	if (MOD_TRAITS_PANTHEON_IS_RELIGION) {
-		if (GetReligionData()->GetReligion() == RELIGION_PANTHEON && GET_PLAYER(getOwner()).GetPlayerTraits()->IsPantheonIsReligion()) {
-			bCanSpread = true;
-		}
-	}
-	
-	if(!bCanSpread)
-#else
 	if(GetReligionData()->GetReligion() == NO_RELIGION)
-#endif
 	{
 		return false;
 	}
@@ -7690,11 +7674,7 @@ bool CvUnit::DoSpreadReligion()
 #endif
 			CvGameReligions* pReligions = GC.getGame().GetGameReligions();
 			ReligionTypes eReligion = GetReligionData()->GetReligion();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			if(eReligion >= RELIGION_PANTHEON)
-#else
 			if(eReligion > RELIGION_PANTHEON)
-#endif
 			{
 				const CvReligion* pReligion = pReligions->GetReligion(eReligion, getOwner());
 				if(pReligion)
@@ -7821,19 +7801,7 @@ bool CvUnit::CanRemoveHeresy(const CvPlot* pPlot) const
 		return false;
 	}
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-    bool bCanSpread = GetReligionData()->GetReligion() > RELIGION_PANTHEON;
-	
-	if (MOD_TRAITS_PANTHEON_IS_RELIGION) {
-		if (GetReligionData()->GetReligion() == RELIGION_PANTHEON && GET_PLAYER(getOwner()).GetPlayerTraits()->IsPantheonIsReligion()) {
-			bCanSpread = true;
-		}
-	}
-	
-	if(!bCanSpread)
-#else
 	if(GetReligionData()->GetReligion() == NO_RELIGION)
-#endif
 	{
 		return false;
 	}
@@ -7998,11 +7966,7 @@ int CvUnit::GetConversionStrength() const
 	int iReligiousStrength = GC.getRELIGION_MISSIONARY_PRESSURE_MULTIPLIER() * GetReligionData()->GetReligiousStrength();
 	CvGameReligions* pReligions = GC.getGame().GetGameReligions();
 	ReligionTypes eReligion = GetReligionData()->GetReligion();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	if(eReligion >= RELIGION_PANTHEON)
-#else
 	if(eReligion > RELIGION_PANTHEON)
-#endif
 	{
 		const CvReligion* pReligion = pReligions->GetReligion(eReligion, getOwner());
 		if(pReligion)

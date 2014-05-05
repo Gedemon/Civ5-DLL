@@ -290,7 +290,7 @@ CvCity::~CvCity()
 
 //	--------------------------------------------------------------------------------
 #if defined(MOD_API_EXTENSIONS)
-void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, bool bInitialFounding, const char* szName)
+void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, bool bInitialFounding, ReligionTypes eInitialReligion, const char* szName)
 #else
 void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, bool bInitialFounding)
 #endif
@@ -615,6 +615,23 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	{
 		GetCityReligions()->AddReligiousPressure(FOLLOWER_CHANGE_PANTHEON_FOUNDED, RELIGION_PANTHEON, GC.getRELIGION_ATHEISM_PRESSURE_PER_POP() * getPopulation() * 2);
 	}
+	
+#if defined(MOD_API_EXTENSIONS)
+	if (eInitialReligion != NO_RELIGION) {
+		// Spread an initial religion here if one was given
+		GetCityReligions()->AdoptReligionFully(eInitialReligion);
+	}
+
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	else if (MOD_RELIGION_LOCAL_RELIGIONS) {
+		// Spread a local religion here if one is active
+		if(pReligions->HasCreatedReligion() && GC.getReligionInfo(pReligions->GetReligionCreatedByPlayer())->IsLocalReligion())
+		{
+			GetCityReligions()->AdoptReligionFully(pReligions->GetReligionCreatedByPlayer());
+		}
+	}
+#endif
+#endif
 
 	// A new City might change our victory progress
 	GET_TEAM(getTeam()).DoTestSmallAwards();
@@ -4919,11 +4936,7 @@ int CvCity::GetFaithPurchaseCost(UnitTypes eUnit, bool bIncludeBeliefDiscounts)
 	{
 		CvGameReligions* pReligions = GC.getGame().GetGameReligions();
 		ReligionTypes eMajority = GetCityReligions()->GetReligiousMajority();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		if(eMajority >= RELIGION_PANTHEON)
-#else
 		if(eMajority > RELIGION_PANTHEON)
-#endif
 		{
 			const CvReligion* pReligion = pReligions->GetReligion(eMajority, getOwner());
 			if(pReligion)
@@ -13130,17 +13143,7 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 
 		// Does this city have a majority religion?
 		ReligionTypes eReligion = GetCityReligions()->GetReligiousMajority();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		bool bCanFaithPurchase = (eReligion > RELIGION_PANTHEON);
-		
-		if (MOD_TRAITS_PANTHEON_IS_RELIGION) {
-			bCanFaithPurchase = bCanFaithPurchase || (eReligion == RELIGION_PANTHEON && GET_PLAYER(getOwner()).GetPlayerTraits()->IsPantheonIsReligion());
-		}
-		
-		if(!bCanFaithPurchase)
-#else
 		if(eReligion <= RELIGION_PANTHEON)
-#endif
 		{
 			return false;
 		}
@@ -13157,11 +13160,7 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 			CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eUnitType);
 			if(pkUnitInfo)
 			{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-				if (pkUnitInfo->IsRequiresEnhancedReligion() && !(GC.getGame().GetGameReligions()->GetReligion(eReligion, m_eOwner)->m_bEnhanced))
-#else
 				if (pkUnitInfo->IsRequiresEnhancedReligion() && !(GC.getGame().GetGameReligions()->GetReligion(eReligion, NO_PLAYER)->m_bEnhanced))
-#endif
 				{
 					return false;
 				}
@@ -13225,11 +13224,7 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 			if(pkBuildingInfo && pkBuildingInfo->IsUnlockedByBelief())
 			{
 				ReligionTypes eMajority = GetCityReligions()->GetReligiousMajority();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-				if(eMajority < RELIGION_PANTHEON)
-#else
 				if(eMajority <= RELIGION_PANTHEON)
-#endif
 				{
 					return false;
 				}
@@ -13486,11 +13481,7 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 			int iReligiousStrength = pUnit->getUnitInfo().GetReligiousStrength();
 
 			// Missionary strength
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			if(iReligionSpreads > 0 && eReligion >= RELIGION_PANTHEON)
-#else
 			if(iReligionSpreads > 0 && eReligion > RELIGION_PANTHEON)
-#endif
 			{
 				pUnit->GetReligionData()->SetSpreadsLeft(iReligionSpreads + GetCityBuildings()->GetMissionaryExtraSpreads());
 				pUnit->GetReligionData()->SetReligiousStrength(iReligiousStrength);

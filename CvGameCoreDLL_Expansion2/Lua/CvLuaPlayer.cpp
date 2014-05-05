@@ -916,9 +916,6 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 #if defined(MOD_TRAITS_ANY_BELIEF)
 	Method(IsTraitAnyBelief);
 #endif
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	Method(IsTraitPantheonIsReligion);
-#endif
 	Method(IsTraitBonusReligiousBelief);
 	Method(GetHappinessFromLuxury);
 	Method(IsAbleToAnnexCityStates);
@@ -2769,7 +2766,11 @@ int CvLuaPlayer::lGetBeliefsInPantheon(lua_State* L)
 	const int t = lua_gettop(L);
 	int idx = 1;
 
-	CvReligionBeliefs beliefs = GC.getGame().GetGameReligions()->GetReligion(RELIGION_PANTHEON, pkPlayer->GetID())->m_Beliefs;
+	// If this player has created a (local) religion, we need to use that instead!
+	ReligionTypes eReligion = GC.getGame().GetGameReligions()->GetReligionCreatedByPlayer(pkPlayer->GetID());
+	if (eReligion == NO_RELIGION) eReligion = RELIGION_PANTHEON;
+
+	CvReligionBeliefs beliefs = GC.getGame().GetGameReligions()->GetReligion(eReligion, pkPlayer->GetID())->m_Beliefs;
 	for(int iI = 0; iI < beliefs.GetNumBeliefs(); iI++)
 	{
 		const BeliefTypes eBelief = beliefs.GetBelief(iI);
@@ -2797,8 +2798,12 @@ int CvLuaPlayer::lCanCreatePantheon(lua_State* L)
 int CvLuaPlayer::lHasCreatedReligion(lua_State* L)
 {
 	CvPlayerAI* pkPlayer = GetInstance(L);
-
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	const bool bIgnoreLocal = luaL_optbool(L, 2, false);
+	const bool bResult = pkPlayer->GetReligions()->HasCreatedReligion(bIgnoreLocal);
+#else
 	const bool bResult = pkPlayer->GetReligions()->HasCreatedReligion();
+#endif
 	lua_pushboolean(L, bResult);
 
 	return 1;
@@ -9417,18 +9422,6 @@ int CvLuaPlayer::lIsTraitAnyBelief(lua_State* L)
 	if(pkPlayer)
 	{
 		lua_pushboolean(L, pkPlayer->GetPlayerTraits()->IsAnyBelief());
-	}
-	return 1;
-}
-#endif
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-//------------------------------------------------------------------------------
-int CvLuaPlayer::lIsTraitPantheonIsReligion(lua_State* L)
-{
-	CvPlayer* pkPlayer = GetInstance(L);
-	if(pkPlayer)
-	{
-		lua_pushboolean(L, pkPlayer->GetPlayerTraits()->IsPantheonIsReligion());
 	}
 	return 1;
 }

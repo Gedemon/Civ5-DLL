@@ -2392,7 +2392,12 @@ int CvLuaGame::lGetBeliefsInReligion(lua_State* L)
 int CvLuaGame::lGetNumReligionsStillToFound(lua_State* L)
 {
 	int iRtnValue;
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	const bool bIgnoreLocal	= luaL_optint(L, 1, 1);
+	iRtnValue = GC.getGame().GetGameReligions()->GetNumReligionsStillToFound(bIgnoreLocal);
+#else
 	iRtnValue = GC.getGame().GetGameReligions()->GetNumReligionsStillToFound();
+#endif
 	lua_pushinteger(L, iRtnValue);
 	return 1;
 }
@@ -2400,7 +2405,12 @@ int CvLuaGame::lGetNumReligionsStillToFound(lua_State* L)
 int CvLuaGame::lGetNumReligionsFounded(lua_State* L)
 {
 	int iRtnValue;
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	const bool bIgnoreLocal	= luaL_optint(L, 1, 1);
+	iRtnValue = GC.getGame().GetGameReligions()->GetNumReligionsFounded(bIgnoreLocal);
+#else
 	iRtnValue = GC.getGame().GetGameReligions()->GetNumReligionsFounded();
+#endif
 	lua_pushinteger(L, iRtnValue);
 	return 1;
 }
@@ -2477,8 +2487,12 @@ int CvLuaGame::lEnhancePantheon(lua_State* L)
 	const PlayerTypes ePlayer = static_cast<PlayerTypes>(luaL_checkint(L, 1));
 	const BeliefTypes eBelief = static_cast<BeliefTypes>(luaL_checkint(L, 2));
 	const bool bNotify = luaL_optbool(L, 3, true);
+	
+	// If this player has created a (local) religion, we need to enhance that instead!
+	ReligionTypes eReligion = GC.getGame().GetGameReligions()->GetReligionCreatedByPlayer(ePlayer);
+	if (eReligion == NO_RELIGION) eReligion = RELIGION_PANTHEON;
 
-	GC.getGame().GetGameReligions()->EnhanceReligion(ePlayer, RELIGION_PANTHEON, eBelief, NO_BELIEF, bNotify);
+	GC.getGame().GetGameReligions()->EnhanceReligion(ePlayer, eReligion, eBelief, NO_BELIEF, bNotify);
 
 	return 0;
 }
@@ -2506,8 +2520,13 @@ int CvLuaGame::lEnhanceReligion(lua_State* L)
 	const ReligionTypes eReligion = static_cast<ReligionTypes>(luaL_checkint(L, 2));
 	const BeliefTypes eBelief1 = static_cast<BeliefTypes>(luaL_checkint(L, 3));
 	const BeliefTypes eBelief2 = static_cast<BeliefTypes>(luaL_checkint(L, 4));
+#if defined(MOD_API_RELIGION)
+	const bool bNotify = luaL_optbool(L, 5, true);
 
+	GC.getGame().GetGameReligions()->EnhanceReligion(ePlayer, eReligion, eBelief1, eBelief2, bNotify);
+#else
 	GC.getGame().GetGameReligions()->EnhanceReligion(ePlayer, eReligion, eBelief1, eBelief2);
+#endif
 
 	return 0;
 }

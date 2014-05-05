@@ -24,6 +24,9 @@
 //======================================================================================================
 /// Constructor
 CvReligionEntry::CvReligionEntry()
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	: m_iLocalReligion(0)
+#endif
 {
 }
 
@@ -41,6 +44,12 @@ bool CvReligionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 	//Basic Properties
 	m_strIconString = kResults.GetText("IconString");
 	 
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	if (MOD_RELIGION_LOCAL_RELIGIONS) {
+		m_iLocalReligion = kResults.GetInt("LocalReligion");
+	}
+#endif
+
 	return true;
 }
 
@@ -49,6 +58,14 @@ CvString CvReligionEntry::GetIconString() const
 {
 	return m_strIconString;
 }
+
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+//------------------------------------------------------------------------------
+bool CvReligionEntry::IsLocalReligion() const
+{
+	return (m_iLocalReligion != 0);
+}
+#endif
 
 //=====================================
 // CvReligionXMLEntries
@@ -502,11 +519,6 @@ void CvGameReligions::DoPlayerTurn(CvPlayer& kPlayer)
 	switch (kPlayer.GetFaithPurchaseType())
 	{
 	case FAITH_PURCHASE_SAVE_PROPHET:
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		if (MOD_TRAITS_PANTHEON_IS_RELIGION && eReligion == RELIGION_PANTHEON && kPlayer.GetPlayerTraits()->IsPantheonIsReligion()) {
-			bSelectionStillValid = true;
-		} else 
-#endif
 		if (eReligion <= RELIGION_PANTHEON && GetNumReligionsStillToFound() <= 0)
 		{
 			szItemName = GetLocalizedText("TXT_KEY_RO_AUTO_FAITH_PROPHET");
@@ -721,6 +733,12 @@ ReligionTypes CvGameReligions::GetReligionToFound(PlayerTypes ePlayer)
 		{
 			continue;
 		}
+		
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+		if (MOD_RELIGION_LOCAL_RELIGIONS && pEntry->IsLocalReligion()) {
+			continue;
+		}
+#endif
 
 		if(HasBeenFounded((ReligionTypes)pEntry->GetID()))
 		{
@@ -771,6 +789,12 @@ ReligionTypes CvGameReligions::GetReligionToFound(PlayerTypes ePlayer)
 			{
 				continue;
 			}
+
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+			if (MOD_RELIGION_LOCAL_RELIGIONS && pEntry->IsLocalReligion()) {
+				continue;
+			}
+#endif
 
 			if(HasBeenFounded((ReligionTypes)pEntry->GetID()))
 			{
@@ -825,13 +849,6 @@ void CvGameReligions::FoundPantheon(PlayerTypes ePlayer, BeliefTypes eBelief)
 
 	// Found it
 	m_CurrentReligions.push_back(newReligion);
-
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	if (MOD_TRAITS_PANTHEON_IS_RELIGION) {
-		// Inform the spiritual centre
-		kPlayer.getCapitalCity()->GetCityReligions()->DoPantheonFounded(newReligion.m_eReligion);
-	}
-#endif
 
 	// Update game systems
 	kPlayer.UpdateReligion();
@@ -1015,50 +1032,58 @@ void CvGameReligions::FoundReligion(PlayerTypes ePlayer, ReligionTypes eReligion
 
 		GC.getGame().addReplayMessage(REPLAY_MESSAGE_RELIGION_FOUNDED, kReligion.m_eFounder, replayText.toUTF8(), kReligion.m_iHolyCityX, kReligion.m_iHolyCityY);
 
-		//Notify the masses
-		for(int iNotifyLoop = 0; iNotifyLoop < MAX_MAJOR_CIVS; ++iNotifyLoop){
-			PlayerTypes eNotifyPlayer = (PlayerTypes) iNotifyLoop;
-			CvPlayerAI& kNotifyPlayer = GET_PLAYER(eNotifyPlayer);
-			CvNotifications* pNotifications = kNotifyPlayer.GetNotifications();
-			if(pNotifications){
-				// Message slightly different for founder player
-				if(kReligion.m_eFounder == eNotifyPlayer)
-				{
-					Localization::String localizedText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_FOUNDED_ACTIVE_PLAYER");
-					localizedText << szReligionName << pkHolyCity->getNameKey();
-
-#if defined(MOD_API_EXTENSIONS)
-					pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, eReligion, -1);
-#else
-					pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+		// Local religions are intended to be "super-pantheons" so typically are founded immediately a pantheon is founded
+		// As founding the pantheon sent a notification, don't send another here (if the modded wants one, they can always send it manually)
+		if (!(MOD_RELIGION_LOCAL_RELIGIONS && pEntry->IsLocalReligion())) {
 #endif
-				}
-				else
-				{
-					CvTeam& kNotifyTeam = GET_TEAM(kNotifyPlayer.getTeam());
-
-					if(kNotifyTeam.isHasMet(kPlayer.getTeam()))
+			//Notify the masses
+			for(int iNotifyLoop = 0; iNotifyLoop < MAX_MAJOR_CIVS; ++iNotifyLoop){
+				PlayerTypes eNotifyPlayer = (PlayerTypes) iNotifyLoop;
+				CvPlayerAI& kNotifyPlayer = GET_PLAYER(eNotifyPlayer);
+				CvNotifications* pNotifications = kNotifyPlayer.GetNotifications();
+				if(pNotifications){
+					// Message slightly different for founder player
+					if(kReligion.m_eFounder == eNotifyPlayer)
 					{
+						Localization::String localizedText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_FOUNDED_ACTIVE_PLAYER");
+						localizedText << szReligionName << pkHolyCity->getNameKey();
+
 #if defined(MOD_API_EXTENSIONS)
-						pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, replayText.toUTF8(), strSummary.toUTF8(), -1, -1, eReligion, -1);
+						pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, eReligion, -1);
 #else
-						pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, replayText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+						pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED_ACTIVE_PLAYER, localizedText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
 #endif
 					}
 					else
 					{
-						Localization::String unknownCivText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_FOUNDED_UNKNOWN");
-						unknownCivText << szReligionName;
+						CvTeam& kNotifyTeam = GET_TEAM(kNotifyPlayer.getTeam());
+
+						if(kNotifyTeam.isHasMet(kPlayer.getTeam()))
+						{
+#if defined(MOD_API_EXTENSIONS)
+							pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, replayText.toUTF8(), strSummary.toUTF8(), -1, -1, eReligion, -1);
+#else
+							pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, replayText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+#endif
+						}
+						else
+						{
+							Localization::String unknownCivText = Localization::Lookup("TXT_KEY_NOTIFICATION_RELIGION_FOUNDED_UNKNOWN");
+							unknownCivText << szReligionName;
 
 #if defined(MOD_API_EXTENSIONS)
-						pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, unknownCivText.toUTF8(), strSummary.toUTF8(), -1, -1, eReligion, -1);
+							pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, unknownCivText.toUTF8(), strSummary.toUTF8(), -1, -1, eReligion, -1);
 #else
-						pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, unknownCivText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
+							pNotifications->Add(NOTIFICATION_RELIGION_FOUNDED, unknownCivText.toUTF8(), strSummary.toUTF8(), -1, -1, -1);
 #endif
+						}
 					}
 				}
 			}
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
 		}
+#endif
 
 		// Logging
 		if(GC.getLogging())
@@ -1101,9 +1126,11 @@ CvGameReligions::FOUNDING_RESULT CvGameReligions::CanFoundReligion(PlayerTypes e
 
 	// Copy over belief from your pantheon
 #if defined(MOD_API_RELIGION)
-	CvReligionBeliefs beliefs = GC.getGame().GetGameReligions()->GetReligion(RELIGION_PANTHEON, kPlayer.GetID())->m_Beliefs;
-	for(int iI = 0; iI < beliefs.GetNumBeliefs(); iI++) {
-		kReligion.m_Beliefs.AddBelief(beliefs.GetBelief(iI));
+	if (HasCreatedPantheon(ePlayer)) {
+		CvReligionBeliefs beliefs = GC.getGame().GetGameReligions()->GetReligion(RELIGION_PANTHEON, kPlayer.GetID())->m_Beliefs;
+		for(int iI = 0; iI < beliefs.GetNumBeliefs(); iI++) {
+			kReligion.m_Beliefs.AddBelief(beliefs.GetBelief(iI));
+		}
 	}
 #else
 	BeliefTypes eBelief = GC.getGame().GetGameReligions()->GetBeliefInPantheon(kPlayer.GetID());
@@ -1189,6 +1216,7 @@ void CvGameReligions::EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligi
 	if(!bFoundIt)
 	{
 		CvAssertMsg(false, "Internal error in religion code.");
+		CUSTOMLOG("Trying to enhance a religion/pantheon that doesn't exist!!!");
 		return;
 	}
 
@@ -1708,18 +1736,22 @@ int CvGameReligions::GetNumCitiesFollowing(ReligionTypes eReligion) const
 }
 
 /// Has this player created a religion?
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+bool CvGameReligions::HasCreatedReligion(PlayerTypes ePlayer, bool bIgnoreLocal) const
+#else
 bool CvGameReligions::HasCreatedReligion(PlayerTypes ePlayer) const
+#endif
 {
     if (GetReligionCreatedByPlayer(ePlayer) > RELIGION_PANTHEON)
 	{
-		return true;
-	}
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	else if (MOD_TRAITS_PANTHEON_IS_RELIGION && GetReligionCreatedByPlayer(ePlayer) == RELIGION_PANTHEON && GET_PLAYER(ePlayer).GetPlayerTraits()->IsPantheonIsReligion())
-	{
-		return true;
-	}
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+		if (MOD_RELIGION_LOCAL_RELIGIONS && bIgnoreLocal) {
+			return !(GC.getReligionInfo(GetReligionCreatedByPlayer(ePlayer))->IsLocalReligion());
+		}
 #endif
+
+		return true;
+	}
 
 	return false;
 }
@@ -1753,11 +1785,7 @@ bool CvGameReligions::HasAddedReformationBelief(PlayerTypes ePlayer) const
 /// Does this player qualify for founder benefits?
 bool CvGameReligions::IsEligibleForFounderBenefits(ReligionTypes eReligion, PlayerTypes ePlayer) const
 {
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	const CvReligion* religion = GetReligion(eReligion, ePlayer);
-#else
 	const CvReligion* religion = GetReligion(eReligion, NO_PLAYER);
-#endif
 	if(religion)
 	{
 		CvPlot* pHolyCityPlot = NULL;
@@ -1781,11 +1809,7 @@ bool CvGameReligions::IsEligibleForFounderBenefits(ReligionTypes eReligion, Play
 /// Is this city state friendly with the player that founded this religion?
 bool CvGameReligions::IsCityStateFriendOfReligionFounder(ReligionTypes eReligion, PlayerTypes ePlayer)
 {
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	const CvReligion* religion = GetReligion(eReligion, ePlayer);
-#else
 	const CvReligion* religion = GetReligion(eReligion, NO_PLAYER);
-#endif
 	if(religion)
 	{
 		CvPlayer& kMinor = GET_PLAYER(ePlayer);
@@ -1849,7 +1873,11 @@ ReligionTypes CvGameReligions::GetFounderBenefitsReligion(PlayerTypes ePlayer) c
 }
 
 /// Number of religions founded so far (does not include pantheons)
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+int CvGameReligions::GetNumReligionsFounded(bool bIgnoreLocal) const
+#else
 int CvGameReligions::GetNumReligionsFounded() const
+#endif
 {
 	int iRtnValue = 0;
 
@@ -1858,6 +1886,12 @@ int CvGameReligions::GetNumReligionsFounded() const
 	{
 		if(!it->m_bPantheon)
 		{
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+			if (MOD_RELIGION_LOCAL_RELIGIONS && bIgnoreLocal && GC.getReligionInfo(it->m_eReligion)->IsLocalReligion()) {
+				continue;
+			}
+#endif
+
 			iRtnValue++;
 		}
 	}
@@ -1883,9 +1917,17 @@ int CvGameReligions::GetNumReligionsEnhanced() const
 }
 
 /// Number of religions that still can be founded on this size map
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+int CvGameReligions::GetNumReligionsStillToFound(bool bIgnoreLocal) const
+#else
 int CvGameReligions::GetNumReligionsStillToFound() const
+#endif
 {
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	return (GC.getMap().getWorldInfo().getMaxActiveReligions() - GetNumReligionsFounded(bIgnoreLocal));
+#else
 	return (GC.getMap().getWorldInfo().getMaxActiveReligions() - GetNumReligionsFounded());
+#endif
 }
 
 /// List of beliefs that can be adopted by religion founders
@@ -2128,27 +2170,8 @@ int CvGameReligions::GetAdjacentCityReligiousPressure (ReligionTypes eReligion, 
 {
 	int iPressure = 0;
 	iNumTradeRoutesInfluencing = 0;
-	
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	bool bExit = true;
-	
-	if (eReligion > RELIGION_PANTHEON) {
-		bExit = false;
-	} else if (eReligion == RELIGION_PANTHEON) {
-		// Need to have the trait ...
-		if (MOD_TRAITS_PANTHEON_IS_RELIGION && GET_PLAYER(pFromCity->getOwner()).GetPlayerTraits()->IsPantheonIsReligion()) {
-			// ... and own both cities ...
-			if (pFromCity->getOwner() == pToCity->getOwner()) {
-				// .. and not puppets or occupied
-				bExit = (pFromCity->IsOccupied() || pFromCity->IsPuppet() || pToCity->IsOccupied() || pToCity->IsPuppet());
-			}
-		}
-	}
-	
-	if (bExit)
-#else
+
 	if (eReligion <= RELIGION_PANTHEON)
-#endif
 	{
 		return iPressure;
 	}
@@ -2158,6 +2181,21 @@ int CvGameReligions::GetAdjacentCityReligiousPressure (ReligionTypes eReligion, 
 	{
 		return iPressure;
 	}
+
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	if (MOD_RELIGION_LOCAL_RELIGIONS && GC.getReligionInfo(eReligion)->IsLocalReligion()) {
+		// Can only spread a local religion to our own cities or City States
+		if (pToCity->getOwner() < MAX_MAJOR_CIVS && pFromCity->getOwner() != pToCity->getOwner()) {
+			return iPressure;
+		}
+
+		// Cannot spread if either city is occupied or a puppet
+		if ((pFromCity->IsOccupied() && !pFromCity->IsNoOccupiedUnhappiness()) || pFromCity->IsPuppet() ||
+			(pToCity->IsOccupied() && !pToCity->IsNoOccupiedUnhappiness()) || pToCity->IsPuppet()) {
+			return iPressure;
+		}
+	}
+#endif
 
 	// Are the cities within the minimum distance?
 	int iDistance = GC.getRELIGION_ADJACENT_CITY_DISTANCE();
@@ -2435,11 +2473,7 @@ bool CvGameReligions::CheckSpawnGreatProphet(CvPlayer& kPlayer)
 	int iCost = kPlayer.GetReligions()->GetCostNextProphet(true /*bIncludeBeliefDiscounts*/, true /*bAdjustForSpeedDifficulty*/);
 
 	ReligionTypes ePlayerReligion = GetReligionCreatedByPlayer(kPlayer.GetID());
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	if(ePlayerReligion > RELIGION_PANTHEON || (MOD_TRAITS_PANTHEON_IS_RELIGION && ePlayerReligion == RELIGION_PANTHEON && kPlayer.GetPlayerTraits()->IsPantheonIsReligion()))
-#else
 	if(ePlayerReligion > RELIGION_PANTHEON)
-#endif
 	{
 		pReligion = GetReligion(ePlayerReligion, kPlayer.GetID());
 	}
@@ -2477,7 +2511,11 @@ bool CvGameReligions::CheckSpawnGreatProphet(CvPlayer& kPlayer)
 
 	if(pSpawnCity != NULL && pSpawnCity->getOwner() == kPlayer.GetID())
 	{
+#if defined(MOD_BUGFIX_MINOR)
+		pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, true /*bIncrementCount*/, true);
+#else
 		pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, false /*bIncrementCount*/, true);
+#endif
 #if defined(MOD_RELIGION_KEEP_PROPHET_OVERFLOW)
 		if (MOD_RELIGION_KEEP_PROPHET_OVERFLOW && iBaseChance >= 100) {
 			kPlayer.ChangeFaith(-1 * iCost);
@@ -2493,7 +2531,11 @@ bool CvGameReligions::CheckSpawnGreatProphet(CvPlayer& kPlayer)
 		pSpawnCity = kPlayer.getCapitalCity();
 		if(pSpawnCity != NULL)
 		{
+#if defined(MOD_BUGFIX_MINOR)
+			pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, true /*bIncrementCount*/, true);
+#else
 			pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, false /*bIncrementCount*/, true);
+#endif
 #if defined(MOD_RELIGION_KEEP_PROPHET_OVERFLOW)
 		if (MOD_RELIGION_KEEP_PROPHET_OVERFLOW && iBaseChance >= 100) {
 			kPlayer.ChangeFaith(-1 * iCost);
@@ -2744,11 +2786,7 @@ int CvPlayerReligions::GetCostNextProphet(bool bIncludeBeliefDiscounts, bool bAd
 
 	// Boost to faith due to belief?
 	ReligionTypes ePlayerReligion = GetReligionCreatedByPlayer();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	if (bIncludeBeliefDiscounts && (ePlayerReligion > RELIGION_PANTHEON || (MOD_TRAITS_PANTHEON_IS_RELIGION && ePlayerReligion == RELIGION_PANTHEON && m_pPlayer->GetPlayerTraits()->IsPantheonIsReligion())))
-#else
 	if (bIncludeBeliefDiscounts && ePlayerReligion > RELIGION_PANTHEON)
-#endif
 	{
 		const CvReligion* pReligion = NULL;
 		pReligion = GC.getGame().GetGameReligions()->GetReligion(ePlayerReligion, m_pPlayer->GetID());
@@ -2788,9 +2826,17 @@ bool CvPlayerReligions::HasCreatedPantheon() const
 }
 
 /// Has this player created a religion?
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+bool CvPlayerReligions::HasCreatedReligion(bool bIgnoreLocal) const
+#else
 bool CvPlayerReligions::HasCreatedReligion() const
+#endif
 {
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	return GC.getGame().GetGameReligions()->HasCreatedReligion(m_pPlayer->GetID(), bIgnoreLocal);
+#else
 	return GC.getGame().GetGameReligions()->HasCreatedReligion(m_pPlayer->GetID());
+#endif
 }
 
 /// Has this player reformed his religion
@@ -2890,17 +2936,7 @@ bool CvPlayerReligions::HasReligiousCity() const
 	{
 		if(pCity)
 		{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			bool bHasCity = pCity->GetCityReligions()->GetReligiousMajority() > RELIGION_PANTHEON;
-			
-			if (MOD_TRAITS_PANTHEON_IS_RELIGION) {
-				bHasCity = bHasCity || (pCity->GetCityReligions()->GetReligiousMajority() == RELIGION_PANTHEON && m_pPlayer->GetPlayerTraits()->IsPantheonIsReligion());
-			}
-
-			if(bHasCity)
-#else
 			if(pCity->GetCityReligions()->GetReligiousMajority() > RELIGION_PANTHEON)
-#endif
 			{
 				return true;
 			}
@@ -2921,9 +2957,6 @@ bool CvPlayerReligions::HasOthersReligionInMostCities(PlayerTypes eOtherPlayer) 
 
 	ReligionTypes eOtherReligion = GC.getGame().GetGameReligions()->GetReligionCreatedByPlayer(eOtherPlayer);
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	// As HasCreatedReligion() above returns true if we have a pantheon as a religion, this test doesn't matter
-#endif
 	if(eOtherReligion <= RELIGION_PANTHEON)
 	{
 		return false;
@@ -2950,17 +2983,7 @@ bool CvPlayerReligions::HasOthersReligionInMostCities(PlayerTypes eOtherPlayer) 
 /// Do a majority of this player's cities follow a specific religion?
 bool CvPlayerReligions::HasReligionInMostCities(ReligionTypes eReligion) const
 {
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	bool bBailEarly = (eReligion <= RELIGION_PANTHEON);
-	
-	if (MOD_TRAITS_PANTHEON_IS_RELIGION && eReligion == RELIGION_PANTHEON) {
-		bBailEarly = !m_pPlayer->GetPlayerTraits()->IsPantheonIsReligion();
-	}
-	
-	if (bBailEarly)
-#else
 	if (eReligion <= RELIGION_PANTHEON)
-#endif
 	{
 		return false;
 	}
@@ -3008,11 +3031,7 @@ int CvPlayerReligions::GetCityStateMinimumInfluence(ReligionTypes eReligion) con
 		CvGameReligions* pReligions = GC.getGame().GetGameReligions();
 		if(eFounderBenefitReligion != NO_RELIGION)
 		{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			const CvReligion* pReligion = pReligions->GetReligion(eFounderBenefitReligion, m_pPlayer->GetID());
-#else
 			const CvReligion* pReligion = pReligions->GetReligion(eFounderBenefitReligion, NO_PLAYER);
-#endif
 			if(pReligion)
 			{
 				iMinInfluence += pReligion->m_Beliefs.GetCityStateMinimumInfluence();
@@ -3030,11 +3049,7 @@ int CvPlayerReligions::GetCityStateInfluenceModifier() const
 	ReligionTypes eReligion = GetReligionCreatedByPlayer();
 	if (eReligion != NO_RELIGION)
 	{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, m_pPlayer->GetID());
-#else
 		const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, NO_PLAYER);
-#endif
 		if(pReligion)
 		{
 			iRtnValue += pReligion->m_Beliefs.GetCityStateInfluenceModifier();
@@ -3050,11 +3065,7 @@ int CvPlayerReligions::GetSpyPressure() const
 	ReligionTypes eReligion = GetReligionCreatedByPlayer();
 	if (eReligion != NO_RELIGION)
 	{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, m_pPlayer->GetID());
-#else
 		const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, NO_PLAYER);
-#endif
 		if(pReligion)
 		{
 			iRtnValue += pReligion->m_Beliefs.GetSpyPressure();
@@ -3211,17 +3222,7 @@ int CvCityReligions::GetNumReligionsWithFollowers()
 	// Find the religion in the list
 	for(religionIt = m_ReligionStatus.begin(); religionIt != m_ReligionStatus.end(); ++religionIt)
 	{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		bool bIncludeInCount = (religionIt->m_iFollowers > 0 && religionIt->m_eReligion > RELIGION_PANTHEON);
-		
-		if (MOD_TRAITS_PANTHEON_IS_RELIGION && religionIt->m_iFollowers > 0 && religionIt->m_eReligion == RELIGION_PANTHEON) {
-			bIncludeInCount = GET_PLAYER(m_pCity->getOwner()).GetPlayerTraits()->IsPantheonIsReligion();
-		}
-	
-		if (bIncludeInCount)
-#else
 		if(religionIt->m_iFollowers > 0 && religionIt->m_eReligion > RELIGION_PANTHEON)
-#endif
 		{
 			iRtnValue++;
 		}
@@ -3414,17 +3415,7 @@ ReligionTypes CvCityReligions::GetSecondaryReligion()
 	{	
 		for(religionIt = m_ReligionStatus.begin(); religionIt != m_ReligionStatus.end(); ++religionIt)
 		{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			bool bInclude = (religionIt->m_eReligion != eMajority && religionIt->m_eReligion > RELIGION_PANTHEON && religionIt->m_iFollowers > 0);
-		
-			if (MOD_TRAITS_PANTHEON_IS_RELIGION && religionIt->m_eReligion != eMajority && religionIt->m_eReligion == RELIGION_PANTHEON && religionIt->m_iFollowers > 0) {
-				bInclude = GET_PLAYER(m_pCity->getOwner()).GetPlayerTraits()->IsPantheonIsReligion();
-			}
-	
-			if (bInclude)
-#else
 			if (religionIt->m_eReligion != eMajority && religionIt->m_eReligion > RELIGION_PANTHEON && religionIt->m_iFollowers > 0)
-#endif
 			{
 				if (religionIt->m_iFollowers > iMostFollowers)
 				{
@@ -3484,17 +3475,7 @@ int CvCityReligions::GetFollowersOtherReligions(ReligionTypes eReligion)
 
 	for(religionIt = m_ReligionStatus.begin(); religionIt != m_ReligionStatus.end(); ++religionIt)
 	{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		bool bInclude = (religionIt->m_eReligion > RELIGION_PANTHEON && religionIt->m_eReligion != eReligion);
-		
-		if (MOD_TRAITS_PANTHEON_IS_RELIGION && religionIt->m_eReligion == RELIGION_PANTHEON && religionIt->m_eReligion != eReligion) {
-			bInclude = GET_PLAYER(m_pCity->getOwner()).GetPlayerTraits()->IsPantheonIsReligion();
-		}
-	
-		if (bInclude)
-#else
 		if (religionIt->m_eReligion > RELIGION_PANTHEON && religionIt->m_eReligion != eReligion)
-#endif
 		{
 			iOtherFollowers += religionIt->m_iFollowers;
 		}
@@ -3674,16 +3655,6 @@ void CvCityReligions::DoPopulationChange(int iChange)
 	}
 }
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-/// Note that a pantheon was founded here
-void CvCityReligions::DoPantheonFounded(ReligionTypes eReligion)
-{
-	if (MOD_TRAITS_PANTHEON_IS_RELIGION && GET_PLAYER(m_pCity->getOwner()).GetPlayerTraits()->IsPantheonIsReligion()) {
-		DoReligionFounded(eReligion);
-	}
-}
-#endif
-
 /// Note that a religion was founded here
 void CvCityReligions::DoReligionFounded(ReligionTypes eReligion)
 {
@@ -3793,20 +3764,12 @@ void CvCityReligions::AddReligiousPressure(CvReligiousFollowChangeReason eReason
 		//  If this is pressure from a real religion, reduce presence of pantheon by the same amount
 		else if(eReligion > RELIGION_PANTHEON && it->m_eReligion == RELIGION_PANTHEON)
 		{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			// but only if the city owner DOESN'T have the trait
-			if (!(MOD_TRAITS_PANTHEON_IS_RELIGION && GET_PLAYER(m_pCity->getOwner()).GetPlayerTraits()->IsPantheonIsReligion()))
-#endif
 			it->m_iPressure = max(0, (it->m_iPressure - iPressure));
 		}
 
 		else if (it->m_eReligion > RELIGION_PANTHEON && eReason == FOLLOWER_CHANGE_MISSIONARY)
 		{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			const CvReligion *pReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, m_pCity->getOwner());
-#else
 			const CvReligion *pReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, NO_PLAYER);
-#endif
 			int iPressureErosion = pReligion->m_Beliefs.GetOtherReligionPressureErosion();  // Normally 0
 			if (iPressureErosion > 0)
 			{
@@ -3898,20 +3861,12 @@ void CvCityReligions::SimulateReligiousPressure(ReligionTypes eReligion, int iPr
 		//  If this is pressure from a real religion, reduce presence of pantheon by the same amount
 		else if(eReligion > RELIGION_PANTHEON && it->m_eReligion == RELIGION_PANTHEON)
 		{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			// but only if the city owner DOESN'T have the trait
-			if (!(MOD_TRAITS_PANTHEON_IS_RELIGION && GET_PLAYER(m_pCity->getOwner()).GetPlayerTraits()->IsPantheonIsReligion()))
-#endif
 			it->m_iPressure = max(0, (it->m_iPressure - iPressure));
 		}
 
 		else if (it->m_eReligion > RELIGION_PANTHEON)
 		{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			const CvReligion *pReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, m_pCity->getOwner());
-#else
 			const CvReligion *pReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, NO_PLAYER);
-#endif
 			int iPressureErosion = pReligion->m_Beliefs.GetOtherReligionPressureErosion();  // Normally 0
 			if (iPressureErosion > 0)
 			{
@@ -4018,7 +3973,7 @@ void CvCityReligions::AdoptReligionFully(ReligionTypes eReligion)
 	religion.m_bFoundedHere = false;
 	religion.m_eReligion = NO_RELIGION;
 	religion.m_iFollowers = 1;
-#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS) || defined(MOD_RELIGION_LOCAL_RELIGIONS)
 	// This needs to be less than the pressure in a city with a pop of 1
 	religion.m_iPressure = religion.m_iFollowers * GC.getRELIGION_ATHEISM_PRESSURE_PER_POP() - 1;
 #else
@@ -4033,8 +3988,8 @@ void CvCityReligions::AdoptReligionFully(ReligionTypes eReligion)
 	religion.m_iPressure = religion.m_iFollowers * GC.getRELIGION_ATHEISM_PRESSURE_PER_POP();
 	m_ReligionStatus.push_back(religion);
 
-#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
-	if (MOD_GLOBAL_RELIGIOUS_SETTLERS) {
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS) || defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	if (MOD_GLOBAL_RELIGIOUS_SETTLERS || MOD_RELIGION_LOCAL_RELIGIONS) {
 		RecomputeFollowers(FOLLOWER_CHANGE_ADOPT_FULLY, NO_RELIGION);
 	}
 #endif
@@ -4349,51 +4304,15 @@ void CvCityReligions::CityConvertsReligion(ReligionTypes eMajority, ReligionType
 
 	m_pCity->UpdateReligion(eMajority);
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	PlayerTypes eOldPlayer = NO_PLAYER;
-	bool bUpdateOld = eOldMajority > RELIGION_PANTHEON;
-	
-	if (MOD_TRAITS_PANTHEON_IS_RELIGION && eOldMajority == RELIGION_PANTHEON) {
-		if (GET_PLAYER(m_pCity->getOwner()).GetPlayerTraits()->IsPantheonIsReligion()) {
-			eOldPlayer = m_pCity->getOwner();
-			bUpdateOld = true;
-		}
-	}
-	
-	if(bUpdateOld)
-#else
 	if(eOldMajority > RELIGION_PANTHEON)
-#endif
 	{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		const CvReligion* pOldReligion = pReligions->GetReligion(eOldMajority, eOldPlayer);
-#else
 		const CvReligion* pOldReligion = pReligions->GetReligion(eOldMajority, NO_PLAYER);
-#endif
 		GET_PLAYER(pOldReligion->m_eFounder).UpdateReligion();
 	}
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	PlayerTypes eNewPlayer = NO_PLAYER;
-	bool bUpdateNew = eMajority > RELIGION_PANTHEON;
-	
-	if (MOD_TRAITS_PANTHEON_IS_RELIGION && eMajority == RELIGION_PANTHEON) {
-		if (GET_PLAYER(m_pCity->getOwner()).GetPlayerTraits()->IsPantheonIsReligion()) {
-			eNewPlayer = m_pCity->getOwner();
-			bUpdateNew = true;
-		}
-	}
-	
-	if(bUpdateNew)
-#else
 	if(eMajority > RELIGION_PANTHEON)
-#endif
 	{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		const CvReligion* pNewReligion = pReligions->GetReligion(eMajority, eNewPlayer);
-#else
 		const CvReligion* pNewReligion = pReligions->GetReligion(eMajority, NO_PLAYER);
-#endif
 		GET_PLAYER(pNewReligion->m_eFounder).UpdateReligion();
 
 		// Pay adoption bonuses (if any)
@@ -4423,11 +4342,7 @@ void CvCityReligions::CityConvertsReligion(ReligionTypes eMajority, ReligionType
 		const ReligionTypes eOwnerPlayerReligion = kOwnerPlayer.GetReligions()->GetReligionCreatedByPlayer();
 
 		if(eOwnerPlayer != eResponsibleParty && eMajority != eOldMajority && pNewReligion->m_eFounder != eOwnerPlayer
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			&& eOwnerPlayerReligion >= RELIGION_PANTHEON)
-#else
 			&& eOwnerPlayerReligion > RELIGION_PANTHEON)
-#endif
 		{
 			if(kOwnerPlayer.GetNotifications())
 			{
@@ -4549,17 +4464,7 @@ void CvCityReligions::CityConvertsReligion(ReligionTypes eMajority, ReligionType
 
 				// Did he found another religion?
 				ReligionTypes eCityOwnerReligion = kCityOwnerPlayer.GetReligions()->GetReligionCreatedByPlayer();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-				bool bTakeTheHit = (eCityOwnerReligion >= RELIGION_PANTHEON);
-				
-				if (MOD_TRAITS_PANTHEON_IS_RELIGION && eCityOwnerReligion == RELIGION_PANTHEON && kCityOwnerPlayer.GetPlayerTraits()->IsPantheonIsReligion()) {
-					bTakeTheHit = true;
-				}
-				
-				if(bTakeTheHit)
-#else
 				if(eCityOwnerReligion >= RELIGION_PANTHEON)
-#endif
 				{
 					int iPoints = 0;
 
@@ -5156,11 +5061,7 @@ CvCity* CvReligionAI::ChooseMissionaryTargetCity(UnitHandle pUnit)
 	int iBestScore = 0;
 	CvCity* pBestCity = NULL;
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	if(eMyReligion < RELIGION_PANTHEON)
-#else
 	if(eMyReligion <= RELIGION_PANTHEON)
-#endif
 	{
 		return NULL;
 	}
@@ -5282,11 +5183,7 @@ CvCity* CvReligionAI::ChooseInquisitorTargetCity(UnitHandle pUnit)
 	int iBestScore = 0;
 	CvCity* pBestCity = NULL;
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	if(eMyReligion < RELIGION_PANTHEON)
-#else
 	if(eMyReligion <= RELIGION_PANTHEON)
-#endif
 	{
 		return NULL;
 	}
@@ -5402,11 +5299,7 @@ CvCity *CvReligionAI::ChooseProphetConversionCity(bool bOnlyBetterThanEnhancingR
 
 	// Make sure we're spreading a religion and find holy city
 	ReligionTypes eReligion = GetReligionToSpread();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	if (eReligion < RELIGION_PANTHEON)
-#else
 	if (eReligion <= RELIGION_PANTHEON)
-#endif
 	{
 		return pBestCity;
 	}
@@ -5442,12 +5335,7 @@ CvCity *CvReligionAI::ChooseProphetConversionCity(bool bOnlyBetterThanEnhancingR
 
 		// Otherwise score this city
 		int iScore = (iHeretics * 100) / (iDistanceToHolyCity + 1);
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		// This should be the same.  Not our pantheon and a real religion.
 		if (eMajorityReligion != eReligion && eMajorityReligion > RELIGION_PANTHEON)
-#else
-		if (eMajorityReligion != eReligion && eMajorityReligion > RELIGION_PANTHEON)
-#endif
 		{
 			iScore *= 3;
 		}
@@ -5493,17 +5381,7 @@ CvCity *CvReligionAI::ChooseProphetConversionCity(bool bOnlyBetterThanEnhancingR
 
 						//    - Holy city will anger folks, let's not do that one right away
 						ReligionTypes eCityOwnersReligion = GET_PLAYER((PlayerTypes)iPlayerLoop).GetReligions()->GetReligionCreatedByPlayer();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-						bool bIsHolyCity = (eCityOwnersReligion > RELIGION_PANTHEON && pLoopCity->GetCityReligions()->IsHolyCityForReligion(eCityOwnersReligion));
-						
-						if (MOD_TRAITS_PANTHEON_IS_RELIGION && eCityOwnersReligion == RELIGION_PANTHEON && GET_PLAYER((PlayerTypes)iPlayerLoop).GetPlayerTraits()->IsPantheonIsReligion() && pLoopCity->isCapital()) {
-							bIsHolyCity = true;
-						}
-						
-						if (bIsHolyCity)
-#else
 						if (eCityOwnersReligion > RELIGION_PANTHEON && pLoopCity->GetCityReligions()->IsHolyCityForReligion(eCityOwnersReligion))
-#endif
 						{
 							iScore /= 2;
 						}
@@ -5628,11 +5506,7 @@ ReligionTypes CvReligionAI::GetReligionToSpread() const
 
 	CvGameReligions *pReligions = GC.getGame().GetGameReligions();
 	eRtnValue = pReligions->GetReligionCreatedByPlayer(m_pPlayer->GetID());
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	if(eRtnValue > RELIGION_PANTHEON || (MOD_TRAITS_PANTHEON_IS_RELIGION && eRtnValue == RELIGION_PANTHEON && m_pPlayer->GetPlayerTraits()->IsPantheonIsReligion()))
-#else
 	if(eRtnValue > RELIGION_PANTHEON)
-#endif
 	{
 		return eRtnValue;
 	}
@@ -5942,11 +5816,7 @@ bool CvReligionAI::BuyAnyAvailableFaithBuilding()
 	for(pLoopCity = GET_PLAYER(ePlayer).firstCity(&iLoop); pLoopCity != NULL; pLoopCity = GET_PLAYER(ePlayer).nextCity(&iLoop))
 	{
 		ReligionTypes eReligion = pLoopCity->GetCityReligions()->GetReligiousMajority();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		if(eReligion > RELIGION_PANTHEON || (MOD_TRAITS_PANTHEON_IS_RELIGION && eReligion == RELIGION_PANTHEON && m_pPlayer->GetPlayerTraits()->IsPantheonIsReligion()))
-#else
 		if(eReligion > RELIGION_PANTHEON)
-#endif
 		{
 			BuildingClassTypes eBuildingClass = FaithBuildingAvailable(eReligion);
 			if(eBuildingClass != NO_BUILDINGCLASS)
@@ -6514,10 +6384,13 @@ int CvReligionAI::ScoreCityForMissionary(CvCity* pCity, UnitHandle pUnit)
 	int iScore = 0;
 	ReligionTypes eMyReligion = GetReligionToSpread();
 	
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	// If this is a pantheon acting as a religion, only target our own cities
-	if (MOD_TRAITS_PANTHEON_IS_RELIGION && eMyReligion == RELIGION_PANTHEON && m_pPlayer->GetPlayerTraits()->IsPantheonIsReligion()) {
-		if (m_pPlayer->GetID() != pCity->getOwner()) {
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	if (MOD_RELIGION_LOCAL_RELIGIONS && GC.getReligionInfo(eMyReligion)->IsLocalReligion()) {
+		if (pCity->getOwner() != pUnit->getOwner()) {
+			return iScore;
+		}
+
+		if (pCity->IsOccupied() || pCity->IsPuppet()) {
 			return iScore;
 		}
 	}
@@ -6572,17 +6445,7 @@ int CvReligionAI::ScoreCityForMissionary(CvCity* pCity, UnitHandle pUnit)
 
 	// Holy city will anger folks, let's not do that one right away
 	ReligionTypes eCityOwnersReligion = kCityPlayer.GetReligions()->GetReligionCreatedByPlayer();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	bool bIsHolyCity = (eCityOwnersReligion > RELIGION_PANTHEON && pCity->GetCityReligions()->IsHolyCityForReligion(eCityOwnersReligion));
-						
-	if (MOD_TRAITS_PANTHEON_IS_RELIGION && eCityOwnersReligion == RELIGION_PANTHEON && kCityPlayer.GetPlayerTraits()->IsPantheonIsReligion() && pCity->isCapital()) {
-		bIsHolyCity = true;
-	}
-						
-	if (bIsHolyCity)
-#else
 	if (eCityOwnersReligion > RELIGION_PANTHEON && pCity->GetCityReligions()->IsHolyCityForReligion(eCityOwnersReligion))
-#endif
 	{
 		iScore /= 2;
 	}
@@ -6596,10 +6459,13 @@ int CvReligionAI::ScoreCityForInquisitor(CvCity* pCity, UnitHandle pUnit)
 	int iScore = 0;
 	ReligionTypes eMyReligion = GetReligionToSpread();
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-	// If this is a pantheon acting as a religion, only target our own cities
-	if (MOD_TRAITS_PANTHEON_IS_RELIGION && eMyReligion == RELIGION_PANTHEON && m_pPlayer->GetPlayerTraits()->IsPantheonIsReligion()) {
-		if (m_pPlayer->GetID() != pCity->getOwner()) {
+#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+	if (MOD_RELIGION_LOCAL_RELIGIONS && GC.getReligionInfo(eMyReligion)->IsLocalReligion()) {
+		if (pCity->getOwner() != pUnit->getOwner()) {
+			return iScore;
+		}
+
+		if (pCity->IsOccupied() || pCity->IsPuppet()) {
 			return iScore;
 		}
 	}
@@ -6730,12 +6596,7 @@ bool CvReligionAI::HaveNearbyConversionTarget(ReligionTypes eReligion, bool bCan
 					}
 				}
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-				ReligionTypes eReligionToSpread = kPlayer.GetReligionAI()->GetReligionToSpread();
-				if(eReligionToSpread > RELIGION_PANTHEON || (MOD_TRAITS_PANTHEON_IS_RELIGION && eReligionToSpread == RELIGION_PANTHEON && kPlayer.GetPlayerTraits()->IsPantheonIsReligion()))
-#else
 				if(kPlayer.GetReligionAI()->GetReligionToSpread() > RELIGION_PANTHEON)
-#endif
 				{
 					bStartedOwnReligion = true;
 				}
@@ -6775,17 +6636,7 @@ bool CvReligionAI::HaveEnoughInquisitors(ReligionTypes eReligion) const
 	for(CvCity* pCity = m_pPlayer->firstCity(&iLoop); pCity != NULL; pCity = m_pPlayer->nextCity(&iLoop))
 	{
 		ReligionTypes eCityReligion = pCity->GetCityReligions()->GetReligiousMajority();
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-		bool bNeedInquisitor = (eCityReligion > RELIGION_PANTHEON && eCityReligion != eReligion);
-		
-		if (MOD_TRAITS_PANTHEON_IS_RELIGION && m_pPlayer->GetPlayerTraits()->IsPantheonIsReligion() && eCityReligion > RELIGION_PANTHEON) {
-			bNeedInquisitor = true;
-		}
-		
-		if(bNeedInquisitor)
-#else
 		if(eCityReligion > RELIGION_PANTHEON && eCityReligion != eReligion)
-#endif
 		{
 			iNumNeeded++;
 		}
@@ -6914,17 +6765,7 @@ UnitTypes CvReligionAI::GetDesiredFaithGreatPerson() const
 				// Score it
 				if (eUnitClass == GC.getInfoTypeForString("UNITCLASS_PROPHET"))
 				{
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-					bool bSpread = (GetReligionToSpread() > RELIGION_PANTHEON);
-					
-					if (MOD_TRAITS_PANTHEON_IS_RELIGION && GetReligionToSpread() == RELIGION_PANTHEON && m_pPlayer->GetPlayerTraits()->IsPantheonIsReligion()) {
-						bSpread = true;
-					}
-					
-					if (bSpread)
-#else
 					if (GetReligionToSpread() > RELIGION_PANTHEON)
-#endif
 					{
 						if (ChooseProphetConversionCity(true/*bOnlyBetterThanEnhancingReligion*/))
 						{
@@ -7272,17 +7113,7 @@ bool CvReligionAIHelpers::DoesUnitPassFaithPurchaseCheck(CvPlayer &kPlayer, Unit
 			CvGameReligions* pReligions = GC.getGame().GetGameReligions();
 			ReligionTypes eReligion = pReligions->GetReligionCreatedByPlayer(kPlayer.GetID());
 
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			if (MOD_TRAITS_PANTHEON_IS_RELIGION && kPlayer.GetPlayerTraits()->IsPantheonIsReligion() && kPlayer.GetReligions()->HasCreatedPantheon()) {
-				eReligion = RELIGION_PANTHEON;
-			}
-#endif
-
-#if defined(MOD_TRAITS_PANTHEON_IS_RELIGION)
-			if (eReligion >= RELIGION_PANTHEON)
-#else
 			if (eReligion > RELIGION_PANTHEON)
-#endif
 			{
 				for(pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
 				{
