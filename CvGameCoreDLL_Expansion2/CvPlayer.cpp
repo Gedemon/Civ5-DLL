@@ -2120,7 +2120,7 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 			FILogFile* pLog = LOGFILEMGR.GetLog("red_capture_city_culture_debug.log", FILogFile::kDontTimeStamp);
 
 			redLogMessage += "---------------------------------------------------------------------------\n";
-			strTemp.Format("Update culture on plot (%d,%d) (City %s captured at (%d,%d) on turn %d)", pLoopPlot->getX(), pLoopPlot->getY(), pOldCity->getName(), pOldCity->getX(), pOldCity->getY(), GC.getGame().getElapsedGameTurns());
+			strTemp.Format("Update culture on plot (%d,%d) (City %s captured at (%d,%d) on turn %d)", pLoopPlot->getX(), pLoopPlot->getY(), pOldCity->getName().c_str(), pOldCity->getX(), pOldCity->getY(), GC.getGame().getElapsedGameTurns());
 			redLogMessage += strTemp;
 
 			int iTotalCultureLoss = 0;
