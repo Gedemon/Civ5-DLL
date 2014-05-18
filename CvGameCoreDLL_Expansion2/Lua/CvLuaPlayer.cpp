@@ -60,6 +60,11 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 
 	Method(ChooseTech);
 
+#if defined(MOD_API_EXTENSIONS)
+	Method(GetSpecificUnitType);
+	Method(GetSpecificBuildingType);
+#endif
+
 	Method(KillUnits);
 	Method(IsHuman);
 	Method(IsBarbarian);
@@ -461,6 +466,9 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetGreatEngineerRateModifier);
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	Method(GetGreatDiplomatRateModifier);
+	Method(GetScienceRateFromMinorAllies);
+	Method(GetScienceRateFromLeagueAid);
+	Method(GetLeagueCultureCityModifier);
 #endif
 
 	Method(GetPolicyGreatPeopleRateModifier);
@@ -1099,8 +1107,13 @@ int CvLuaPlayer::lInitCity(lua_State* L)
 	const int y = lua_tointeger(L, 3);
 	const bool bBumpUnits = luaL_optint(L, 4, 1);
 	const bool bInitialFounding = luaL_optint(L, 5, 1);
+#if defined(MOD_API_EXTENSIONS)
+	const ReligionTypes eInitialReligion = (ReligionTypes) luaL_optint(L, 6, NO_RELIGION);
 
+	CvCity* pkCity = pkPlayer->initCity(x, y, bBumpUnits, bInitialFounding, eInitialReligion);
+#else
 	CvCity* pkCity = pkPlayer->initCity(x, y, bBumpUnits, bInitialFounding);
+#endif
 	pkPlayer->DoUpdateNextPolicyCost();
 	CvLuaCity::Push(L, pkCity);
 	return 1;
@@ -1207,6 +1220,30 @@ int CvLuaPlayer::lKillUnits(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlayerAI::killUnits);
 }
+
+#if defined(MOD_API_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaPlayer::lGetSpecificUnitType(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	CvString strType = lua_tostring(L, 2);
+	
+	const UnitTypes eUnitType = pkPlayer->GetSpecificUnitType(strType, true);
+	lua_pushinteger(L, eUnitType);
+	return 1;
+}
+//------------------------------------------------------------------------------
+int CvLuaPlayer::lGetSpecificBuildingType(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	CvString strType = lua_tostring(L, 2);
+	
+	const BuildingTypes eBuildingType = pkPlayer->GetSpecificBuildingType(strType, true);
+	lua_pushinteger(L, eBuildingType);
+	return 1;
+}
+#endif
+
 //------------------------------------------------------------------------------
 //void CvPlayer::chooseTech(int iDiscover, const char* strText, TechTypes iTechJustDiscovered)
 int CvLuaPlayer::lChooseTech(lua_State* L)
@@ -5515,6 +5552,23 @@ int CvLuaPlayer::lGetGreatMerchantRateModifier(lua_State* L)
 int CvLuaPlayer::lGetGreatDiplomatRateModifier(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlayerAI::getGreatDiplomatRateModifier);
+}
+//------------------------------------------------------------------------------
+//int GetScienceRateFromMinorAllies();
+int CvLuaPlayer::lGetScienceRateFromMinorAllies(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::GetScienceRateFromMinorAllies);
+}
+//------------------------------------------------------------------------------
+//int GetScienceRateFromLeagueAid();
+int CvLuaPlayer::lGetScienceRateFromLeagueAid(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::GetScienceRateFromLeagueAid);
+}
+//int GetLeagueCultureCityModifier();
+int CvLuaPlayer::lGetLeagueCultureCityModifier(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::GetLeagueCultureCityModifier);
 }
 #endif
 

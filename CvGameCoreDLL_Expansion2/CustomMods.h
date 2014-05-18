@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 48)
+#define MOD_DLL_VERSION_NUMBER ((uint) 49)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -156,6 +156,7 @@
 // Changes for the City State Diplomacy mod by Gazebo - AFFECTS SAVE GAME DATA FORMAT (v35)
 #define MOD_DIPLOMACY_CITYSTATES                    gCustomMods.isDIPLOMACY_CITYSTATES()
 #if defined(MOD_DIPLOMACY_CITYSTATES)
+#define MOD_DIPLOMACY_CITYSTATES_DIFFICULTY         (MOD_DIPLOMACY_CITYSTATES && gCustomMods.isDIPLOMACY_CITYSTATES_DIFFICULTY())
 #define MOD_DIPLOMACY_CITYSTATES_QUESTS             (MOD_DIPLOMACY_CITYSTATES && gCustomMods.isDIPLOMACY_CITYSTATES_QUESTS())
 #define MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS        (MOD_DIPLOMACY_CITYSTATES && gCustomMods.isDIPLOMACY_CITYSTATES_RESOLUTIONS())
 #define MOD_DIPLOMACY_CITYSTATES_HURRY              (MOD_DIPLOMACY_CITYSTATES && gCustomMods.isDIPLOMACY_CITYSTATES_HURRY())
@@ -257,16 +258,10 @@
 #define MOD_AI_SMART_ARCHAEOLOGISTS                 (MOD_AI_SMART && gCustomMods.isAI_SMART_ARCHAEOLOGISTS())
 // Disband long obsolete units, eg triremes in industrial era
 #define MOD_AI_SMART_DISBAND                        (MOD_AI_SMART && gCustomMods.isAI_SMART_DISBAND())
-// Emphasize a bit more on workers
-#define MOD_AI_SMART_TILE_IMPROVERS                 (MOD_AI_SMART && gCustomMods.isAI_SMART_TILE_IMPROVERS())
 // Upgrade more units per turn if there are lots of units that can be upgraded. Will also upgrade air units more often
 #define MOD_AI_SMART_UPGRADES                       (MOD_AI_SMART && gCustomMods.isAI_SMART_UPGRADES())
-// Changes AI's priorities for promotions
-#define MOD_AI_SMART_PROMOTIONS                     (MOD_AI_SMART && gCustomMods.isAI_SMART_PROMOTIONS())
 // Units with at least 75% health will avoid healing
 #define MOD_AI_SMART_HEALING                        (MOD_AI_SMART && gCustomMods.isAI_SMART_HEALING())
-// Purchase units and buildings in cities under certain conditions
-#define MOD_AI_SMART_GOLD_PURCHASE                  (MOD_AI_SMART && gCustomMods.isAI_SMART_GOLD_PURCHASE())
 // Units won't randomly embark to water tiles
 #define MOD_AI_SMART_FLEE_FROM_DANGER               (MOD_AI_SMART && gCustomMods.isAI_SMART_FLEE_FROM_DANGER())
 // Ranged units are always able to move AND shoot on the same turn and should not attack over and over a city with 1 HP remaining.
@@ -275,8 +270,6 @@
 #define MOD_AI_SMART_AIR_SWEEPS                     (MOD_AI_SMART && gCustomMods.isAI_SMART_AIR_SWEEPS())
 // AI will hold planes back for interceptions if enemy aircraft are nearby
 #define MOD_AI_SMART_INTERCEPTIONS                  (MOD_AI_SMART && gCustomMods.isAI_SMART_INTERCEPTIONS())
-// Changes the AI's calculations of how many carriers are required
-#define MOD_AI_SMART_CARRIERS                       (MOD_AI_SMART && gCustomMods.isAI_SMART_CARRIERS())
 // Improves the AI's melee tactics
 #define MOD_AI_SMART_TACTICS                        (MOD_AI_SMART && gCustomMods.isAI_SMART_TACTICS())
 #endif
@@ -705,6 +698,12 @@ enum TerraformingEventTypes {
 #if defined(MOD_SERIALIZE)
 #define MOD_SERIALIZE_INIT_READ(stream) uint uiDllSaveVersion; stream >> uiDllSaveVersion
 #define MOD_SERIALIZE_READ(version, stream, member, def) if (uiDllSaveVersion >= version) { stream >> member; } else { member = def; }
+#define MOD_SERIALIZE_READ_AUTO(version, stream, member, size, def)   \
+	if (uiDllSaveVersion >= version) {                                \
+		stream >> member;                                             \
+	} else {                                                          \
+		for (int iI = 0; iI < size; iI++) { member.setAt(iI, def); }  \
+	}
 #define MOD_SERIALIZE_READ_ARRAY(version, stream, member, type, size, def)	\
 	if (uiDllSaveVersion >= version) {										\
 		ArrayWrapper<type> wrapper(size, member); stream >> wrapper;		\
@@ -719,16 +718,19 @@ enum TerraformingEventTypes {
 	}
 #define MOD_SERIALIZE_INIT_WRITE(stream) uint uiDllSaveVersion = MOD_DLL_VERSION_NUMBER; stream << uiDllSaveVersion
 #define MOD_SERIALIZE_WRITE(stream, member) CvAssert(uiDllSaveVersion == MOD_DLL_VERSION_NUMBER); stream << member
+#define MOD_SERIALIZE_WRITE_AUTO(stream, member) CvAssert(uiDllSaveVersion == MOD_DLL_VERSION_NUMBER); stream << member
 #define MOD_SERIALIZE_WRITE_ARRAY(stream, member, type, size) CvAssert(uiDllSaveVersion == MOD_DLL_VERSION_NUMBER); stream << ArrayWrapper<type>(size, member)
 #define MOD_SERIALIZE_WRITE_CONSTARRAY(stream, member, type, size) CvAssert(uiDllSaveVersion == MOD_DLL_VERSION_NUMBER); stream << ArrayWrapperConst<type>(size, member)
 #define MOD_SERIALIZE_WRITE_HASH(stream, member, type, size, obj) CvAssert(uiDllSaveVersion == MOD_DLL_VERSION_NUMBER); CvInfosSerializationHelper::WriteHashedDataArray<obj, type>(stream, member, size)
 #else
-#define MOD_SERIALIZE_INIT_READ(stream, member) __noop
-#define MOD_SERIALIZE_READ(stream, member) __noop
+#define MOD_SERIALIZE_INIT_READ(stream) __noop
+#define MOD_SERIALIZE_READ(version, stream, member, def) __noop
+#define MOD_SERIALIZE_READ_AUTO(version, stream, member, size, def) __noop
 #define MOD_SERIALIZE_READ_ARRAY(version, stream, member, type, size, def) __noop
 #define MOD_SERIALIZE_READ_HASH(version, stream, member, type, size, def) __noop
-#define MOD_SERIALIZE_INIT_WRITE(stream, member) __noop
+#define MOD_SERIALIZE_INIT_WRITE(stream) __noop
 #define MOD_SERIALIZE_WRITE(stream, member) __noop
+#define MOD_SERIALIZE_WRITE_AUTO(stream, member) __noop
 #define MOD_SERIALIZE_WRITE_ARRAY(stream, member, type, size) __noop
 #define MOD_SERIALIZE_WRITE_ARRAYCONST(stream, member, type, size) __noop
 #define MOD_SERIALIZE_WRITE_HASH(stream, member, type, size) __noop
@@ -812,6 +814,7 @@ public:
 	MOD_OPT_DECL(DIPLOMACY_TECH_BONUSES);
 	MOD_OPT_DECL(DIPLOMACY_AUTO_DENOUNCE);
 	MOD_OPT_DECL(DIPLOMACY_CITYSTATES); 
+	MOD_OPT_DECL(DIPLOMACY_CITYSTATES_DIFFICULTY); 
 	MOD_OPT_DECL(DIPLOMACY_CITYSTATES_QUESTS); 
 	MOD_OPT_DECL(DIPLOMACY_CITYSTATES_RESOLUTIONS); 
 	MOD_OPT_DECL(DIPLOMACY_CITYSTATES_HURRY); 
@@ -867,16 +870,12 @@ public:
 	MOD_OPT_DECL(AI_SMART_POLICY_CHOICE);
 	MOD_OPT_DECL(AI_SMART_ARCHAEOLOGISTS);
 	MOD_OPT_DECL(AI_SMART_DISBAND);
-	MOD_OPT_DECL(AI_SMART_TILE_IMPROVERS);
 	MOD_OPT_DECL(AI_SMART_UPGRADES);
-	MOD_OPT_DECL(AI_SMART_PROMOTIONS);
 	MOD_OPT_DECL(AI_SMART_HEALING);
-	MOD_OPT_DECL(AI_SMART_GOLD_PURCHASE);
 	MOD_OPT_DECL(AI_SMART_FLEE_FROM_DANGER);
 	MOD_OPT_DECL(AI_SMART_RANGED_UNITS);
 	MOD_OPT_DECL(AI_SMART_AIR_SWEEPS);
 	MOD_OPT_DECL(AI_SMART_INTERCEPTIONS);
-	MOD_OPT_DECL(AI_SMART_CARRIERS);
 	MOD_OPT_DECL(AI_SMART_TACTICS);
 
 	MOD_OPT_DECL(EVENTS_TERRAFORMING);

@@ -1352,7 +1352,7 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 					}
 
 #if defined(MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS)
-					if(kNodeCacheData.bIsRevealedToTeam && (!MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS ||bUnitIsCombat))
+					if(kNodeCacheData.bIsRevealedToTeam && (!MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS || bUnitIsCombat))
 #else
 					if(kNodeCacheData.bIsRevealedToTeam)
 #endif

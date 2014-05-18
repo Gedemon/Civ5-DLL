@@ -2337,13 +2337,7 @@ bool CityStrategyAIHelpers::IsTestCityStrategy_NeedTileImprovers(AICityStrategyT
 	}
 	else
 	{
-#if defined(MOD_AI_SMART_TILE_IMPROVERS)
-		int iMultiplier = MOD_AI_SMART_TILE_IMPROVERS ? 1 : 3;
-		int iDivisor = MOD_AI_SMART_TILE_IMPROVERS ? 1 : 4;
-		int iNumCities = max(1, (iCurrentNumCities * iMultiplier) / iDivisor);
-#else
 		int iNumCities = max(1, (iCurrentNumCities * 3) / 4);
-#endif
 		if(iNumWorkers >= iNumCities)
 			return false;
 		// If we're losing at war, return false
@@ -2382,13 +2376,6 @@ bool CityStrategyAIHelpers::IsTestCityStrategy_NeedTileImprovers(AICityStrategyT
 		if(GC.getGame().getElapsedGameTurns() > iDesperateTurn)
 			return true;
 	}
-#if defined(MOD_AI_SMART_TILE_IMPROVERS)
-	int iCityCountCoastalLessValue = kPlayer.countCitiesCoastalLessValue();
-	if (MOD_AI_SMART_TILE_IMPROVERS && iNumWorkers < iCityCountCoastalLessValue)
-	{
-		return true;
-	}
-#endif
 
 	return false;
 }
@@ -3453,7 +3440,7 @@ bool CityStrategyAIHelpers::IsTestCityStrategy_NeedDiplomatsCritical(CvCity *pCi
 			if (pCity->GetCityBuildings()->GetNumBuilding(eBuilding) > 0)
 			{
 				// Does it grant a diplomatic production bonus?
-				if (pkBuildingInfo->GetBuildingClassType() == (BuildingClassTypes)GC.getInfoTypeForString("BUILDINGCLASS_SCRIBE"))
+				if (pkBuildingInfo->GetBuildingClassType() == (BuildingClassTypes)GC.getInfoTypeForString("BUILDINGCLASS_COURT_SCRIBE"))
 				{
 					bHasDiploBuilding = true;
 				}

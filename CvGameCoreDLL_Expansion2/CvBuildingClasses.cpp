@@ -133,6 +133,8 @@ CvBuildingEntry::CvBuildingEntry(void):
 	m_iCapitalsToVotesBase(0),
 	m_iDoFToVotesBase(0),
 	m_iRAToVotesBase(0),
+	m_iGPExpendInfluenceBase(0),
+	m_iGrowthExtraYieldBase(0),
 #endif
 	m_iPreferredDisplayPosition(0),
 	m_iPortraitIndex(-1),
@@ -392,6 +394,8 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 		m_iCapitalsToVotesBase = kResults.GetInt("CapitalsToVotes");
 		m_iDoFToVotesBase = kResults.GetInt("DoFToVotes");
 		m_iRAToVotesBase = kResults.GetInt("RAToVotes");
+		m_iGPExpendInfluenceBase = kResults.GetInt("GPExpendInfluence");
+		m_iGrowthExtraYieldBase = kResults.GetInt("GrowthExtraYieldBase");
 	}
 #endif
 	m_iPreferredDisplayPosition = kResults.GetInt("DisplayPosition");
@@ -1399,6 +1403,18 @@ int CvBuildingEntry::GetDoFToVotes() const
 int CvBuildingEntry::GetRAToVotes() const
 {
 	return m_iRAToVotesBase;
+}
+
+/// Extra votes from Research Agreements
+int CvBuildingEntry::GetGPExpendInfluence() const
+{
+	return m_iGPExpendInfluenceBase;
+}
+
+/// Extra votes from Research Agreements
+int CvBuildingEntry::GetGrowthExtraYield() const
+{
+	return m_iGrowthExtraYieldBase;
 }
 #endif
 

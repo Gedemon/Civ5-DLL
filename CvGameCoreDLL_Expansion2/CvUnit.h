@@ -315,6 +315,9 @@ public:
 	bool pillage();
 
 	bool canFound(const CvPlot* pPlot, bool bTestVisible = false) const;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	bool canFoundMid(const CvPlot* pPlot, bool bTestVisible = false) const;
+#endif
 	bool found();
 
 	bool canJoin(const CvPlot* pPlot, SpecialistTypes eSpecialist) const;
@@ -401,6 +404,9 @@ public:
 
 	bool isReadyForUpgrade() const;
 	bool CanUpgradeRightNow(bool bOnlyTestVisible) const;
+#if defined(MOD_API_EXTENSIONS)
+	bool CanUpgradeTo(UnitTypes eUpgradeUnitType, bool bOnlyTestVisible) const;
+#endif
 #if defined(MOD_GLOBAL_CS_UPGRADES)
 	bool CanUpgradeInTerritory(bool bOnlyTestVisible) const;
 #endif
@@ -410,6 +416,9 @@ public:
 	CvUnit* DoUpgrade(bool bFree = false);
 #else
 	CvUnit* DoUpgrade();
+#endif
+#if defined(MOD_API_EXTENSIONS)
+	CvUnit* DoUpgradeTo(UnitTypes eUpgradeUnitType, bool bFree = false);
 #endif
 
 	HandicapTypes getHandicapType() const;
@@ -461,6 +470,10 @@ public:
 	void changeRivalTerritoryCount(int iChange);
 	bool isFound() const;
 	bool IsFoundAbroad() const;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	bool IsFoundMid() const;
+	bool IsFoundLate() const;
+#endif
 	bool IsWork() const;
 	bool isGoldenAge() const;
 	bool isGivesPolicies() const;
@@ -1233,9 +1246,6 @@ public:
 	void AI_promote();
 	UnitAITypes AI_getUnitAIType() const;
 	void AI_setUnitAIType(UnitAITypes eNewValue);
-#if defined(MOD_AI_SMART_PROMOTIONS)
-	int GetPromotionValue(int promotionBonus, int unitExtraValue, int matchFlavorValue, int baseValue);
-#endif
 	int AI_promotionValue(PromotionTypes ePromotion);
 
 	GreatPeopleDirectiveTypes GetGreatPeopleDirective() const;
@@ -1268,6 +1278,13 @@ public:
 	MissionAITypes GetMissionAIType();
 	void SetMissionAI(MissionAITypes eNewMissionAI, CvPlot* pNewPlot, CvUnit* pNewUnit);
 	CvUnit* GetMissionAIUnit();
+
+#if defined(MOD_API_EXTENSIONS) || defined(MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS)
+	inline bool IsCivilianUnit() const
+	{
+		return !(IsCombatUnit() || isRanged());
+	}
+#endif
 
 	// Combat eligibility routines
 	inline bool IsCombatUnit() const

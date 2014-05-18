@@ -116,8 +116,11 @@ public:
 	void disbandUnit(bool bAnnounce);
 	void killUnits();
 
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_EXTENSIONS) || defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
 	UnitTypes GetSpecificUnitType(const char* szUnitClass, bool hideAssert = false);
+#endif
+#if defined(MOD_API_EXTENSIONS) || defined(MOD_BUGFIX_BUILDINGCLASS_NOT_BUILDING)
+	BuildingTypes GetSpecificBuildingType(const char* szBuildingClass, bool hideAssert = false);
 #endif
 
 	CvPlot *GetGreatAdmiralSpawnPlot (CvUnit *pUnit);
@@ -220,9 +223,6 @@ public:
 	//int countNumCitiesConnectedToCapital() const;
 
 	int countCitiesFeatureSurrounded() const;
-#if defined(MOD_AI_SMART_TILE_IMPROVERS)
-	int countCitiesCoastalLessValue() const;
-#endif
 
 	bool IsCityConnectedToCity(CvCity* pCity1, CvCity* pCity2, RouteTypes eRestrictRouteType = NO_ROUTE, bool bIgnoreHarbors = false);
 	bool IsCapitalConnectedToPlayer(PlayerTypes ePlayer, RouteTypes eRestrictRouteType = NO_ROUTE);
@@ -244,6 +244,11 @@ public:
 
 	void AwardFreeBuildings(CvCity* pCity); // slewis - broken out so that Venice can get free buildings when they purchase something
 	bool canFound(int iX, int iY, bool bTestVisible = false) const;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	void foundmid(int iX, int iY);
+	void foundlate(int iX, int iY);
+#endif
+
 #if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
 	void found(int iX, int iY, ReligionTypes eReligion = NO_RELIGION);
 #else
@@ -378,6 +383,10 @@ public:
 
 	int GetJONSCultureCityModifier() const;
 	void ChangeJONSCultureCityModifier(int iChange);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int GetLeagueCultureCityModifier() const;
+	void ChangeLeagueCultureCityModifier(int iChange);
+#endif
 
 	int getJONSCulture() const;
 	void setJONSCulture(int iNewValue);
@@ -552,6 +561,30 @@ public:
 	int GetRAToVotes() const;
 	void ChangeRAToVotes(int iChange);
 	int TestRAToVotes(int iChange);
+	int GetGPExpendInfluence() const;
+	void ChangeGPExpendInfluence(int iChange);
+	
+	void SetLeagueArt(bool bValue);
+	bool IsLeagueArt() const;
+
+	void SetLeagueScholar(bool bValue);
+	bool IsLeagueScholar() const;
+
+	//Artsy/Sciencey Bonus
+	void SetLeagueAid(bool bValue);
+	bool IsLeagueAid() const;
+
+	void ProcessLeagueResolutions();
+	PlayerTypes AidRank();
+	int ScoreDifference();
+
+	int GetScienceRateFromMinorAllies() const;
+	void ChangeScienceRateFromMinorAllies(int iChange);
+	void SetScienceRateFromMinorAllies(int iValue);
+
+	int GetScienceRateFromLeagueAid() const;
+	void ChangeScienceRateFromLeagueAid(int iChange);
+	void SetScienceRateFromLeagueAid(int iValue);
 #endif
 
 	void ChangeExtraLeagueVotes(int iChange);
@@ -668,6 +701,8 @@ public:
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	int getGreatDiplomatsCreated() const;
 	void incrementGreatDiplomatsCreated();
+	int getDiplomatsFromFaith() const;
+	void incrementDiplomatsFromFaith();
 #endif
 
 	int getMerchantsFromFaith() const;
@@ -1721,6 +1756,13 @@ protected:
 	int m_iCapitalsToVotes;
 	int m_iDoFToVotes;
 	int m_iRAToVotes;
+	int m_iGPExpendInfluence;
+	bool m_bIsLeagueAid;
+	bool m_bIsLeagueScholar;
+	bool m_bIsLeagueArt;
+	int m_iScienceRateFromLeague;
+	int m_iScienceRateFromLeagueAid;
+	FAutoVariable<int, CvPlayer> m_iLeagueCultureCityModifier;
 #endif
 	FAutoVariable<int, CvPlayer> m_iAdvancedStartPoints;
 	FAutoVariable<int, CvPlayer> m_iAttackBonusTurns;
@@ -1741,6 +1783,7 @@ protected:
 	int m_iGreatMusiciansCreated;
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	int m_iGreatDiplomatsCreated;
+	int m_iDiplomatsFromFaith;
 #endif
 	int m_iMerchantsFromFaith;
 	int m_iScientistsFromFaith;

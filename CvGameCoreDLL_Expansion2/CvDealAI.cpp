@@ -1307,6 +1307,16 @@ int CvDealAI::GetResourceValue(ResourceTypes eResource, int iResourceQuantity, i
 		if(!GET_TEAM(GetPlayer()->getTeam()).IsResourceObsolete(eResource))
 		{
 			iItemValue += (iResourceQuantity * iNumTurns * 150 / 100);	// Ex: 5 Iron for 30 turns * 2 = value of 300
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+			if (MOD_DIPLOMACY_CITYSTATES) {
+				//Paper is super important - don't give it away too easily!
+				ResourceTypes ePaperResource = (ResourceTypes)GC.getInfoTypeForString("RESOURCE_PAPER", true);
+				if(eResource == ePaperResource)
+				{
+					iItemValue *= iResourceQuantity;
+				}
+			}
+#endif
 		}
 		else
 		{
@@ -1372,6 +1382,17 @@ int CvDealAI::GetResourceValue(ResourceTypes eResource, int iResourceQuantity, i
 			iModifier += 100;
 			break;
 		}
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		if (MOD_DIPLOMACY_CITYSTATES) {
+			//Paper is super important - don't give it away too easily!
+			ResourceTypes ePaperResource = (ResourceTypes)GC.getInfoTypeForString("RESOURCE_PAPER", true);
+			if(eResource == ePaperResource)
+			{
+				iModifier *= iResourceQuantity;
+			}
+		}
+#endif
 
 		iItemValue *= iModifier;
 		iItemValue /= 200;	// 200 because we've added two mods together

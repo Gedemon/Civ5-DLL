@@ -521,12 +521,22 @@ void CvGameReligions::DoPlayerTurn(CvPlayer& kPlayer)
 	case FAITH_PURCHASE_SAVE_PROPHET:
 		if (eReligion <= RELIGION_PANTHEON && GetNumReligionsStillToFound() <= 0)
 		{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+			UnitTypes eProphetType = kPlayer.GetSpecificUnitType("UNITCLASS_PROPHET", true);
+			szItemName = GetLocalizedText("TXT_KEY_RO_AUTO_FAITH_PROPHET_PARAM", GC.getUnitInfo(eProphetType)->GetDescription());
+#else
 			szItemName = GetLocalizedText("TXT_KEY_RO_AUTO_FAITH_PROPHET");
+#endif
 			bSelectionStillValid = false;
 		}
 		else if (kPlayer.GetCurrentEra() >= GC.getInfoTypeForString("ERA_INDUSTRIAL"))
 		{
+#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+			UnitTypes eProphetType = kPlayer.GetSpecificUnitType("UNITCLASS_PROPHET", true);
+			szItemName = GetLocalizedText("TXT_KEY_RO_AUTO_FAITH_PROPHET_PARAM", GC.getUnitInfo(eProphetType)->GetDescription());
+#else
 			szItemName = GetLocalizedText("TXT_KEY_RO_AUTO_FAITH_PROPHET");
+#endif
 			bSelectionStillValid = false;
 		}
 		break;
@@ -3988,8 +3998,8 @@ void CvCityReligions::AdoptReligionFully(ReligionTypes eReligion)
 	religion.m_iPressure = religion.m_iFollowers * GC.getRELIGION_ATHEISM_PRESSURE_PER_POP();
 	m_ReligionStatus.push_back(religion);
 
-#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS) || defined(MOD_RELIGION_LOCAL_RELIGIONS)
-	if (MOD_GLOBAL_RELIGIOUS_SETTLERS || MOD_RELIGION_LOCAL_RELIGIONS) {
+#if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
+	if (MOD_GLOBAL_RELIGIOUS_SETTLERS) {
 		RecomputeFollowers(FOLLOWER_CHANGE_ADOPT_FULLY, NO_RELIGION);
 	}
 #endif
@@ -6890,6 +6900,25 @@ UnitTypes CvReligionAI::GetDesiredFaithGreatPerson() const
 						iScore = 1000 / (m_pPlayer->GetNumUnitsWithUnitAI(UNITAI_INQUISITOR) + 1);
 					}
 				}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+				else if (MOD_DIPLOMACY_CITYSTATES && eUnitClass == GC.getInfoTypeForString("UNITCLASS_GREAT_DIPLOMAT"))
+				{
+					EconomicAIStrategyTypes eStrategy = (EconomicAIStrategyTypes) GC.getInfoTypeForString("ECONOMICAISTRATEGY_NEED_DIPLOMATS_CRITICAL");
+					if (eStrategy != NO_ECONOMICAISTRATEGY && m_pPlayer->GetEconomicAI()->IsUsingStrategy(eStrategy))
+					{
+						iScore = 800;
+					}
+					if (eVictoryStrategy == (AIGrandStrategyTypes) GC.getInfoTypeForString("AIGRANDSTRATEGY_DIPLOMACY"))
+					{
+						iScore = 2000;
+					}
+					else
+					{
+						iScore = 400;
+					}
+					iScore /= (1+ m_pPlayer->getDiplomatsFromFaith() + m_pPlayer->GetNumUnitsWithUnitAI(UNITAI_DIPLOMAT));
+				}
+#endif
 
 				if (iScore > iBestScore)
 				{

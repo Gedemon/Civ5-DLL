@@ -2798,7 +2798,7 @@ bool CvUnit::canMoveInto(const CvPlot& plot, byte bMoveFlags) const
 
 	// Added in Civ 5: Destination plots can't allow stacked Units of the same type
 #if defined(MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS)
-	if((bMoveFlags & MOVEFLAG_DESTINATION) && (!MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS || IsCombatUnit()))
+	if((bMoveFlags & MOVEFLAG_DESTINATION) && (!MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS || !IsCivilianUnit()))
 #else
 	if(bMoveFlags & MOVEFLAG_DESTINATION)
 #endif
@@ -6368,7 +6368,7 @@ bool CvUnit::canPlunderTradeRoute(const CvPlot* pPlot, bool bOnlyTestVisibility)
 	}
 	
 #if defined(MOD_GLOBAL_NO_OCEAN_PLUNDERING)
-	if (MOD_GLOBAL_NO_OCEAN_PLUNDERING && !pPlot->isShallowWater())
+	if (MOD_GLOBAL_NO_OCEAN_PLUNDERING && pPlot->isWater() && !pPlot->isShallowWater())
 	{
 		return false;
 	}
@@ -7210,6 +7210,17 @@ bool CvUnit::found()
 		}
 #endif
 	}
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if(MOD_DIPLOMACY_CITYSTATES && m_pUnitInfo->IsFoundMid())
+	{
+		kPlayer.foundmid(getX(), getY());
+	}
+	if(MOD_DIPLOMACY_CITYSTATES && m_pUnitInfo->IsFoundLate())
+	{
+		kPlayer.foundlate(getX(), getY());
+	}
+#endif
 
 	auto_ptr<ICvUnit1> pDllUnit(new CvDllUnit(this));
 	gDLL->GameplayUnitVisibility(pDllUnit.get(), false);
@@ -8457,7 +8468,7 @@ bool CvUnit::trade()
 		//Added Influence Quest Bonus
 		if(GET_PLAYER(eMinor).GetMinorCivAI()->IsActiveQuestForPlayer(getOwner(), MINOR_CIV_QUEST_INFLUENCE))
 		{	
-			int iBoostPercentage = 15;
+			int iBoostPercentage = GC.getINFLUENCE_MINOR_QUEST_BOOST();
 			iFriendship *= 100 + iBoostPercentage;
 			iFriendship /= 100;
 		}
@@ -9906,7 +9917,14 @@ bool CvUnit::CanUpgradeRightNow(bool bOnlyTestVisible) const
 		return false;
 
 	UnitTypes eUpgradeUnitType = GetUpgradeUnitType();
+	
+#if defined(MOD_API_EXTENSIONS)
+	return CanUpgradeTo(eUpgradeUnitType, bOnlyTestVisible);
+}
 
+bool CvUnit::CanUpgradeTo(UnitTypes eUpgradeUnitType, bool bOnlyTestVisible) const
+{
+#endif
 	// Does the Unit actually upgrade into anything?
 	if(eUpgradeUnitType == NO_UNIT)
 		return false;
@@ -10145,6 +10163,13 @@ CvUnit* CvUnit::DoUpgrade()
 
 	UnitTypes eUnitType = GetUpgradeUnitType();
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	return DoUpgradeTo(eUnitType, bFree);
+}
+
+CvUnit* CvUnit::DoUpgradeTo(UnitTypes eUnitType, bool bFree)
+{
+#endif
 	// Gold Cost
 	int iUpgradeCost = upgradePrice(eUnitType);
 	CvPlayerAI& thisPlayer = GET_PLAYER(getOwner());
@@ -10749,6 +10774,21 @@ bool CvUnit::IsFoundAbroad() const
 	VALIDATE_OBJECT
 	return m_pUnitInfo->IsFoundAbroad();
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+//	--------------------------------------------------------------------------------
+bool CvUnit::IsFoundMid() const
+{
+	VALIDATE_OBJECT
+	return m_pUnitInfo->IsFoundMid();
+}
+//	--------------------------------------------------------------------------------
+bool CvUnit::IsFoundLate() const
+{
+	VALIDATE_OBJECT
+	return m_pUnitInfo->IsFoundLate();
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 bool CvUnit::IsWork() const
@@ -18187,7 +18227,7 @@ const CvString CvUnit::getName() const
 	{
 #if defined(MOD_PROMOTIONS_UNIT_NAMING)
 		// For units, getUnitInfo().GetTextKey() (ie getNameKey()) and getUnitInfo().GetDescription() are the same
-		return getNameKey();
+		return GetLocalizedText(getNameKey());
 #else
 		return getUnitInfo().GetDescription();
 #endif
@@ -18196,7 +18236,7 @@ const CvString CvUnit::getName() const
 	Localization::String name = Localization::Lookup(m_strName);
 #if defined(MOD_PROMOTIONS_UNIT_NAMING)
 		// For units, getUnitInfo().GetTextKey() (ie getNameKey()) and getUnitInfo().GetDescription() are the same
-	strBuffer.Format("%s (%s)", name.toUTF8(), getNameKey());
+	strBuffer.Format("%s (%s)", name.toUTF8(), GetLocalizedText(getNameKey()).c_str());
 #else
 	strBuffer.Format("%s (%s)", name.toUTF8(), getUnitInfo().GetDescription());
 #endif
@@ -18901,7 +18941,21 @@ void CvUnit::setHasPromotion(PromotionTypes eIndex, bool bNewValue)
 		CvPromotionEntry& thisPromotion = *GC.getPromotionInfo(eIndex);
 
 #if defined(MOD_GLOBAL_CANNOT_EMBARK)
-		if (MOD_GLOBAL_CANNOT_EMBARK && getUnitInfo().CannotEmbark()) {
+		if (bNewValue && MOD_GLOBAL_CANNOT_EMBARK && getUnitInfo().CannotEmbark()) {
+			if (thisPromotion.IsAllowsEmbarkation() || thisPromotion.IsEmbarkedAllWater()) {
+				return;
+#if defined(MOD_PROMOTIONS_DEEP_WATER_EMBARKATION)
+			} else if (MOD_PROMOTIONS_DEEP_WATER_EMBARKATION && thisPromotion.IsEmbarkedDeepWater()) {
+				return;
+#endif
+			}
+		}
+#endif
+
+#if defined(MOD_BUGFIX_MINOR)
+		// Firaxis only use the CanMoveAllTerrain promotion in the Smokey Skies scenario,
+		// which doesn't have the situation where the player discovers Optics ...
+		if (bNewValue && canMoveAllTerrain()) {
 			if (thisPromotion.IsAllowsEmbarkation() || thisPromotion.IsEmbarkedAllWater()) {
 				return;
 #if defined(MOD_PROMOTIONS_DEEP_WATER_EMBARKATION)
@@ -20534,10 +20588,6 @@ bool CvUnit::IsDeclareWar() const
 		case UNITAI_SCIENTIST:
 		case UNITAI_GENERAL:
 		case UNITAI_MERCHANT:
-#if defined(MOD_DIPLOMACY_CITYSTATES)
-		case UNITAI_DIPLOMAT:
-		case UNITAI_MESSENGER:
-#endif
 		case UNITAI_ENGINEER:
 		case UNITAI_ICBM:
 		case UNITAI_WORKER_SEA:
@@ -20551,6 +20601,10 @@ bool CvUnit::IsDeclareWar() const
 		case UNITAI_ARCHAEOLOGIST:
 		case UNITAI_WRITER:
 		case UNITAI_MUSICIAN:
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		case UNITAI_DIPLOMAT:
+		case UNITAI_MESSENGER:
+#endif
 			break;
 
 		case UNITAI_ATTACK_SEA:
@@ -20733,7 +20787,7 @@ bool CvUnit::UnitAttack(int iX, int iY, int iFlags, int iSteps)
 	}
 
 #if defined(MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS)
-	if (MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS && !IsCombatUnit())
+	if (MOD_GLOBAL_BREAK_CIVILIAN_RESTRICTIONS && IsCivilianUnit())
 		return false;
 #endif
 
@@ -22317,31 +22371,6 @@ void CvUnit::AI_promote()
 	}
 }
 
-#if defined(MOD_AI_SMART_PROMOTIONS)
-//	-----------------------------------------------------------
-// Ninakoru: Little function to calculate with promotion values
-int CvUnit::GetPromotionValue(int promotionBonus, int unitExtraValue, int matchFlavorValue, int baseValue)
-{
-	VALIDATE_OBJECT
-
-	int result = 0;
-	int iExtra = 0;
-	int primaryValue = 15;
-
-	if (unitExtraValue != 0)
-	{
-		iExtra = 12;
-	}
-
-	if (promotionBonus != 0)
-	{
-		result = primaryValue + matchFlavorValue + iExtra + baseValue;
-	}
-
-	return result;
-}
-#endif
-
 //	--------------------------------------------------------------------------------
 // XXX make sure we include any new UnitAITypes...
 int CvUnit::AI_promotionValue(PromotionTypes ePromotion)
@@ -22358,289 +22387,6 @@ int CvUnit::AI_promotionValue(PromotionTypes ePromotion)
 
 	int iValue = 0;
 
-#if defined(MOD_AI_SMART_PROMOTIONS)
-	if (MOD_AI_SMART_PROMOTIONS)
-	{
-	int lowPriority = 100;
-	int mediumPriority = 110;
-	int highPriority = 120;
-	int absolutePriority = 200;
-	int iTemp;
-	int iI;
-	int plotPercents;
-	int doubleMove;
-	// Get flavor info we can use
-	CvFlavorManager* pFlavorMgr = GET_PLAYER(m_eOwner).GetFlavorManager();
-	int iFlavorOffense = pFlavorMgr->GetPersonalityIndividualFlavor((FlavorTypes)GC.getInfoTypeForString("FLAVOR_OFFENSE"));
-	int iFlavorDefense = pFlavorMgr->GetPersonalityIndividualFlavor((FlavorTypes)GC.getInfoTypeForString("FLAVOR_DEFENSE"));
-	int iFlavorOffDef = (iFlavorOffense + iFlavorDefense) / 2;
-	int iFlavorRanged = pFlavorMgr->GetPersonalityIndividualFlavor((FlavorTypes)GC.getInfoTypeForString("FLAVOR_RANGED"));
-	int iFlavorRecon = pFlavorMgr->GetPersonalityIndividualFlavor((FlavorTypes)GC.getInfoTypeForString("FLAVOR_RECON"));
-	int iFlavorMobile = pFlavorMgr->GetPersonalityIndividualFlavor((FlavorTypes)GC.getInfoTypeForString("FLAVOR_MOBILE"));
-	int iFlavorNaval = pFlavorMgr->GetPersonalityIndividualFlavor((FlavorTypes)GC.getInfoTypeForString("FLAVOR_NAVAL"));
-	int iFlavorAir = pFlavorMgr->GetPersonalityIndividualFlavor((FlavorTypes)GC.getInfoTypeForString("FLAVOR_AIR"));
-
-	// If we are damaged, insta heal is the way to go
-	if(pkPromotionInfo->IsInstaHeal())
-	{
-		// Half health or less?
-		if(getDamage() >= (GetMaxHitPoints() / 2))
-		{
-			iValue = absolutePriority;   // Enough to lock this one up
-		}
-	}
-
-	// High priority promotions
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetExtraAttacks(), 0, iFlavorOffense, highPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->IsAlwaysHeal() ? 1 : 0, 0, iFlavorDefense, highPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->IsBlitz() ? 1 : 0, 0, iFlavorMobile, highPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetRangeChange(), 0, iFlavorRanged, getDomainType() == DOMAIN_AIR ? mediumPriority : highPriority);
-	}
-
-	if (iValue == 0)
-	{
-		plotPercents = 0;
-		doubleMove = 0;
-
-		for(iI = 0; iI < GC.getNumTerrainInfos(); iI++)
-		{
-			const TerrainTypes eTerrain = static_cast<TerrainTypes>(iI);
-			CvTerrainInfo* pkTerrainInfo = GC.getTerrainInfo(eTerrain);
-
-			if(pkTerrainInfo)
-			{
-				plotPercents += pkPromotionInfo->GetTerrainAttackPercent(iI) + pkPromotionInfo->GetTerrainDefensePercent(iI);
-				doubleMove += pkPromotionInfo->GetTerrainDoubleMove(iI) ? 1 : 0;
-			}
-		}
-
-		iValue = GetPromotionValue(doubleMove, 0, iFlavorMobile, highPriority);
-
-		if (iValue == 0)
-		{
-			iValue = GetPromotionValue(plotPercents, 0, iFlavorOffDef, mediumPriority);
-		}
-	}
-
-	if (iValue == 0)
-	{
-		plotPercents = 0;
-		doubleMove = 0;
-
-		for(iI = 0; iI < GC.getNumFeatureInfos(); iI++)
-		{
-			const FeatureTypes eFeature = static_cast<FeatureTypes>(iI);
-			CvFeatureInfo* pkFeatureInfo = GC.getFeatureInfo(eFeature);
-
-			if(pkFeatureInfo)
-			{
-				plotPercents += pkPromotionInfo->GetFeatureAttackPercent(iI) + pkPromotionInfo->GetFeatureDefensePercent(iI);
-				doubleMove += pkPromotionInfo->GetFeatureDoubleMove(iI) ? 1 : 0;
-			}
-		}
-
-		iValue = GetPromotionValue(doubleMove, 0, iFlavorMobile, highPriority);
-
-		if (iValue == 0)
-		{
-			iValue = GetPromotionValue(plotPercents, 0, iFlavorOffDef, mediumPriority);
-		}
-	}
-
-	// Medium priority promotions
-	if (iValue == 0)
-	{
-		iTemp = pkPromotionInfo->GetEnemyHealChange() + pkPromotionInfo->GetNeutralHealChange() + pkPromotionInfo->GetFriendlyHealChange() + pkPromotionInfo->GetAdjacentTileHealChange();
-		iValue = GetPromotionValue(iTemp, getDefenseModifier(), iFlavorDefense, mediumPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->IsRangeAttackIgnoreLOS() ? 1 : 0, 0, iFlavorRanged, mediumPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetAttackWoundedMod(), getExtraAttackWoundedMod(), iFlavorOffense, mediumPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetMovesChange(), 0, iFlavorMobile, mediumPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetAttackFortifiedMod(), getExtraAttackFortifiedMod(), iFlavorOffense, mediumPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->IsCanMoveAfterAttacking() ? 1 : 0, 0, iFlavorMobile, mediumPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetNumInterceptionChange(), 0, iFlavorDefense, mediumPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(getDomainType() == DOMAIN_AIR ? pkPromotionInfo->GetInterceptionDefenseDamageModifier() : 0, GetInterceptionDefenseDamageModifier(), iFlavorAir, mediumPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetCargoChange(), 0, iFlavorNaval, mediumPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetAttackMod(), getDomainType() == DOMAIN_SEA ? 1 : 0, iFlavorMobile, mediumPriority);
-	}
-
-	// Low priority promotions
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetRangedDefenseMod(), getExtraRangedDefenseModifier(), iFlavorDefense, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetCityAttackPercent(), getDomainType() == DOMAIN_SEA ? 1 : getExtraCityAttackPercent(), iFlavorOffense, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetCityDefensePercent(), getExtraCityDefensePercent(), iFlavorDefense, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iTemp = pkPromotionInfo->GetOpenAttackPercent() + pkPromotionInfo->GetOpenDefensePercent();
-		iValue = GetPromotionValue(iTemp, getExtraOpenAttackPercent() + getExtraOpenDefensePercent(), iFlavorOffDef, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iTemp = pkPromotionInfo->GetRoughAttackPercent() + pkPromotionInfo->GetRoughDefensePercent();
-		iValue = GetPromotionValue(iTemp, getExtraRoughAttackPercent() + getExtraRoughDefensePercent(), iFlavorOffDef, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetOpenRangedAttackMod(), getExtraOpenRangedAttackMod(), iFlavorRanged, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetRoughRangedAttackMod(), getExtraRoughRangedAttackMod(), iFlavorRanged, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetVisibilityChange(), 0, iFlavorRecon, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue((pkPromotionInfo->IsAmphib() || pkPromotionInfo->IsRiver()) ? 1 : 0, 0, iFlavorOffense, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetDefenseMod(), getDefenseModifier(), iFlavorDefense, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(pkPromotionInfo->GetFlankAttackModifier(), maxMoves() > 2 ? 1 : 0, iFlavorMobile, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iTemp = (GC.getPromotionInfo(ePromotion)->IsHealOutsideFriendly() && getDomainType() == DOMAIN_SEA) ? 1 : 0;
-		iValue = GetPromotionValue(iTemp, 0, iFlavorNaval, mediumPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(canAirPatrol(NULL) ? pkPromotionInfo->GetInterceptionCombatModifier() : 0, GetInterceptionCombatModifier(), iFlavorAir, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(canAirSweep() ? pkPromotionInfo->GetAirSweepCombatModifier() : 0, GetAirSweepCombatModifier(), iFlavorAir, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iTemp = 0;
-
-		for(iI = 0; iI < GC.getNumUnitCombatClassInfos(); iI++)
-		{
-			const UnitCombatTypes eUnitCombat = static_cast<UnitCombatTypes>(iI);
-			CvBaseInfo* pkUnitCombatInfo = GC.getUnitCombatClassInfo(eUnitCombat);
-
-			if(pkUnitCombatInfo)
-			{
-				iTemp += pkPromotionInfo->GetUnitCombatModifierPercent(iI);
-			}
-		}
-
-		iValue = GetPromotionValue(iTemp, 0, iFlavorOffDef, lowPriority);
-	}
-
-	if (iValue == 0)
-	{
-		iTemp = 0;
-
-		for(iI = 0; iI < NUM_DOMAIN_TYPES; iI++)
-		{
-			iTemp += pkPromotionInfo->GetDomainModifierPercent(iI);
-		}
-
-		iValue = GetPromotionValue(iTemp, getDomainType() == DOMAIN_SEA ? 1 : 0, iFlavorOffDef, lowPriority);
-	}
-
-	// Always give at least a low priority with some flavor
-	if (iValue == 0)
-	{
-		iValue = GetPromotionValue(1, 0, iFlavorOffDef, lowPriority);
-
-		// Logging to keep track on promotions not handled on the script.
-		if(GC.getLogging() && GC.getAILogging())
-		{
-			CvString szMsg;
-			szMsg.Format("UNKNOWN PROMOTION %s.", getName().GetCString());
-			GET_PLAYER(m_eOwner).GetTacticalAI()->LogTacticalMessage(szMsg, true /*bSkipLogDominanceZone*/);
-		}
-	}
-
-	if(iValue > 0)
-	{
-		//AMS: Higher random from 15 to 25
-		iValue += GC.getGame().getJonRandNum(25, "AI Promote");
-	}
-	}
-	else
-	{
-#endif
 	int iTemp;
 	int iExtra;
 	int iI;
@@ -23268,9 +23014,6 @@ int CvUnit::AI_promotionValue(PromotionTypes ePromotion)
 	{
 		iValue += GC.getGame().getJonRandNum(15, "AI Promote");
 	}
-#if defined(MOD_AI_SMART_PROMOTIONS)
-	}
-#endif
 
 	return iValue;
 }

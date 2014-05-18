@@ -76,8 +76,8 @@ protected:
 	static int lGetArtsyGreatPersonRateModifier(lua_State* L);
 	static int lGetScienceyGreatPersonRateModifier(lua_State* L);
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
-	static int lGetSpaceShipProductionMod(lua_State* L);
-	static int lGetSpaceShipPurchaseMod(lua_State* L);
+	LUAAPIEXTN(GetSpaceShipProductionMod);
+	LUAAPIEXTN(GetSpaceShipPurchaseMod);
 #endif
 
 	static int lGetResolutionName(lua_State* L);

@@ -101,6 +101,10 @@ CvUnitEntry::CvUnitEntry(void) :
 	m_bPillage(false),
 	m_bFound(false),
 	m_bFoundAbroad(false),
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	m_bFoundMid(false),
+	m_bFoundLate(false),
+#endif
 	m_iCultureBombRadius(0),
 	m_iGoldenAgeTurns(0),
 	m_iFreePolicies(0),
@@ -121,6 +125,9 @@ CvUnitEntry::CvUnitEntry(void) :
 	m_pbGreatPeoples(NULL),
 	m_pbBuildings(NULL),
 	m_pbBuildingClassRequireds(NULL),
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	m_pbBuildOnFound(NULL),
+#endif
 	m_piPrereqAndTechs(NULL),
 	m_piResourceQuantityRequirements(NULL),
 	m_piProductionTraits(NULL),
@@ -149,6 +156,9 @@ CvUnitEntry::~CvUnitEntry(void)
 	SAFE_DELETE_ARRAY(m_pbGreatPeoples);
 	SAFE_DELETE_ARRAY(m_pbBuildings);
 	SAFE_DELETE_ARRAY(m_pbBuildingClassRequireds);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	SAFE_DELETE_ARRAY(m_pbBuildOnFound);
+#endif
 	SAFE_DELETE_ARRAY(m_piPrereqAndTechs);
 	SAFE_DELETE_ARRAY(m_piResourceQuantityRequirements);
 	SAFE_DELETE_ARRAY(m_piProductionTraits);
@@ -242,6 +252,12 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	m_bPillage = kResults.GetBool("Pillage");
 	m_bFound = kResults.GetBool("Found");
 	m_bFoundAbroad = kResults.GetBool("FoundAbroad");
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) {
+		m_bFoundMid = kResults.GetBool("FoundMid");
+		m_bFoundLate = kResults.GetBool("FoundLate");
+	}
+#endif
 	m_iCultureBombRadius = kResults.GetInt("CultureBombRadius");
 	m_iGoldenAgeTurns = kResults.GetInt("GoldenAgeTurns");
 	m_iFreePolicies = kResults.GetInt("FreePolicies");
@@ -347,7 +363,11 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	kUtility.PopulateArrayByExistence(m_pbGreatPeoples, "Specialists", "Unit_GreatPersons", "GreatPersonType", "UnitType", szUnitType);
 	kUtility.PopulateArrayByExistence(m_pbBuildings, "Buildings", "Unit_Buildings", "BuildingType", "UnitType", szUnitType);
 	kUtility.PopulateArrayByExistence(m_pbBuildingClassRequireds, "BuildingClasses", "Unit_BuildingClassRequireds", "BuildingClassType", "UnitType", szUnitType);
-
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if (MOD_DIPLOMACY_CITYSTATES) {
+		kUtility.PopulateArrayByExistence(m_pbBuildOnFound, "BuildingClasses", "Unit_BuildOnFound", "BuildingClassType", "UnitType", szUnitType);
+	}
+#endif
 	//TechTypes
 	{
 		//Initialize array to NO_TECH
@@ -936,6 +956,19 @@ bool CvUnitEntry::IsFoundAbroad() const
 	return m_bFoundAbroad;
 }
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+/// Can it start a city in the mid game?
+bool CvUnitEntry::IsFoundMid() const
+{
+	return m_bFoundMid;
+}
+/// Can it start a city in the late game?
+bool CvUnitEntry::IsFoundLate() const
+{
+	return m_bFoundLate;
+}
+#endif
+
 /// Distance this unit steals
 int CvUnitEntry::GetCultureBombRadius() const
 {
@@ -1138,6 +1171,16 @@ bool CvUnitEntry::GetBuildingClassRequireds(int i) const
 	CvAssertMsg(i > -1, "Index out of bounds");
 	return m_pbBuildingClassRequireds ? m_pbBuildingClassRequireds[i] : false;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+/// Does this Unit create something when it founds a city?
+bool CvUnitEntry::GetBuildOnFound(int i) const
+{
+	CvAssertMsg(i < GC.getNumBuildingClassInfos(), "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_pbBuildOnFound? m_pbBuildOnFound[i] : false;
+}
+#endif
 
 /// Initial set of promotions for this unit
 bool CvUnitEntry::GetFreePromotions(int i) const

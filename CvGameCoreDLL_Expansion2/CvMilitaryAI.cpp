@@ -4818,11 +4818,6 @@ bool MilitaryAIHelpers::IsTestStrategy_NeedAirCarriers(CvPlayer* pPlayer)
 	int iNumLoadableAirUnits = 0;
 	int iNumTotalCargoSpace = 0;
 
-#if defined(MOD_AI_SMART_CARRIERS)
-	int iNumCargoUnits = 0;
-	int iNumNavalUnits = 0;
-#endif
-
 	CvUnit* pLoopUnit;
 	int iLoop;
 	SpecialUnitTypes eSpecialUnitPlane = (SpecialUnitTypes) GC.getInfoTypeForString("SPECIALUNIT_FIGHTER");
@@ -4831,13 +4826,6 @@ bool MilitaryAIHelpers::IsTestStrategy_NeedAirCarriers(CvPlayer* pPlayer)
 		// Don't count civilians or exploration units
 		if(pLoopUnit->AI_getUnitAIType() != UNITAI_EXPLORE && pLoopUnit->AI_getUnitAIType() != UNITAI_EXPLORE_SEA)
 		{
-#if defined(MOD_AI_SMART_CARRIERS)
-			if(pLoopUnit->getDomainType() == DOMAIN_SEA)
-			{
-				iNumNavalUnits++;
-			}
-#endif
-
 			if(pLoopUnit->cargoSpace() > 0)
 			{
 				if(pLoopUnit->specialCargo() != NO_SPECIALUNIT)
@@ -4855,9 +4843,6 @@ bool MilitaryAIHelpers::IsTestStrategy_NeedAirCarriers(CvPlayer* pPlayer)
 						continue;
 					}
 				}
-#if defined(MOD_AI_SMART_CARRIERS)
-				iNumCargoUnits++;
-#endif
 				iNumTotalCargoSpace += pLoopUnit->cargoSpace();
 			}
 			else if (pLoopUnit->getSpecialUnitType() == eSpecialUnitPlane)
@@ -4867,17 +4852,12 @@ bool MilitaryAIHelpers::IsTestStrategy_NeedAirCarriers(CvPlayer* pPlayer)
 		}
 	}
 
-#if defined(MOD_AI_SMART_CARRIERS)
-	// AMS: Also return false if there are more cargo units than the 20% of the total naval army.
-	if ((iNumLoadableAirUnits > iNumTotalCargoSpace) && (!MOD_AI_SMART_CARRIERS || (iNumNavalUnits / 5) >= iNumCargoUnits))
-#else
 #if defined(MOD_CONFIG_AI_IN_XML)
 	// Why would we ever want to load EVERY plane onto a carrier?
 	int iFactor = GC.getAI_CONFIG_MILITARY_AIRCRAFT_PER_CARRIER_SPACE();
 	if (iNumLoadableAirUnits > iFactor*iNumTotalCargoSpace)
 #else
 	if (iNumLoadableAirUnits > iNumTotalCargoSpace)
-#endif
 #endif
 	{
 		return true;

@@ -574,7 +574,10 @@ public:
 	ImprovementTypes getImprovementType() const;
 	ImprovementTypes getImprovementTypeNeededToImproveResource(PlayerTypes ePlayer = NO_PLAYER, bool bTestPlotOwner = true);
 	void setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder = NO_PLAYER);
-
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	bool IsImprovementEmbassy() const;
+	void SetImprovementEmbassy(bool bEmbassy);
+#endif
 	bool IsImprovementPillaged() const;
 #if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
 	void SetImprovementPillaged(bool bPillaged, bool bEvents = true);
@@ -970,6 +973,9 @@ protected:
 	char m_cContinentType;
 	char m_cRiverCrossing;	// bit field
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	bool m_bImprovementEmbassy:1;
+#endif
 	bool m_bImprovementPillaged:1;
 	bool m_bRoutePillaged:1;
 	bool m_bStartingPlot:1;

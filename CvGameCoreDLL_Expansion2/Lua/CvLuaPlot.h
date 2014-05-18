@@ -124,9 +124,9 @@ protected:
 	static int lIsRevealedBarbarian(lua_State* L);
 	static int lHasBarbarianCamp(lua_State* L);
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
-	static int lHasDig(lua_State* L);
+	LUAAPIEXTN(HasDig);
 #if !defined(MOD_API_LUA_EXTENSIONS)
-	static int lGetPlayerThatBuiltImprovement(lua_State* L);
+	LUAAPIEXTN(GetPlayerThatBuiltImprovement);
 #endif
 #endif
 	static int lIsVisible(lua_State* L);
@@ -311,6 +311,9 @@ protected:
 	static int lGetActiveFogOfWarMode(lua_State* L);
 
 	static int lIsImprovementPillaged(lua_State* L);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	LUAAPIEXTN(IsImprovementEmbassy);
+#endif
 
 	static int lCanSeePlot(lua_State* L);
 

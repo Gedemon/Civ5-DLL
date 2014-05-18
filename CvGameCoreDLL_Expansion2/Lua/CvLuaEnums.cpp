@@ -880,6 +880,8 @@ int CvLuaEnums::pRegister(lua_State* L)
 	RegisterEnum(MINOR_CIV_QUEST_ARCHAEOLOGY);
 	RegisterEnum(MINOR_CIV_QUEST_CIRCUMNAVIGATION);
 	RegisterEnum(MINOR_CIV_QUEST_LIBERATION);
+	RegisterEnum(MINOR_CIV_QUEST_HORDE);
+	RegisterEnum(MINOR_CIV_QUEST_REBELLION);
 #endif
 	RegisterEnum(NUM_MINOR_CIV_QUEST_TYPES);
 	EnumEnd(L);

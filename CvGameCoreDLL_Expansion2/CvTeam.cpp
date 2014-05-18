@@ -7027,6 +7027,142 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 		{
 			DLLUI->setDirty(Soundtrack_DIRTY_BIT, true);
 		}
+		
+#if defined(MOD_DIPLOMACY_CITYSTATES_DIFFICULTY)
+		if(MOD_DIPLOMACY_CITYSTATES_DIFFICULTY && !isMinorCiv() && (GC.getCSD_GAME_DIFFICULTY_MULTIPLIER() > 0))
+		{
+			CvString strHandicapType = GC.getGame().getHandicapInfo().GetType();
+
+			if(strHandicapType == "HANDICAP_DEITY" || strHandicapType == "HANDICAP_IMMORTAL" || strHandicapType == "HANDICAP_EMPEROR" || strHandicapType == "HANDICAP_KING")
+			{
+				PlayerTypes ePlayer;
+				for(int iPlayerLoop = 0; iPlayerLoop < MAX_CIV_PLAYERS; iPlayerLoop++)
+				{
+					ePlayer = (PlayerTypes) iPlayerLoop;
+					CvPlayerAI& kPlayer = GET_PLAYER(ePlayer);
+					if(!kPlayer.isHuman() && !kPlayer.isMinorCiv() && !kPlayer.isBarbarian() && kPlayer.isAlive() && kPlayer.getTeam() == GetID())
+					{
+						CvCivilizationInfo& playerCivilizationInfo = kPlayer.getCivilizationInfo();
+						for(int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+						{
+							const UnitClassTypes eUnitClass = static_cast<UnitClassTypes>(iI);
+							CvUnitClassInfo* pkUnitClassInfo = GC.getUnitClassInfo(eUnitClass);
+							if(pkUnitClassInfo)
+							{
+								const UnitTypes eLoopUnit = (UnitTypes) playerCivilizationInfo.getCivilizationUnits(iI);
+
+								if(eLoopUnit != NO_UNIT)
+								{
+									CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eLoopUnit);
+									if(pkUnitInfo && pkUnitInfo->GetDefaultUnitAIType() == UNITAI_ATTACK && kPlayer.getCapitalCity()->canTrain(eLoopUnit))
+									{
+										int iUnitMax = 0;
+										if(iUnitMax >= GC.getCSD_GAME_DIFFICULTY_MULTIPLIER())
+										{
+											break;
+										}
+										CvUnit* pNewUnit = kPlayer.initUnit(eLoopUnit, kPlayer.getCapitalCity()->getX(), kPlayer.getCapitalCity()->getY(), UNITAI_ATTACK);
+										bool bJumpSuccess = pNewUnit->jumpToNearestValidPlot();
+										if (!bJumpSuccess)
+										{
+											pNewUnit->kill(false);
+											break;
+										}
+										iUnitMax++;
+									}
+								}
+							}
+						}
+						EraTypes eMedieval = (EraTypes) GC.getInfoTypeForString("ERA_MEDIEVAL", true);
+						EraTypes eIndustrial = (EraTypes) GC.getInfoTypeForString("ERA_INDUSTRIAL", true);
+
+						if(eNewValue == eMedieval || eNewValue == eIndustrial)
+						{
+							CvCivilizationInfo& playerCivilizationInfo = kPlayer.getCivilizationInfo();
+							for(int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+							{
+								const UnitClassTypes eUnitClass = static_cast<UnitClassTypes>(iI);
+								CvUnitClassInfo* pkUnitClassInfo = GC.getUnitClassInfo(eUnitClass);
+								if(pkUnitClassInfo)
+								{
+									const UnitTypes eLoopUnit = (UnitTypes) playerCivilizationInfo.getCivilizationUnits(iI);
+
+									if(eLoopUnit != NO_UNIT)
+									{
+										CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eLoopUnit);
+										if(pkUnitInfo && pkUnitInfo->GetDefaultUnitAIType() == UNITAI_WORKER && kPlayer.getCapitalCity()->canTrain(eLoopUnit))
+										{
+											CvUnit* pNewUnit = kPlayer.initUnit(eLoopUnit, kPlayer.getCapitalCity()->getX(), kPlayer.getCapitalCity()->getY(), UNITAI_WORKER);
+											bool bJumpSuccess = pNewUnit->jumpToNearestValidPlot();
+											if (!bJumpSuccess)
+											{
+												pNewUnit->kill(false);
+												break;
+											}
+											break;
+										}
+									}
+								}
+							}
+						}
+
+						EraTypes eRenaissance = (EraTypes) GC.getInfoTypeForString("ERA_RENAISSANCE", true);
+						EraTypes eClassical = (EraTypes) GC.getInfoTypeForString("ERA_CLASSICAL", true);
+
+						if(eNewValue == eClassical || eNewValue == eRenaissance)
+						{
+							CvCivilizationInfo& playerCivilizationInfo = kPlayer.getCivilizationInfo();
+							for(int iI = 0; iI < GC.getNumUnitClassInfos(); iI++)
+							{
+								const UnitClassTypes eUnitClass = static_cast<UnitClassTypes>(iI);
+								CvUnitClassInfo* pkUnitClassInfo = GC.getUnitClassInfo(eUnitClass);
+								if(pkUnitClassInfo)
+								{
+									const UnitTypes eLoopUnit = (UnitTypes) playerCivilizationInfo.getCivilizationUnits(iI);
+
+									if(eLoopUnit != NO_UNIT)
+									{
+										CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eLoopUnit);
+										if(pkUnitInfo && pkUnitInfo->GetDefaultUnitAIType() == UNITAI_EXPLORE && kPlayer.getCapitalCity()->canTrain(eLoopUnit))
+										{
+											CvUnit* pNewUnit = kPlayer.initUnit(eLoopUnit, kPlayer.getCapitalCity()->getX(), kPlayer.getCapitalCity()->getY(), UNITAI_EXPLORE);
+											bool bJumpSuccess = pNewUnit->jumpToNearestValidPlot();
+											if (!bJumpSuccess)
+											{
+												pNewUnit->kill(false);
+												break;
+											}
+											break;
+										}
+									}
+								}
+							}
+						}
+
+						kPlayer.getCapitalCity()->ChangeUnmoddedHappinessFromBuildings(GC.getCSD_GAME_DIFFICULTY_MULTIPLIER());
+						kPlayer.GetTreasury()->ChangeGold(GC.getCSD_GAME_DIFFICULTY_MULTIPLIER() * kPlayer.GetCurrentEra() * 100);
+						kPlayer.ChangeGoldenAgeProgressMeter(GC.getCSD_GAME_DIFFICULTY_MULTIPLIER() * kPlayer.GetCurrentEra() * 40);
+						kPlayer.changeJONSCulture(GC.getCSD_GAME_DIFFICULTY_MULTIPLIER() * kPlayer.GetCurrentEra() * 40);
+
+						int iBeakersBonus = kPlayer.GetScienceYieldFromPreviousTurns(GC.getGame().getGameTurn(), (GC.getCSD_GAME_DIFFICULTY_MULTIPLIER() + (kPlayer.GetCurrentEra())));
+						
+						if(iBeakersBonus > 0)
+						{
+							TechTypes eCurrentTech = kPlayer.GetPlayerTechs()->GetCurrentResearch();
+							if(eCurrentTech == NO_TECH)
+							{
+								kPlayer.changeOverflowResearch(iBeakersBonus);
+							}
+							else
+							{
+								GetTeamTechs()->ChangeResearchProgress(eCurrentTech, iBeakersBonus, ePlayer);
+							}
+						}
+					}
+				}
+			}
+		}
+#endif
 
 #if defined(MOD_EVENTS_NEW_ERA)
 		if (MOD_EVENTS_NEW_ERA && GetCurrentEra() != GC.getGame().getStartEra()) {

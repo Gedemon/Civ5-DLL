@@ -25,6 +25,10 @@ namespace LeagueHelpers
 	EraTypes GetGameEraForTrigger();
 	EraTypes GetNextGameEraForTrigger();
 	EraTypes GetNextGameEraForTrigger(EraTypes eThisEra);
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	BuildingTypes GetBuildingForTrigger(BuildingTypes eBuilding);
+	ResolutionTypes IsResolutionForTriggerActive(ResolutionTypes eType);
+#endif
 
 	typedef FStaticVector<PlayerTypes, MAX_CIV_PLAYERS, true, c_eCiv5GameplayDLL> PlayerList;
 
@@ -111,12 +115,6 @@ struct CvResolutionEffects
 	int iOneTimeGold;
 	int iOneTimeGoldPercent;
 	bool bRaiseCityStateInfluenceToNeutral;
-#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
-	bool bRaiseCityStateInfluenceToAlly;
-	bool bRaiseCityStateInfluenceToFriend;
-	int iLimitSpaceshipProduction;
-	int iLimitSpaceshipPurchase;
-#endif
 	LeagueProjectTypes eLeagueProjectEnabled;
 	int iGoldPerTurn;
 	int iResourceQuantity;
@@ -137,7 +135,14 @@ struct CvResolutionEffects
 	int iScienceyGreatPersonRateMod;
 	int iGreatPersonTileImprovementCulture;
 	int iLandmarkCulture;
-
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	bool bRaiseCityStateInfluenceToAlly;
+	bool bRaiseCityStateInfluenceToFriend;
+	int iLimitSpaceshipProduction;
+	int iLimitSpaceshipPurchase;
+	int iIsWorldWar;
+	bool bEmbargoIdeology;
+#endif
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	int iVassalMaintenanceGoldPercent;
 #endif
@@ -575,10 +580,6 @@ public:
 	int GetFeatureYieldChange(FeatureTypes eFeature, YieldTypes eYield);
 	int GetWorldWonderYieldChange(YieldTypes eYield);
 	bool IsNoTrainingNuclearWeapons();
-#if defined(MOD_DIPLOMACY_CITYSTATES) 
-	int GetSpaceShipProductionMod();
-	int GetSpaceShipPurchaseMod();
-#endif
 	int GetExtraVotesForFollowingReligion(PlayerTypes ePlayer);
 	int GetCityTourismModifier(const CvCity* pCity);
 	int GetReligionSpreadStrengthModifier(ReligionTypes eReligion);
@@ -586,6 +587,13 @@ public:
 	int GetPressureForIdeology(PolicyBranchTypes eIdeology);
 	int GetArtsyGreatPersonRateModifier();
 	int GetScienceyGreatPersonRateModifier();
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS) 
+	int GetSpaceShipProductionMod();
+	int GetSpaceShipPurchaseMod();
+	int GetWorldWar();
+	int GetUnitMaintenanceMod();
+	bool IsIdeologyEmbargoed(PlayerTypes eTrader, PlayerTypes eRecipient);
+#endif
 
 	// Text composition for UI
 	CvString GetResolutionName(ResolutionTypes eResolution, int iResolutionID, int iProposerChoice, bool bIncludePrefix);
@@ -729,15 +737,18 @@ public:
 	int GetFeatureYieldChange(PlayerTypes ePlayer, FeatureTypes eFeature, YieldTypes eYield);
 	int GetWorldWonderYieldChange(PlayerTypes ePlayer, YieldTypes eYield);
 	bool IsNoTrainingNuclearWeapons(PlayerTypes ePlayer);
-#if defined(MOD_DIPLOMACY_CITYSTATES)
-	int GetSpaceShipProductionMod(PlayerTypes ePlayer);
-	int GetSpaceShipPurchaseMod(PlayerTypes ePlayer);
-#endif
 	int GetCityTourismModifier(PlayerTypes ePlayer, const CvCity* pCity);
 	int GetReligionSpreadStrengthModifier(PlayerTypes ePlayer, ReligionTypes eReligion);
 	int GetPressureForIdeology(PlayerTypes ePlayer, PolicyBranchTypes eIdeology);
 	int GetArtsyGreatPersonRateModifier(PlayerTypes ePlayer);
 	int GetScienceyGreatPersonRateModifier(PlayerTypes ePlayer);
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	int GetSpaceShipProductionMod(PlayerTypes ePlayer);
+	int GetSpaceShipPurchaseMod(PlayerTypes ePlayer);
+	int IsWorldWar(PlayerTypes ePlayer);
+	int GetUnitMaintenanceMod(PlayerTypes ePlayer);
+	bool IsIdeologyEmbargoed(PlayerTypes eTrader, PlayerTypes eRecipient);
+#endif
 
 	// General Logging
 	CvString GetLogFileName() const;
@@ -950,6 +961,10 @@ public:
 	virtual bool CacheResults(Database::Results& kResults, CvDatabaseUtility& kUtility);
 
 	EraTypes GetEraTrigger() const;
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	BuildingTypes GetBuildingTrigger() const;
+	ResolutionTypes GetResolutionTrigger() const;
+#endif
 	ResolutionTypes GetImmediateProposal() const;
 	ResolutionTypes GetRecurringProposal() const;
 	int GetTurnsBetweenSessions() const;
@@ -960,6 +975,10 @@ public:
 
 protected:
 	EraTypes m_eEraTrigger;
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	BuildingTypes m_eBuildingTrigger;
+	ResolutionTypes m_eResolutionTrigger;
+#endif
 	ResolutionTypes m_eImmediateProposal;
 	ResolutionTypes m_eRecurringProposal;
 	int m_iTurnsBetweenSessions;
@@ -1099,6 +1118,7 @@ public:
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 	int GetAttackBonusTurns() const;
 	int GetBaseFreeUnits() const;
+	int GetNumFreeGreatPeople() const;
 #endif
 	UnitClassTypes GetFreeUnitClass() const;
 
@@ -1114,6 +1134,7 @@ protected:
 #if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 	int m_iGetAttackBonusTurns;
 	int m_iGetBaseFreeUnits;
+	int m_iGetNumFreeGreatPeople;
 #endif
 	UnitClassTypes m_eFreeUnitClass;
 
@@ -1242,12 +1263,6 @@ public:
 	int GetOneTimeGold() const;
 	int GetOneTimeGoldPercent() const;
 	bool IsRaiseCityStateInfluenceToNeutral() const;
-#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
-	bool IsRaiseCityStateInfluenceToAlly() const;
-	bool IsRaiseCityStateInfluenceToFriend() const;
-	int GetSpaceShipProductionMod() const;
-	int GetSpaceShipPurchaseMod() const;
-#endif
 	LeagueProjectTypes GetLeagueProjectEnabled() const;
 	int GetGoldPerTurn() const;
 	int GetResourceQuantity() const;
@@ -1268,7 +1283,14 @@ public:
 	int GetScienceyGreatPersonRateMod() const;
 	int GetGreatPersonTileImprovementCulture() const;
 	int GetLandmarkCulture() const;
-
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	bool IsRaiseCityStateInfluenceToAlly() const;
+	bool IsRaiseCityStateInfluenceToFriend() const;
+	int GetSpaceShipProductionMod() const;
+	int GetSpaceShipPurchaseMod() const;
+	int GetWorldWar() const;
+	bool IsEmbargoIdeology() const;
+#endif
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	int GetVassalMaintenanceGoldPercent() const;
 #endif
@@ -1287,12 +1309,6 @@ protected:
 	int m_iOneTimeGold;
 	int m_iOneTimeGoldPercent;
 	bool m_bRaiseCityStateInfluenceToNeutral;
-#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
-	bool m_bRaiseCityStateInfluenceToAlly;
-	bool m_bRaiseCityStateInfluenceToFriend;
-	int m_iSpaceshipProductionMod;
-	int m_iSpaceshipPurchaseMod;
-#endif
 	LeagueProjectTypes m_eLeagueProjectEnabled;
 	int m_iGoldPerTurn;
 	int m_iResourceQuantity;
@@ -1313,7 +1329,14 @@ protected:
 	int m_iScienceyGreatPersonRateMod;
 	int m_iGreatPersonTileImprovementCulture;
 	int m_iLandmarkCulture;
-
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+	bool m_bRaiseCityStateInfluenceToAlly;
+	bool m_bRaiseCityStateInfluenceToFriend;
+	int m_iSpaceshipProductionMod;
+	int m_iSpaceshipPurchaseMod;
+	int m_iIsWorldWar;
+	bool m_bEmbargoIdeology;
+#endif
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	int m_iVassalMaintenanceGoldPercent;
 #endif

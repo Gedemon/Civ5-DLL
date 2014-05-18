@@ -43,6 +43,7 @@ enum AIOperationTypes
 	AI_OPERATION_CONCERT_TOUR,
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	AI_OPERATION_DIPLOMAT_DELEGATION,
+	AI_OPERATION_ALLY_DEFENSE,
 #endif
     NUM_AI_OPERATIONS,
 };
@@ -649,6 +650,38 @@ public:
 
 private:
 	CvPlot* FindBestTarget(CvUnit* pUnit, bool bOnlySafePaths);
+};
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//  CLASS:      CvAIOperationCityCloseDefense
+//!  \brief		Defend a specific city
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+class CvAIOperationAllyDefense : public CvAIOperation
+{
+public:
+
+	CvAIOperationAllyDefense();
+	virtual ~CvAIOperationAllyDefense();
+
+	virtual void Init(int iID, PlayerTypes eOwner, PlayerTypes eEnemy, int iDefaultArea = -1, CvCity* pTarget = NULL, CvCity* pMuster = NULL);
+	virtual void Read(FDataStream& kStream);
+	virtual void Write(FDataStream& kStream) const;
+
+	virtual int GetOperationType() const
+	{
+		return AI_OPERATION_ALLY_DEFENSE;
+	}
+	virtual CvString GetOperationName() const
+	{
+		return CvString("AI_OPERATION_ALLY_DEFENSE");
+	}
+	virtual MultiunitFormationTypes GetFormation() const
+	{
+		return MUFORMATION_CLOSE_CITY_DEFENSE;
+	}
+
+private:
+	CvPlot* FindBestTarget();
 };
 #endif
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

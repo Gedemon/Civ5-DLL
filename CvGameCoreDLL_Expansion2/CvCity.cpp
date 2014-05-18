@@ -207,6 +207,13 @@ CvCity::CvCity() :
 	, m_aiBaseYieldRateFromBuildings("CvCity::m_aiBaseYieldRateFromBuildings", m_syncArchive)
 	, m_aiBaseYieldRateFromSpecialists("CvCity::m_aiBaseYieldRateFromSpecialists", m_syncArchive)
 	, m_aiBaseYieldRateFromMisc("CvCity::m_aiBaseYieldRateFromMisc", m_syncArchive)
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	, m_aiBaseYieldRateFromLeague("CvCity::m_aiBaseYieldRateFromLeague", m_syncArchive)
+	, m_iTotalScienceyAid(0)
+	, m_iTotalArtsyAid(0)
+	, m_iTotalGreatWorkAid(0)
+	, m_iChangeGrowthExtraYield(0)
+#endif
 	, m_aiYieldRateModifier("CvCity::m_aiYieldRateModifier", m_syncArchive)
 	, m_aiYieldPerPop("CvCity::m_aiYieldPerPop", m_syncArchive)
 	, m_aiPowerYieldRateModifier("CvCity::m_aiPowerYieldRateModifier", m_syncArchive)
@@ -617,20 +624,21 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	}
 	
 #if defined(MOD_API_EXTENSIONS)
-	if (eInitialReligion != NO_RELIGION) {
-		// Spread an initial religion here if one was given
-		GetCityReligions()->AdoptReligionFully(eInitialReligion);
-	}
+	if (bInitialFounding) {
+		if (eInitialReligion != NO_RELIGION) {
+			// Spread an initial religion here if one was given
+			GetCityReligions()->AdoptReligionFully(eInitialReligion);
+		}
 
 #if defined(MOD_RELIGION_LOCAL_RELIGIONS)
-	else if (MOD_RELIGION_LOCAL_RELIGIONS) {
-		// Spread a local religion here if one is active
-		if(pReligions->HasCreatedReligion() && GC.getReligionInfo(pReligions->GetReligionCreatedByPlayer())->IsLocalReligion())
-		{
-			GetCityReligions()->AdoptReligionFully(pReligions->GetReligionCreatedByPlayer());
+		else if (MOD_RELIGION_LOCAL_RELIGIONS) {
+			// Spread a local religion here if one is active
+			if(pReligions->HasCreatedReligion() && GC.getReligionInfo(pReligions->GetReligionCreatedByPlayer())->IsLocalReligion()) {
+				GetCityReligions()->AdoptReligionFully(pReligions->GetReligionCreatedByPlayer());
+			}
 		}
-	}
 #endif
+	}
 #endif
 
 	// A new City might change our victory progress
@@ -853,6 +861,13 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 	m_aiBaseYieldRateFromBuildings.resize(NUM_YIELD_TYPES);
 	m_aiBaseYieldRateFromSpecialists.resize(NUM_YIELD_TYPES);
 	m_aiBaseYieldRateFromMisc.resize(NUM_YIELD_TYPES);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	m_aiBaseYieldRateFromLeague.resize(NUM_YIELD_TYPES);
+	m_iTotalScienceyAid = 0;
+	m_iTotalArtsyAid = 0;
+	m_iTotalGreatWorkAid = 0;
+	m_iChangeGrowthExtraYield = 0;
+#endif
 	m_aiBaseYieldRateFromReligion.resize(NUM_YIELD_TYPES);
 	m_aiYieldPerPop.resize(NUM_YIELD_TYPES);
 	m_aiYieldPerReligion.resize(NUM_YIELD_TYPES);
@@ -871,6 +886,9 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 		m_aiBaseYieldRateFromBuildings.setAt(iI, 0);
 		m_aiBaseYieldRateFromSpecialists.setAt(iI, 0);
 		m_aiBaseYieldRateFromMisc.setAt(iI, 0);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		m_aiBaseYieldRateFromLeague.setAt(iI, 0);
+#endif
 		m_aiBaseYieldRateFromReligion[iI] = 0;
 		m_aiYieldPerPop.setAt(iI, 0);
 		m_aiYieldPerReligion[iI] = 0;
@@ -4884,6 +4902,13 @@ int CvCity::GetFaithPurchaseCost(UnitTypes eUnit, bool bIncludeBeliefDiscounts)
 						eBranch = (PolicyBranchTypes)GC.getInfoTypeForString("POLICY_BRANCH_EXPLORATION", true /*bHideAssert*/);
 						iNum = kPlayer.getAdmiralsFromFaith();
 					}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+					else if (MOD_DIPLOMACY_CITYSTATES && eUnitClass == GC.getInfoTypeForString("UNITCLASS_GREAT_DIPLOMAT", true /*bHideAssert*/))
+					{
+						eBranch = (PolicyBranchTypes)GC.getInfoTypeForString("POLICY_BRANCH_PATRONAGE", true /*bHideAssert*/);
+						iNum = kPlayer.getDiplomatsFromFaith();
+					}
+#endif
 
 					bool bAllUnlockedByBelief = false;
 					const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, getOwner());
@@ -5252,7 +5277,17 @@ int CvCity::getGeneralProductionModifiers(CvString* toolTipSink) const
 			GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_RAILROAD_CONNECTION", iTempMod);
 		}
 	}
-
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if(MOD_DIPLOMACY_CITYSTATES && GetBaseYieldRateFromLeague(YIELD_PRODUCTION) > 0)
+	{
+		int iTempLeagueMod = GetBaseYieldRateFromLeague(YIELD_PRODUCTION);
+		iMultiplier += iTempLeagueMod;
+		if(toolTipSink && iTempLeagueMod)
+		{
+			GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_PRODMOD_LEAGUE", iTempLeagueMod);
+		}
+	}
+#endif
 	return iMultiplier;
 }
 
@@ -6274,6 +6309,14 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 			}
 		}
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		//Yield from growth
+		if(MOD_DIPLOMACY_CITYSTATES && pBuildingInfo->GetGrowthExtraYield() != 0)
+		{
+			ChangeGrowthExtraYield(pBuildingInfo->GetGrowthExtraYield() * iChange);
+		}
+#endif
+
 		changeMaxFoodKeptPercent(pBuildingInfo->GetFoodKept() * iChange);
 		changeMilitaryProductionModifier(pBuildingInfo->GetMilitaryProductionModifier() * iChange);
 		changeSpaceProductionModifier(pBuildingInfo->GetSpaceProductionModifier() * iChange);
@@ -7028,6 +7071,15 @@ int CvCity::foodDifferenceTimes100(bool bBottom, CvString* toolTipSink) const
 			iTotalMod += iMod;
 			GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_FOODMOD_WLTKD", iMod);
 		}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+		//Resolution League Bonus	
+		if(MOD_DIPLOMACY_CITYSTATES && GetBaseYieldRateFromLeague(YIELD_FOOD) > 0)
+		{
+			int iMod = GetBaseYieldRateFromLeague(YIELD_FOOD);
+			iTotalMod += iMod;
+			GC.getGame().BuildProdModHelpText(toolTipSink, "TXT_KEY_FOODMOD_LEAGUE", iMod);
+		}
+#endif
 
 		iDifference *= iTotalMod;
 		iDifference /= 100;
@@ -7526,6 +7578,54 @@ void CvCity::setPopulation(int iNewValue, bool bReassignPop /* = true */)
 		if(getPopulation() > getHighestPopulation())
 		{
 			setHighestPopulation(getPopulation());
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+			//Chancery and Wire Service - % boost to yield when new citizen is born
+			if(MOD_DIPLOMACY_CITYSTATES && GetGrowthExtraYield() > 0)
+			{
+				//Gold
+				if(GC.getCSD_DIPLO_BUILDING_YIELD() == 1)
+				{
+					int iGoldBoost = ((getYieldRate(YIELD_GOLD, false) * GetGrowthExtraYield()) / 100);
+					if (iGoldBoost > 0)
+					{
+						GET_PLAYER(getOwner()).GetTreasury()->ChangeGold(iGoldBoost);
+					}
+					if (iGoldBoost <= 0)
+					{
+						GET_PLAYER(getOwner()).GetTreasury()->ChangeGold(1);
+					}
+
+				}
+				//Production
+				else if(GC.getCSD_DIPLO_BUILDING_YIELD() == 2)
+				{
+					int iProductionBoost = ((getYieldRate(YIELD_PRODUCTION, false) * GetGrowthExtraYield()) / 100);
+					if (iProductionBoost > 0)
+					{
+						changeProduction(iProductionBoost);
+					}
+					if (iProductionBoost <= 0)
+					{
+						changeProduction(iProductionBoost);
+					}
+
+				}
+				//Culture
+				else if(GC.getCSD_DIPLO_BUILDING_YIELD() == 3)
+				{
+					int iCultureBoost = ((getJONSCulturePerTurn() * GetGrowthExtraYield()) / 100);
+					if (iCultureBoost > 0)
+					{
+						GET_PLAYER(getOwner()).changeJONSCulture(iCultureBoost);
+					}
+					if (iCultureBoost <= 0)
+					{
+						GET_PLAYER(getOwner()).changeJONSCulture(1);
+					}
+
+				}
+			}
+#endif
 		}
 
 		area()->changePopulationPerPlayer(getOwner(), (getPopulation() - iOldPopulation));
@@ -7955,6 +8055,13 @@ int CvCity::getJONSCulturePerTurn() const
 	{
 		iModifier += GC.getPUPPET_CULTURE_MODIFIER();
 	}
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if(MOD_DIPLOMACY_CITYSTATES && GET_PLAYER(getOwner()).IsLeagueAid() && GET_PLAYER(getOwner()).GetLeagueCultureCityModifier() > 0)
+	{
+		iModifier += GET_PLAYER(getOwner()).GetLeagueCultureCityModifier();
+	}
+#endif
 
 	iCulture *= iModifier;
 	iCulture /= 100;
@@ -10000,9 +10107,27 @@ int CvCity::getBaseYieldRate(YieldTypes eIndex) const
 	iValue += GetBaseYieldRateFromSpecialists(eIndex);
 	iValue += GetBaseYieldRateFromMisc(eIndex);
 	iValue += GetBaseYieldRateFromReligion(eIndex);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	if(MOD_DIPLOMACY_CITYSTATES && GET_PLAYER(getOwner()).IsLeagueArt() && eIndex == YIELD_SCIENCE)
+	{
+		iValue += GetBaseScienceFromArt();
+	}
+#endif
 
 	return iValue;
 }
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+/// Where is our Science coming from?
+int CvCity::GetBaseScienceFromArt() const
+{
+	int iScience = 0;
+		
+	iScience += GetBaseYieldRateFromLeague(YIELD_SCIENCE);
+
+	return iScience;
+}	
+#endif
 
 #if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
 //	--------------------------------------------------------------------------------
@@ -10154,6 +10279,103 @@ void CvCity::ChangeBaseYieldRateFromMisc(YieldTypes eIndex, int iChange)
 		}
 	}
 }
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+// Base yield rate from League
+int CvCity::GetBaseYieldRateFromLeague(YieldTypes eIndex) const
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eIndex >= 0, "eIndex expected to be >= 0");
+	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex expected to be < NUM_YIELD_TYPES");
+
+	return m_aiBaseYieldRateFromLeague[eIndex];
+}
+
+//	--------------------------------------------------------------------------------
+/// Base yield rate from League
+void CvCity::ChangeBaseYieldRateFromLeague(YieldTypes eIndex, int iChange)
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eIndex >= 0, "eIndex expected to be >= 0");
+	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex expected to be < NUM_YIELD_TYPES");
+
+	if(iChange != 0)
+	{
+		m_aiBaseYieldRateFromLeague.setAt(eIndex, m_aiBaseYieldRateFromLeague[eIndex] + iChange);
+
+		if(getTeam() == GC.getGame().getActiveTeam())
+		{
+			if(isCitySelected())
+			{
+				DLLUI->setDirty(CityScreen_DIRTY_BIT, true);
+			}
+		}
+	}
+}
+//SCIENCY AID - Used for negation if cancelled
+void CvCity::ChangeTotalScienceyAid(int iChange)
+{
+	SetTotalScienceyAid(GetTotalScienceyAid() + iChange);
+}
+
+int CvCity::GetTotalScienceyAid() const
+{
+	return m_iTotalScienceyAid;
+}
+
+void CvCity::SetTotalScienceyAid(int iValue)
+{
+	if(GetTotalScienceyAid() != iValue)
+		m_iTotalScienceyAid = iValue;
+}
+
+//ARTSY AID TOTALS  - Used for negation if cancelled
+void CvCity::ChangeTotalArtsyAid(int iChange)
+{
+	SetTotalArtsyAid(GetTotalArtsyAid() + iChange);
+}
+
+int CvCity::GetTotalArtsyAid() const
+{
+	return m_iTotalArtsyAid;
+}
+
+void CvCity::SetTotalArtsyAid(int iValue)
+{
+	if(GetTotalArtsyAid() != iValue)
+		m_iTotalArtsyAid = iValue;
+}
+
+//GREAT WORK AID TOTALS  - Used for negation if cancelled
+void CvCity::ChangeTotalGreatWorkAid(int iChange)
+{
+	SetTotalGreatWorkAid(GetTotalGreatWorkAid() + iChange);
+}
+
+int CvCity::GetTotalGreatWorkAid() const
+{
+	return m_iTotalGreatWorkAid;
+}
+
+void CvCity::SetTotalGreatWorkAid(int iValue)
+{
+	if(GetTotalGreatWorkAid() != iValue)
+		m_iTotalGreatWorkAid = iValue;
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra yield from building
+int CvCity::GetGrowthExtraYield() const
+{
+	return m_iChangeGrowthExtraYield;
+}
+
+//	--------------------------------------------------------------------------------
+/// Extra yield from building
+void CvCity::ChangeGrowthExtraYield(int iChange)
+{
+	m_iChangeGrowthExtraYield += iChange;
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 /// Base yield rate from Religion
@@ -13013,36 +13235,6 @@ bool CvCity::CanPlaceUnitHere(UnitTypes eUnitType)
 	return true;
 }
 
-#if defined(MOD_AI_SMART_GOLD_PURCHASE)
-/// AMS: Check oout if can purchase based on Order.
-bool CvCity::IsCanGoldPurchase(OrderData* pOrder)
-{
-	UnitTypes eUnitType = NO_UNIT;
-	BuildingTypes eBuildingType = NO_BUILDING;
-	ProjectTypes eProjectType = NO_PROJECT;
-
-	switch(pOrder->eOrderType)
-	{
-		case ORDER_TRAIN:
-			eUnitType = ((UnitTypes)(pOrder->iData1));
-			break;
-
-		case ORDER_CONSTRUCT:
-			eBuildingType = ((BuildingTypes)(pOrder->iData1));
-			break;
-
-		case ORDER_CREATE:
-			eProjectType = ((ProjectTypes)(pOrder->iData1));
-			break;
-
-		default:
-			return false;
-	}
-
-	return IsCanPurchase(true, true, eUnitType, eBuildingType, eProjectType, YIELD_GOLD);
-}
-#endif
-
 //	--------------------------------------------------------------------------------
 // Is this city allowed to purchase something right now?
 bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectTypes eProjectType, YieldTypes ePurchaseYield)
@@ -13303,40 +13495,6 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 	return true;
 }
 
-#if defined(MOD_AI_SMART_GOLD_PURCHASE)
-/// AMS: Purchase what is being built on a city.
-void CvCity::PurchaseCurrentOrder()
-{
-	UnitTypes eUnitType = NO_UNIT;
-	BuildingTypes eBuildingType = NO_BUILDING;
-	ProjectTypes eProjectType = NO_PROJECT;
-	OrderData* pOrder = getOrderFromQueue(0);
-
-	if (pOrder)
-	{
-		switch(pOrder->eOrderType)
-		{
-			case ORDER_TRAIN:
-				eUnitType = ((UnitTypes)(pOrder->iData1));
-				break;
-
-			case ORDER_CONSTRUCT:
-				eBuildingType = ((BuildingTypes)(pOrder->iData1));
-				break;
-
-			case ORDER_CREATE:
-				eProjectType = ((ProjectTypes)(pOrder->iData1));
-				break;
-
-			default:
-				return;
-		}
-	}
-
-	Purchase(eUnitType, eBuildingType, eProjectType, YIELD_GOLD);
-}
-#endif
-
 //	--------------------------------------------------------------------------------
 // purchase something at the city
 void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectTypes eProjectType, YieldTypes ePurchaseYield)
@@ -13536,6 +13694,12 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 			{
 				kPlayer.GetReligions()->ChangeNumProphetsSpawned(1);
 			}
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+			else if (MOD_DIPLOMACY_CITYSTATES && eUnitClass == GC.getInfoTypeForString("UNITCLASS_GREAT_DIPLOMAT"))
+			{
+				kPlayer.incrementDiplomatsFromFaith();
+			}
+#endif
 
 			if(GC.getLogging())
 			{
@@ -14333,6 +14497,13 @@ void CvCity::read(FDataStream& kStream)
 	kStream >> m_aiBaseYieldRateFromBuildings;
 	kStream >> m_aiBaseYieldRateFromSpecialists;
 	kStream >> m_aiBaseYieldRateFromMisc;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	MOD_SERIALIZE_READ_AUTO(49, kStream, m_aiBaseYieldRateFromLeague, NUM_YIELD_TYPES, 0);
+	MOD_SERIALIZE_READ(49, kStream, m_iTotalScienceyAid, 0);
+	MOD_SERIALIZE_READ(49, kStream, m_iTotalArtsyAid, 0);
+	MOD_SERIALIZE_READ(49, kStream, m_iTotalGreatWorkAid, 0);
+	MOD_SERIALIZE_READ(49, kStream, m_iChangeGrowthExtraYield, 0);
+#endif
 	kStream >> m_aiBaseYieldRateFromReligion;
 	kStream >> m_aiYieldPerPop;
 	if (uiVersion >= 4)
@@ -14666,6 +14837,13 @@ void CvCity::write(FDataStream& kStream) const
 	kStream << m_aiBaseYieldRateFromBuildings;
 	kStream << m_aiBaseYieldRateFromSpecialists;
 	kStream << m_aiBaseYieldRateFromMisc;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	MOD_SERIALIZE_WRITE_AUTO(kStream, m_aiBaseYieldRateFromLeague);
+	MOD_SERIALIZE_WRITE(kStream, m_iTotalScienceyAid);
+	MOD_SERIALIZE_WRITE(kStream, m_iTotalArtsyAid);
+	MOD_SERIALIZE_WRITE(kStream, m_iTotalGreatWorkAid);
+	MOD_SERIALIZE_WRITE(kStream, m_iChangeGrowthExtraYield);
+#endif
 	kStream << m_aiBaseYieldRateFromReligion;
 	kStream << m_aiYieldPerPop;
 	kStream << m_aiYieldPerReligion;

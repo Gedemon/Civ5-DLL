@@ -198,8 +198,13 @@ CvString CvGameCulture::GetGreatWorkTooltip(int iIndex, PlayerTypes eOwner) cons
 	int iCulturePerWork = GC.getBASE_CULTURE_PER_GREAT_WORK();
 	iCulturePerWork += GET_PLAYER(eOwner).GetGreatWorkYieldChange(YIELD_CULTURE);
 	int iTourismPerWork = GC.getBASE_TOURISM_PER_GREAT_WORK();
-
-	cultureString.Format ("+%d [ICON_CULTURE], +%d [ICON_TOURISM]", iCulturePerWork, iTourismPerWork);
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int iSciencePerWork = MOD_DIPLOMACY_CITYSTATES ? GET_PLAYER(eOwner).GetGreatWorkYieldChange(YIELD_SCIENCE) : 0;
+	if (iSciencePerWork > 0)
+		cultureString.Format ("+%d [ICON_CULTURE], +%d [ICON_TOURISM], +%d [ICON_RESEARCH]", iCulturePerWork, iTourismPerWork, iSciencePerWork);
+	else
+#endif
+		cultureString.Format ("+%d [ICON_CULTURE], +%d [ICON_TOURISM]", iCulturePerWork, iTourismPerWork);
 	szTooltip += cultureString;
 
 	return szTooltip;
@@ -3497,7 +3502,7 @@ void CvPlayerCulture::DoPublicOpinion()
 			iUnhappyPerXPop = GC.getIDEOLOGY_POP_PER_UNHAPPY();
 		}
 #endif
-		
+
 		if (m_eOpinion != PUBLIC_OPINION_CONTENT)
 		{
 			if (iDissatisfaction < 3)
@@ -3844,7 +3849,7 @@ int CvPlayerCulture::ComputePublicOpinionUnhappiness(int iDissatisfaction, int &
 
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 		if (MOD_DIPLOMACY_CITYSTATES) {
-			iPerCityUnhappy = GC.getIDEOLOGY_PER_CITY_UNHAPPY() * 4;
+			iPerCityUnhappy = GC.getIDEOLOGY_PER_CITY_UNHAPPY() * 3;
 			iUnhappyPerXPop = (int) ((GC.getIDEOLOGY_POP_PER_UNHAPPY() / 4.0) + 1.0);
 		}
 #endif

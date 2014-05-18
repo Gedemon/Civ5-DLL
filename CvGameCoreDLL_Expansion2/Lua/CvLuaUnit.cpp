@@ -32,6 +32,7 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(Convert);
 #if defined(MOD_API_LUA_EXTENSIONS)
 	Method(Upgrade);
+	Method(UpgradeTo);
 #endif
 	Method(Kill);
 
@@ -145,6 +146,9 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetUpgradeUnitType);
 	Method(UpgradePrice);
 	Method(CanUpgradeRightNow);
+#if defined(MOD_API_EXTENSIONS)
+	Method(CanUpgradeTo);
+#endif
 #if defined(MOD_GLOBAL_CS_UPGRADES)
 	Method(CanUpgradeInTerritory);
 #endif
@@ -582,6 +586,19 @@ int CvLuaUnit::lUpgrade(lua_State* L)
 	bool bIsFree = luaL_optbool(L, 2, false);
 	
 	CvUnit* pkNewUnit = pkUnit->DoUpgrade(bIsFree);
+
+	CvLuaUnit::Push(L, pkNewUnit);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//void DoUpgradeTo;
+int CvLuaUnit::lUpgradeTo(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const UnitTypes eUpgradeUnitType = (UnitTypes) lua_tointeger(L, 2);
+	const bool bIsFree = luaL_optbool(L, 3, false);
+	
+	CvUnit* pkNewUnit = pkUnit->DoUpgradeTo(eUpgradeUnitType, bIsFree);
 
 	CvLuaUnit::Push(L, pkNewUnit);
 	return 1;
@@ -1642,6 +1659,19 @@ int CvLuaUnit::lCanUpgradeRightNow(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+#if defined(MOD_API_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaUnit::lCanUpgradeTo(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const UnitTypes eUpgradeUnitType = (UnitTypes)lua_tointeger(L, 2);
+	const bool bTestVisible = luaL_optint(L, 3, 0);
+	const bool bResult = pkUnit->CanUpgradeTo(eUpgradeUnitType, bTestVisible);
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 #if defined(MOD_GLOBAL_CS_UPGRADES)
 //------------------------------------------------------------------------------
 int CvLuaUnit::lCanUpgradeInTerritory(lua_State* L)
@@ -1660,7 +1690,11 @@ int CvLuaUnit::lGetNumResourceNeededToUpgrade(lua_State* L)
 	CvUnit* pkUnit = GetInstance(L);
 	const ResourceTypes eResource = (ResourceTypes) lua_tointeger(L, 2);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	const UnitTypes eUpgradeUnitType = (UnitTypes) luaL_optint(L, 3, pkUnit->GetUpgradeUnitType());
+#else
 	const UnitTypes eUpgradeUnitType = pkUnit->GetUpgradeUnitType();
+#endif
 
 	CvUnitEntry* pkUnitInfo = GC.getUnitInfo(eUpgradeUnitType);
 	if(pkUnitInfo == NULL)
@@ -4799,7 +4833,7 @@ int CvLuaUnit::lSetActivityType(lua_State* L)
 	CvUnit* pkUnit = GetInstance(L);
 	const ActivityTypes eActivity = (ActivityTypes)lua_tointeger(L, 2);
 #if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
-	const bool bClearFortify = luaL_optint(L, 3, 1);		//defaults to true
+	const bool bClearFortify = luaL_optbool(L, 3, true);
 
 	pkUnit->SetActivityType(eActivity, bClearFortify);
 #else

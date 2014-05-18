@@ -1624,6 +1624,12 @@ int CvPlayerAI::ScoreCityForDiplomat(CvCity* pCity, UnitHandle pUnit)
 		return iScore;
 	}
 
+	// Return score if at war
+	if(atWar(getTeam(), kCityPlayer.getTeam()))
+	{
+		return iScore;
+	}
+
 	// Do we already have an embassy here?
 	// To iterate all plots owned by a CS, wrap this is a loop that iterates all cities owned by the CS
 	// Iterate all plots owned by a city
@@ -1655,14 +1661,7 @@ int CvPlayerAI::ScoreCityForDiplomat(CvCity* pCity, UnitHandle pUnit)
 	iScore = 100;
 
 	// Then subtract distance
-
 	iScore -= (plotDistance(pUnit->getX(), pUnit->getY(), pCity->getX(), pCity->getY()) * GC.getINFLUENCE_TARGET_DISTANCE_WEIGHT_VALUE());
-
-	// Multiplier by how safe it is
-	if(!atWar(getTeam(), kCityPlayer.getTeam()))
-	{
-		iScore *= 2;
-	}
 
 	return iScore;
 }
@@ -1744,12 +1743,12 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 		iScore *= 2;
 	}
 
-	if (eApproach == MINOR_CIV_APPROACH_FRIENDLY)
+	else if (eApproach == MINOR_CIV_APPROACH_FRIENDLY)
 	{
 		iScore *= 3;
 	}
 
-	if(eApproach == MINOR_CIV_APPROACH_PROTECTIVE)
+	else if(eApproach == MINOR_CIV_APPROACH_PROTECTIVE)
 	{
 		iScore  *= 4;
 	}
@@ -1784,7 +1783,7 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 	}
 
 	//MILITARY - We want units and happiness!!
-	if(GetDiplomacyAI()->IsGoingForWorldConquest())
+	else if(GetDiplomacyAI()->IsGoingForWorldConquest())
 	{
 		if(pMinorCivAI->GetTrait() == MINOR_CIV_TRAIT_CULTURED)
 		{
@@ -1809,7 +1808,7 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 	}
 
 	//SCIENCE - We want happiness and growth!!
-	if(GetDiplomacyAI()->IsGoingForSpaceshipVictory())
+	else if(GetDiplomacyAI()->IsGoingForSpaceshipVictory())
 	{
 		if(pMinorCivAI->GetTrait() == MINOR_CIV_TRAIT_CULTURED)
 		{
@@ -1834,7 +1833,7 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 	}
 
 	//CULTURE - We want culture and religion!!
-	if(GetDiplomacyAI()->IsGoingForCultureVictory())
+	else if(GetDiplomacyAI()->IsGoingForCultureVictory())
 	{
 		if(pMinorCivAI->GetTrait() == MINOR_CIV_TRAIT_CULTURED)
 		{
@@ -1871,7 +1870,7 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 	// Is Our Influence worth more here? Definitely take advantage of this.
 	if(pMinorCivAI->IsActiveQuestForPlayer(eID, MINOR_CIV_QUEST_INFLUENCE))
 	{
-		iScore *= 3;
+		iScore *= 4;
 	}
 	
 	// Do they have a resource we lack?
@@ -1926,22 +1925,22 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 					//If their influence is way higher than ours, let's tune this down...
 					if(iOtherPlayerFriendshipWithMinor >= (60 + iFriendship + iFriendshipWithMinor))
 					{
-						iScore /= 4;
+						iScore /= 3;
 					}
 					//If we can pass them, ramp it up!
-					if(iOtherPlayerFriendshipWithMinor < (iFriendship + iFriendshipWithMinor)) 
+					else if(iOtherPlayerFriendshipWithMinor < (iFriendship + iFriendshipWithMinor)) 
 					{
-						iScore *= 6;
+						iScore *= 3;
 					}
 				}
 			}
 			// If a teammate is allied, let's discourage going there.
-			if(GET_PLAYER(eOtherMajor).getTeam() == getTeam())
+			else if(GET_PLAYER(eOtherMajor).getTeam() == getTeam())
 			{
 				// Only care if they are allies
 				if(pMinorCivAI->IsAllies(eOtherMajor))
 				{
-					iScore /= 5;
+					iScore /= 3;
 				}
 			}
 			// Are we allied? Yay! But let's be careful.
@@ -1950,7 +1949,7 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 				// Are WE allies by a wide margin (over 100)? If so, let's find someone new to love.
 				if(iFriendshipWithMinor >= (60 + iOtherPlayerFriendshipWithMinor)) 
 				{
-					iScore /= 10;
+					iScore /= 4;
 				}
 				// Is another player really close to us? If so, let's keep an eye on things.
 				if(iOtherPlayerFriendshipWithMinor >= (iFriendshipWithMinor - 30))
@@ -1960,7 +1959,7 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 					// Are we close to losing our status? If so, obsess away!
 				if(pMinorCivAI->IsCloseToNotBeingAllies(eID))
 				{
-					iScore *= 6;
+					iScore *= 5;
 				}
 			}
 			MajorCivApproachTypes eApproachType = GetDiplomacyAI()->GetMajorCivApproach(eOtherMajor, false);
@@ -1975,7 +1974,7 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 				}
 			}
 			// If an enemy is allied, let's take their stuff!
-			if(eApproachType == MAJOR_CIV_APPROACH_HOSTILE)
+			else if(eApproachType == MAJOR_CIV_APPROACH_HOSTILE)
 			{
 				// Only care if they are allies
 				if(pMinorCivAI->IsAllies(eOtherMajor))
@@ -1993,7 +1992,7 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 				}
 			}
 			// If an competitor is allied, let's fight for it!
-			if(eOpinion == MAJOR_CIV_OPINION_COMPETITOR)
+			else if(eOpinion == MAJOR_CIV_OPINION_COMPETITOR)
 			{
 				// Only care if they are allies
 				if(pMinorCivAI->IsAllies(eOtherMajor))
@@ -2025,8 +2024,11 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 	// Distance
 	// **************************
 
-	// Subtract distance (XML value important here!)
+	
+	CvMap& theMap = GC.getMap();
+	CvArea* pArea = theMap.getArea(pCity->getArea());
 
+	// Subtract distance (XML value important here!)
 	iScore -= ((plotDistance(pUnit->getX(), pUnit->getY(), pCity->getX(), pCity->getY())) * GC.getINFLUENCE_TARGET_DISTANCE_WEIGHT_VALUE());
 
 	// Multiplier by how safe it is
@@ -2044,19 +2046,25 @@ int CvPlayerAI::ScoreCityForMessenger(CvCity* pCity, UnitHandle pUnit)
 	//Are there barbarians near the city-state? If so, abort!
 	if(eMinor.GetMinorCivAI()->IsThreateningBarbariansEventActiveForPlayer(eID))
 	{
-		iScore /= 3;
+		iScore /= 4;
 	}
 
 	//Let's downplay minors we can't walk to if we don't have embarkation.
-	if((pCity->getArea() != GetDiplomacyAI()->GetPlayer()->getCapitalCity()->getArea()) && !GET_TEAM(GetDiplomacyAI()->GetPlayer()->getTeam()).canEmbark()) // we can't embark!
+	if((pCity->getArea() != pUnit->getArea()) && !GET_TEAM(GET_PLAYER(eID).getTeam()).canEmbark())
+	{
+		iScore /= 3;
+	}
+
+	//Let's downplay far/distant minors without full embarkation.
+	else if((pCity->getArea() != pUnit->getArea()) && !GET_TEAM(GET_PLAYER(eID).getTeam()).canEmbarkAllWaterPassage())
 	{
 		iScore /= 2;
 	}
 
-	//Let's downplay far/distant minors without full embarkation.
-	if((eMinor.GetProximityToPlayer(eID) <= PLAYER_PROXIMITY_FAR) && !GET_TEAM(GetDiplomacyAI()->GetPlayer()->getTeam()).canEmbarkAllWaterPassage()) // we can't embark on oceans!
+	//If we can travel across oceans, let's emphasize island CSs to get them alliances.
+	else if((pArea->getNumTiles() <= 15) && GET_TEAM(GET_PLAYER(eID).getTeam()).canEmbarkAllWaterPassage())
 	{
-		iScore /= 2;
+		iScore *= 2;
 	}
 
 	return iScore;

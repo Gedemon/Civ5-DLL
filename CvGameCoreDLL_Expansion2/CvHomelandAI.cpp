@@ -384,7 +384,7 @@ void CvHomelandAI::EstablishHomelandPriorities()
 			break;
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 		case AI_HOMELAND_MOVE_DIPLOMAT_EMBASSY:
-			iPriority = GC.getAI_HOMELAND_MOVE_PRIORITY_DIPLOMAT_EMBASSY();
+			iPriority = GC.getAI_HOMELAND_MOVE_PRIORITY_DIPLOMAT();
 			break;
 		case AI_HOMELAND_MOVE_MESSENGER:
 			iPriority = GC.getAI_HOMELAND_MOVE_PRIORITY_MESSENGER();
@@ -1943,7 +1943,6 @@ void CvHomelandAI::PlotDiplomatMoves()
 		ExecuteDiplomatMoves();
 	}
 }
-
 /// Find moves for messengers
 void CvHomelandAI::PlotMessengerMoves()
 {
@@ -4017,7 +4016,6 @@ void CvHomelandAI::ExecuteDiplomatMoves()
 		}
 	}
 }
-
 void CvHomelandAI::ExecuteMessengerMoves()
 {
 	FStaticVector< CvHomelandUnit, 64, true, c_eCiv5GameplayDLL >::iterator it;

@@ -55,6 +55,11 @@ protected:
 
 	static int lChooseTech(lua_State* L);
 
+#if defined(MOD_API_EXTENSIONS)
+	LUAAPIEXTN(GetSpecificUnitType);
+	LUAAPIEXTN(GetSpecificBuildingType);
+#endif
+
 	static int lKillUnits(lua_State* L);
 	static int lIsHuman(lua_State* L);
 	static int lIsBarbarian(lua_State* L);
@@ -446,7 +451,10 @@ protected:
 	static int lGetGreatMerchantRateModifier(lua_State* L);
 	static int lGetGreatEngineerRateModifier(lua_State* L);
 #if defined(MOD_DIPLOMACY_CITYSTATES)
-	static int lGetGreatDiplomatRateModifier(lua_State* L);
+	LUAAPIEXTN(GetGreatDiplomatRateModifier);
+	LUAAPIEXTN(GetScienceRateFromMinorAllies);
+	LUAAPIEXTN(GetScienceRateFromLeagueAid);
+	LUAAPIEXTN(GetLeagueCultureCityModifier);
 #endif
 
 	static int lGetPolicyGreatPeopleRateModifier(lua_State* L);
@@ -457,7 +465,7 @@ protected:
 	static int lGetPolicyGreatMerchantRateModifier(lua_State* L);
 	static int lGetPolicyGreatEngineerRateModifier(lua_State* L);
 #if defined(MOD_DIPLOMACY_CITYSTATES)
-	static int lGetPolicyGreatDiplomatRateModifier(lua_State* L);
+	LUAAPIEXTN(GetPolicyGreatDiplomatRateModifier);
 #endif
 
 	static int lGetProductionModifier(lua_State* L);

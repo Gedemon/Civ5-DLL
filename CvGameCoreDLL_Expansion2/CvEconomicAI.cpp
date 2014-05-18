@@ -1928,7 +1928,7 @@ void CvEconomicAI::DoHurry()
 														}
 #endif
 													}
-													
+
 													m_pPlayer->GetMilitaryAI()->ResetNumberOfTimesOpsBuildSkippedOver();
 													pLoopCity->CleanUpQueue();
 												}
@@ -1953,72 +1953,6 @@ void CvEconomicAI::DoHurry()
 	CvCity* pLoopCity = 0;
 	int iTurnsSaved = 0;
 
-#if defined(MOD_AI_SMART_GOLD_PURCHASE)
-	if (MOD_AI_SMART_GOLD_PURCHASE)
-	{
-	CvCity* pBestHurryCity = NULL;
-	int iBestHurryTurnsSaved = 0;
-	//Exit if we don't have a set amount of gold, to avoid purchase overuse.
-	int comfortableGoldToHurry = 50 + (150 * m_pPlayer->GetCurrentEra());
-	int playerGold = m_pPlayer->GetTreasury()->GetGold();
-
-	if (playerGold < comfortableGoldToHurry)
-	{
-		return;
-	}
-
-	// Look at each of our cities
-	for(pLoopCity = m_pPlayer->firstCity(&iLoop); pLoopCity != NULL; pLoopCity = m_pPlayer->nextCity(&iLoop))
-	{
-		// What are we currently working on?
-		pOrder = pLoopCity->getOrderFromQueue(0);
-
-		if(pOrder != NULL)
-		{
-			bool isPurchasable = pLoopCity->IsCanGoldPurchase(pOrder);
-			int prodPercentRemaining = ((pLoopCity->getProductionNeeded() - pLoopCity->getProduction()) * 100) / pLoopCity->getProductionNeeded();
-
-			//We skip if the build order is more than 60% done.
-			if (prodPercentRemaining < 60)
-			{
-				continue;
-			}
-
-			if (isPurchasable)
-			{
-				iTurnsSaved = pLoopCity->getProductionTurnsLeft() - 1;
-				//Also skip if we don't save any turns
-				if (iTurnsSaved < 2)
-				{
-					continue;
-				}
-				if (iBestHurryTurnsSaved < iTurnsSaved)
-				{
-					if(GC.getLogging() && GC.getAILogging() && isPurchasable)
-					{
-						static const char* orderTypeStrings[] = { "ORDER_TRAIN", "ORDER_CONSTRUCT", "ORDER_CREATE", "ORDER_PREPARE", "ORDER_MAINTAIN", "NO_ORDER" };
-						int orderIndex = ((pOrder->eOrderType < 0) || (pOrder->eOrderType > 4)) ? 5 : pOrder->eOrderType;
-						CvString strLogString;
-						strLogString.Format("DoHurry Option: order type %s, Turns Saved: %d,remaining percent = %d", orderTypeStrings[orderIndex], iTurnsSaved, prodPercentRemaining);
-						m_pPlayer->GetHomelandAI()->LogHomelandMessage(strLogString);
-					}
-					iBestHurryTurnsSaved = iTurnsSaved;
-					pBestHurryCity = pLoopCity;
-				}
-			}
-		}
-	}
-
-	// Now enact the best hurry we've found (only hurry one item per turn for now)
-	if(pBestHurryCity != NULL)
-	{
-		pBestHurryCity->PurchaseCurrentOrder();
-		pBestHurryCity->AI_chooseProduction(false);
-	}
-	}
-	else
-	{
-#endif
 	int iHurryAmount = 0;
 	int iHurryAmountAvailable = 0;
 	int iI = 0;
@@ -2086,9 +2020,6 @@ void CvEconomicAI::DoHurry()
 		pBestHurryCity->hurry(eBestHurryType);
 		pBestHurryCity->GetCityStrategyAI()->LogHurry(eBestHurryType, iBestHurryAmount, iBestHurryAmountAvailable, iBestHurryTurnsSaved);
 	}
-#if defined(MOD_AI_SMART_GOLD_PURCHASE)
-	}
-#endif
 #if defined(MOD_DIPLOMACY_CITYSTATES_HURRY)
   }
 #endif
@@ -4546,7 +4477,6 @@ bool EconomicAIHelpers::IsTestStrategy_NeedDiplomatsCritical(CvPlayer* pPlayer)
 	}
 }
 
-
 int EconomicAIHelpers::IsTestStrategy_ScoreDiplomats(CvPlayer* pPlayer)
 {
 
@@ -4717,7 +4647,7 @@ int EconomicAIHelpers::IsTestStrategy_ScoreDiplomats(CvPlayer* pPlayer)
 		//Going for a Diplo Victory?
 		if(pPlayer->GetDiplomacyAI()->IsGoingForDiploVictory())
 		{
-			iScore += iCSDesire;
+			iScore += (iCSDesire * 5);
 		}
 
 		//APPROACH WEIGHTS - These will make the AI more competitive if they are fighting for minors.
@@ -4788,13 +4718,13 @@ int EconomicAIHelpers::IsTestStrategy_ScoreDiplomats(CvPlayer* pPlayer)
 		//Does someone have a lot of votes? That's not cool!
 		if((iLotsOfVotes > 0))
 		{
-			iScore += iCSDesire;
+			iScore += (iCSDesire * 2);
 		}
 
 		//Is someone about to win? Oh no!
 		if((iWinVotes > 0))
 		{
-			iScore += iCSDesire;
+			iScore += (iCSDesire * 2);
 		}
 
 /////////////////////////
@@ -4836,8 +4766,7 @@ int EconomicAIHelpers::IsTestStrategy_ScoreDiplomats(CvPlayer* pPlayer)
 		}
 		else
 		{
-			iScore = 0;
-			return iScore;
+			return 0;
 		}
 	}
 	return 0;

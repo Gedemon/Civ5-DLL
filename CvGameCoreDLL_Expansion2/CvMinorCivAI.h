@@ -76,6 +76,8 @@ enum MinorCivQuestTypes
 	MINOR_CIV_QUEST_ARCHAEOLOGY,
 	MINOR_CIV_QUEST_CIRCUMNAVIGATION,
 	MINOR_CIV_QUEST_LIBERATION,
+	MINOR_CIV_QUEST_HORDE,
+	MINOR_CIV_QUEST_REBELLION,
 #endif
 
     NUM_MINOR_CIV_QUEST_TYPES,
@@ -327,6 +329,29 @@ public:
 	CvPlot* GetBestNearbyCampToKill();
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
 	CvPlot* GetBestNearbyDig();
+	//Tests
+	PlayerTypes SpawnHorde();
+	PlayerTypes SpawnRebels();
+	//Ends
+	void SetSacked(bool bValue);
+	bool IsSacked();
+	bool IsRebellion();
+	void SetRebellion(bool bValue);
+	//Countdown
+	void ChangeTurnsSinceRebellion(int iChange);
+	int GetTurnsSinceRebellion() const;
+	void SetTurnsSinceRebellion(int iValue);
+	//Primers
+	void DoRebellion();
+	bool IsValidRebellion();
+	void SetRebellionActive(bool bValue);
+	bool IsRebellionActive();
+	void SetHordeActive(bool bValue);
+	bool IsHordeActive();
+	//Cooldown
+	void ChangeCooldownSpawn(int iChange);
+	int GetCooldownSpawn() const;
+	void SetCooldownSpawn(int iValue);
 #endif
 	ResourceTypes GetNearbyResourceForQuest(PlayerTypes ePlayer);
 	BuildingTypes GetBestWonderForQuest(PlayerTypes ePlayer);
@@ -404,6 +429,10 @@ public:
 	void DoSetBonus(PlayerTypes ePlayer, bool bAdd, bool bFriends, bool bAllies, bool bSuppressNotifications = false, bool bPassedBySomeone = false, PlayerTypes eNewAlly = NO_PLAYER);
 
 	void DoIntrusion();
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	void DoSack();
+	void DoDefection();
+#endif
 
 	// DEPRECATED
 	bool IsMajorIntruding(PlayerTypes eMajor) const;
@@ -606,6 +635,15 @@ private:
 	int m_aaiNumEnemyUnitsLeftToKillByMajor[MAX_MAJOR_CIVS][MAX_MAJOR_CIVS];
 
 	bool m_abRouteConnectionEstablished[MAX_MAJOR_CIVS];
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+	bool m_bIsSacked;
+	bool m_bIsRebellion;
+	int m_iIsRebellionCountdown;
+	bool m_bIsRebellionActive;
+	bool m_bIsHordeActive;
+	int m_iCooldownSpawn;
+#endif
 
 	PlayerTypes m_eAlly;
 	int m_iTurnAllied;

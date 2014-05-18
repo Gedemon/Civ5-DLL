@@ -609,6 +609,10 @@ public:
 	// Base Yield
 	int getBaseYieldRate(YieldTypes eIndex) const;
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int GetBaseScienceFromArt() const;
+#endif
+
 #if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
 	int GetBaseYieldRateFromGreatWorks(YieldTypes eIndex) const;
 #endif
@@ -624,6 +628,26 @@ public:
 
 	int GetBaseYieldRateFromMisc(YieldTypes eIndex) const;
 	void ChangeBaseYieldRateFromMisc(YieldTypes eIndex, int iChange);
+
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	int GetBaseYieldRateFromLeague(YieldTypes eIndex) const;
+	void ChangeBaseYieldRateFromLeague(YieldTypes eIndex, int iChange);
+
+	void ChangeTotalArtsyAid(int iChange);
+	int GetTotalArtsyAid() const;
+	void SetTotalArtsyAid(int iValue);
+
+	void ChangeTotalScienceyAid(int iChange);
+	int GetTotalScienceyAid() const;
+	void SetTotalScienceyAid(int iValue);
+
+	void ChangeTotalGreatWorkAid(int iChange);
+	int GetTotalGreatWorkAid() const;
+	void SetTotalGreatWorkAid(int iValue);
+
+	int GetGrowthExtraYield() const;
+	void ChangeGrowthExtraYield(int iChange);
+#endif
 
 	int GetBaseYieldRateFromReligion(YieldTypes eIndex) const;
 	void ChangeBaseYieldRateFromReligion(YieldTypes eIndex, int iChange);
@@ -805,13 +829,7 @@ public:
 	bool CreateProject(ProjectTypes eProjectType);
 
 	bool CanPlaceUnitHere(UnitTypes eUnitType);
-#if defined(MOD_AI_SMART_GOLD_PURCHASE)
-	bool IsCanGoldPurchase(OrderData* pOrder);
-#endif
 	bool IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectTypes eProjectType, YieldTypes ePurchaseYield);
-#if defined(MOD_AI_SMART_GOLD_PURCHASE)
-	void PurchaseCurrentOrder();
-#endif
 	void Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectTypes eProjectType, YieldTypes ePurchaseYield);
 
 	PlayerTypes getLiberationPlayer() const;
@@ -975,6 +993,13 @@ protected:
 	FAutoVariable<std::vector<int>, CvCity> m_aiBaseYieldRateFromBuildings;
 	FAutoVariable<std::vector<int>, CvCity> m_aiBaseYieldRateFromSpecialists;
 	FAutoVariable<std::vector<int>, CvCity> m_aiBaseYieldRateFromMisc;
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	FAutoVariable<std::vector<int>, CvCity> m_aiBaseYieldRateFromLeague;
+	int m_iTotalScienceyAid;
+	int m_iTotalArtsyAid;
+	int m_iTotalGreatWorkAid;
+	int m_iChangeGrowthExtraYield;
+#endif
 	std::vector<int> m_aiBaseYieldRateFromReligion;
 	FAutoVariable<std::vector<int>, CvCity> m_aiYieldRateModifier;
 	FAutoVariable<std::vector<int>, CvCity> m_aiYieldPerPop;

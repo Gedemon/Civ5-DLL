@@ -8167,7 +8167,7 @@ UnitTypes CvGame::GetRandomUniqueUnitType(bool bIncludeCivsInGame, bool bInclude
 		// We only want unique units
 		if(eLoopUnit == pkUnitClassInfo->getDefaultUnitIndex())
 			continue;
-			
+
 		// Is it a unique unit from a civ that is in our game?
 		if (!bIncludeCivsInGame)
 		{

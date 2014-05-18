@@ -286,6 +286,8 @@ CvAIOperation* CvAIOperation::CreateOperation(AIOperationTypes eAIOperationType,
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	case AI_OPERATION_DIPLOMAT_DELEGATION:
 		return FNEW(CvAIOperationDiplomatDelegation(), c_eCiv5GameplayDLL, 0);
+	case AI_OPERATION_ALLY_DEFENSE:
+		return FNEW(CvAIOperationAllyDefense(), c_eCiv5GameplayDLL, 0);
 #endif
 	case AI_OPERATION_CONCERT_TOUR:
 		return FNEW(CvAIOperationConcertTour(), c_eCiv5GameplayDLL, 0);
@@ -3746,6 +3748,178 @@ CvPlot* CvAIOperationDiplomatDelegation::FindBestTarget(CvUnit* pUnit, bool bOnl
 	int iTargetTurns;
 	bOnlySafePaths= true;
 	return GET_PLAYER(pUnit->getOwner()).ChooseMessengerTargetPlot(pUnit, &iTargetTurns);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// CvAIOperationAllyDefense - 
+////////////////////////////////////////////////////////////////////////////////
+
+/// Constructor
+CvAIOperationAllyDefense::CvAIOperationAllyDefense()
+{
+}
+
+/// Destructor
+CvAIOperationAllyDefense::~CvAIOperationAllyDefense()
+{
+}
+
+/// Kick off this operation
+void CvAIOperationAllyDefense::Init(int iID, PlayerTypes eOwner, PlayerTypes eEnemy, int /*iDefaultArea*/, CvCity* /*pTarget*/, CvCity* /*pMuster*/)
+{
+	Reset();
+	m_iID = iID;
+	m_eOwner = eOwner;
+	m_eEnemy = eEnemy;
+
+	if(iID != -1)
+	{
+		// create the armies that are needed and set the state to ARMYAISTATE_WAITING_FOR_UNITS_TO_REINFORCE
+		CvArmyAI* pArmyAI = GET_PLAYER(m_eOwner).addArmyAI();
+		if(pArmyAI)
+		{
+			m_viArmyIDs.push_back(pArmyAI->GetID());
+			pArmyAI->Init(pArmyAI->GetID(),m_eOwner,m_iID);
+			pArmyAI->SetArmyAIState(ARMYAISTATE_WAITING_FOR_UNITS_TO_REINFORCE);
+			pArmyAI->SetFormationIndex(GetFormation());
+
+			CvPlot* pTargetPlot = FindBestTarget();
+			if(pTargetPlot != NULL)
+			{
+				SetTargetPlot(pTargetPlot);
+				pArmyAI->SetGoalPlot(pTargetPlot);
+				SetMusterPlot(pTargetPlot);  // Gather directly at the point we're trying to defend
+				pArmyAI->SetXY(GetMusterPlot()->getX(), GetMusterPlot()->getY());
+				SetDefaultArea(GetMusterPlot()->getArea());
+
+				// Find the list of units we need to build before starting this operation in earnest
+				BuildListOfUnitsWeStillNeedToBuild();
+
+				// Try to get as many units as possible from existing units that are waiting around
+				if(GrabUnitsFromTheReserves(GetMusterPlot(), GetMusterPlot()))
+				{
+					pArmyAI->SetArmyAIState(ARMYAISTATE_WAITING_FOR_UNITS_TO_CATCH_UP);
+					m_eCurrentState = AI_OPERATION_STATE_GATHERING_FORCES;
+				}
+				else
+				{
+					m_eCurrentState = AI_OPERATION_STATE_RECRUITING_UNITS;
+				}
+
+				LogOperationStart();
+			}
+		}
+	}
+}
+
+/// Read serialized data
+void CvAIOperationAllyDefense::Read(FDataStream& kStream)
+{
+	// read the base class' entries
+	CvAIOperation::Read(kStream);
+
+	// Version number to maintain backwards compatibility
+	uint uiVersion;
+	kStream >> uiVersion;
+}
+
+/// Write serialized data
+void CvAIOperationAllyDefense::Write(FDataStream& kStream) const
+{
+	// write the base class' entries
+	CvAIOperation::Write(kStream);
+
+	// Current version number
+	uint uiVersion = 1;
+	kStream << uiVersion;
+}
+
+/// Find the best position against the current threats
+CvPlot* CvAIOperationAllyDefense::FindBestTarget()
+{
+	CvCity* pCity = NULL;
+	CvPlot* pPlot = NULL;
+	CvPlot* pBestPlot = NULL;
+	int iMinorLoop;
+	PlayerTypes eMinor;
+	PlayerProximityTypes eClosestProximity = NO_PLAYER_PROXIMITY;
+
+	// Defend CSs that need help
+	for(iMinorLoop = 0; iMinorLoop < MAX_CIV_PLAYERS; iMinorLoop++)
+	{
+		eMinor = (PlayerTypes) iMinorLoop;
+		if(GET_PLAYER(eMinor).isMinorCiv() && GET_PLAYER(eMinor).isAlive())
+		{
+			TeamTypes eLoopTeam;
+			for(int iTeamLoop = 0; iTeamLoop < MAX_CIV_TEAMS; iTeamLoop++)
+			{
+				eLoopTeam = (TeamTypes) iTeamLoop;
+
+				if(GET_PLAYER(eMinor).GetMinorCivAI()->IsActiveQuestForPlayer(m_eOwner, MINOR_CIV_QUEST_HORDE) || GET_PLAYER(eMinor).GetMinorCivAI()->IsActiveQuestForPlayer(m_eOwner, MINOR_CIV_QUEST_REBELLION))
+				{
+					// Now, loop through the Minors in the game to what the closest proximity is to any of the players. That'll be our focus.
+					if(GET_PLAYER(eMinor).GetProximityToPlayer(m_eOwner) > eClosestProximity)
+					{
+						eClosestProximity = GET_PLAYER(eMinor).GetProximityToPlayer(m_eOwner);
+						pCity = GET_PLAYER(eMinor).getCapitalCity();
+					}
+				}
+			}
+		}
+	}
+
+	// If no city is threatened just defend our capital (this should rarely happen)
+	if(pCity == NULL)
+	{
+		pCity = pCity = GET_PLAYER(m_eOwner).getCapitalCity();
+	}
+
+	//Let's find a target plot that isn't our ally's capital.
+	if(pCity != NULL)
+	{
+		int iTempWeight = 0;
+		
+		int iBestPlotWeight = -1;
+
+		// Start at 1, since ID 0 is the city plot itself
+		for(int iPlotLoop = 1; iPlotLoop < NUM_DIRECTION_TYPES; iPlotLoop++)
+		{
+			if(!pPlot)		// Should be valid, but make sure
+				continue;
+
+			// Can't be impassable
+			if(pPlot->isImpassable() || pPlot->isMountain())
+				continue;
+
+			// Can't be ANOTHER city
+			if(pPlot->isCity())
+				continue;
+
+			// Add weight if there's a defensive bonus for this plot
+			if(pPlot->defenseModifier(GET_PLAYER(m_eOwner).getTeam(), false, false))
+				iTempWeight += 4;
+
+			if(iTempWeight > iBestPlotWeight)
+			{
+				iBestPlotWeight = iTempWeight;
+				pBestPlot = pPlot;
+			}
+		}
+
+		// Found valid plot
+		if(pBestPlot != NULL)
+		{
+			return pBestPlot;
+		}
+
+		//No plot? Let's move to the capital, and try not to be dumb about it.
+		else
+		{
+			pBestPlot = pCity->plot();
+		}
+	}
+
+	return pBestPlot;
 }
 #endif
 

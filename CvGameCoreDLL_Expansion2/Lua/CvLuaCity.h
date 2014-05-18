@@ -395,6 +395,10 @@ protected:
 	static int lGetBaseYieldRateFromMisc(lua_State* L);
 	static int lChangeBaseYieldRateFromMisc(lua_State* L);
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	LUAAPIEXTN(GetBaseYieldRateFromLeague);
+#endif
+
 	static int lGetBaseYieldRateFromReligion(lua_State* L);
 	static int lChangeBaseYieldRateFromReligion(lua_State* L);
 

@@ -30,6 +30,7 @@ protected:
 	static int lConvert(lua_State* L);
 #if defined(MOD_API_LUA_EXTENSIONS)
 	LUAAPIEXTN(Upgrade);
+	LUAAPIEXTN(UpgradeTo);
 #endif
 	static int lKill(lua_State* L);
 
@@ -152,6 +153,9 @@ protected:
 	static int lGetUpgradeUnitType(lua_State* L);
 	static int lUpgradePrice(lua_State* L);
 	static int lCanUpgradeRightNow(lua_State* L);
+#if defined(MOD_API_EXTENSIONS)
+	LUAAPIEXTN(CanUpgradeTo);
+#endif
 #if defined(MOD_GLOBAL_CS_UPGRADES)
 	LUAAPIEXTN(CanUpgradeInTerritory);
 #endif

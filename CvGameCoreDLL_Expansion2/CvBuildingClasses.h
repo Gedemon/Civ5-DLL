@@ -219,6 +219,8 @@ public:
 	int GetCapitalsToVotes() const;
 	int GetDoFToVotes() const;
 	int GetRAToVotes() const;
+	int GetGPExpendInfluence() const;
+	int GetGrowthExtraYield() const;
 #endif
 	int GetPreferredDisplayPosition() const;
 	int GetPortraitIndex() const;
@@ -454,6 +456,8 @@ private:
 	int m_iCapitalsToVotesBase;
 	int m_iDoFToVotesBase;
 	int m_iRAToVotesBase;
+	int m_iGPExpendInfluenceBase;
+	int m_iGrowthExtraYieldBase;
 #endif
 	int m_iPreferredDisplayPosition;
 	int m_iPortraitIndex;
