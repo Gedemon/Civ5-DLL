@@ -3043,6 +3043,14 @@ bool CvPlayerPolicies::CanAdoptPolicy(PolicyTypes eIndex, bool bIgnoreCost) cons
 			}
 		}
 	}
+	
+#if defined(MOD_EVENTS_IDEOLOGIES)
+	if (MOD_EVENTS_IDEOLOGIES && pkPolicyEntry->GetLevel() > 0) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanAdoptTenet, m_pPlayer->GetID(), eIndex) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
+	}
+#endif
 
 	return true;
 }
@@ -3176,15 +3184,9 @@ bool CvPlayerPolicies::CanUnlockPolicyBranch(PolicyBranchTypes eBranchType)
 /// can the player unlock eBranchType right now?
 bool CvPlayerPolicies::IsEraPrereqBranch(PolicyBranchTypes eBranchType)
 {
-	bool methodResult = false;
 	CvPolicyBranchEntry* pkBranchEntry = m_pPolicies->GetPolicyBranchEntry(eBranchType);
 
-	if(pkBranchEntry->GetEraPrereq() > 0)
-	{
-		methodResult = true;
-	}
-
-	return methodResult;
+	return (pkBranchEntry && pkBranchEntry->GetEraPrereq() > 0);
 }
 #endif
 
@@ -3462,6 +3464,26 @@ bool CvPlayerPolicies::IsPolicyBlocked(PolicyTypes eType) const
 	return IsPolicyBranchBlocked(eBranch);
 }
 
+#if defined(MOD_API_EXTENSIONS)
+bool CvPlayerPolicies::CanAdoptIdeology(PolicyBranchTypes eIdeology) const
+{
+#if defined(MOD_EVENTS_IDEOLOGIES)
+	if (MOD_EVENTS_IDEOLOGIES) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanAdoptTenet, m_pPlayer->GetID(), eIdeology) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
+	}
+#endif
+
+	return true;
+}
+
+bool CvPlayerPolicies::HasAdoptedIdeology(PolicyBranchTypes eIdeology) const
+{
+	return IsPolicyBranchUnlocked(eIdeology);
+}
+#endif
+
 /// Implement a switch of ideologies
 void CvPlayerPolicies::DoSwitchIdeologies(PolicyBranchTypes eNewBranchType)
 {
@@ -3491,7 +3513,7 @@ void CvPlayerPolicies::DoSwitchIdeologies(PolicyBranchTypes eNewBranchType)
 			args->Push(eNewBranchType);
 
 			bool bResult = false;
-			LuaSupport::CallHook(pkScriptSystem, "PlayerCanAdoptPolicyBranch", args.get(), bResult);
+			LuaSupport::CallHook(pkScriptSystem, "PlayerAdoptPolicyBranch", args.get(), bResult);
 		}
 	}
 #endif
@@ -3997,6 +4019,12 @@ std::vector<PolicyTypes> CvPlayerPolicies::GetAvailableTenets(PolicyBranchTypes 
 		CvPolicyEntry* pEntry = pkPolicies->GetPolicyEntry(eTenet);
 		if (pEntry && pEntry->GetPolicyBranchType() == eBranch && pEntry->GetLevel() == iLevel && !HasPolicy(eTenet))
 		{
+#if defined(MOD_EVENTS_IDEOLOGIES)
+			if (MOD_EVENTS_IDEOLOGIES && !CanAdoptPolicy(eTenet)) {
+				continue;
+			}
+#endif
+
 			availableTenets.push_back(eTenet);
 		}
 	}
@@ -4131,8 +4159,9 @@ void CvPlayerPolicies::AddFlavorAsStrategies(int iPropagatePercent)
 //		NEW WAY: use PERSONALITY flavors (since policy choices are LONG-TERM)
 //		EVEN NEWER WAY: add in a modifier for the Grand Strategy we are running (since these are also long term)
 #if defined(MOD_AI_SMART_GRAND_STRATEGY)
-		//		AMS: EVEN NEWER!!! not add grand strategy factor before medieval era, the AI still doesn't know if the Grand Strategy is solid.
-		if (MOD_AI_SMART_GRAND_STRATEGY && m_pPlayer->GetCurrentEra() < 2)
+		// NEWER NEWER WAY: don't add grand strategy factor before medieval era, the AI still doesn't know if the Grand Strategy is solid.
+		EraTypes eMedieval = (EraTypes) GC.getInfoTypeForString("ERA_MEDIEVAL", true);
+		if (MOD_AI_SMART_GRAND_STRATEGY && m_pPlayer->GetCurrentEra() < eMedieval)
 		{
 			iFlavorValue = m_pPlayer->GetFlavorManager()->GetPersonalityIndividualFlavor((FlavorTypes) iFlavor);
 		}

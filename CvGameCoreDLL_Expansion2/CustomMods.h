@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 49)
+#define MOD_DLL_VERSION_NUMBER ((uint) 51)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -241,37 +241,33 @@
 // Fixes the AI's inability to use combat units for founding cities (v26)
 #define MOD_AI_SECONDARY_SETTLERS                   gCustomMods.isAI_SECONDARY_SETTLERS()
 
-// Features from the "Smart AI mod" by Ninakoru - see http://forums.civfanatics.com/showthread.php?t=521955 (v45)
-// #define MOD_AI_SMART                                gCustomMods.isAI_SMART()
+// Features from the "Smart AI mod" by Ninakoru - see http://forums.civfanatics.com/showthread.php?t=521955 (v50)
+ #define MOD_AI_SMART                                gCustomMods.isAI_SMART()
 #if defined(MOD_AI_SMART)
-// Various helper methods used by several sub-features - always on
-#define MOD_AI_SMART_HELPERS                        (true)
-// Omit obsolete/no value items as part of a deal if asked to balance things out
+// Omit obsolete/no value items as part of a deal if asked to balance things out (v50)
 #define MOD_AI_SMART_DEALS                          (MOD_AI_SMART && gCustomMods.isAI_SMART_DEALS())
-// Use Great people more effectively, plant some improvements early, and later use GP powers
+// Use Great people more effectively, plant some improvements early, and later use GP powers (v50)
 #define MOD_AI_SMART_GREAT_PEOPLE                   (MOD_AI_SMART && gCustomMods.isAI_SMART_GREAT_PEOPLE())
-// Evaluate with a decent importance science grand strategy at renaissance
+// Delay grand strategy bias until the Renaissance (v50)
 #define MOD_AI_SMART_GRAND_STRATEGY                 (MOD_AI_SMART && gCustomMods.isAI_SMART_GRAND_STRATEGY())
-// Make better policy choices ignoring grand strategy until medieval and giving less importance to opening branches vs unlocked branches
+// Make better policy choices ignoring grand strategy until medieval and giving less importance to opening branches vs unlocked branches (v50)
 #define MOD_AI_SMART_POLICY_CHOICE                  (MOD_AI_SMART && gCustomMods.isAI_SMART_POLICY_CHOICE())
-// Stop making archaeologists sooner and also disband archaeologists if there are not valid targets
+// Stop making archaeologists sooner and also disband archaeologists if there are not valid targets (v50)
 #define MOD_AI_SMART_ARCHAEOLOGISTS                 (MOD_AI_SMART && gCustomMods.isAI_SMART_ARCHAEOLOGISTS())
-// Disband long obsolete units, eg triremes in industrial era
+// Disband long obsolete units, eg triremes in industrial era (v50)
 #define MOD_AI_SMART_DISBAND                        (MOD_AI_SMART && gCustomMods.isAI_SMART_DISBAND())
-// Upgrade more units per turn if there are lots of units that can be upgraded. Will also upgrade air units more often
+// Upgrade more units per turn if there are lots of units that can be upgraded. Also upgrade air units more often (v50)
 #define MOD_AI_SMART_UPGRADES                       (MOD_AI_SMART && gCustomMods.isAI_SMART_UPGRADES())
-// Units with at least 75% health will avoid healing
+// Units with at least 75% health will avoid healing (v50)
 #define MOD_AI_SMART_HEALING                        (MOD_AI_SMART && gCustomMods.isAI_SMART_HEALING())
-// Units won't randomly embark to water tiles
+// Units won't randomly embark to water tiles (v50)
 #define MOD_AI_SMART_FLEE_FROM_DANGER               (MOD_AI_SMART && gCustomMods.isAI_SMART_FLEE_FROM_DANGER())
-// Ranged units are always able to move AND shoot on the same turn and should not attack over and over a city with 1 HP remaining.
+// Ranged units are always able to move AND shoot on the same turn and should not attack over and over a city with 1 HP remaining. (v51)
 #define MOD_AI_SMART_RANGED_UNITS                   (MOD_AI_SMART && gCustomMods.isAI_SMART_RANGED_UNITS())
-// Use air sweep missions more consistently
-#define MOD_AI_SMART_AIR_SWEEPS                     (MOD_AI_SMART && gCustomMods.isAI_SMART_AIR_SWEEPS())
-// AI will hold planes back for interceptions if enemy aircraft are nearby
-#define MOD_AI_SMART_INTERCEPTIONS                  (MOD_AI_SMART && gCustomMods.isAI_SMART_INTERCEPTIONS())
-// Improves the AI's melee tactics
-#define MOD_AI_SMART_TACTICS                        (MOD_AI_SMART && gCustomMods.isAI_SMART_TACTICS())
+// AI will hold planes back for interceptions and perform air sweep missions more efficiently, if enemy aircraft are nearby (v50)
+#define MOD_AI_SMART_AIR_TACTICS                    (MOD_AI_SMART && gCustomMods.isAI_SMART_AIR_TACTICS())
+// Improves the AI's melee tactics (v51)
+#define MOD_AI_SMART_MELEE_TACTICS                  (MOD_AI_SMART && gCustomMods.isAI_SMART_MELEE_TACTICS())
 #endif
 
 // Events sent when terraforming occurs (v33)
@@ -363,11 +359,19 @@
 
 // Events sent as units are promoted/upgraded
 //   GameEvents.CanHavePromotion.Add(function(iPlayer, iUnit, iPromotionType) return true end)
+//   GameEvents.UnitCanHavePromotion.Add(function(iPlayer, iUnit, iPromotionType) return true end)
 //   GameEvents.UnitPromoted.Add(function(iPlayer, iUnit, iPromotionType) end)
 //   GameEvents.CanHaveAnyUpgrade.Add(function(iPlayer, iUnit) return true end)
+//   GameEvents.UnitCanHaveAnyUpgrade.Add(function(iPlayer, iUnit) return true end)
 //   GameEvents.CanHaveUpgrade.Add(function(iPlayer, iUnit, iUnitClassType, iUnitType) return true end)
+//   GameEvents.UnitCanHaveUpgrade.Add(function(iPlayer, iUnit, iUnitClassType, iUnitType) return true end)
 //   GameEvents.UnitUpgraded.Add(function(iPlayer, iOldUnit, iNewUnit, bGoodyHut) end)
 #define MOD_EVENTS_UNIT_UPGRADES                    gCustomMods.isEVENTS_UNIT_UPGRADES()
+
+// Events sent as units are created (v51)
+//   GameEvents.UnitCanHaveName.Add(function(iPlayer, iUnit, iName) return true end)
+//   GameEvents.UnitCanHaveGreatWork.Add(function(iPlayer, iUnit, iGreatWork) return true end)
+#define MOD_EVENTS_UNIT_DATA                        gCustomMods.isEVENTS_UNIT_DATA()
 
 // Event sent to ascertain if a unit can move into a given plot - VERY, VERY CPU INTENSIVE!!!
 //   GameEvents.CanMoveInto.Add(function(iPlayer, iUnit, iPlotX, iPlotY, bAttack, bDeclareWar) return true end)
@@ -378,11 +382,23 @@
 #define MOD_EVENTS_NUCLEAR_DETONATION               gCustomMods.isEVENTS_NUCLEAR_DETONATION()
 
 // Events sent about war and peace
+//   GameEvents.PlayerCanDeclareWar.Add(function(iPlayer, iAgainstTeam) return true end)
 //   GameEvents.IsAbleToDeclareWar.Add(function(iPlayer, iAgainstTeam) return true end)
 //   GameEvents.DeclareWar.Add(function(iPlayer, iAgainstTeam) end)
+//   GameEvents.PlayerCanMakePeace.Add(function(iPlayer, iAgainstTeam) return true end)
 //   GameEvents.IsAbleToMakePeace.Add(function(iPlayer, iAgainstTeam) return true end)
 //   GameEvents.MakePeace.Add(function(iPlayer, iAgainstTeam) end)
 #define MOD_EVENTS_WAR_AND_PEACE                    gCustomMods.isEVENTS_WAR_AND_PEACE()
+
+// Events sent about resolutions (v51)
+//   GameEvents.PlayerCanPropose.Add(function(iPlayer, iResolution, iChoice, bEnact) return true end)
+//   GameEvents.ResolutionResult.Add(function(iResolution, iChoice, bEnact, bPassed) end)
+#define MOD_EVENTS_RESOLUTIONS                      gCustomMods.isEVENTS_RESOLUTIONS()
+
+// Events sent about ideologies and tenets (v51)
+//   GameEvents.PlayerCanAdopyIdeology.Add(function(iPlayer, iIdeology) return true end)
+//   GameEvents.PlayerCanAdopyTenet.Add(function(iPlayer, iIdeology) return true end)
+#define MOD_EVENTS_IDEOLOGIES                       gCustomMods.isEVENTS_IDEOLOGIES()
 
 // Events sent by plots (v30)
 //   GameEvents.PlayerCanBuild.Add(function(iPlayer, iUnit, iX, iY, iBuild) return true end)
@@ -600,8 +616,9 @@ enum TerraformingEventTypes {
 
 
 // LUA API wrappers
-#define LUAAPIEXTN(method)	static int l##method(lua_State* L)
-
+#define LUAAPIEXTN(method, type, ...) static int l##method(lua_State* L)
+#define LUAAPIIMPL(object, method) int CvLua##object::l##method(lua_State* L) { return BasicLuaMethod(L, &Cv##object::##method); }
+#define LUAAPIINLINE(method, hasMethod, type) inline bool method() const { return hasMethod(type); }
 
 // Game Event wrappers
 #include "Lua\CvLuaSupport.h"
@@ -665,10 +682,15 @@ enum TerraformingEventTypes {
 #define GAMEEVENT_PlaceResource				"PlaceResource",				"iiiii"
 #define GAMEEVENT_PlayerBuilding			"PlayerBuilding",				"iiiiib"
 #define GAMEEVENT_PlayerBuilt				"PlayerBuilt",					"iiiii"
+#define GAMEEVENT_PlayerCanAdoptIdeology	"PlayerCanAdoptIdeology",		"ii"
+#define GAMEEVENT_PlayerCanAdoptTenet		"PlayerCanAdoptTenet",			"ii"
 #define GAMEEVENT_PlayerCanBuild			"PlayerCanBuild",				"iiiii"
+#define GAMEEVENT_PlayerCanDeclareWar		"PlayerCanDeclareWar",			"ii"
 #define GAMEEVENT_PlayerCanFoundPantheon	"PlayerCanFoundPantheon",		"i"
 #define GAMEEVENT_PlayerCanFoundReligion	"PlayerCanFoundReligion",		"ii"
 #define GAMEEVENT_PlayerCanHaveBelief		"PlayerCanHaveBelief",			"ii"
+#define GAMEEVENT_PlayerCanMakePeace		"PlayerCanMakePeace",			"ii"
+#define GAMEEVENT_PlayerCanPropose			"PlayerCanPropose",				"iiib"
 #define GAMEEVENT_PlayerCanRaze				"PlayerCanRaze",				"ii"
 #define GAMEEVENT_PlayerCanRemoveHeresy		"PlayerCanRemoveHeresy",		"iiii"
 #define GAMEEVENT_PlayerCanSpreadReligion	"PlayerCanSpreadReligion",		"iiii"
@@ -677,6 +699,7 @@ enum TerraformingEventTypes {
 #define GAMEEVENT_ReligionCanHaveBelief		"ReligionCanHaveBelief",		"iii"
 #define GAMEEVENT_ReligionEnhanced			"ReligionEnhanced",				"iiii"
 #define GAMEEVENT_ReligionFounded			"ReligionFounded",				"iiiiiiii"
+#define GAMEEVENT_ResolutionResult			"ResolutionResult",				"iibb"
 #define GAMEEVENT_TeamSetEra				"TeamSetEra",					"iib"
 #define GAMEEVENT_TerraformingMap			"TerraformingMap",				"ii"
 #define GAMEEVENT_TerraformingPlot			"TerraformingPlot",				"iiiiiiii"
@@ -685,6 +708,11 @@ enum TerraformingEventTypes {
 #define GAMEEVENT_TileOwnershipChanged		"TileOwnershipChanged",			"iiii"
 #define GAMEEVENT_TileRouteChanged			"TileRouteChanged",				"iiiiib"
 #define GAMEEVENT_UiDiploEvent				"UiDiploEvent",					"iiii"
+#define GAMEEVENT_UnitCanHaveAnyUpgrade		"UnitCanHaveAnyUpgrade",		"ii"
+#define GAMEEVENT_UnitCanHaveGreatWork		"UnitCanHaveGreatWork",			"iii"
+#define GAMEEVENT_UnitCanHaveName			"UnitCanHaveName",				"iii"
+#define GAMEEVENT_UnitCanHavePromotion		"UnitCanHavePromotion",			"iii"
+#define GAMEEVENT_UnitCanHaveUpgrade		"UnitCanHaveUpgrade",			"iiii"
 #define GAMEEVENT_UnitCaptureType			"UnitCaptureType",				"iiii"
 #define GAMEEVENT_UnitCreated				"UnitCreated",					"iiiii"
 #define GAMEEVENT_UnitPrekill				"UnitPrekill",					"iiiiibi"
@@ -874,9 +902,8 @@ public:
 	MOD_OPT_DECL(AI_SMART_HEALING);
 	MOD_OPT_DECL(AI_SMART_FLEE_FROM_DANGER);
 	MOD_OPT_DECL(AI_SMART_RANGED_UNITS);
-	MOD_OPT_DECL(AI_SMART_AIR_SWEEPS);
-	MOD_OPT_DECL(AI_SMART_INTERCEPTIONS);
-	MOD_OPT_DECL(AI_SMART_TACTICS);
+	MOD_OPT_DECL(AI_SMART_AIR_TACTICS);
+	MOD_OPT_DECL(AI_SMART_MELEE_TACTICS);
 
 	MOD_OPT_DECL(EVENTS_TERRAFORMING);
 	MOD_OPT_DECL(EVENTS_TILE_IMPROVEMENTS);
@@ -905,7 +932,10 @@ public:
 	MOD_OPT_DECL(EVENTS_UNIT_CAPTURE);
 	MOD_OPT_DECL(EVENTS_CAN_MOVE_INTO);
 	MOD_OPT_DECL(EVENTS_UNIT_UPGRADES);
+	MOD_OPT_DECL(EVENTS_UNIT_DATA);
 	MOD_OPT_DECL(EVENTS_WAR_AND_PEACE);
+	MOD_OPT_DECL(EVENTS_RESOLUTIONS);
+	MOD_OPT_DECL(EVENTS_IDEOLOGIES);
 	MOD_OPT_DECL(EVENTS_NUCLEAR_DETONATION);
 	MOD_OPT_DECL(EVENTS_REBASE);
 	MOD_OPT_DECL(EVENTS_COMMAND);

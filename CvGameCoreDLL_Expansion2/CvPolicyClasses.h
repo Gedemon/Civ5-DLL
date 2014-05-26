@@ -631,6 +631,11 @@ public:
 	bool IsPolicyBranchBlocked(PolicyBranchTypes eBranchType) const;
 	bool IsPolicyBlocked(PolicyTypes eType) const;
 
+#if defined(MOD_API_EXTENSIONS)
+	bool CanAdoptIdeology(PolicyBranchTypes eIdeology) const;
+	bool HasAdoptedIdeology(PolicyBranchTypes eIdeology) const;
+#endif
+
 	// Ideology change
 	void DoSwitchIdeologies(PolicyBranchTypes eBranchType);
 	void ClearPolicyBranch(PolicyBranchTypes eBranchType);

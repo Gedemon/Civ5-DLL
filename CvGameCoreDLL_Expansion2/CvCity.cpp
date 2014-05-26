@@ -453,6 +453,17 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	// Free population from things (e.g. Policies)
 	changePopulation(GET_PLAYER(getOwner()).GetNewCityExtraPopulation());
 
+#if defined(MOD_DIPLOMACY_CITYSTATES_DIFFICULTY)
+	if(MOD_DIPLOMACY_CITYSTATES_DIFFICULTY && !owningPlayer.isMinorCiv() && (GC.getCSD_GAME_DIFFICULTY_MULTIPLIER() > 0) && !owningPlayer.isHuman())
+	{
+		CvString strHandicapType = GC.getGame().getHandicapInfo().GetType();
+		if(strHandicapType == "HANDICAP_DEITY" || strHandicapType == "HANDICAP_IMMORTAL" || strHandicapType == "HANDICAP_EMPEROR" || strHandicapType == "HANDICAP_KING")
+		{
+			changePopulation(GC.getCSD_GAME_DIFFICULTY_MULTIPLIER());
+		}
+	}
+#endif
+
 #if defined(MOD_API_EXTENSIONS)
 	// We do this here as changePopulation() sends a game event we may have caught to do funky renaming things
 	if (szName) {
@@ -468,6 +479,17 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	{
 		owningPlayer.setFoundedFirstCity(true);
 		owningPlayer.ChangeNumCitiesFounded(1);
+
+#if defined(MOD_DIPLOMACY_CITYSTATES_DIFFICULTY)
+		if(MOD_DIPLOMACY_CITYSTATES_DIFFICULTY && !owningPlayer.isMinorCiv() && (GC.getCSD_GAME_DIFFICULTY_MULTIPLIER() > 0) && (owningPlayer.GetNumCitiesFounded() <= 1)  && !owningPlayer.isHuman())
+		{
+				CvString strHandicapType = GC.getGame().getHandicapInfo().GetType();
+				if(strHandicapType == "HANDICAP_DEITY" || strHandicapType == "HANDICAP_IMMORTAL" || strHandicapType == "HANDICAP_EMPEROR" || strHandicapType == "HANDICAP_KING")
+				{
+					owningPlayer.ChangeNewCityExtraPopulation(GC.getCSD_GAME_DIFFICULTY_MULTIPLIER() - 1);
+				}
+		}
+#endif
 
 		// Free resources under city?
 		for(int i = 0; i < GC.getNumResourceInfos(); i++)
@@ -8325,7 +8347,7 @@ void CvCity::changeCultureRateModifier(int iChange)
 	}
 }
 
-#if defined(MOD_API_LUA_EXTENSIONS)
+#if defined(MOD_API_EXTENSIONS)
 //	--------------------------------------------------------------------------------
 int CvCity::getTourismRateModifier() const
 {
@@ -16367,3 +16389,591 @@ bool CvCity::isFighting() const
 {
 	return getCombatUnit() != NULL;
 }
+
+#if defined(MOD_API_EXTENSIONS)
+//	----------------------------------------------------------------------------
+bool CvCity::HasBelief(BeliefTypes iBeliefType) const
+{
+	const ReligionTypes iReligion = GetCityReligions()->GetReligiousMajority();
+	const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(iReligion, getOwner());
+
+	return (pReligion && pReligion->m_Beliefs.HasBelief(iBeliefType));
+}
+
+bool CvCity::HasBuilding(BuildingTypes iBuildingType) const
+{
+	return (GetCityBuildings()->GetNumBuilding(iBuildingType) > 0);
+}
+
+bool CvCity::HasBuildingClass(BuildingClassTypes iBuildingClassType) const
+{
+	return HasBuilding((BuildingTypes) getCivilizationInfo().getCivilizationBuildings(iBuildingClassType));
+}
+
+bool CvCity::HasAnyWonder() const
+{
+	return (getNumWorldWonders() > 0);
+}
+
+bool CvCity::HasWonder(BuildingTypes iBuildingType) const
+{
+	return HasBuilding(iBuildingType);
+}
+
+bool CvCity::IsCivilization(CivilizationTypes iCivilizationType) const
+{
+	return (GET_PLAYER(getOwner()).getCivilizationType() == iCivilizationType);
+}
+
+bool CvCity::HasFeature(FeatureTypes iFeatureType) const
+{
+	int iX = getX(); int iY = getY(); int iOwner = getOwner();
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for (int iCityPlotLoop = 0; iCityPlotLoop < GetNumWorkablePlots(); iCityPlotLoop++)
+#else
+	for (int iCityPlotLoop = 0; iCityPlotLoop < NUM_CITY_PLOTS; iCityPlotLoop++)
+#endif
+	{
+		CvPlot* pLoopPlot = plotCity(iX, iY, iCityPlotLoop);
+
+		// Invalid plot or not owned by this player
+		if (pLoopPlot == NULL || pLoopPlot->getOwner() != iOwner) {
+			continue;
+		}
+
+		if (pLoopPlot->HasFeature(iFeatureType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasWorkedFeature(FeatureTypes iFeatureType) const
+{
+	int iX = getX(); int iY = getY(); int iOwner = getOwner();
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for (int iCityPlotLoop = 0; iCityPlotLoop < GetNumWorkablePlots(); iCityPlotLoop++)
+#else
+	for (int iCityPlotLoop = 0; iCityPlotLoop < NUM_CITY_PLOTS; iCityPlotLoop++)
+#endif
+	{
+		CvPlot* pLoopPlot = plotCity(iX, iY, iCityPlotLoop);
+
+		// Invalid plot or not owned by this player
+		if (pLoopPlot == NULL || pLoopPlot->getOwner() != iOwner) {
+			continue;
+		}
+
+		// Not being worked by this city
+		if (pLoopPlot->getWorkingCity() != this || !pLoopPlot->isBeingWorked()) {
+			continue;
+		}
+
+		if (pLoopPlot->HasFeature(iFeatureType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasAnyNaturalWonder() const
+{
+	int iX = getX(); int iY = getY(); int iOwner = getOwner();
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for (int iCityPlotLoop = 0; iCityPlotLoop < GetNumWorkablePlots(); iCityPlotLoop++)
+#else
+	for (int iCityPlotLoop = 0; iCityPlotLoop < NUM_CITY_PLOTS; iCityPlotLoop++)
+#endif
+	{
+		CvPlot* pLoopPlot = plotCity(iX, iY, iCityPlotLoop);
+
+		// Invalid plot or not owned by this player
+		if (pLoopPlot == NULL || pLoopPlot->getOwner() != iOwner) {
+			continue;
+		}
+
+		if (pLoopPlot->IsNaturalWonder()) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasNaturalWonder(FeatureTypes iFeatureType) const
+{
+	return HasFeature(iFeatureType);
+}
+
+bool CvCity::HasImprovement(ImprovementTypes iImprovementType) const
+{
+	int iX = getX(); int iY = getY(); int iOwner = getOwner();
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for (int iCityPlotLoop = 0; iCityPlotLoop < GetNumWorkablePlots(); iCityPlotLoop++)
+#else
+	for (int iCityPlotLoop = 0; iCityPlotLoop < NUM_CITY_PLOTS; iCityPlotLoop++)
+#endif
+	{
+		CvPlot* pLoopPlot = plotCity(iX, iY, iCityPlotLoop);
+
+		// Invalid plot or not owned by this player
+		if (pLoopPlot == NULL || pLoopPlot->getOwner() != iOwner) {
+			continue;
+		}
+
+		if (pLoopPlot->HasImprovement(iImprovementType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasWorkedImprovement(ImprovementTypes iImprovementType) const
+{
+	int iX = getX(); int iY = getY(); int iOwner = getOwner();
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for (int iCityPlotLoop = 0; iCityPlotLoop < GetNumWorkablePlots(); iCityPlotLoop++)
+#else
+	for (int iCityPlotLoop = 0; iCityPlotLoop < NUM_CITY_PLOTS; iCityPlotLoop++)
+#endif
+	{
+		CvPlot* pLoopPlot = plotCity(iX, iY, iCityPlotLoop);
+
+		// Invalid plot or not owned by this player
+		if (pLoopPlot == NULL || pLoopPlot->getOwner() != iOwner) {
+			continue;
+		}
+
+		// Not being worked by this city
+		if (pLoopPlot->getWorkingCity() != this || !pLoopPlot->isBeingWorked()) {
+			continue;
+		}
+
+		if (pLoopPlot->HasImprovement(iImprovementType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasPlotType(PlotTypes iPlotType) const
+{
+	int iX = getX(); int iY = getY(); int iOwner = getOwner();
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for (int iCityPlotLoop = 0; iCityPlotLoop < GetNumWorkablePlots(); iCityPlotLoop++)
+#else
+	for (int iCityPlotLoop = 0; iCityPlotLoop < NUM_CITY_PLOTS; iCityPlotLoop++)
+#endif
+	{
+		CvPlot* pLoopPlot = plotCity(iX, iY, iCityPlotLoop);
+
+		// Invalid plot or not owned by this player
+		if (pLoopPlot == NULL || pLoopPlot->getOwner() != iOwner) {
+			continue;
+		}
+
+		if (pLoopPlot->HasPlotType(iPlotType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasWorkedPlotType(PlotTypes iPlotType) const
+{
+	int iX = getX(); int iY = getY(); int iOwner = getOwner();
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for (int iCityPlotLoop = 0; iCityPlotLoop < GetNumWorkablePlots(); iCityPlotLoop++)
+#else
+	for (int iCityPlotLoop = 0; iCityPlotLoop < NUM_CITY_PLOTS; iCityPlotLoop++)
+#endif
+	{
+		CvPlot* pLoopPlot = plotCity(iX, iY, iCityPlotLoop);
+
+		// Invalid plot or not owned by this player
+		if (pLoopPlot == NULL || pLoopPlot->getOwner() != iOwner) {
+			continue;
+		}
+
+		// Not being worked by this city
+		if (pLoopPlot->getWorkingCity() != this || !pLoopPlot->isBeingWorked()) {
+			continue;
+		}
+
+		if (pLoopPlot->HasPlotType(iPlotType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasAnyReligion() const
+{
+	return (GetCityReligions()->IsReligionInCity());
+}
+
+bool CvCity::HasReligion(ReligionTypes iReligionType) const
+{
+	return (HasAnyReligion() && GetCityReligions()->GetNumFollowers(iReligionType) > 0);
+}
+
+bool CvCity::HasResource(ResourceTypes iResourceType) const
+{
+	int iX = getX(); int iY = getY(); int iOwner = getOwner();
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for (int iCityPlotLoop = 0; iCityPlotLoop < GetNumWorkablePlots(); iCityPlotLoop++)
+#else
+	for (int iCityPlotLoop = 0; iCityPlotLoop < NUM_CITY_PLOTS; iCityPlotLoop++)
+#endif
+	{
+		CvPlot* pLoopPlot = plotCity(iX, iY, iCityPlotLoop);
+
+		// Invalid plot or not owned by this player
+		if (pLoopPlot == NULL || pLoopPlot->getOwner() != iOwner) {
+			continue;
+		}
+
+		// Team can't see the resource here
+		if (pLoopPlot->getResourceType(getTeam()) != iResourceType) {
+			continue;
+		}
+
+		// Resource not linked to this city
+		// if (pLoopPlot->GetResourceLinkedCity() != this) {
+		// 	continue;
+		// }
+
+		if (pLoopPlot->HasResource(iResourceType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasWorkedResource(ResourceTypes iResourceType) const
+{
+	int iX = getX(); int iY = getY(); int iOwner = getOwner();
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for (int iCityPlotLoop = 0; iCityPlotLoop < GetNumWorkablePlots(); iCityPlotLoop++)
+#else
+	for (int iCityPlotLoop = 0; iCityPlotLoop < NUM_CITY_PLOTS; iCityPlotLoop++)
+#endif
+	{
+		CvPlot* pLoopPlot = plotCity(iX, iY, iCityPlotLoop);
+
+		// Invalid plot or not owned by this player
+		if (pLoopPlot == NULL || pLoopPlot->getOwner() != iOwner) {
+			continue;
+		}
+
+		// Team can't see the resource here
+		if (pLoopPlot->getResourceType(getTeam()) != iResourceType) {
+			continue;
+		}
+
+		// Not being worked by this city
+		if (pLoopPlot->getWorkingCity() != this || !pLoopPlot->isBeingWorked()) {
+			continue;
+		}
+
+		if (pLoopPlot->HasResource(iResourceType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::IsConnectedToCapital() const
+{
+	return GET_PLAYER(getOwner()).IsCapitalConnectedToCity((CvCity*) this);
+}
+
+bool CvCity::IsConnectedTo(CvCity* pCity) const
+{
+	return GET_PLAYER(getOwner()).IsCityConnectedToCity((CvCity*) this, pCity);
+}
+
+bool CvCity::HasSpecialistSlot(SpecialistTypes iSpecialistType) const
+{
+	for (int iBuildingType = 0; iBuildingType < GC.getNumBuildingInfos(); iBuildingType++) {
+		if (HasBuilding((BuildingTypes)iBuildingType)) {
+			CvBuildingEntry* pkBuilding = GC.getBuildingInfo((BuildingTypes)iBuildingType);
+			if (pkBuilding && pkBuilding->GetSpecialistType() == iSpecialistType && pkBuilding->GetSpecialistCount() > 0) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasSpecialist(SpecialistTypes iSpecialistType) const
+{
+	return (GetCityCitizens()->GetSpecialistCount(iSpecialistType) > 0);
+}
+
+bool CvCity::HasTerrain(TerrainTypes iTerrainType) const
+{
+	int iX = getX(); int iY = getY(); int iOwner = getOwner();
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for (int iCityPlotLoop = 0; iCityPlotLoop < GetNumWorkablePlots(); iCityPlotLoop++)
+#else
+	for (int iCityPlotLoop = 0; iCityPlotLoop < NUM_CITY_PLOTS; iCityPlotLoop++)
+#endif
+	{
+		CvPlot* pLoopPlot = plotCity(iX, iY, iCityPlotLoop);
+
+		// Invalid plot or not owned by this player
+		if (pLoopPlot == NULL || pLoopPlot->getOwner() != iOwner) {
+			continue;
+		}
+
+		if (pLoopPlot->HasTerrain(iTerrainType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasWorkedTerrain(TerrainTypes iTerrainType) const
+{
+	int iX = getX(); int iY = getY(); int iOwner = getOwner();
+
+#if defined(MOD_GLOBAL_CITY_WORKING)
+	for (int iCityPlotLoop = 0; iCityPlotLoop < GetNumWorkablePlots(); iCityPlotLoop++)
+#else
+	for (int iCityPlotLoop = 0; iCityPlotLoop < NUM_CITY_PLOTS; iCityPlotLoop++)
+#endif
+	{
+		CvPlot* pLoopPlot = plotCity(iX, iY, iCityPlotLoop);
+
+		// Invalid plot or not owned by this player
+		if (pLoopPlot == NULL || pLoopPlot->getOwner() != iOwner) {
+			continue;
+		}
+
+		// Not being worked by this city
+		if (pLoopPlot->getWorkingCity() != this || !pLoopPlot->isBeingWorked()) {
+			continue;
+		}
+
+		if (pLoopPlot->HasTerrain(iTerrainType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasAnyDomesticTradeRoute() const
+{
+	CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+	for (uint iTradeRoute = 0; iTradeRoute < pTrade->m_aTradeConnections.size(); iTradeRoute++) {
+		if (pTrade->IsTradeRouteIndexEmpty(iTradeRoute)) {
+			continue;
+		}
+
+		TradeConnection* pConnection = &(pTrade->m_aTradeConnections[iTradeRoute]);
+		CvCity* pFromCity = GC.getMap().plot(pConnection->m_iOriginX, pConnection->m_iOriginY)->getPlotCity();
+		CvCity* pToCity = GC.getMap().plot(pConnection->m_iDestX, pConnection->m_iDestY)->getPlotCity();
+
+		if (pFromCity == this && pToCity->getOwner() == getOwner()) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasAnyInternationalTradeRoute() const
+{
+	CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+	for (uint iTradeRoute = 0; iTradeRoute < pTrade->m_aTradeConnections.size(); iTradeRoute++) {
+		if (pTrade->IsTradeRouteIndexEmpty(iTradeRoute)) {
+			continue;
+		}
+
+		TradeConnection* pConnection = &(pTrade->m_aTradeConnections[iTradeRoute]);
+		CvCity* pFromCity = GC.getMap().plot(pConnection->m_iOriginX, pConnection->m_iOriginY)->getPlotCity();
+		CvCity* pToCity = GC.getMap().plot(pConnection->m_iDestX, pConnection->m_iDestY)->getPlotCity();
+
+		if (pFromCity == this && pToCity->getOwner() != getOwner()) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasTradeRouteToAnyCity() const
+{
+	CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+	for (uint iTradeRoute = 0; iTradeRoute < pTrade->m_aTradeConnections.size(); iTradeRoute++) {
+		if (pTrade->IsTradeRouteIndexEmpty(iTradeRoute)) {
+			continue;
+		}
+
+		TradeConnection* pConnection = &(pTrade->m_aTradeConnections[iTradeRoute]);
+		CvCity* pFromCity = GC.getMap().plot(pConnection->m_iOriginX, pConnection->m_iOriginY)->getPlotCity();
+
+		if (pFromCity == this) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasTradeRouteTo(CvCity* pCity) const
+{
+	CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+	for (uint iTradeRoute = 0; iTradeRoute < pTrade->m_aTradeConnections.size(); iTradeRoute++) {
+		if (pTrade->IsTradeRouteIndexEmpty(iTradeRoute)) {
+			continue;
+		}
+
+		TradeConnection* pConnection = &(pTrade->m_aTradeConnections[iTradeRoute]);
+		CvCity* pFromCity = GC.getMap().plot(pConnection->m_iOriginX, pConnection->m_iOriginY)->getPlotCity();
+		CvCity* pToCity = GC.getMap().plot(pConnection->m_iDestX, pConnection->m_iDestY)->getPlotCity();
+
+		if (pFromCity == this && pToCity == pCity) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasTradeRouteFromAnyCity() const
+{
+	CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+	for (uint iTradeRoute = 0; iTradeRoute < pTrade->m_aTradeConnections.size(); iTradeRoute++) {
+		if (pTrade->IsTradeRouteIndexEmpty(iTradeRoute)) {
+			continue;
+		}
+
+		TradeConnection* pConnection = &(pTrade->m_aTradeConnections[iTradeRoute]);
+		CvCity* pToCity = GC.getMap().plot(pConnection->m_iDestX, pConnection->m_iDestY)->getPlotCity();
+
+		if (pToCity == this) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::HasTradeRouteFrom(CvCity* pCity) const
+{
+	CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+	for (uint iTradeRoute = 0; iTradeRoute < pTrade->m_aTradeConnections.size(); iTradeRoute++) {
+		if (pTrade->IsTradeRouteIndexEmpty(iTradeRoute)) {
+			continue;
+		}
+
+		TradeConnection* pConnection = &(pTrade->m_aTradeConnections[iTradeRoute]);
+		CvCity* pFromCity = GC.getMap().plot(pConnection->m_iOriginX, pConnection->m_iOriginY)->getPlotCity();
+		CvCity* pToCity = GC.getMap().plot(pConnection->m_iDestX, pConnection->m_iDestY)->getPlotCity();
+
+		if (pToCity == this && pFromCity == pCity) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvCity::IsOnFeature(FeatureTypes iFeatureType) const
+{
+	return plot()->HasFeature(iFeatureType);
+}
+
+bool CvCity::IsAdjacentToFeature(FeatureTypes iFeatureType) const
+{
+	return plot()->IsAdjacentToFeature(iFeatureType);
+}
+
+bool CvCity::IsWithinDistanceOfFeature(FeatureTypes iFeatureType, int iDistance) const
+{
+	return plot()->IsWithinDistanceOfFeature(iFeatureType, iDistance);
+}
+
+bool CvCity::IsOnImprovement(ImprovementTypes iImprovementType) const
+{
+	return plot()->HasImprovement(iImprovementType);
+}
+
+bool CvCity::IsAdjacentToImprovement(ImprovementTypes iImprovementType) const
+{
+	return plot()->IsAdjacentToImprovement(iImprovementType);
+}
+
+bool CvCity::IsWithinDistanceOfImprovement(ImprovementTypes iImprovementType, int iDistance) const
+{
+	return plot()->IsWithinDistanceOfImprovement(iImprovementType, iDistance);
+}
+
+bool CvCity::IsOnPlotType(PlotTypes iPlotType) const
+{
+	return plot()->HasPlotType(iPlotType);
+}
+
+bool CvCity::IsAdjacentToPlotType(PlotTypes iPlotType) const
+{
+	return plot()->IsAdjacentToPlotType(iPlotType);
+}
+
+bool CvCity::IsWithinDistanceOfPlotType(PlotTypes iPlotType, int iDistance) const
+{
+	return plot()->IsWithinDistanceOfPlotType(iPlotType, iDistance);
+}
+
+bool CvCity::IsOnResource(ResourceTypes iResourceType) const
+{
+	return plot()->HasResource(iResourceType);
+}
+
+bool CvCity::IsAdjacentToResource(ResourceTypes iResourceType) const
+{
+	return plot()->IsAdjacentToResource(iResourceType);
+}
+
+bool CvCity::IsWithinDistanceOfResource(ResourceTypes iResourceType, int iDistance) const
+{
+	return plot()->IsWithinDistanceOfResource(iResourceType, iDistance);
+}
+
+bool CvCity::IsOnTerrain(TerrainTypes iTerrainType) const
+{
+	return plot()->HasTerrain(iTerrainType);
+}
+
+bool CvCity::IsAdjacentToTerrain(TerrainTypes iTerrainType) const
+{
+	return plot()->IsAdjacentToTerrain(iTerrainType);
+}
+
+bool CvCity::IsWithinDistanceOfTerrain(TerrainTypes iTerrainType, int iDistance) const
+{
+	return plot()->IsWithinDistanceOfTerrain(iTerrainType, iDistance);
+}
+#endif

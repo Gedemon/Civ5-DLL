@@ -358,27 +358,50 @@ void CvPolicyAI::DoChooseIdeology(CvPlayer *pPlayer)
 	int iDiploPriority = max(0, pPlayer->GetGrandStrategyAI()->GetUnitedNationsPriority());
 	int iTechPriority = max(0, pPlayer->GetGrandStrategyAI()->GetSpaceshipPriority());
 	int iCulturePriority = max(0, pPlayer->GetGrandStrategyAI()->GetCulturePriority());
+	
+#if defined(MOD_EVENTS_IDEOLOGIES)
+	if (MOD_EVENTS_IDEOLOGIES) {
+		CvPlayerPolicies* pPolicies = pPlayer->GetPlayerPolicies();
 
-	// Rule out one ideology if we are clearly (at least 25% more priority) going for the victory this ideology doesn't support
-	int iClearPrefPercent = GC.getIDEOLOGY_PERCENT_CLEAR_VICTORY_PREF();
-	if (iConquestPriority > (iDiploPriority   * (100 + iClearPrefPercent) / 100) &&
-		iConquestPriority > (iTechPriority    * (100 + iClearPrefPercent) / 100) &&
-		iConquestPriority > (iCulturePriority * (100 + iClearPrefPercent) / 100))
-	{
-		iFreedomMultiplier = 0;
+		// Just jump on the band-wagon and hard code for three ideologies!!!
+		if (!pPolicies->CanAdoptIdeology(eFreedomBranch)) {
+			iFreedomMultiplier = 0;
+		}
+		if (!pPolicies->CanAdoptIdeology(eAutocracyBranch)) {
+			iAutocracyMultiplier = 0;
+		}
+		if (!pPolicies->CanAdoptIdeology(eOrderBranch)) {
+			iOrderMultiplier = 0;
+		}
 	}
-	else if (iDiploPriority > (iConquestPriority * (100 + iClearPrefPercent) / 100) &&
-		iDiploPriority > (iTechPriority     * (100 + iClearPrefPercent) / 100) &&
-		iDiploPriority > (iCulturePriority  * (100 + iClearPrefPercent) / 100))
-	{
-		iOrderMultiplier = 0;
+#endif
+
+#if defined(MOD_EVENTS_IDEOLOGIES)
+	if (iFreedomMultiplier != 0 && iAutocracyMultiplier != 0 && iOrderMultiplier != 0) {
+#endif
+		// Rule out one ideology if we are clearly (at least 25% more priority) going for the victory this ideology doesn't support
+		int iClearPrefPercent = GC.getIDEOLOGY_PERCENT_CLEAR_VICTORY_PREF();
+		if (iConquestPriority > (iDiploPriority   * (100 + iClearPrefPercent) / 100) &&
+			iConquestPriority > (iTechPriority    * (100 + iClearPrefPercent) / 100) &&
+			iConquestPriority > (iCulturePriority * (100 + iClearPrefPercent) / 100))
+		{
+			iFreedomMultiplier = 0;
+		}
+		else if (iDiploPriority > (iConquestPriority * (100 + iClearPrefPercent) / 100) &&
+				 iDiploPriority > (iTechPriority     * (100 + iClearPrefPercent) / 100) &&
+				 iDiploPriority > (iCulturePriority  * (100 + iClearPrefPercent) / 100))
+		{
+			iOrderMultiplier = 0;
+		}
+		else if (iTechPriority > (iConquestPriority * (100 + iClearPrefPercent) / 100) &&
+				 iTechPriority > (iDiploPriority    * (100 + iClearPrefPercent) / 100) &&
+				 iTechPriority > (iCulturePriority  * (100 + iClearPrefPercent) / 100))
+		{
+			iAutocracyMultiplier = 0;
+		}
+#if defined(MOD_EVENTS_IDEOLOGIES)
 	}
-	else if (iTechPriority > (iConquestPriority * (100 + iClearPrefPercent) / 100) &&
-		iTechPriority > (iDiploPriority    * (100 + iClearPrefPercent) / 100) &&
-		iTechPriority > (iCulturePriority  * (100 + iClearPrefPercent) / 100))
-	{
-		iAutocracyMultiplier = 0;
-	}
+#endif
 
 	int iFreedomTotal = iDiploPriority + iTechPriority + iCulturePriority;
 	int iAutocracyTotal = iDiploPriority + iConquestPriority + iCulturePriority;
@@ -572,7 +595,7 @@ void CvPolicyAI::DoChooseIdeology(CvPlayer *pPlayer)
 			args->Push(eChosenBranch);
 
 			bool bResult = false;
-			LuaSupport::CallHook(pkScriptSystem, "PlayerCanAdoptPolicyBranch", args.get(), bResult);
+			LuaSupport::CallHook(pkScriptSystem, "PlayerAdoptPolicyBranch", args.get(), bResult);
 		}
 	}
 #endif

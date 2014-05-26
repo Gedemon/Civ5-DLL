@@ -31,12 +31,12 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(CanHaveFeature);
 	Method(GetFeatureType);
 	Method(GetTerrainType);
-#if defined(MOD_API_PLOT_BASED_DAMAGE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_PLOT_BASED_DAMAGE)
 	Method(GetTurnDamage);
 #endif
 	Method(IsRiver);
 	Method(IsWater);
-#if defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
 	Method(IsBlockaded);
 #endif
 	Method(SetFeatureType);
@@ -56,7 +56,7 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(ShareAdjacentArea);
 	Method(IsAdjacentToLand);
 	Method(IsAdjacentToShallowWater);
-#if defined(MOD_PROMOTIONS_CROSS_ICE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_CROSS_ICE)
 	Method(IsAdjacentToIce);
 #endif
 	Method(IsCoastalLand);
@@ -69,10 +69,6 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(IsRiverSide);
 	Method(IsRiverConnection);
 	Method(IsRiverCrossingFlowClockwise);
-
-#if defined(MOD_API_LUA_EXTENSIONS)
-	Method(IsNaturalWonder);
-#endif
 
 	Method(GetNearestLandArea);
 	Method(SeeFromLevel);
@@ -104,7 +100,7 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(IsBarbarian);
 	Method(IsRevealedBarbarian);
 	Method(HasBarbarianCamp);
-#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
 	Method(HasDig);
 #if !defined(MOD_API_LUA_EXTENSIONS)
 	Method(GetPlayerThatBuiltImprovement);
@@ -126,7 +122,7 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 
 	Method(IsCity);
 	Method(IsFriendlyCity);
-#if defined(MOD_GLOBAL_PASSABLE_FORTS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_PASSABLE_FORTS)
 	Method(IsFriendlyCityOrPassableImprovement);
 #endif
 	Method(IsEnemyCity);
@@ -142,7 +138,7 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(GetNumFriendlyUnitsOfType);
 	Method(IsFighting);
 
-#if defined(MOD_GLOBAL_STACKING_RULES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_STACKING_RULES)
 	Method(GetUnitLimit);
 #endif
 
@@ -205,7 +201,7 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(GetPlotType);
 	Method(IsFlatlands);
 	Method(IsHills);
-#if defined(MOD_PATHFINDER_TERRAFIRMA)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PATHFINDER_TERRAFIRMA)
 	Method(IsTerraFirma);
 #endif
 	Method(IsOpenGround);
@@ -292,7 +288,7 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 	Method(GetActiveFogOfWarMode);
 
 	Method(IsImprovementPillaged);
-#if defined(MOD_DIPLOMACY_CITYSTATES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES)
 	Method(IsImprovementEmbassy);
 #endif
 
@@ -321,6 +317,58 @@ void CvLuaPlot::PushMethods(lua_State* L, int t)
 #if defined(MOD_API_LUA_EXTENSIONS)
 	Method(AddMessage);
 	Method(AddPopupMessage);
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(IsCivilization);
+	Method(HasFeature);
+	Method(IsNaturalWonder);
+	Method(HasAnyNaturalWonder);
+	Method(HasNaturalWonder);
+	Method(IsFeatureIce);
+	Method(IsFeatureJungle);
+	Method(IsFeatureMarsh);
+	Method(IsFeatureOasis);
+	Method(IsFeatureFloodPlains);
+	Method(IsFeatureForest);
+	Method(IsFeatureFallout);
+	Method(IsFeatureAtoll);
+	Method(IsFeatureLake);
+	Method(IsFeatureRiver);
+	Method(HasImprovement);
+	Method(HasPlotType);
+	Method(IsPlotMountain);
+	Method(IsPlotMountains);
+	Method(IsPlotHill);
+	Method(IsPlotHills);
+	Method(IsPlotLand);
+	Method(IsPlotOcean);
+	Method(HasResource);
+	Method(HasRoute);
+	Method(IsRouteRoad);
+	Method(IsRouteRailroad);
+	Method(HasTerrain);
+	Method(IsTerrainGrass);
+	Method(IsTerrainPlains);
+	Method(IsTerrainDesert);
+	Method(IsTerrainTundra);
+	Method(IsTerrainSnow);
+	Method(IsTerrainCoast);
+	Method(IsTerrainOcean);
+	Method(IsTerrainMountain);
+	Method(IsTerrainMountains);
+	Method(IsTerrainHill);
+	Method(IsTerrainHills);
+	Method(IsAdjacentToFeature);
+	Method(IsWithinDistanceOfFeature);
+	Method(IsAdjacentToImprovement);
+	Method(IsWithinDistanceOfImprovement);
+	Method(IsAdjacentToPlotType);
+	Method(IsWithinDistanceOfPlotType);
+	Method(IsAdjacentToResource);
+	Method(IsWithinDistanceOfResource);
+	Method(IsAdjacentToTerrain);
+	Method(IsWithinDistanceOfTerrain);
 #endif
 }
 //------------------------------------------------------------------------------
@@ -368,7 +416,7 @@ int CvLuaPlot::lGetTerrainType(lua_State* L)
 
 	return 1;
 }
-#if defined(MOD_API_PLOT_BASED_DAMAGE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_PLOT_BASED_DAMAGE)
 //------------------------------------------------------------------------------
 int CvLuaPlot::lGetTurnDamage(lua_State* L)
 {
@@ -402,7 +450,7 @@ int CvLuaPlot::lIsWater(lua_State* L)
 
 	return 1;
 }
-#if defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
 //------------------------------------------------------------------------------
 int CvLuaPlot::lIsBlockaded(lua_State* L)
 {
@@ -526,7 +574,7 @@ int CvLuaPlot::lIsAdjacentToShallowWater(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlot::isAdjacentToShallowWater);
 }
-#if defined(MOD_PROMOTIONS_CROSS_ICE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_CROSS_ICE)
 //------------------------------------------------------------------------------
 //bool IsAdjacentToIce()
 int CvLuaPlot::lIsAdjacentToIce(lua_State* L)
@@ -581,16 +629,6 @@ int CvLuaPlot::lIsRiverCrossingFlowClockwise(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
-#if defined(MOD_API_LUA_EXTENSIONS)
-//------------------------------------------------------------------------------
-int CvLuaPlot::lIsNaturalWonder(lua_State* L)
-{
-	CvPlot* pkPlot = GetInstance(L);
-	const bool bResult = pkPlot->IsNaturalWonder();
-	lua_pushboolean(L, bResult);
-	return 1;
-}
-#endif
 //------------------------------------------------------------------------------
 //int getNearestLandArea();
 int CvLuaPlot::lGetNearestLandArea(lua_State* L)
@@ -767,7 +805,7 @@ int CvLuaPlot::lHasBarbarianCamp(lua_State* L)
 	return BasicLuaMethod(L, &CvPlot::HasBarbarianCamp);
 }
 
-#if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
 //------------------------------------------------------------------------------
 int CvLuaPlot::lHasDig(lua_State* L)
 {
@@ -895,7 +933,7 @@ int CvLuaPlot::lIsFriendlyCity(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
-#if defined(MOD_GLOBAL_PASSABLE_FORTS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_PASSABLE_FORTS)
 //bool isFriendlyCityOrPassableImprovement(CyUnit* pUnit, bool bCheckImprovement);
 int CvLuaPlot::lIsFriendlyCityOrPassableImprovement(lua_State* L)
 {
@@ -995,7 +1033,7 @@ int CvLuaPlot::lIsFighting(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlot::isFighting);
 }
-#if defined(MOD_GLOBAL_STACKING_RULES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_STACKING_RULES)
 //------------------------------------------------------------------------------
 //int getUnitLimit();
 int CvLuaPlot::lGetUnitLimit(lua_State* L)
@@ -1333,7 +1371,7 @@ int CvLuaPlot::lIsHills(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlot::isHills);
 }
-#if defined(MOD_PATHFINDER_TERRAFIRMA)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PATHFINDER_TERRAFIRMA)
 //------------------------------------------------------------------------------
 //bool isTerraFirma(CyUnit* pUnit);
 int CvLuaPlot::lIsTerraFirma(lua_State* L)
@@ -1649,7 +1687,7 @@ int CvLuaPlot::lChangeVisibilityCount(lua_State* L)
 {
 	CvPlot* pkPlot = GetInstance(L);
 	const TeamTypes eTeam = (TeamTypes)lua_tointeger(L, 2);
-#if defined(MOD_BUGFIX_LUA_CHANGE_VISIBILITY_COUNT)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_BUGFIX_LUA_CHANGE_VISIBILITY_COUNT)
 	const int iChange = lua_tointeger(L, 3);
 #else
 	const int iChange = lua_toboolean(L, 3);
@@ -1888,7 +1926,7 @@ int CvLuaPlot::lIsImprovementPillaged(lua_State* L)
 	return BasicLuaMethod(L, &CvPlot::IsImprovementPillaged);
 }
 
-#if defined(MOD_DIPLOMACY_CITYSTATES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES)
 //------------------------------------------------------------------------------
 int CvLuaPlot::lIsImprovementEmbassy(lua_State* L)
 {
@@ -2079,4 +2117,56 @@ int CvLuaPlot::lAddPopupMessage(lua_State* L)
 	SHOW_PLOT_POPUP(pPlot, ePlayer, szMessage, fDelay);
 	return 0;
 }
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+LUAAPIIMPL(Plot, IsCivilization)
+LUAAPIIMPL(Plot, HasFeature)
+LUAAPIIMPL(Plot, IsNaturalWonder)
+LUAAPIIMPL(Plot, HasAnyNaturalWonder)
+LUAAPIIMPL(Plot, HasNaturalWonder)
+LUAAPIIMPL(Plot, IsFeatureIce)
+LUAAPIIMPL(Plot, IsFeatureJungle)
+LUAAPIIMPL(Plot, IsFeatureMarsh)
+LUAAPIIMPL(Plot, IsFeatureOasis)
+LUAAPIIMPL(Plot, IsFeatureFloodPlains)
+LUAAPIIMPL(Plot, IsFeatureForest)
+LUAAPIIMPL(Plot, IsFeatureFallout)
+LUAAPIIMPL(Plot, IsFeatureAtoll)
+LUAAPIIMPL(Plot, IsFeatureLake)
+LUAAPIIMPL(Plot, IsFeatureRiver)
+LUAAPIIMPL(Plot, HasImprovement)
+LUAAPIIMPL(Plot, HasPlotType)
+LUAAPIIMPL(Plot, IsPlotMountain)
+LUAAPIIMPL(Plot, IsPlotMountains)
+LUAAPIIMPL(Plot, IsPlotHill)
+LUAAPIIMPL(Plot, IsPlotHills)
+LUAAPIIMPL(Plot, IsPlotLand)
+LUAAPIIMPL(Plot, IsPlotOcean)
+LUAAPIIMPL(Plot, HasResource)
+LUAAPIIMPL(Plot, HasRoute)
+LUAAPIIMPL(Plot, IsRouteRoad)
+LUAAPIIMPL(Plot, IsRouteRailroad)
+LUAAPIIMPL(Plot, HasTerrain)
+LUAAPIIMPL(Plot, IsTerrainGrass)
+LUAAPIIMPL(Plot, IsTerrainPlains)
+LUAAPIIMPL(Plot, IsTerrainDesert)
+LUAAPIIMPL(Plot, IsTerrainTundra)
+LUAAPIIMPL(Plot, IsTerrainSnow)
+LUAAPIIMPL(Plot, IsTerrainCoast)
+LUAAPIIMPL(Plot, IsTerrainOcean)
+LUAAPIIMPL(Plot, IsTerrainMountain)
+LUAAPIIMPL(Plot, IsTerrainMountains)
+LUAAPIIMPL(Plot, IsTerrainHill)
+LUAAPIIMPL(Plot, IsTerrainHills)
+LUAAPIIMPL(Plot, IsAdjacentToFeature)
+LUAAPIIMPL(Plot, IsWithinDistanceOfFeature)
+LUAAPIIMPL(Plot, IsAdjacentToImprovement)
+LUAAPIIMPL(Plot, IsWithinDistanceOfImprovement)
+LUAAPIIMPL(Plot, IsAdjacentToPlotType)
+LUAAPIIMPL(Plot, IsWithinDistanceOfPlotType)
+LUAAPIIMPL(Plot, IsAdjacentToResource)
+LUAAPIIMPL(Plot, IsWithinDistanceOfResource)
+LUAAPIIMPL(Plot, IsAdjacentToTerrain)
+LUAAPIIMPL(Plot, IsWithinDistanceOfTerrain)
 #endif

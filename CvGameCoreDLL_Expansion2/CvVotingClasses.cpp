@@ -3046,6 +3046,14 @@ bool CvLeague::CanProposeEnact(ResolutionTypes eResolution, PlayerTypes ePropose
 	}
 #endif
 
+#if defined(MOD_EVENTS_RESOLUTIONS)
+	if (MOD_EVENTS_RESOLUTIONS) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanPropose, eProposer, eResolution, iChoice, true) == GAMEEVENTRETURN_FALSE) {
+			bValid = false;
+		}
+	}
+#endif
+	
 	return bValid;
 }
 
@@ -3078,6 +3086,15 @@ bool CvLeague::CanProposeRepeal(int iResolutionID, PlayerTypes eProposer, CvStri
 		bValid = false;
 	}
 
+#if defined(MOD_EVENTS_RESOLUTIONS)
+	if (MOD_EVENTS_RESOLUTIONS) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanPropose, eProposer, iResolutionID, 0, false) == GAMEEVENTRETURN_FALSE) {
+			bValid = false;
+		}
+	}
+#endif
+	
+	
 	// Must already be active
 	for (uint iIndex = 0; iIndex < m_vActiveResolutions.size(); iIndex++)
 	{
@@ -6704,6 +6721,10 @@ void CvLeague::NotifyProposalResult(CvEnactProposal* pProposal)
 	CvAssert(pProposal != NULL);
 	if (pProposal == NULL) return;
 
+#if defined(MOD_EVENTS_RESOLUTIONS)
+	int iDecision = -1;
+#endif
+
 	CvString sSummary = "";
 	CvString sMessage = "";
 	if (pProposal->GetEffects()->bDiplomaticVictory)
@@ -6738,6 +6759,10 @@ void CvLeague::NotifyProposalResult(CvEnactProposal* pProposal)
 			sMessage += sTemp.toUTF8();
 		}
 		sMessage += "[NEWLINE]" + pProposal->GetVoterDecision()->GetVotesAsText(this);
+	
+#if defined(MOD_EVENTS_RESOLUTIONS)
+		iDecision = pProposal->GetVoterDecision()->GetDecision();
+#endif
 	}
 	else if (pProposal->GetEffects()->bChangeLeagueHost)
 	{
@@ -6774,6 +6799,10 @@ void CvLeague::NotifyProposalResult(CvEnactProposal* pProposal)
 		sMessageTemp << GetName() << sHostKey;
 		sMessage += sMessageTemp.toUTF8();
 		sMessage += "[NEWLINE]" + pProposal->GetVoterDecision()->GetVotesAsText(this);
+	
+#if defined(MOD_EVENTS_RESOLUTIONS)
+		iDecision = pProposal->GetVoterDecision()->GetDecision();
+#endif
 	}
 	else
 	{
@@ -6790,7 +6819,20 @@ void CvLeague::NotifyProposalResult(CvEnactProposal* pProposal)
 		sSummary = sSummaryTemp.toUTF8();
 		sMessage = sMessageTemp.toUTF8();
 		sMessage += "[NEWLINE]" + pProposal->GetVoterDecision()->GetVotesAsText(this);
+	
+#if defined(MOD_EVENTS_RESOLUTIONS)
+		iDecision = pProposal->GetProposerDecision()->GetDecision();
+		if (MOD_EVENTS_RESOLUTIONS) {
+			GAMEEVENTINVOKE_HOOK(GAMEEVENT_ResolutionResult, pProposal->GetType(), iDecision, true, pProposal->IsPassed(GetVotesSpentThisSession()));
+		}
+#endif
 	}
+
+#if defined(MOD_EVENTS_RESOLUTIONS)
+	if (MOD_EVENTS_RESOLUTIONS) {
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_ResolutionResult, pProposal->GetType(), iDecision, true, pProposal->IsPassed(GetVotesSpentThisSession()));
+	}
+#endif
 
 	for (MemberList::iterator it = m_vMembers.begin(); it != m_vMembers.end(); it++)
 	{
@@ -6825,6 +6867,12 @@ void CvLeague::NotifyProposalResult(CvRepealProposal* pProposal)
 	CvString sSummary = sSummaryTemp.toUTF8();
 	CvString sMessage = sMessageTemp.toUTF8();
 	sMessage += "[NEWLINE]" + pProposal->GetRepealDecision()->GetVotesAsText(this);
+
+#if defined(MOD_EVENTS_RESOLUTIONS)
+	if (MOD_EVENTS_RESOLUTIONS) {
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_ResolutionResult, pProposal->GetType(), pProposal->GetProposerDecision()->GetDecision(), false, pProposal->IsPassed(iTotalSessionVotes));
+	}
+#endif
 
 	for (MemberList::iterator it = m_vMembers.begin(); it != m_vMembers.end(); it++)
 	{

@@ -395,7 +395,7 @@ public:
 
 	// END Culture
 
-#if defined(MOD_API_LUA_EXTENSIONS)
+#if defined(MOD_API_EXTENSIONS)
 	int getTourismRateModifier() const;
 	void changeTourismRateModifier(int iChange);
 #endif
@@ -884,6 +884,54 @@ public:
 	void			setCombatUnit(CvUnit* pUnit, bool bAttacking = false);
 	void			clearCombat();
 	bool			isFighting() const;
+
+#if defined(MOD_API_EXTENSIONS)
+	bool HasBelief(BeliefTypes iBeliefType) const;
+	bool HasBuilding(BuildingTypes iBuildingType) const;
+	bool HasBuildingClass(BuildingClassTypes iBuildingClassType) const;
+	bool HasAnyWonder() const;
+	bool HasWonder(BuildingTypes iBuildingType) const;
+	bool IsCivilization(CivilizationTypes iCivilizationType) const;
+	bool HasFeature(FeatureTypes iFeatureType) const;
+	bool HasWorkedFeature(FeatureTypes iFeatureType) const;
+	bool HasAnyNaturalWonder() const;
+	bool HasNaturalWonder(FeatureTypes iFeatureType) const;
+	bool HasImprovement(ImprovementTypes iImprovementType) const;
+	bool HasWorkedImprovement(ImprovementTypes iImprovementType) const;
+	bool HasPlotType(PlotTypes iPlotType) const;
+	bool HasWorkedPlotType(PlotTypes iPlotType) const;
+	bool HasAnyReligion() const;
+	bool HasReligion(ReligionTypes iReligionType) const;
+	bool HasResource(ResourceTypes iResourceType) const;
+	bool HasWorkedResource(ResourceTypes iResourceType) const;
+	bool IsConnectedToCapital() const;
+	bool IsConnectedTo(CvCity* pCity) const;
+	bool HasSpecialistSlot(SpecialistTypes iSpecialistType) const;
+	bool HasSpecialist(SpecialistTypes iSpecialistType) const;
+	bool HasTerrain(TerrainTypes iTerrainType) const;
+	bool HasWorkedTerrain(TerrainTypes iTerrainType) const;
+	bool HasAnyDomesticTradeRoute() const;
+	bool HasAnyInternationalTradeRoute() const;
+	bool HasTradeRouteToAnyCity() const;
+	bool HasTradeRouteTo(CvCity* pCity) const;
+	bool HasTradeRouteFromAnyCity() const;
+	bool HasTradeRouteFrom(CvCity* pCity) const;
+	bool IsOnFeature(FeatureTypes iFeatureType) const;
+	bool IsAdjacentToFeature(FeatureTypes iFeatureType) const;
+	bool IsWithinDistanceOfFeature(FeatureTypes iFeatureType, int iDistance) const;
+	bool IsOnImprovement(ImprovementTypes iImprovementType) const;
+	bool IsAdjacentToImprovement(ImprovementTypes iImprovementType) const;
+	bool IsWithinDistanceOfImprovement(ImprovementTypes iImprovementType, int iDistance) const;
+	bool IsOnPlotType(PlotTypes iPlotType) const;
+	bool IsAdjacentToPlotType(PlotTypes iPlotType) const;
+	bool IsWithinDistanceOfPlotType(PlotTypes iPlotType, int iDistance) const;
+	bool IsOnResource(ResourceTypes iResourceType) const;
+	bool IsAdjacentToResource(ResourceTypes iResourceType) const;
+	bool IsWithinDistanceOfResource(ResourceTypes iResourceType, int iDistance) const;
+	bool IsOnTerrain(TerrainTypes iTerrainType) const;
+	bool IsAdjacentToTerrain(TerrainTypes iTerrainType) const;
+	bool IsWithinDistanceOfTerrain(TerrainTypes iTerrainType, int iDistance) const;
+#endif
 
 	int iScratch; // know the scope of your validity
 

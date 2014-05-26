@@ -11337,3 +11337,226 @@ void CvPlot::SetAvoidMovement(PlayerTypes ePlayer, bool bNewValue)
 	m_abAvoidMovement[ePlayer] = bNewValue;
 }
 #endif
+
+#if defined(MOD_API_EXTENSIONS)
+bool CvPlot::IsCivilization(CivilizationTypes iCivilizationType) const
+{
+	return (GET_PLAYER(getOwner()).getCivilizationType() == iCivilizationType);
+}
+
+bool CvPlot::HasFeature(FeatureTypes iFeatureType) const
+{
+	if (iFeatureType == (FeatureTypes)GC.getInfoTypeForString("FEATURE_LAKE")) {
+		return IsFeatureLake();
+	} else if (iFeatureType == (FeatureTypes)GC.getInfoTypeForString("FEATURE_RIVER")) {
+		return IsFeatureRiver();
+	}
+
+	return (getFeatureType() == iFeatureType);
+}
+
+bool CvPlot::IsFeatureLake() const
+{
+	return isLake();
+}
+
+bool CvPlot::IsFeatureRiver() const
+{
+	return isRiver();
+}
+
+bool CvPlot::HasAnyNaturalWonder() const
+{
+	return IsNaturalWonder();
+}
+
+bool CvPlot::HasNaturalWonder(FeatureTypes iFeatureType) const
+{
+	return HasFeature(iFeatureType);
+}
+
+bool CvPlot::HasImprovement(ImprovementTypes iImprovementType) const
+{
+	return (getImprovementType() == iImprovementType);
+}
+
+bool CvPlot::HasPlotType(PlotTypes iPlotType) const
+{
+	return (getPlotType() == iPlotType);
+}
+
+bool CvPlot::HasResource(ResourceTypes iResourceType) const
+{
+	return (getResourceType() == iResourceType);
+}
+
+bool CvPlot::HasRoute(RouteTypes iRouteType) const
+{
+	return (getRouteType() == iRouteType);
+}
+
+bool CvPlot::HasTerrain(TerrainTypes iTerrainType) const
+{
+	return (getTerrainType() == iTerrainType);
+}
+
+bool CvPlot::IsAdjacentToFeature(FeatureTypes iFeatureType) const
+{
+	int iX = getX(); int iY = getY();
+
+	for (int iDirection = 0; iDirection < NUM_DIRECTION_TYPES; iDirection++) {
+		CvPlot* pLoopPlot = plotDirection(iX, iY, (DirectionTypes) iDirection);
+
+		if (pLoopPlot != NULL && pLoopPlot->HasFeature(iFeatureType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlot::IsWithinDistanceOfFeature(FeatureTypes iFeatureType, int iDistance) const
+{
+	int iX = getX(); int iY = getY();
+
+	for (int i = -iDistance; i <= iDistance; ++i) {
+		for (int j = -iDistance; j <= iDistance; ++j) {
+			CvPlot* pLoopPlot = ::plotXYWithRangeCheck(iX, iY, i, j, iDistance);
+		
+			if (pLoopPlot != NULL && pLoopPlot->HasFeature(iFeatureType)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool CvPlot::IsAdjacentToImprovement(ImprovementTypes iImprovementType) const
+{
+	int iX = getX(); int iY = getY();
+
+	for (int iDirection = 0; iDirection < NUM_DIRECTION_TYPES; iDirection++) {
+		CvPlot* pLoopPlot = plotDirection(iX, iY, (DirectionTypes) iDirection);
+
+		if (pLoopPlot != NULL && pLoopPlot->HasImprovement(iImprovementType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlot::IsWithinDistanceOfImprovement(ImprovementTypes iImprovementType, int iDistance) const
+{
+	int iX = getX(); int iY = getY();
+
+	for (int i = -iDistance; i <= iDistance; ++i) {
+		for (int j = -iDistance; j <= iDistance; ++j) {
+			CvPlot* pLoopPlot = ::plotXYWithRangeCheck(iX, iY, i, j, iDistance);
+		
+			if (pLoopPlot != NULL && pLoopPlot->HasImprovement(iImprovementType)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool CvPlot::IsAdjacentToPlotType(PlotTypes iPlotType) const
+{
+	int iX = getX(); int iY = getY();
+
+	for (int iDirection = 0; iDirection < NUM_DIRECTION_TYPES; iDirection++) {
+		CvPlot* pLoopPlot = plotDirection(iX, iY, (DirectionTypes) iDirection);
+
+		if (pLoopPlot != NULL && pLoopPlot->HasPlotType(iPlotType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlot::IsWithinDistanceOfPlotType(PlotTypes iPlotType, int iDistance) const
+{
+	int iX = getX(); int iY = getY();
+
+	for (int i = -iDistance; i <= iDistance; ++i) {
+		for (int j = -iDistance; j <= iDistance; ++j) {
+			CvPlot* pLoopPlot = ::plotXYWithRangeCheck(iX, iY, i, j, iDistance);
+		
+			if (pLoopPlot != NULL && pLoopPlot->HasPlotType(iPlotType)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool CvPlot::IsAdjacentToResource(ResourceTypes iResourceType) const
+{
+	int iX = getX(); int iY = getY();
+
+	for (int iDirection = 0; iDirection < NUM_DIRECTION_TYPES; iDirection++) {
+		CvPlot* pLoopPlot = plotDirection(iX, iY, (DirectionTypes) iDirection);
+
+		if (pLoopPlot != NULL && pLoopPlot->HasResource(iResourceType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlot::IsWithinDistanceOfResource(ResourceTypes iResourceType, int iDistance) const
+{
+	int iX = getX(); int iY = getY();
+
+	for (int i = -iDistance; i <= iDistance; ++i) {
+		for (int j = -iDistance; j <= iDistance; ++j) {
+			CvPlot* pLoopPlot = ::plotXYWithRangeCheck(iX, iY, i, j, iDistance);
+		
+			if (pLoopPlot != NULL && pLoopPlot->HasResource(iResourceType)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool CvPlot::IsAdjacentToTerrain(TerrainTypes iTerrainType) const
+{
+	int iX = getX(); int iY = getY();
+
+	for (int iDirection = 0; iDirection < NUM_DIRECTION_TYPES; iDirection++) {
+		CvPlot* pLoopPlot = plotDirection(iX, iY, (DirectionTypes) iDirection);
+
+		if (pLoopPlot != NULL && pLoopPlot->HasTerrain(iTerrainType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlot::IsWithinDistanceOfTerrain(TerrainTypes iTerrainType, int iDistance) const
+{
+	int iX = getX(); int iY = getY();
+
+	for (int i = -iDistance; i <= iDistance; ++i) {
+		for (int j = -iDistance; j <= iDistance; ++j) {
+			CvPlot* pLoopPlot = ::plotXYWithRangeCheck(iX, iY, i, j, iDistance);
+		
+			if (pLoopPlot != NULL && pLoopPlot->HasTerrain(iTerrainType)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+#endif

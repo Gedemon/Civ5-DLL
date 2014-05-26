@@ -45,7 +45,7 @@ protected:
 
 	static int lGetNewCityName(lua_State* L);
 #if defined(MOD_API_LUA_EXTENSIONS)
-	LUAAPIEXTN(IsCityNameValid);
+	LUAAPIEXTN(IsCityNameValid, bool, sName, bTestDestroyed);
 #endif
 
 	static int lInitUnit(lua_State* L);
@@ -55,9 +55,9 @@ protected:
 
 	static int lChooseTech(lua_State* L);
 
-#if defined(MOD_API_EXTENSIONS)
-	LUAAPIEXTN(GetSpecificUnitType);
-	LUAAPIEXTN(GetSpecificBuildingType);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(GetSpecificUnitType, int, sUnitClass);
+	LUAAPIEXTN(GetSpecificBuildingType, int, sBuildingClass);
 #endif
 
 	static int lKillUnits(lua_State* L);
@@ -87,8 +87,8 @@ protected:
 	static int lSetNumWondersBeatenTo(lua_State* L);
 
 	static int lIsCapitalConnectedToCity(lua_State* L);
-#if defined(MOD_API_EXTENSIONS)
-	LUAAPIEXTN(IsPlotConnectedToPlot);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(IsPlotConnectedToPlot, bool, pFromPlot, pToPlot);
 #endif
 
 	static int lIsTurnActive(lua_State* L);
@@ -124,8 +124,8 @@ protected:
 	static int lGetBuildingProductionNeeded(lua_State* L);
 	static int lGetProjectProductionNeeded(lua_State* L);
 
-#if defined(MOD_PROCESS_STOCKPILE)
-	LUAAPIEXTN(GetMaxStockpile);
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROCESS_STOCKPILE)
+	LUAAPIEXTN(GetMaxStockpile, int);
 #endif
 
 	static int lHasReadyUnit(lua_State* L);
@@ -259,7 +259,7 @@ protected:
 	static int lGetPublicOpinionUnhappinessTooltip(lua_State* L);
 
 #if defined(MOD_API_LUA_EXTENSIONS)
-	LUAAPIEXTN(DoSwapGreatWorks);
+	LUAAPIEXTN(DoSwapGreatWorks, void, iFocusYield);
 #endif
 	static int lHasAvailableGreatWorkSlot(lua_State* L);
 	static int lGetCityOfClosestGreatWorkSlot(lua_State* L);
@@ -278,8 +278,8 @@ protected:
 	static int lGetFaithPerTurnFromReligion(lua_State* L);
 	static int lHasCreatedPantheon(lua_State* L);
 	static int lGetBeliefInPantheon(lua_State* L);
-#if defined(MOD_API_RELIGION)
-	LUAAPIEXTN(GetBeliefsInPantheon);
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_RELIGION)
+	LUAAPIEXTN(GetBeliefsInPantheon, table);
 #endif
 	static int lCanCreatePantheon(lua_State* L);
 	static int lHasCreatedReligion(lua_State* L);
@@ -383,7 +383,11 @@ protected:
 	static int lGetBranchPicked1(lua_State* L);
 	static int lGetBranchPicked2(lua_State* L);
 	static int lGetBranchPicked3(lua_State* L);
-
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(CanAdoptIdeology, bool, iIdeologyBranch);
+	LUAAPIEXTN(CanAdoptTenet, bool, iTenetPolicy, bIgnoreCost);
+#endif
+	
 	static int lGetPolicyCatchSpiesModifier(lua_State* L);
 
 	static int lGetNumPolicyBranchesFinished(lua_State* L);
@@ -450,11 +454,11 @@ protected:
 	static int lGetGreatScientistRateModifier(lua_State* L);
 	static int lGetGreatMerchantRateModifier(lua_State* L);
 	static int lGetGreatEngineerRateModifier(lua_State* L);
-#if defined(MOD_DIPLOMACY_CITYSTATES)
-	LUAAPIEXTN(GetGreatDiplomatRateModifier);
-	LUAAPIEXTN(GetScienceRateFromMinorAllies);
-	LUAAPIEXTN(GetScienceRateFromLeagueAid);
-	LUAAPIEXTN(GetLeagueCultureCityModifier);
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES)
+	LUAAPIEXTN(GetGreatDiplomatRateModifier, int);
+	LUAAPIEXTN(GetScienceRateFromMinorAllies, int);
+	LUAAPIEXTN(GetScienceRateFromLeagueAid, int);
+	LUAAPIEXTN(GetLeagueCultureCityModifier, int);
 #endif
 
 	static int lGetPolicyGreatPeopleRateModifier(lua_State* L);
@@ -464,8 +468,8 @@ protected:
 	static int lGetPolicyGreatScientistRateModifier(lua_State* L);
 	static int lGetPolicyGreatMerchantRateModifier(lua_State* L);
 	static int lGetPolicyGreatEngineerRateModifier(lua_State* L);
-#if defined(MOD_DIPLOMACY_CITYSTATES)
-	LUAAPIEXTN(GetPolicyGreatDiplomatRateModifier);
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES)
+	LUAAPIEXTN(GetPolicyGreatDiplomatRateModifier, int);
 #endif
 
 	static int lGetProductionModifier(lua_State* L);
@@ -555,8 +559,8 @@ protected:
 	static int lGetMinorCivType(lua_State* L);
 	static int lGetMinorCivTrait(lua_State* L);
 	static int lGetPersonality(lua_State* L);
-#if defined(MOD_API_EXTENSIONS)
-	LUAAPIEXTN(SetPersonality);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(SetPersonality, void, iPersonality);
 #endif
 	static int lIsMinorCivHasUniqueUnit(lua_State* L);
 	static int lGetMinorCivUniqueUnit(lua_State* L);
@@ -766,13 +770,13 @@ protected:
 	static int lGetBuyPlotCost(lua_State* L);
 	static int lGetPlotDanger(lua_State* L);
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
-	LUAAPIEXTN(GetBuyPlotDistance);
-	LUAAPIEXTN(GetWorkPlotDistance);
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_CITY_WORKING)
+	LUAAPIEXTN(GetBuyPlotDistance, int);
+	LUAAPIEXTN(GetWorkPlotDistance, int);
 #endif
-#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
-	LUAAPIEXTN(GetCityWorkingChange);
-	LUAAPIEXTN(ChangeCityWorkingChange);
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TECHS_CITY_WORKING)
+	LUAAPIEXTN(GetCityWorkingChange, int);
+	LUAAPIEXTN(ChangeCityWorkingChange, void, iChange);
 #endif
 
 	// Diplomacy Stuff
@@ -873,7 +877,7 @@ protected:
 	static int lGetNotificationDismissed(lua_State* L);
 	static int lAddNotification(lua_State* L);
 #if defined(MOD_API_LUA_EXTENSIONS)
-	LUAAPIEXTN(DismissNotification);
+	LUAAPIEXTN(DismissNotification, void, iIndex, bUserInvoked);
 #endif
 
 	static int lGetRecommendedWorkerPlots(lua_State* L);
@@ -923,8 +927,8 @@ protected:
 	static int lGetTraitCityStateCombatModifier(lua_State* L);
 	static int lGetTraitGreatGeneralExtraBonus(lua_State* L);
 	static int lGetTraitGreatScientistRateModifier(lua_State* L);
-#if defined(MOD_TRAITS_ANY_BELIEF)
-	LUAAPIEXTN(IsTraitAnyBelief);
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TRAITS_ANY_BELIEF)
+	LUAAPIEXTN(IsTraitAnyBelief, bool);
 #endif
 	static int lIsTraitBonusReligiousBelief(lua_State* L);
 	static int lGetHappinessFromLuxury(lua_State* L);
@@ -954,8 +958,8 @@ protected:
 	static int lGetPolicyEspionageModifier(lua_State* L);
 	static int lGetPolicyEspionageCatchSpiesModifier(lua_State* L);
 	
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-	LUAAPIEXTN(GetPolicyConversionModifier);
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+	LUAAPIEXTN(GetPolicyConversionModifier, int, iPolicyType);
 #endif
 
 	static int lGetPlayerBuildingClassYieldChange(lua_State* L);
@@ -976,11 +980,11 @@ protected:
 	static int lGetNumSpies(lua_State* L);
 	static int lGetNumUnassignedSpies(lua_State* L);
 	static int lGetEspionageSpies(lua_State* L);
-#if defined(MOD_API_ESPIONAGE)
-	LUAAPIEXTN(EspionageCreateSpy);
-	LUAAPIEXTN(EspionagePromoteSpy);
-	LUAAPIEXTN(EspionageSetPassive);
-	LUAAPIEXTN(EspionageSetOutcome);
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_ESPIONAGE)
+	LUAAPIEXTN(EspionageCreateSpy, void);
+	LUAAPIEXTN(EspionagePromoteSpy, void, iSpyIndex);
+	LUAAPIEXTN(EspionageSetPassive, void, iSpyIndex, bPassive);
+	LUAAPIEXTN(EspionageSetOutcome, void, iSpyIndex, iSpyResult, bAffectsDiplomacy);
 #endif
 	static int lHasSpyEstablishedSurveillance(lua_State* L);
 	static int lIsSpyDiplomat(lua_State* L);
@@ -1002,9 +1006,9 @@ protected:
 	static int lGetInternationalTradeRoutePlotMouseoverToolTip(lua_State* L);
 	static int lGetNumInternationalTradeRoutesUsed(lua_State* L);
 	static int lGetNumInternationalTradeRoutesAvailable(lua_State* L);
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
     static int GetPotentialInternationalTradeRouteDestinationsHelper(lua_State* L, CvPlayerAI* pkPlayer, CvUnit* pkUnit, CvPlot* pkUnitPlot);
-	LUAAPIEXTN(GetPotentialInternationalTradeRouteDestinationsFrom);
+	LUAAPIEXTN(GetPotentialInternationalTradeRouteDestinationsFrom, table, pUnit, pCity);
 #endif
 	static int lGetPotentialInternationalTradeRouteDestinations(lua_State* L);
 	static int lGetInternationalTradeRouteBaseBonus(lua_State* L);
@@ -1055,19 +1059,55 @@ protected:
 	static int lGetLiberationPreviewString(lua_State* L);
 
 #if defined(MOD_API_LUA_EXTENSIONS)
-	LUAAPIEXTN(AddMessage);
+	LUAAPIEXTN(AddMessage, void, sMessage);
 #endif
 
-#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
-	static int lGetVassalGoldMaintenance(lua_State* L);
-	static int lIsVassalageAcceptable(lua_State* L);
-	static int lGetJONSCulturePerTurnFromVassals(lua_State* L);
-	static int lGetHappinessFromVassals(lua_State* L);
-	static int lGetScoreFromVassals(lua_State* L);
-	static int lGetScienceFromVassalTimes100(lua_State* L);
-	static int lGetMilitaryAggressivePosture(lua_State* L);
-	static int lMoveRequestTooSoon(lua_State* L);
-	static int lGetPlayerMoveTroopsRequestCounter(lua_State* L);
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	LUAAPIEXTN(GetVassalGoldMaintenance, int);
+	LUAAPIEXTN(IsVassalageAcceptable, bool, iOtherPlayer);
+	LUAAPIEXTN(GetJONSCulturePerTurnFromVassals, int);
+	LUAAPIEXTN(GetHappinessFromVassals, int);
+	LUAAPIEXTN(GetScoreFromVassals, int);
+	LUAAPIEXTN(GetScienceFromVassalTimes100, int);
+	LUAAPIEXTN(GetMilitaryAggressivePosture, int, iOtherPlayer);
+	LUAAPIEXTN(MoveRequestTooSoon, bool, iOtherPlayer);
+	LUAAPIEXTN(GetPlayerMoveTroopsRequestCounter, int, iOtherPlayer);
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(HasBelief, bool, iBeliefType);
+	LUAAPIEXTN(HasBuilding, bool, iBuildingType);
+	LUAAPIEXTN(HasBuildingClass, bool, iBuildingClassType);
+	LUAAPIEXTN(HasAnyWonder, bool);
+	LUAAPIEXTN(HasWonder, bool, iBuildingType);
+	LUAAPIEXTN(IsCivilization, bool, iCivilizationType);
+	LUAAPIEXTN(IsInEra, bool, iEraType);
+	LUAAPIEXTN(HasReachedEra, bool, iEraType);
+	LUAAPIEXTN(HasAnyNaturalWonder, bool);
+	LUAAPIEXTN(HasNaturalWonder, bool, iFeatureType);
+	// LUAAPIEXTN(HasPolicy, bool, iPolicyType);
+	LUAAPIEXTN(HasTenet, bool, iPolicyType);
+	LUAAPIEXTN(HasPolicyBranch, bool, iPolicyBranchType);
+	LUAAPIEXTN(HasIdeology, bool, iPolicyBranchType);
+	LUAAPIEXTN(HasProject, bool, iProjectType);
+	LUAAPIEXTN(IsAtPeace, bool);
+	LUAAPIEXTN(IsAtPeaceWith, bool, iPlayer);
+	LUAAPIEXTN(IsAtWar, bool);
+	LUAAPIEXTN(IsAtWarWith, bool, iPlayer);
+	LUAAPIEXTN(HasPantheon, bool);
+	LUAAPIEXTN(HasAnyReligion, bool);
+	LUAAPIEXTN(HasReligion, bool, iReligionType);
+	LUAAPIEXTN(HasEnhancedReligion, bool);
+	LUAAPIEXTN(IsConnectedTo, bool, iPlayer);
+	LUAAPIEXTN(HasSpecialistSlot, bool, iSpecialistType);
+	LUAAPIEXTN(HasSpecialist, bool, iSpecialistType);
+	LUAAPIEXTN(HasTech, bool, iTechType);
+	LUAAPIEXTN(HasAnyDomesticTradeRoute, bool);
+	LUAAPIEXTN(HasAnyInternationalTradeRoute, bool);
+	LUAAPIEXTN(HasAnyTradeRoute, bool);
+	LUAAPIEXTN(HasAnyTradeRouteWith, bool, iPlayer);
+	LUAAPIEXTN(HasUnit, bool, iUnitType);
+	LUAAPIEXTN(HasUnitClass, bool, iUnitClassType);
 #endif
 };
 

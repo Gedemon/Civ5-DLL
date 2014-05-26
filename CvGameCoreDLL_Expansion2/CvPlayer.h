@@ -1594,6 +1594,42 @@ public:
 		return m_strEmbarkedGraphicOverride;
 	};
 
+#if defined(MOD_API_EXTENSIONS)
+	bool HasBelief(BeliefTypes iBeliefType) const;
+	bool HasBuilding(BuildingTypes iBuildingType);
+	bool HasBuildingClass(BuildingClassTypes iBuildingClassType);
+	bool HasAnyWonder();
+	bool HasWonder(BuildingTypes iBuildingType);
+	bool IsCivilization(CivilizationTypes iCivilizationType) const;
+	bool IsInEra(EraTypes iEraType) const;
+	bool HasReachedEra(EraTypes iEraType) const;
+	bool HasAnyNaturalWonder();
+	bool HasNaturalWonder(FeatureTypes iFeatureType);
+	bool HasPolicy(PolicyTypes iPolicyType) const;
+	bool HasTenet(PolicyTypes iPolicyType) const;
+	bool HasPolicyBranch(PolicyBranchTypes iPolicyBranchType) const;
+	bool HasIdeology(PolicyBranchTypes iPolicyBranchType) const;
+	bool HasProject(ProjectTypes iProjectType) const;
+	bool IsAtPeace() const;
+	bool IsAtPeaceWith(PlayerTypes iPlayer) const;
+	bool IsAtWar() const;
+	bool IsAtWarWith(PlayerTypes iPlayer) const;
+	bool HasPantheon() const;
+	bool HasAnyReligion() const;
+	bool HasReligion(ReligionTypes iReligionType) const;
+	bool HasEnhancedReligion() const;
+	bool IsConnectedTo(PlayerTypes iPlayer);
+	bool HasSpecialistSlot(SpecialistTypes iSpecialistType);
+	bool HasSpecialist(SpecialistTypes iSpecialistType);
+	bool HasTech(TechTypes iTechType) const;
+	bool HasAnyDomesticTradeRoute() const;
+	bool HasAnyInternationalTradeRoute() const;
+	bool HasAnyTradeRoute() const;
+	bool HasAnyTradeRouteWith(PlayerTypes iPlayer) const;
+	bool HasUnit(UnitTypes iUnitType);
+	bool HasUnitClass(UnitClassTypes iUnitClassType);
+#endif
+
 	// for serialization
 	virtual void Read(FDataStream& kStream);
 	virtual void Write(FDataStream& kStream) const;

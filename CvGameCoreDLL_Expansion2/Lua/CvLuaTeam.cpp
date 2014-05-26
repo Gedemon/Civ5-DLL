@@ -126,7 +126,7 @@ void CvLuaTeam::PushMethods(lua_State* L, int t)
 	Method(GetPermanentAllianceTradingCount);
 	Method(IsPermanentAllianceTrading);
 	Method(ChangePermanentAllianceTradingCount);
-#if defined(MOD_TECHS_CITY_WORKING)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TECHS_CITY_WORKING)
 	Method(GetCityWorkingChange);
 	Method(IsCityWorkingChange);
 	Method(ChangeCityWorkingChange);
@@ -166,7 +166,7 @@ void CvLuaTeam::PushMethods(lua_State* L, int t)
 	Method(GetKilledByTeam);
 
 	Method(HasEmbassyAtTeam);
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 	Method(HasSpyAtTeam);
 #endif
 	Method(IsAllowsOpenBordersToTeam);
@@ -215,7 +215,7 @@ void CvLuaTeam::PushMethods(lua_State* L, int t)
 
 	Method(UpdateEmbarkGraphics);
 
-#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	Method(IsVassal);
 	Method(CanBecomeVassal);
 	Method(canEndVassal);
@@ -830,7 +830,7 @@ int CvLuaTeam::lChangePermanentAllianceTradingCount(lua_State* L)
 	return BasicLuaMethod(L, &CvTeam::changePermanentAllianceTradingCount);
 }
 
-#if defined(MOD_TECHS_CITY_WORKING)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TECHS_CITY_WORKING)
 //------------------------------------------------------------------------------
 //int getCityWorkingChange();
 int CvLuaTeam::lGetCityWorkingChange(lua_State* L)
@@ -1031,7 +1031,7 @@ int CvLuaTeam::lHasEmbassyAtTeam(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvTeam::HasEmbassyAtTeam);
 }
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 //------------------------------------------------------------------------------
 int CvLuaTeam::lHasSpyAtTeam(lua_State* L)
 {
@@ -1306,7 +1306,7 @@ int CvLuaTeam::lUpdateEmbarkGraphics(lua_State* L)
 	return BasicLuaMethod(L, &CvTeam::UpdateEmbarkGraphics);
 }
 
-#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CIV4_FEATURES)
 //------------------------------------------------------------------------------
 //int GetNumTurnsIsVassal(TeamTypes eIndex) const;
 int CvLuaTeam::lGetNumTurnsIsVassal(lua_State* L)
@@ -1382,7 +1382,7 @@ int CvLuaTeam::lDoBecomeVassal(lua_State *L)
 	const bool bVoluntary = luaL_optbool(L, 3, false);
 
 	pkTeam->DoBecomeVassal(eTeam, bVoluntary);
-	return 1;
+	return 0;
 }
 // ---------------------------------------------------------------------
 // void DoEndVassal(TeamTypes eTeam, bool bPeaceful, bool bSuppressNotification)

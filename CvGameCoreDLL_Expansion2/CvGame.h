@@ -581,6 +581,31 @@ public:
 	void SetTeamThatCircumnavigated(TeamTypes eNewValue);
 #endif
 
+#if defined(MOD_API_EXTENSIONS)
+	bool AnyoneHasBelief(BeliefTypes iBeliefType) const;
+	bool AnyoneHasBuilding(BuildingTypes iBuildingType) const;
+	bool AnyoneHasBuildingClass(BuildingClassTypes iBuildingClassType) const;
+	bool AnyoneHasAnyWonder() const;
+	bool AnyoneHasWonder(BuildingTypes iBuildingType) const;
+	int GetCivilizationPlayer(CivilizationTypes iCivilizationType) const;
+	bool AnyoneIsInEra(EraTypes iEraType) const;
+	bool AnyoneHasReachedEra(EraTypes iEraType) const;
+	bool AnyoneHasAnyNaturalWonder() const;
+	bool AnyoneHasNaturalWonder(FeatureTypes iFeatureType) const;
+	bool AnyoneHasPolicy(PolicyTypes iPolicyType) const;
+	bool AnyoneHasTenet(PolicyTypes iPolicyType) const;
+	bool AnyoneHasPolicyBranch(PolicyBranchTypes iPolicyBranchType) const;
+	bool AnyoneHasIdeology(PolicyBranchTypes iPolicyBranchType) const;
+	bool AnyoneHasProject(ProjectTypes iProjectType) const;
+	bool AnyoneHasPantheon() const;
+	bool AnyoneHasAnyReligion() const;
+	bool AnyoneHasReligion(ReligionTypes iReligionType) const;
+	bool IsResolutionPassed(ResolutionTypes iResolutionType, int iChoice) const;
+	bool AnyoneHasTech(TechTypes iTechType) const;
+	bool AnyoneHasUnit(UnitTypes iUnitType) const;
+	bool AnyoneHasUnitClass(UnitClassTypes iUnitClassType) const;
+#endif
+
 public:
 
 	//Function to determine city size from city population

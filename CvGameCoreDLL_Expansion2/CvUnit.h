@@ -412,7 +412,7 @@ public:
 #endif
 	UnitTypes GetUpgradeUnitType() const;
 	int upgradePrice(UnitTypes eUnit) const;
-#if defined(MOD_API_LUA_EXTENSIONS)
+#if defined(MOD_API_EXTENSIONS)
 	CvUnit* DoUpgrade(bool bFree = false);
 #else
 	CvUnit* DoUpgrade();
@@ -455,8 +455,8 @@ public:
 	bool hasMoved() const;
 
 	int GetRange() const;
-#if defined(MOD_AI_SMART_HELPERS)
-	int GetRangePlusMoveToshot() const;
+#if defined(MOD_AI_SMART_RANGED_UNITS)
+	int GetRangeWithMovement() const;
 #endif
 	int GetNukeDamageLevel() const;
 
@@ -1197,16 +1197,12 @@ public:
 	bool isPotentialEnemy(TeamTypes eTeam, const CvPlot* pPlot = NULL) const;
 
 	bool canRangeStrike() const;
-#if defined(MOD_AI_SMART_HELPERS)
-	bool canEverRangeStrikeAtFromPlot(int iX, int iY, CvPlot* targetPlot) const;
+#if defined(MOD_AI_SMART_RANGED_UNITS)
+	bool canEverRangeStrikeAtFromPlot(int iX, int iY, CvPlot* pSourcePlot) const;
+	void GetMovablePlotListOpt(vector<CvPlot*>& plotData, CvPlot* plotTarget, bool exitOnFound);
 #endif
 	bool canEverRangeStrikeAt(int iX, int iY) const;
 	bool canRangeStrikeAt(int iX, int iY, bool bNeedWar = true, bool bNoncombatAllowed = true) const;
-#if defined(MOD_AI_SMART_HELPERS)
-	bool canMoveAndRangedStrike(int iX, int iY);
-
-	void GetMovablePlotListOpt(vector<CvPlot*>& plotData, CvPlot* plotTarget, bool exitOnFound);
-#endif
 
 	bool IsAirSweepCapable() const;
 	int GetAirSweepCapableCount() const;
@@ -1377,6 +1373,28 @@ public:
 
 	std::string debugDump(const FAutoVariableBase&) const;
 	std::string stackTraceRemark(const FAutoVariableBase&) const;
+
+#if defined(MOD_API_EXTENSIONS)
+	bool IsCivilization(CivilizationTypes iCivilizationType) const;
+	bool HasPromotion(PromotionTypes iPromotionType) const;
+	bool IsUnit(UnitTypes iUnitType) const;
+	bool IsUnitClass(UnitClassTypes iUnitClassType) const;
+	bool IsOnFeature(FeatureTypes iFeatureType) const;
+	bool IsAdjacentToFeature(FeatureTypes iFeatureType) const;
+	bool IsWithinDistanceOfFeature(FeatureTypes iFeatureType, int iDistance) const;
+	bool IsOnImprovement(ImprovementTypes iImprovementType) const;
+	bool IsAdjacentToImprovement(ImprovementTypes iImprovementType) const;
+	bool IsWithinDistanceOfImprovement(ImprovementTypes iImprovementType, int iDistance) const;
+	bool IsOnPlotType(PlotTypes iPlotType) const;
+	bool IsAdjacentToPlotType(PlotTypes iPlotType) const;
+	bool IsWithinDistanceOfPlotType(PlotTypes iPlotType, int iDistance) const;
+	bool IsOnResource(ResourceTypes iResourceType) const;
+	bool IsAdjacentToResource(ResourceTypes iResourceType) const;
+	bool IsWithinDistanceOfResource(ResourceTypes iResourceType, int iDistance) const;
+	bool IsOnTerrain(TerrainTypes iTerrainType) const;
+	bool IsAdjacentToTerrain(TerrainTypes iTerrainType) const;
+	bool IsWithinDistanceOfTerrain(TerrainTypes iTerrainType, int iDistance) const;
+#endif
 
 protected:
 	const MissionQueueNode* HeadMissionQueueNode() const;

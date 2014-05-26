@@ -449,8 +449,25 @@ void CvUnit::initWithNameOffset(int iID, UnitTypes eUnit, int iNameOffset, UnitA
 		{
 			int iIndex = (iNameOffset + iI) % iNumNames;
 			CvString strName = getUnitInfo().GetUnitNames(iIndex);
+			
+#if defined(MOD_EVENTS_UNIT_DATA)
+			if (MOD_EVENTS_UNIT_DATA) {
+				if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_UnitCanHaveName, getOwner(), GetID(), iI) == GAMEEVENTRETURN_FALSE) {
+					continue;
+				}
+			}
+#endif
+
 			if(!GC.getGame().isGreatPersonBorn(strName))
 			{
+#if defined(MOD_EVENTS_UNIT_DATA)
+				if (MOD_EVENTS_UNIT_DATA) {
+					if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_UnitCanHaveGreatWork, getOwner(), GetID(), getUnitInfo().GetGreatWorks(iIndex)) == GAMEEVENTRETURN_FALSE) {
+						continue;
+					}
+				}
+#endif
+				
 				setName(strName);
 				SetGreatWork(getUnitInfo().GetGreatWorks(iIndex));
 				GC.getGame().addGreatPersonBornName(strName);
@@ -10013,6 +10030,10 @@ bool CvUnit::CanUpgradeTo(UnitTypes eUpgradeUnitType, bool bOnlyTestVisible) con
 		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CanHaveAnyUpgrade, getOwner(), GetID()) == GAMEEVENTRETURN_FALSE) {
 			return false;
 		}
+
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_UnitCanHaveAnyUpgrade, getOwner(), GetID()) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
 	}
 #endif
 
@@ -10073,6 +10094,10 @@ UnitTypes CvUnit::GetUpgradeUnitType() const
 #if defined(MOD_EVENTS_UNIT_UPGRADES)
 				if (MOD_EVENTS_UNIT_UPGRADES) {
 					if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CanHaveUpgrade, getOwner(), GetID(), iI, eUpgradeUnitType) == GAMEEVENTRETURN_FALSE) {
+						continue;
+					}
+
+					if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_UnitCanHaveUpgrade, getOwner(), GetID(), iI, eUpgradeUnitType) == GAMEEVENTRETURN_FALSE) {
 						continue;
 					}
 				}
@@ -10153,7 +10178,7 @@ int CvUnit::upgradePrice(UnitTypes eUnit) const
 
 //	--------------------------------------------------------------------------------
 /// Upgrades this Unit - returns a pointer to the newly created unit
-#if defined(MOD_API_LUA_EXTENSIONS)
+#if defined(MOD_API_EXTENSIONS)
 CvUnit* CvUnit::DoUpgrade(bool bFree)
 #else
 CvUnit* CvUnit::DoUpgrade()
@@ -10163,7 +10188,7 @@ CvUnit* CvUnit::DoUpgrade()
 
 	UnitTypes eUnitType = GetUpgradeUnitType();
 
-#if defined(MOD_API_LUA_EXTENSIONS)
+#if defined(MOD_API_EXTENSIONS)
 	return DoUpgradeTo(eUnitType, bFree);
 }
 
@@ -10173,16 +10198,16 @@ CvUnit* CvUnit::DoUpgradeTo(UnitTypes eUnitType, bool bFree)
 	// Gold Cost
 	int iUpgradeCost = upgradePrice(eUnitType);
 	CvPlayerAI& thisPlayer = GET_PLAYER(getOwner());
-#if defined(MOD_API_LUA_EXTENSIONS)
+#if defined(MOD_API_EXTENSIONS)
 	if (!bFree) {
 #endif
 	thisPlayer.GetTreasury()->LogExpenditure(getUnitInfo().GetText(), iUpgradeCost, 3);
 	thisPlayer.GetTreasury()->ChangeGold(-iUpgradeCost);
-#if defined(MOD_API_LUA_EXTENSIONS)
+#if defined(MOD_API_EXTENSIONS)
 	}
 #endif
 
-#if defined(MOD_API_LUA_EXTENSIONS)
+#if defined(MOD_API_EXTENSIONS)
 	if (!bFree) {
 #endif
 #if defined(MOD_GLOBAL_CS_UPGRADES)
@@ -10208,7 +10233,7 @@ CvUnit* CvUnit::DoUpgradeTo(UnitTypes eUnitType, bool bFree)
 		}
 	}
 #endif
-#if defined(MOD_API_LUA_EXTENSIONS)
+#if defined(MOD_API_EXTENSIONS)
 	}
 #endif
 
@@ -10609,9 +10634,9 @@ int CvUnit::GetRange() const
 	return (m_pUnitInfo->GetRange() + m_iExtraRange);
 }
 
-#if defined(MOD_AI_SMART_HELPERS)
-//AMS: Special property to get unit range+ move possibility.
-int CvUnit::GetRangePlusMoveToshot() const
+#if defined(MOD_AI_SMART_RANGED_UNITS)
+// Special property to get unit range+ move possibility.
+int CvUnit::GetRangeWithMovement() const
 {
 	VALIDATE_OBJECT
 	return ((getDomainType() == DOMAIN_AIR) ? GetRange() : (GetRange() + baseMoves() - (isMustSetUpToRangedAttack() ? 1 : 0)));
@@ -18830,6 +18855,10 @@ bool CvUnit::canAcquirePromotion(PromotionTypes ePromotion) const
 		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CanHavePromotion, getOwner(), GetID(), ePromotion) == GAMEEVENTRETURN_FALSE) {
 			return false;
 		}
+
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_UnitCanHavePromotion, getOwner(), GetID(), ePromotion) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
 	}
 #endif
 
@@ -19693,16 +19722,15 @@ bool CvUnit::canRangeStrike() const
 //	--------------------------------------------------------------------------------
 bool CvUnit::canEverRangeStrikeAt(int iX, int iY) const
 {
-#if defined(MOD_AI_SMART_HELPERS)
+#if defined(MOD_AI_SMART_RANGED_UNITS)
 	VALIDATE_OBJECT
 	return canEverRangeStrikeAtFromPlot(iX, iY, plot());
 }
 
-//AMS: Same as original canEverRangeStrikeAt but with plot as parameter
-bool CvUnit::canEverRangeStrikeAtFromPlot(int iX, int iY, CvPlot* targetPlot) const
+// Same as original canEverRangeStrikeAt but with plot as parameter
+bool CvUnit::canEverRangeStrikeAtFromPlot(int iX, int iY, CvPlot* pSourcePlot) const
 {
 	VALIDATE_OBJECT
-	CvPlot* pSourcePlot = targetPlot;
 #else
 	CvPlot* pSourcePlot = plot();
 #endif
@@ -19877,46 +19905,8 @@ bool CvUnit::canRangeStrikeAt(int iX, int iY, bool bNeedWar, bool bNoncombatAllo
 	return true;
 }
 
-#if defined(MOD_AI_SMART_HELPERS)
-// AMS: Unit can move and ranged attack with movements left.
-bool CvUnit::canMoveAndRangedStrike(int iX, int iY)
-{
-	VALIDATE_OBJECT
-
-	// We only compute if distance is reasonable.
-	if(GetRangePlusMoveToshot() > plotDistance(getX(), getY(), iX, iY))
-	{
-		return false;
-	}
-
-	// If unit can already strike without moving is always true
-	if (canEverRangeStrikeAt(iX, iY))
-	{
-		return true;
-	}
-
-	int initTime = timeGetTime();
-	std::vector<CvPlot*> movePlotTest;
-	CvPlot* plotTarget = GC.getMap().plotCheckInvalid(iX, iY);
-
-	if (plotTarget != NULL)
-	{
-		GetMovablePlotListOpt(movePlotTest, plotTarget, true);
-	}
-
-	int endTime = timeGetTime();
-
-	if(GC.getLogging() && GC.getAILogging())
-	{
-		CvString szMsg;
-		szMsg.Format("Tile search time elapsed %d ms.", (endTime - initTime));
-		GET_PLAYER(m_eOwner).GetTacticalAI()->LogTacticalMessage(szMsg, true /*bSkipLogDominanceZone*/);
-	}
-
-	return movePlotTest.size() > 0;
-}
-
-//AMS: Optimized function to evaluate free plots for move and fire.
+#if defined(MOD_AI_SMART_RANGED_UNITS)
+// Optimized function to evaluate free plots for move and fire.
 void CvUnit::GetMovablePlotListOpt(vector<CvPlot*>& plotData, CvPlot* plotTarget, bool exitOnFound)
 {
 	VALIDATE_OBJECT
@@ -23174,6 +23164,103 @@ std::string CvUnit::stackTraceRemark(const FAutoVariableBase& var) const
 	return result;
 }
 
+#if defined(MOD_API_EXTENSIONS)
+bool CvUnit::IsCivilization(CivilizationTypes iCivilizationType) const
+{
+	return (GET_PLAYER(getOwner()).getCivilizationType() == iCivilizationType);
+}
+
+bool CvUnit::HasPromotion(PromotionTypes iPromotionType) const
+{
+	return isHasPromotion(iPromotionType);
+}
+
+bool CvUnit::IsUnit(UnitTypes iUnitType) const
+{
+	return (getUnitType() == iUnitType);
+}
+
+bool CvUnit::IsUnitClass(UnitClassTypes iUnitClassType) const
+{
+	return (getUnitClassType() == iUnitClassType);
+}
+
+bool CvUnit::IsOnFeature(FeatureTypes iFeatureType) const
+{
+	return plot()->HasFeature(iFeatureType);
+}
+
+bool CvUnit::IsAdjacentToFeature(FeatureTypes iFeatureType) const
+{
+	return plot()->IsAdjacentToFeature(iFeatureType);
+}
+
+bool CvUnit::IsWithinDistanceOfFeature(FeatureTypes iFeatureType, int iDistance) const
+{
+	return plot()->IsWithinDistanceOfFeature(iFeatureType, iDistance);
+}
+
+bool CvUnit::IsOnImprovement(ImprovementTypes iImprovementType) const
+{
+	return plot()->HasImprovement(iImprovementType);
+}
+
+bool CvUnit::IsAdjacentToImprovement(ImprovementTypes iImprovementType) const
+{
+	return plot()->IsAdjacentToImprovement(iImprovementType);
+}
+
+bool CvUnit::IsWithinDistanceOfImprovement(ImprovementTypes iImprovementType, int iDistance) const
+{
+	return plot()->IsWithinDistanceOfImprovement(iImprovementType, iDistance);
+}
+
+bool CvUnit::IsOnPlotType(PlotTypes iPlotType) const
+{
+	return plot()->HasPlotType(iPlotType);
+}
+
+bool CvUnit::IsAdjacentToPlotType(PlotTypes iPlotType) const
+{
+	return plot()->IsAdjacentToPlotType(iPlotType);
+}
+
+bool CvUnit::IsWithinDistanceOfPlotType(PlotTypes iPlotType, int iDistance) const
+{
+	return plot()->IsWithinDistanceOfPlotType(iPlotType, iDistance);
+}
+
+bool CvUnit::IsOnResource(ResourceTypes iResourceType) const
+{
+	return plot()->HasResource(iResourceType);
+}
+
+bool CvUnit::IsAdjacentToResource(ResourceTypes iResourceType) const
+{
+	return plot()->IsAdjacentToResource(iResourceType);
+}
+
+bool CvUnit::IsWithinDistanceOfResource(ResourceTypes iResourceType, int iDistance) const
+{
+	return plot()->IsWithinDistanceOfResource(iResourceType, iDistance);
+}
+
+bool CvUnit::IsOnTerrain(TerrainTypes iTerrainType) const
+{
+	return plot()->HasTerrain(iTerrainType);
+}
+
+bool CvUnit::IsAdjacentToTerrain(TerrainTypes iTerrainType) const
+{
+	return plot()->IsAdjacentToTerrain(iTerrainType);
+}
+
+bool CvUnit::IsWithinDistanceOfTerrain(TerrainTypes iTerrainType, int iDistance) const
+{
+	return plot()->IsWithinDistanceOfTerrain(iTerrainType, iDistance);
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 DestructionNotification<UnitHandle>& CvUnit::getDestructionNotification()
 {
@@ -23193,3 +23280,4 @@ FDataStream& operator>>(FDataStream& loadFrom, CvUnit& writeTo)
 	writeTo.read(loadFrom);
 	return loadFrom;
 }
+

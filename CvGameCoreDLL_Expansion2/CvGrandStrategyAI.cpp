@@ -733,8 +733,8 @@ int CvGrandStrategyAI::GetSpaceshipPriority()
 
 	// the later the game the greater the chance
 #if defined(MOD_AI_SMART_GRAND_STRATEGY)
-	int iEra = MOD_AI_SMART_GRAND_STRATEGY ? 4 : 0;
-	iPriority += (iEra + m_pPlayer->GetCurrentEra()) * iFlavorScience * 150 / 100;
+	int iEraBias = MOD_AI_SMART_GRAND_STRATEGY ? 4 : 0;
+	iPriority += (iEraBias + m_pPlayer->GetCurrentEra()) * iFlavorScience * 150 / 100;
 #else
 	iPriority += m_pPlayer->GetCurrentEra() * iFlavorScience * 150 / 100;
 #endif
@@ -745,12 +745,7 @@ int CvGrandStrategyAI::GetSpaceshipPriority()
 	{
 		if(GET_TEAM(m_pPlayer->getTeam()).getProjectCount(eApolloProgram) > 0)
 		{
-// #if defined(MOD_AI_SMART_GRAND_STRATEGY)
-// Done via SQL
-//			iPriority += /*150*/ (GC.getAI_GS_SS_HAS_APOLLO_PROGRAM() / 2);
-// #else
 			iPriority += /*150*/ GC.getAI_GS_SS_HAS_APOLLO_PROGRAM();
-// #endif
 		}
 	}
 

@@ -26941,3 +26941,323 @@ void CvPlayer::ChangeVassalGoldMaintenanceMod(int iChange)
 	}
 }
 #endif
+
+#if defined(MOD_API_EXTENSIONS)
+//	----------------------------------------------------------------------------
+bool CvPlayer::HasBelief(BeliefTypes iBeliefType) const
+{
+	const ReligionTypes iReligion = GetReligions()->GetReligionCreatedByPlayer();
+	const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(iReligion, GetID());
+
+	return (pReligion && pReligion->m_Beliefs.HasBelief(iBeliefType));
+}
+
+bool CvPlayer::HasBuilding(BuildingTypes iBuildingType)
+{
+	int iLoopCity;
+	for (CvCity* pLoopCity = firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = nextCity(&iLoopCity)) {
+		if (pLoopCity->HasBuilding(iBuildingType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasBuildingClass(BuildingClassTypes iBuildingClassType)
+{
+	int iLoopCity;
+	for (CvCity* pLoopCity = firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = nextCity(&iLoopCity)) {
+		if (pLoopCity->HasBuildingClass(iBuildingClassType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasAnyWonder()
+{
+	int iLoopCity;
+	for (CvCity* pLoopCity = firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = nextCity(&iLoopCity)) {
+		if (pLoopCity->HasAnyWonder()) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasWonder(BuildingTypes iBuildingType)
+{
+	int iLoopCity;
+	for (CvCity* pLoopCity = firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = nextCity(&iLoopCity)) {
+		if (pLoopCity->HasWonder(iBuildingType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::IsCivilization(CivilizationTypes iCivilizationType) const
+{
+	return (getCivilizationType() == iCivilizationType);
+}
+
+bool CvPlayer::IsInEra(EraTypes iEraType) const
+{
+	return (GET_TEAM(getTeam()).GetCurrentEra() == iEraType);
+}
+
+bool CvPlayer::HasReachedEra(EraTypes iEraType) const
+{
+	return (GET_TEAM(getTeam()).GetCurrentEra() >= iEraType);
+}
+
+bool CvPlayer::HasAnyNaturalWonder()
+{
+	int iLoopCity;
+	for (CvCity* pLoopCity = firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = nextCity(&iLoopCity)) {
+		if (pLoopCity->HasAnyNaturalWonder()) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasNaturalWonder(FeatureTypes iFeatureType)
+{
+	int iLoopCity;
+	for (CvCity* pLoopCity = firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = nextCity(&iLoopCity)) {
+		if (pLoopCity->HasNaturalWonder(iFeatureType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasPolicy(PolicyTypes iPolicyType) const
+{
+	return GetPlayerPolicies()->HasPolicy(iPolicyType);
+}
+
+bool CvPlayer::HasTenet(PolicyTypes iPolicyType) const
+{
+	return HasPolicy(iPolicyType);
+}
+
+bool CvPlayer::HasPolicyBranch(PolicyBranchTypes iPolicyBranchType) const
+{
+	return GetPlayerPolicies()->IsPolicyBranchUnlocked(iPolicyBranchType);
+}
+
+bool CvPlayer::HasIdeology(PolicyBranchTypes iPolicyBranchType) const
+{
+	return HasPolicyBranch(iPolicyBranchType);
+}
+
+bool CvPlayer::HasProject(ProjectTypes iProjectType) const
+{
+	return (GET_TEAM(getTeam()).getProjectCount(iProjectType) > 0);
+}
+
+bool CvPlayer::IsAtPeace() const
+{
+	return !IsAtWar();
+}
+
+bool CvPlayer::IsAtPeaceWith(PlayerTypes iPlayer) const
+{
+	return !IsAtWarWith(iPlayer);
+}
+
+bool CvPlayer::IsAtWar() const
+{
+	CvTeam kTeam = GET_TEAM(getTeam());
+
+	for (int iTeam = 0; iTeam < MAX_TEAMS; iTeam++) {
+		if (GET_TEAM((TeamTypes)iTeam).isAlive() && kTeam.isAtWar((TeamTypes)iTeam)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::IsAtWarWith(PlayerTypes iPlayer) const
+{
+	return GET_TEAM(getTeam()).isAtWar(GET_PLAYER(iPlayer).getTeam());
+}
+
+bool CvPlayer::HasPantheon() const
+{
+	return GetReligions()->HasCreatedPantheon();
+}
+
+bool CvPlayer::HasAnyReligion() const
+{
+	return GetReligions()->HasCreatedReligion();
+}
+
+bool CvPlayer::HasReligion(ReligionTypes iReligionType) const
+{
+	return (GetReligions()->GetReligionCreatedByPlayer() == iReligionType);
+}
+
+bool CvPlayer::HasEnhancedReligion() const
+{
+	const ReligionTypes eReligion = GetReligions()->GetReligionCreatedByPlayer();
+	const CvReligion* pMyReligion = GC.getGame().GetGameReligions()->GetReligion(eReligion, GetID());
+
+	return (pMyReligion && pMyReligion->m_bEnhanced);
+}
+
+bool CvPlayer::IsConnectedTo(PlayerTypes iPlayer)
+{
+	return IsCapitalConnectedToPlayer(iPlayer);
+}
+
+bool CvPlayer::HasSpecialistSlot(SpecialistTypes iSpecialistType)
+{
+	int iLoopCity;
+	for (CvCity* pLoopCity = firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = nextCity(&iLoopCity)) {
+		if (pLoopCity->HasSpecialistSlot(iSpecialistType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasSpecialist(SpecialistTypes iSpecialistType)
+{
+	int iLoopCity;
+	for (CvCity* pLoopCity = firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = nextCity(&iLoopCity)) {
+		if (pLoopCity->HasSpecialist(iSpecialistType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasTech(TechTypes iTechType) const
+{
+	return GET_TEAM(getTeam()).GetTeamTechs()->HasTech(iTechType);
+}
+
+bool CvPlayer::HasAnyDomesticTradeRoute() const
+{
+	int iOwner = GetID();
+	CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+
+	for (uint iTradeRoute = 0; iTradeRoute < pTrade->m_aTradeConnections.size(); iTradeRoute++) {
+		if (pTrade->IsTradeRouteIndexEmpty(iTradeRoute)) {
+			continue;
+		}
+
+		TradeConnection* pConnection = &(pTrade->m_aTradeConnections[iTradeRoute]);
+
+		if (pConnection->m_eOriginOwner == iOwner && pConnection->m_eDestOwner == iOwner) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasAnyInternationalTradeRoute() const
+{
+	int iOwner = GetID();
+	CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+
+	for (uint iTradeRoute = 0; iTradeRoute < pTrade->m_aTradeConnections.size(); iTradeRoute++) {
+		if (pTrade->IsTradeRouteIndexEmpty(iTradeRoute)) {
+			continue;
+		}
+
+		TradeConnection* pConnection = &(pTrade->m_aTradeConnections[iTradeRoute]);
+
+		if ((pConnection->m_eOriginOwner == iOwner && pConnection->m_eDestOwner   != iOwner) ||
+		    (pConnection->m_eDestOwner   == iOwner && pConnection->m_eOriginOwner != iOwner)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasAnyTradeRoute() const
+{
+	int iOwner = GetID();
+	CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+
+	for (uint iTradeRoute = 0; iTradeRoute < pTrade->m_aTradeConnections.size(); iTradeRoute++) {
+		if (pTrade->IsTradeRouteIndexEmpty(iTradeRoute)) {
+			continue;
+		}
+
+		TradeConnection* pConnection = &(pTrade->m_aTradeConnections[iTradeRoute]);
+
+		if (pConnection->m_eOriginOwner == iOwner || pConnection->m_eDestOwner == iOwner) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasAnyTradeRouteWith(PlayerTypes iPlayer) const
+{
+	int iOwner = GetID();
+	CvGameTrade* pTrade = GC.getGame().GetGameTrade();
+
+	for (uint iTradeRoute = 0; iTradeRoute < pTrade->m_aTradeConnections.size(); iTradeRoute++) {
+		if (pTrade->IsTradeRouteIndexEmpty(iTradeRoute)) {
+			continue;
+		}
+
+		TradeConnection* pConnection = &(pTrade->m_aTradeConnections[iTradeRoute]);
+
+		if ((pConnection->m_eOriginOwner == iOwner && pConnection->m_eDestOwner   == iPlayer) ||
+		    (pConnection->m_eDestOwner   == iOwner && pConnection->m_eOriginOwner == iPlayer)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasUnit(UnitTypes iUnitType)
+{
+	int iLoopUnit;
+
+	for (CvUnit* pLoopUnit = firstUnit(&iLoopUnit); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoopUnit)) {
+		if (!pLoopUnit->isDelayedDeath()) {
+			if (pLoopUnit->IsUnit(iUnitType)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool CvPlayer::HasUnitClass(UnitClassTypes iUnitClassType)
+{
+	int iLoopUnit;
+
+	for (CvUnit* pLoopUnit = firstUnit(&iLoopUnit); pLoopUnit != NULL; pLoopUnit = nextUnit(&iLoopUnit)) {
+		if (!pLoopUnit->isDelayedDeath()) {
+			if (pLoopUnit->IsUnitClass(iUnitClassType)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+#endif

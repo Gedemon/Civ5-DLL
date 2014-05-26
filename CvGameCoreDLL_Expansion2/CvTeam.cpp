@@ -1081,6 +1081,10 @@ bool CvTeam::canDeclareWar(TeamTypes eTeam) const
 		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_IsAbleToDeclareWar, eOriginatingPlayer, eTeam) == GAMEEVENTRETURN_FALSE) {
 			return false;
 		}
+
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanDeclareWar, eOriginatingPlayer, eTeam) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
 	}
 #endif
 

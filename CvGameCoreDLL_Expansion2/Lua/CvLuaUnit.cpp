@@ -99,7 +99,7 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(CanMakeTradeRoute);
 	Method(CanMakeTradeRouteAt);
 
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 	Method(CanPlunderTradeRoute);
 	Method(PlunderTradeRoute);
 #endif
@@ -146,10 +146,10 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetUpgradeUnitType);
 	Method(UpgradePrice);
 	Method(CanUpgradeRightNow);
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 	Method(CanUpgradeTo);
 #endif
-#if defined(MOD_GLOBAL_CS_UPGRADES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_CS_UPGRADES)
 	Method(CanUpgradeInTerritory);
 #endif
 	Method(GetNumResourceNeededToUpgrade);
@@ -159,7 +159,7 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetSpecialUnitType);
 	Method(GetCaptureUnitType);
 	Method(GetUnitCombatType);
-#if defined(MOD_GLOBAL_PROMOTION_CLASSES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_PROMOTION_CLASSES)
 	Method(GetUnitPromotionType);
 #endif
 	Method(GetUnitAIType);
@@ -226,7 +226,7 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(IsEnemyInMovementRange);
 
 	Method(IsTrade);
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 	Method(GetTradeRouteIndex);
 	Method(IsRecalledTrader);
 	Method(RecallTrader);
@@ -273,24 +273,24 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 #endif
 	Method(FlatMovementCost);
 	Method(IgnoreTerrainCost);
-#if defined(MOD_API_PLOT_BASED_DAMAGE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_PLOT_BASED_DAMAGE)
 	Method(IgnoreTerrainDamage);
 	Method(IgnoreFeatureDamage);
 	Method(ExtraTerrainDamage);
 	Method(ExtraFeatureDamage);
 #endif
-#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
 	Method(GetNearbyImprovementCombatBonus);
 	Method(GetNearbyImprovementBonusRange);
 	Method(GetCombatBonusImprovement);
 #endif
-#if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 	Method(CanCrossMountains);
 #endif
-#if defined(MOD_PROMOTIONS_CROSS_OCEANS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_CROSS_OCEANS)
 	Method(CanCrossOceans);
 #endif
-#if defined(MOD_PROMOTIONS_CROSS_ICE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_CROSS_ICE)
 	Method(CanCrossIce);
 #endif
 	Method(IsNeverInvisible);
@@ -396,7 +396,7 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetGarrisonedCity);
 
 	Method(GetExtraVisibilityRange);
-#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_VARIABLE_RECON)
 	Method(GetExtraReconRange);
 #endif
 	Method(GetExtraMoves);
@@ -480,7 +480,7 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(SetName);
 	Method(IsTerrainDoubleMove);
 	Method(IsFeatureDoubleMove);
-#if defined(MOD_PROMOTIONS_HALF_MOVE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_HALF_MOVE)
 	Method(IsTerrainHalfMove);
 	Method(IsFeatureHalfMove);
 #endif
@@ -544,6 +544,28 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 #if defined(MOD_API_LUA_EXTENSIONS)
 	Method(AddMessage);
 #endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(IsCivilization);
+	Method(HasPromotion);
+	Method(IsUnit);
+	Method(IsUnitClass);
+	Method(IsOnFeature);
+	Method(IsAdjacentToFeature);
+	Method(IsWithinDistanceOfFeature);
+	Method(IsOnImprovement);
+	Method(IsAdjacentToImprovement);
+	Method(IsWithinDistanceOfImprovement);
+	Method(IsOnPlotType);
+	Method(IsAdjacentToPlotType);
+	Method(IsWithinDistanceOfPlotType);
+	Method(IsOnResource);
+	Method(IsAdjacentToResource);
+	Method(IsWithinDistanceOfResource);
+	Method(IsOnTerrain);
+	Method(IsAdjacentToTerrain);
+	Method(IsWithinDistanceOfTerrain);
+#endif
 }
 //------------------------------------------------------------------------------
 const char* CvLuaUnit::GetTypeName()
@@ -571,7 +593,7 @@ int CvLuaUnit::lConvert(lua_State* L)
 	bool bIsUpgrade = lua_toboolean(L, 3);
 
 	pkUnit->convert(pkUnitToConvert, bIsUpgrade);
-#if defined(MOD_BUGFIX_MINOR)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_BUGFIX_MINOR)
 	pkUnit->setupGraphical();
 #endif
 
@@ -734,7 +756,7 @@ int CvLuaUnit::lCanMoveOrAttackInto(lua_State* L)
 	bool bResult = false;
 	if(pkPlot)
 	{
-#if defined(MOD_BUGFIX_MINOR)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_BUGFIX_MINOR)
 		bResult = pkUnit->canMoveOrAttackInto(*pkPlot, bMoveFlags);
 #else
 		pkUnit->canMoveOrAttackInto(*pkPlot, bMoveFlags);
@@ -1234,7 +1256,7 @@ int CvLuaUnit::lCanMakeTradeRouteAt(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 //------------------------------------------------------------------------------
 //bool canPlunderTradeRoute(CvPlot* pPlot)
 int CvLuaUnit::lCanPlunderTradeRoute(lua_State* L)
@@ -1659,7 +1681,7 @@ int CvLuaUnit::lCanUpgradeRightNow(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 //------------------------------------------------------------------------------
 int CvLuaUnit::lCanUpgradeTo(lua_State* L)
 {
@@ -1672,7 +1694,7 @@ int CvLuaUnit::lCanUpgradeTo(lua_State* L)
 	return 1;
 }
 #endif
-#if defined(MOD_GLOBAL_CS_UPGRADES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_CS_UPGRADES)
 //------------------------------------------------------------------------------
 int CvLuaUnit::lCanUpgradeInTerritory(lua_State* L)
 {
@@ -1759,7 +1781,7 @@ int CvLuaUnit::lGetUnitCombatType(lua_State* L)
 	lua_pushinteger(L, eResult);
 	return 1;
 }
-#if defined(MOD_GLOBAL_PROMOTION_CLASSES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_PROMOTION_CLASSES)
 //------------------------------------------------------------------------------
 //int /*UnitCombatTypes*/ getUnitPromotionType();
 int CvLuaUnit::lGetUnitPromotionType(lua_State* L)
@@ -2294,7 +2316,7 @@ int CvLuaUnit::lIsTrade(lua_State* L)
 	return 1;
 }
 
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 //------------------------------------------------------------------------------
 int CvLuaUnit::lGetTradeRouteIndex(lua_State* L)
 {
@@ -2761,7 +2783,7 @@ int CvLuaUnit::lIgnoreTerrainCost(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
-#if defined(MOD_API_PLOT_BASED_DAMAGE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_PLOT_BASED_DAMAGE)
 //------------------------------------------------------------------------------
 //bool ignoreTerrainDamage();
 int CvLuaUnit::lIgnoreTerrainDamage(lua_State* L)
@@ -2803,7 +2825,7 @@ int CvLuaUnit::lExtraFeatureDamage(lua_State* L)
 	return 1;
 }
 #endif
-#if defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_IMPROVEMENT_BONUS)
 //------------------------------------------------------------------------------
 int CvLuaUnit::lGetNearbyImprovementCombatBonus(lua_State* L)
 {
@@ -2832,7 +2854,7 @@ int CvLuaUnit::lGetCombatBonusImprovement(lua_State* L)
 	return 1;
 }
 #endif
-#if defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_CROSS_MOUNTAINS)
 //------------------------------------------------------------------------------
 //bool canCrossMountains();
 int CvLuaUnit::lCanCrossMountains(lua_State* L)
@@ -2844,7 +2866,7 @@ int CvLuaUnit::lCanCrossMountains(lua_State* L)
 	return 1;
 }
 #endif
-#if defined(MOD_PROMOTIONS_CROSS_OCEANS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_CROSS_OCEANS)
 //------------------------------------------------------------------------------
 //bool canCrossOceans();
 int CvLuaUnit::lCanCrossOceans(lua_State* L)
@@ -2856,7 +2878,7 @@ int CvLuaUnit::lCanCrossOceans(lua_State* L)
 	return 1;
 }
 #endif
-#if defined(MOD_PROMOTIONS_CROSS_ICE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_CROSS_ICE)
 //------------------------------------------------------------------------------
 //bool canCrossIce();
 int CvLuaUnit::lCanCrossIce(lua_State* L)
@@ -3820,7 +3842,7 @@ int CvLuaUnit::lGetExtraVisibilityRange(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
-#if defined(MOD_PROMOTIONS_VARIABLE_RECON)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_VARIABLE_RECON)
 //------------------------------------------------------------------------------
 //int getExtraReconRange();
 int CvLuaUnit::lGetExtraReconRange(lua_State* L)
@@ -4499,7 +4521,7 @@ int CvLuaUnit::lIsFeatureDoubleMove(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
-#if defined(MOD_PROMOTIONS_HALF_MOVE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROMOTIONS_HALF_MOVE)
 //------------------------------------------------------------------------------
 //bool isTerrainHalfMove(int /*TerrainTypes*/ eIndex);
 int CvLuaUnit::lIsTerrainHalfMove(lua_State* L)
@@ -4698,7 +4720,7 @@ int CvLuaUnit::lGetReligion(lua_State* L)
 int CvLuaUnit::lGetConversionStrength(lua_State* L)
 {
 	CvUnit* pkUnit = GetInstance(L);
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 	CvCity* pkCity = CvLuaCity::GetInstance(L, 2, false);
 	int iReligiousStrength = pkUnit->GetConversionStrength(pkCity);
 #else
@@ -4832,7 +4854,7 @@ int CvLuaUnit::lSetActivityType(lua_State* L)
 {
 	CvUnit* pkUnit = GetInstance(L);
 	const ActivityTypes eActivity = (ActivityTypes)lua_tointeger(L, 2);
-#if defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_BUGFIX_UNITS_AWAKE_IN_DANGER)
 	const bool bClearFortify = luaL_optbool(L, 3, true);
 
 	pkUnit->SetActivityType(eActivity, bClearFortify);
@@ -5001,4 +5023,26 @@ int CvLuaUnit::lAddMessage(lua_State* L)
 	SHOW_UNIT_MESSAGE(pUnit, ePlayer, szMessage);
 	return 0;
 }
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+LUAAPIIMPL(Unit, IsCivilization)
+LUAAPIIMPL(Unit, HasPromotion)
+LUAAPIIMPL(Unit, IsUnit)
+LUAAPIIMPL(Unit, IsUnitClass)
+LUAAPIIMPL(Unit, IsOnFeature)
+LUAAPIIMPL(Unit, IsAdjacentToFeature)
+LUAAPIIMPL(Unit, IsWithinDistanceOfFeature)
+LUAAPIIMPL(Unit, IsOnImprovement)
+LUAAPIIMPL(Unit, IsAdjacentToImprovement)
+LUAAPIIMPL(Unit, IsWithinDistanceOfImprovement)
+LUAAPIIMPL(Unit, IsOnPlotType)
+LUAAPIIMPL(Unit, IsAdjacentToPlotType)
+LUAAPIIMPL(Unit, IsWithinDistanceOfPlotType)
+LUAAPIIMPL(Unit, IsOnResource)
+LUAAPIIMPL(Unit, IsAdjacentToResource)
+LUAAPIIMPL(Unit, IsWithinDistanceOfResource)
+LUAAPIIMPL(Unit, IsOnTerrain)
+LUAAPIIMPL(Unit, IsAdjacentToTerrain)
+LUAAPIIMPL(Unit, IsWithinDistanceOfTerrain)
 #endif

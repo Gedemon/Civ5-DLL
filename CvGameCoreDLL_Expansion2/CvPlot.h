@@ -830,6 +830,57 @@ public:
 	void SetArtifactGreatWork(GreatWorkType eWork);
 	bool HasWrittenArtifact() const;
 
+#if defined(MOD_API_EXTENSIONS)
+	bool IsCivilization(CivilizationTypes iCivilizationType) const;
+	bool HasFeature(FeatureTypes iFeatureType) const;
+	bool HasAnyNaturalWonder() const;
+	bool HasNaturalWonder(FeatureTypes iFeatureType) const;
+	LUAAPIINLINE(IsFeatureIce, HasFeature, FEATURE_ICE)
+	LUAAPIINLINE(IsFeatureJungle, HasFeature, FEATURE_JUNGLE)
+	LUAAPIINLINE(IsFeatureMarsh, HasFeature, FEATURE_MARSH)
+	LUAAPIINLINE(IsFeatureOasis, HasFeature, FEATURE_OASIS)
+	LUAAPIINLINE(IsFeatureFloodPlains, HasFeature, FEATURE_FLOOD_PLAINS)
+	LUAAPIINLINE(IsFeatureForest, HasFeature, FEATURE_FOREST)
+	LUAAPIINLINE(IsFeatureFallout, HasFeature, FEATURE_FALLOUT)
+	LUAAPIINLINE(IsFeatureAtoll, HasFeature, ((FeatureTypes)GC.getInfoTypeForString("FEATURE_ATOLL")))
+	bool IsFeatureLake() const;
+	bool IsFeatureRiver() const;
+	bool HasImprovement(ImprovementTypes iImprovementType) const;
+	bool HasPlotType(PlotTypes iPlotType) const;
+	LUAAPIINLINE(IsPlotMountain, HasPlotType, PLOT_MOUNTAIN)
+	LUAAPIINLINE(IsPlotMountains, HasPlotType, PLOT_MOUNTAIN)
+	LUAAPIINLINE(IsPlotHill, HasPlotType, PLOT_HILLS)
+	LUAAPIINLINE(IsPlotHills, HasPlotType, PLOT_HILLS)
+	LUAAPIINLINE(IsPlotLand, HasPlotType, PLOT_LAND)
+	LUAAPIINLINE(IsPlotOcean, HasPlotType, PLOT_OCEAN)
+	bool HasResource(ResourceTypes iResourceType) const;
+	bool HasRoute(RouteTypes iRouteType) const;
+	LUAAPIINLINE(IsRouteRoad, HasRoute, ROUTE_ROAD)
+	LUAAPIINLINE(IsRouteRailroad, HasRoute, ROUTE_RAILROAD)
+	bool HasTerrain(TerrainTypes iTerrainType) const;
+	LUAAPIINLINE(IsTerrainGrass, HasTerrain, TERRAIN_GRASS)
+	LUAAPIINLINE(IsTerrainPlains, HasTerrain, TERRAIN_PLAINS)
+	LUAAPIINLINE(IsTerrainDesert, HasTerrain, TERRAIN_DESERT)
+	LUAAPIINLINE(IsTerrainTundra, HasTerrain, TERRAIN_TUNDRA)
+	LUAAPIINLINE(IsTerrainSnow, HasTerrain, TERRAIN_SNOW)
+	LUAAPIINLINE(IsTerrainCoast, HasTerrain, TERRAIN_COAST)
+	LUAAPIINLINE(IsTerrainOcean, HasTerrain, TERRAIN_OCEAN)
+	LUAAPIINLINE(IsTerrainMountain, HasTerrain, TERRAIN_MOUNTAIN)
+	LUAAPIINLINE(IsTerrainMountains, HasTerrain, TERRAIN_MOUNTAIN)
+	LUAAPIINLINE(IsTerrainHill, HasTerrain, TERRAIN_HILL)
+	LUAAPIINLINE(IsTerrainHills, HasTerrain, TERRAIN_HILL)
+	bool IsAdjacentToFeature(FeatureTypes iFeatureType) const;
+	bool IsWithinDistanceOfFeature(FeatureTypes iFeatureType, int iDistance) const;
+	bool IsAdjacentToImprovement(ImprovementTypes iImprovementType) const;
+	bool IsWithinDistanceOfImprovement(ImprovementTypes iImprovementType, int iDistance) const;
+	bool IsAdjacentToPlotType(PlotTypes iPlotType) const;
+	bool IsWithinDistanceOfPlotType(PlotTypes iPlotType, int iDistance) const;
+	bool IsAdjacentToResource(ResourceTypes iResourceType) const;
+	bool IsWithinDistanceOfResource(ResourceTypes iResourceType, int iDistance) const;
+	bool IsAdjacentToTerrain(TerrainTypes iTerrainType) const;
+	bool IsWithinDistanceOfTerrain(TerrainTypes iTerrainType, int iDistance) const;
+#endif
+
 protected:
 	class PlotBoolField
 	{

@@ -3788,8 +3788,8 @@ bool CvMilitaryAI::WillAirUnitRebase(CvUnit* pUnit) const
 	return false;
 }
 
-#if defined(MOD_AI_SMART_INTERCEPTIONS)
-/// AMS: Get all possible interceptions on that plot, doesn't use visibility to offset AI inability to remember air attacks.
+#if defined(MOD_AI_SMART_AIR_TACTICS)
+// Get all possible interceptions on that plot, doesn't use visibility to offset AI inability to remember air attacks.
 int CvMilitaryAI::GetMaxPossibleInterceptions(CvPlot* pTargetPlot) const
 {
 	int iRtnValue = 0;
@@ -3842,8 +3842,8 @@ int CvMilitaryAI::GetMaxPossibleInterceptions(CvPlot* pTargetPlot) const
 #endif
 
 /// Assess nearby enemy air assets
-#if defined(MOD_AI_SMART_INTERCEPTIONS)
-/// AMS add half of unit range to the calculations.
+#if defined(MOD_AI_SMART_AIR_TACTICS)
+// Add half of unit range to the calculations.
 int CvMilitaryAI::GetNumEnemyAirUnitsInRange(CvPlot* pCenterPlot, int iRange, bool bCountFighters, bool bCountBombers) const
 #else
 int CvMilitaryAI::GetNumEnemyAirUnitsInRange(CvPlot* pCenterPlot, int /*iRange*/, bool bCountFighters, bool bCountBombers) const
@@ -3865,12 +3865,11 @@ int CvMilitaryAI::GetNumEnemyAirUnitsInRange(CvPlot* pCenterPlot, int /*iRange*/
 				{
 					if (pLoopUnit->getDomainType() == DOMAIN_AIR)
 					{
-#if defined(MOD_AI_SMART_INTERCEPTIONS)
-						// AMS: Just to keep fighters closer to high range bombers (stealth bombers)
-						int maxCheckRange = min(pLoopUnit->GetRange(), 12);
-						int acceptableDistance = MOD_AI_SMART_INTERCEPTIONS ? maxCheckRange + (iRange / 2) : 10;
-						// AMS: distance was checked to a fixed 10 value
-						if ( plotDistance(pCenterPlot->getX(), pCenterPlot->getY(), pLoopUnit->getX(), pLoopUnit->getY()) <= acceptableDistance )
+#if defined(MOD_AI_SMART_AIR_TACTICS)
+						// Just to keep fighters closer to high range bombers (stealth bombers)
+						int iAcceptableDistance = MOD_AI_SMART_AIR_TACTICS ? min(pLoopUnit->GetRange(), 12) + (iRange / 2) : 10;
+						// distance was checked to a fixed 10 value
+						if ( plotDistance(pCenterPlot->getX(), pCenterPlot->getY(), pLoopUnit->getX(), pLoopUnit->getY()) <= iAcceptableDistance )
 #else
 						if ( plotDistance(pCenterPlot->getX(), pCenterPlot->getY(), pLoopUnit->getX(), pLoopUnit->getY()) <= 10 )
 #endif

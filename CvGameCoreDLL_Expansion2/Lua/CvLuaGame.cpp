@@ -322,7 +322,7 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 	Method(GetMinimumFaithNextPantheon);
 	Method(SetMinimumFaithNextPantheon);
 
-#if defined(MOD_API_RELIGION)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_RELIGION)
 	Method(IsInSomeReligion);
 #endif
 	Method(GetAvailablePantheonBeliefs);
@@ -343,7 +343,7 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 	Method(GetFounderBenefitsReligion);
 
 	Method(FoundPantheon);
-#if defined(MOD_API_RELIGION)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_RELIGION)
 	Method(EnhancePantheon);
 #endif
 	Method(FoundReligion);
@@ -387,7 +387,7 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 
 	Method(GetLongestCityConnectionPlots);
 
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 	Method(GetTradeRoute);
 #endif
 	Method(SelectedUnit_SpeculativePopupTradeRoute_Display);
@@ -403,10 +403,35 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 	Method(SpewTestEvents);
 #endif
 
-#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	Method(GetMinimumVassalTurns);
 	Method(GetNumTurnsBetweenVassals);
 	Method(GetMinimumVoluntaryVassalTurns);
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(AnyoneHasBelief);
+	Method(AnyoneHasBuilding);
+	Method(AnyoneHasBuildingClass);
+	Method(AnyoneHasAnyWonder);
+	Method(AnyoneHasWonder);
+	Method(GetCivilizationPlayer);
+	Method(AnyoneIsInEra);
+	Method(AnyoneHasReachedEra);
+	Method(AnyoneHasAnyNaturalWonder);
+	Method(AnyoneHasNaturalWonder);
+	Method(AnyoneHasPolicy);
+	Method(AnyoneHasTenet);
+	Method(AnyoneHasPolicyBranch);
+	Method(AnyoneHasIdeology);
+	Method(AnyoneHasProject);
+	Method(AnyoneHasPantheon);
+	Method(AnyoneHasAnyReligion);
+	Method(AnyoneHasReligion);
+	Method(IsResolutionPassed);
+	Method(AnyoneHasTech);
+	Method(AnyoneHasUnit);
+	Method(AnyoneHasUnitClass);
 #endif
 }
 //------------------------------------------------------------------------------
@@ -2168,16 +2193,16 @@ int CvLuaGame::lSetMinimumFaithNextPantheon(lua_State* L)
 	GC.getGame().GetGameReligions()->SetMinimumFaithNextPantheon(lua_tointeger(L, 1));
 	return 1;
 }
-#if defined(MOD_API_RELIGION)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_RELIGION)
 //------------------------------------------------------------------------------
 int CvLuaGame::lIsInSomeReligion(lua_State* L)
 {
 	BeliefTypes eBelief = (BeliefTypes)luaL_optint(L, 1, NO_BELIEF);
-#if defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TRAITS_ANY_BELIEF)
 	PlayerTypes ePlayer = (PlayerTypes)luaL_optint(L, 2, NO_PLAYER);
 #endif
 
-#if defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TRAITS_ANY_BELIEF)
 	const bool bResult = GC.getGame().GetGameReligions()->IsInSomeReligion(eBelief, ePlayer);
 #else
 	const bool bResult = GC.getGame().GetGameReligions()->IsInSomeReligion(eBelief);
@@ -2392,7 +2417,7 @@ int CvLuaGame::lGetBeliefsInReligion(lua_State* L)
 int CvLuaGame::lGetNumReligionsStillToFound(lua_State* L)
 {
 	int iRtnValue;
-#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_RELIGION_LOCAL_RELIGIONS)
 	const bool bIgnoreLocal	= luaL_optint(L, 1, 1);
 	iRtnValue = GC.getGame().GetGameReligions()->GetNumReligionsStillToFound(bIgnoreLocal);
 #else
@@ -2405,7 +2430,7 @@ int CvLuaGame::lGetNumReligionsStillToFound(lua_State* L)
 int CvLuaGame::lGetNumReligionsFounded(lua_State* L)
 {
 	int iRtnValue;
-#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_RELIGION_LOCAL_RELIGIONS)
 	const bool bIgnoreLocal	= luaL_optint(L, 1, 1);
 	iRtnValue = GC.getGame().GetGameReligions()->GetNumReligionsFounded(bIgnoreLocal);
 #else
@@ -2480,7 +2505,7 @@ int CvLuaGame::lFoundPantheon(lua_State* L)
 
 	return 0;
 }
-#if defined(MOD_API_RELIGION)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_RELIGION)
 //------------------------------------------------------------------------------
 int CvLuaGame::lEnhancePantheon(lua_State* L)
 {
@@ -2520,7 +2545,7 @@ int CvLuaGame::lEnhanceReligion(lua_State* L)
 	const ReligionTypes eReligion = static_cast<ReligionTypes>(luaL_checkint(L, 2));
 	const BeliefTypes eBelief1 = static_cast<BeliefTypes>(luaL_checkint(L, 3));
 	const BeliefTypes eBelief2 = static_cast<BeliefTypes>(luaL_checkint(L, 4));
-#if defined(MOD_API_RELIGION)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_RELIGION)
 	const bool bNotify = luaL_optbool(L, 5, true);
 
 	GC.getGame().GetGameReligions()->EnhanceReligion(ePlayer, eReligion, eBelief1, eBelief2, bNotify);
@@ -2901,7 +2926,7 @@ int CvLuaGame::lGetLongestCityConnectionPlots(lua_State* L)
 	return 2;
 }
 
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 //------------------------------------------------------------------------------
 // Most of this came from CvLuaPlayer::lGetTradeRoutes(lua_State* L)
 int CvLuaGame::lGetTradeRoute(lua_State* L)
@@ -3096,7 +3121,7 @@ int CvLuaGame::lSpewTestEvents(lua_State* L)
 #endif
 
 
-#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CIV4_FEATURES)
 //------------------------------------------------------------------------------
 int CvLuaGame::lGetMinimumVoluntaryVassalTurns(lua_State* L)
 {
@@ -3113,6 +3138,159 @@ int CvLuaGame::lGetMinimumVassalTurns(lua_State* L)
 int CvLuaGame::lGetNumTurnsBetweenVassals(lua_State* L)
 {
 	lua_pushinteger(L, GC.getGame().getGameSpeedInfo().getNumTurnsBetweenVassals());
+	return 1;
+}
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+int CvLuaGame::lAnyoneHasBelief(lua_State* L)
+{
+	const BeliefTypes iBeliefType = static_cast<BeliefTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasBelief(iBeliefType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasBuilding(lua_State* L)
+{
+	const BuildingTypes iBuildingType = static_cast<BuildingTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasBuilding(iBuildingType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasBuildingClass(lua_State* L)
+{
+	const BuildingClassTypes iBuildingClassType = static_cast<BuildingClassTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasBuildingClass(iBuildingClassType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasAnyWonder(lua_State* L)
+{
+	lua_pushboolean(L, GC.getGame().AnyoneHasAnyWonder());
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasWonder(lua_State* L)
+{
+	const BuildingTypes iBuildingType = static_cast<BuildingTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasWonder(iBuildingType));
+	return 1;
+}
+
+int CvLuaGame::lGetCivilizationPlayer(lua_State* L)
+{
+	const CivilizationTypes iCivilizationType = static_cast<CivilizationTypes>(luaL_checkint(L, 1));
+	lua_pushinteger(L, GC.getGame().GetCivilizationPlayer(iCivilizationType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneIsInEra(lua_State* L)
+{
+	const EraTypes iEraType = static_cast<EraTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneIsInEra(iEraType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasReachedEra(lua_State* L)
+{
+	const EraTypes iEraType = static_cast<EraTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasReachedEra(iEraType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasAnyNaturalWonder(lua_State* L)
+{
+	lua_pushboolean(L, GC.getGame().AnyoneHasAnyNaturalWonder());
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasNaturalWonder(lua_State* L)
+{
+	const FeatureTypes iFeatureType = static_cast<FeatureTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasNaturalWonder(iFeatureType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasPolicy(lua_State* L)
+{
+	const PolicyTypes iPolicyType = static_cast<PolicyTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasPolicy(iPolicyType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasTenet(lua_State* L)
+{
+	const PolicyTypes iPolicyType = static_cast<PolicyTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasTenet(iPolicyType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasPolicyBranch(lua_State* L)
+{
+	const PolicyBranchTypes iPolicyBranchType = static_cast<PolicyBranchTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasPolicyBranch(iPolicyBranchType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasIdeology(lua_State* L)
+{
+	const PolicyBranchTypes iPolicyBranchType = static_cast<PolicyBranchTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasIdeology(iPolicyBranchType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasProject(lua_State* L)
+{
+	const ProjectTypes iProjectType = static_cast<ProjectTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasProject(iProjectType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasPantheon(lua_State* L)
+{
+	lua_pushboolean(L, GC.getGame().AnyoneHasPantheon());
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasAnyReligion(lua_State* L)
+{
+	lua_pushboolean(L, GC.getGame().AnyoneHasAnyReligion());
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasReligion(lua_State* L)
+{
+	const ReligionTypes iReligionType = static_cast<ReligionTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasReligion(iReligionType));
+	return 1;
+}
+
+int CvLuaGame::lIsResolutionPassed(lua_State* L)
+{
+	const ResolutionTypes iResolutionType = static_cast<ResolutionTypes>(luaL_checkint(L, 1));
+	const int iChoice = luaL_checkint(L, 2);
+	lua_pushboolean(L, GC.getGame().IsResolutionPassed(iResolutionType, iChoice));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasTech(lua_State* L)
+{
+	const TechTypes iTechType = static_cast<TechTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasTech(iTechType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasUnit(lua_State* L)
+{
+	const UnitTypes iUnitType = static_cast<UnitTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasUnit(iUnitType));
+	return 1;
+}
+
+int CvLuaGame::lAnyoneHasUnitClass(lua_State* L)
+{
+	const UnitClassTypes iUnitClassType = static_cast<UnitClassTypes>(luaL_checkint(L, 1));
+	lua_pushboolean(L, GC.getGame().AnyoneHasUnitClass(iUnitClassType));
 	return 1;
 }
 #endif

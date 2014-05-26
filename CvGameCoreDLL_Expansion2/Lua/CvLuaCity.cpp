@@ -114,7 +114,7 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(GetBuildingProductionTurnsLeft);
 	Method(GetProjectProductionTurnsLeft);
 	Method(GetSpecialistProductionTurnsLeft);
-#if defined(MOD_PROCESS_STOCKPILE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROCESS_STOCKPILE)
 	Method(GetProcessProductionTurnsLeft);
 #endif
 
@@ -166,7 +166,7 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(IsOriginalCapital);
 	Method(IsOriginalMajorCapital);
 	Method(IsCoastal);
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 	Method(IsAddsFreshWater);
 #endif
 
@@ -183,7 +183,7 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 
 	Method(GetNumBuilding);
 	Method(IsHasBuilding);
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 	Method(GetNumBuildingClass);
 	Method(IsHasBuildingClass);
 #endif
@@ -303,11 +303,11 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 
 	Method(GetLocalResourceWonderProductionMod);
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_CITY_WORKING)
 	Method(GetBuyPlotDistance);
 	Method(GetWorkPlotDistance);
 #endif
-#if defined(MOD_BUILDINGS_CITY_WORKING)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_BUILDINGS_CITY_WORKING)
 	Method(GetCityWorkingChange);
 	Method(ChangeCityWorkingChange);
 #endif
@@ -377,7 +377,7 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 
 	Method(GetBaseYieldRate);
 
-#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
 	Method(GetBaseYieldRateFromGreatWorks);
 #endif
 
@@ -393,7 +393,7 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(GetBaseYieldRateFromMisc);
 	Method(ChangeBaseYieldRateFromMisc);
 
-#if defined(MOD_DIPLOMACY_CITYSTATES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES)
 	// Base yield rate from League
 	Method(GetBaseYieldRateFromLeague);
 #endif
@@ -463,7 +463,7 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(SetDamage);
 	Method(ChangeDamage);
 	Method(GetMaxHitPoints);
-#if defined(MOD_EVENTS_CITY_BOMBARD)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_EVENTS_CITY_BOMBARD)
 	Method(GetBombardRange);
 #endif
 	Method(CanRangeStrike);
@@ -502,14 +502,14 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 	Method(GetBuildingEspionageModifier);
 	Method(GetBuildingGlobalEspionageModifier);
 
-#if defined(MOD_API_ESPIONAGE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_ESPIONAGE)
 	Method(HasDiplomat);
 	Method(HasSpy);
 	Method(HasCounterSpy);
 	Method(GetCounterSpy);
 #endif
 
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 	Method(GetBuildingConversionModifier);
 	Method(GetBuildingGlobalConversionModifier);
 #endif
@@ -526,6 +526,54 @@ void CvLuaCity::PushMethods(lua_State* L, int t)
 
 #if defined(MOD_API_LUA_EXTENSIONS)
 	Method(AddMessage);
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(HasBelief);
+	Method(HasBuilding);
+	Method(HasBuildingClass);
+	Method(HasAnyWonder);
+	Method(HasWonder);
+	Method(IsCivilization);
+	Method(HasFeature);
+	Method(HasWorkedFeature);
+	Method(HasAnyNaturalWonder);
+	Method(HasNaturalWonder);
+	Method(HasImprovement);
+	Method(HasWorkedImprovement);
+	Method(HasPlotType);
+	Method(HasWorkedPlotType);
+	Method(HasAnyReligion);
+	Method(HasReligion);
+	Method(HasResource);
+	Method(HasWorkedResource);
+	Method(IsConnectedToCapital);
+	Method(IsConnectedTo);
+	Method(HasSpecialistSlot);
+	Method(HasSpecialist);
+	Method(HasTerrain);
+	Method(HasWorkedTerrain);
+	Method(HasAnyDomesticTradeRoute);
+	Method(HasAnyInternationalTradeRoute);
+	Method(HasTradeRouteToAnyCity);
+	Method(HasTradeRouteTo);
+	Method(HasTradeRouteFromAnyCity);
+	Method(HasTradeRouteFrom);
+	Method(IsOnFeature);
+	Method(IsAdjacentToFeature);
+	Method(IsWithinDistanceOfFeature);
+	Method(IsOnImprovement);
+	Method(IsAdjacentToImprovement);
+	Method(IsWithinDistanceOfImprovement);
+	Method(IsOnPlotType);
+	Method(IsAdjacentToPlotType);
+	Method(IsWithinDistanceOfPlotType);
+	Method(IsOnResource);
+	Method(IsAdjacentToResource);
+	Method(IsWithinDistanceOfResource);
+	Method(IsOnTerrain);
+	Method(IsAdjacentToTerrain);
+	Method(IsWithinDistanceOfTerrain);
 #endif
 }
 //------------------------------------------------------------------------------
@@ -1309,9 +1357,9 @@ int CvLuaCity::lGetSpecialistProductionTurnsLeft(lua_State* L)
 {
 	return BasicLuaMethod<int, SpecialistTypes>(L, &CvCity::getProductionTurnsLeft);
 }
-#if defined(MOD_PROCESS_STOCKPILE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROCESS_STOCKPILE)
 //------------------------------------------------------------------------------
-//int getProcessProductionTurnsLeft(ProcessTypes eSpecialist, int iNum);
+//int getProcessProductionTurnsLeft(ProcessTypes eProcess, int iNum);
 int CvLuaCity::lGetProcessProductionTurnsLeft(lua_State* L)
 {
 	return BasicLuaMethod<int, ProcessTypes>(L, &CvCity::getProductionTurnsLeft);
@@ -1632,7 +1680,7 @@ int CvLuaCity::lIsCoastal(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvCity::isCoastal);
 }
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 //------------------------------------------------------------------------------
 //bool isAddsFreshWater();
 int CvLuaCity::lIsAddsFreshWater(lua_State* L)
@@ -1735,7 +1783,7 @@ int CvLuaCity::lIsHasBuilding(lua_State* L)
 	}
 	return 1;
 }
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 //------------------------------------------------------------------------------
 //int getNumBuildingClass(BuildingClassTypes eBuildingClassType);
 int CvLuaCity::lGetNumBuildingClass(lua_State* L)
@@ -2243,7 +2291,7 @@ int CvLuaCity::lChangeTourismRateModifier(lua_State* L)
 int CvLuaCity::lGetNumGreatWorks(lua_State* L)
 {
 	CvCity* pkCity = GetInstance(L);
-#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
 	const bool bIgnoreYield = luaL_optbool(L, 2, true);
 	lua_pushinteger(L, pkCity->GetCityCulture()->GetNumGreatWorks(bIgnoreYield));
 #else
@@ -2635,23 +2683,23 @@ int CvLuaCity::lGetLocalResourceWonderProductionMod(lua_State* L)
 	return BasicLuaMethod(L, &CvCity::GetLocalResourceWonderProductionMod);
 }
 
-#if defined(MOD_GLOBAL_CITY_WORKING)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_CITY_WORKING)
 //------------------------------------------------------------------------------
-//int getCityWorkingChange();
+//int GetBuyPlotDistance();
 int CvLuaCity::lGetBuyPlotDistance(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvCity::getBuyPlotDistance);
 }
 
 //------------------------------------------------------------------------------
-//void changeCityWorkingChange(int iChange);
+//void GetWorkPlotDistance();
 int CvLuaCity::lGetWorkPlotDistance(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvCity::getWorkPlotDistance);
 }
 #endif
 
-#if defined(MOD_BUILDINGS_CITY_WORKING)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_BUILDINGS_CITY_WORKING)
 //------------------------------------------------------------------------------
 //int getCityWorkingChange();
 int CvLuaCity::lGetCityWorkingChange(lua_State* L)
@@ -3054,7 +3102,7 @@ int CvLuaCity::lGetBaseYieldRate(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
-#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
 //------------------------------------------------------------------------------
 int CvLuaCity::lGetBaseYieldRateFromGreatWorks(lua_State* L)
 {
@@ -3101,7 +3149,7 @@ int CvLuaCity::lChangeBaseYieldRateFromMisc(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvCity::ChangeBaseYieldRateFromMisc);
 }
-#if defined(MOD_DIPLOMACY_CITYSTATES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES)
 	// Base yield rate from League
 int CvLuaCity::lGetBaseYieldRateFromLeague(lua_State* L)
 {
@@ -3670,7 +3718,7 @@ int CvLuaCity::lGetMaxHitPoints(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
-#if defined(MOD_EVENTS_CITY_BOMBARD)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_EVENTS_CITY_BOMBARD)
 //int, bool GetBombardRange();
 int CvLuaCity::lGetBombardRange(lua_State* L)
 {
@@ -3831,7 +3879,7 @@ int CvLuaCity::lGetNumFreeBuilding(lua_State* L)
 }
 #if defined(MOD_API_LUA_EXTENSIONS)
 //------------------------------------------------------------------------------
-//void setNumRealBuilding(BuildingTypes iIndex, int iNewValue);
+//void SetNumFreeBuilding(BuildingTypes iIndex, int iNewValue);
 int CvLuaCity::lSetNumFreeBuilding(lua_State* L)
 {
 	CvCity* pkCity = GetInstance(L);
@@ -4060,7 +4108,7 @@ int CvLuaCity::lGetBuildingGlobalEspionageModifier(lua_State* L)
 	return 1;
 }
 
-#if defined(MOD_API_ESPIONAGE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_ESPIONAGE)
 //------------------------------------------------------------------------------
 int CvLuaCity::lHasDiplomat(lua_State* L)
 {
@@ -4107,8 +4155,8 @@ int CvLuaCity::lGetCounterSpy(lua_State* L)
 }
 #endif
 
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
-//int GetBuildingConversionModifier(BuildingClassTypes eBuildingClass)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+//int GetBuildingConversionModifier(BuildingTypes eBuilding)
 int CvLuaCity::lGetBuildingConversionModifier(lua_State* L)
 {
 	//CvCity* pkCity = GetInstance(L);
@@ -4126,7 +4174,7 @@ int CvLuaCity::lGetBuildingConversionModifier(lua_State* L)
 	return 1;
 }
 
-// int GetBuildingGlobalConversionModifier(BuildingClassTypes eBuildingClass)
+// int GetBuildingGlobalConversionModifier(BuildingTypes eBuilding)
 int CvLuaCity::lGetBuildingGlobalConversionModifier(lua_State* L)
 {
 	const BuildingTypes eBuilding = (BuildingTypes)lua_tointeger(L, 2);
@@ -4161,7 +4209,7 @@ int CvLuaCity::lSetBuildingYieldChange(lua_State* L)
 //------------------------------------------------------------------------------
 int CvLuaCity::lGetNumCityPlots(lua_State* L)
 {
-#if defined(MOD_GLOBAL_CITY_WORKING)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_CITY_WORKING)
 	CvCity* pkCity = GetInstance(L);
 	lua_pushinteger(L, pkCity->GetNumWorkablePlots());
 #else
@@ -4236,4 +4284,52 @@ int CvLuaCity::lAddMessage(lua_State* L)
 	SHOW_CITY_MESSAGE(pCity, ePlayer, szMessage);
 	return 0;
 }
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+LUAAPIIMPL(City, HasBelief)
+LUAAPIIMPL(City, HasBuilding)
+LUAAPIIMPL(City, HasBuildingClass)
+LUAAPIIMPL(City, HasAnyWonder)
+LUAAPIIMPL(City, HasWonder)
+LUAAPIIMPL(City, IsCivilization)
+LUAAPIIMPL(City, HasFeature)
+LUAAPIIMPL(City, HasWorkedFeature)
+LUAAPIIMPL(City, HasAnyNaturalWonder)
+LUAAPIIMPL(City, HasNaturalWonder)
+LUAAPIIMPL(City, HasImprovement)
+LUAAPIIMPL(City, HasWorkedImprovement)
+LUAAPIIMPL(City, HasPlotType)
+LUAAPIIMPL(City, HasWorkedPlotType)
+LUAAPIIMPL(City, HasAnyReligion)
+LUAAPIIMPL(City, HasReligion)
+LUAAPIIMPL(City, HasResource)
+LUAAPIIMPL(City, HasWorkedResource)
+LUAAPIIMPL(City, IsConnectedToCapital)
+LUAAPIIMPL(City, IsConnectedTo)
+LUAAPIIMPL(City, HasSpecialistSlot)
+LUAAPIIMPL(City, HasSpecialist)
+LUAAPIIMPL(City, HasTerrain)
+LUAAPIIMPL(City, HasWorkedTerrain)
+LUAAPIIMPL(City, HasAnyDomesticTradeRoute)
+LUAAPIIMPL(City, HasAnyInternationalTradeRoute)
+LUAAPIIMPL(City, HasTradeRouteToAnyCity)
+LUAAPIIMPL(City, HasTradeRouteTo)
+LUAAPIIMPL(City, HasTradeRouteFromAnyCity)
+LUAAPIIMPL(City, HasTradeRouteFrom)
+LUAAPIIMPL(City, IsOnFeature)
+LUAAPIIMPL(City, IsAdjacentToFeature)
+LUAAPIIMPL(City, IsWithinDistanceOfFeature)
+LUAAPIIMPL(City, IsOnImprovement)
+LUAAPIIMPL(City, IsAdjacentToImprovement)
+LUAAPIIMPL(City, IsWithinDistanceOfImprovement)
+LUAAPIIMPL(City, IsOnPlotType)
+LUAAPIIMPL(City, IsAdjacentToPlotType)
+LUAAPIIMPL(City, IsWithinDistanceOfPlotType)
+LUAAPIIMPL(City, IsOnResource)
+LUAAPIIMPL(City, IsAdjacentToResource)
+LUAAPIIMPL(City, IsWithinDistanceOfResource)
+LUAAPIIMPL(City, IsOnTerrain)
+LUAAPIIMPL(City, IsAdjacentToTerrain)
+LUAAPIIMPL(City, IsWithinDistanceOfTerrain)
 #endif

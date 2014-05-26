@@ -17,7 +17,7 @@
 #include "cvStopWatch.h"
 #include "CvTypes.h"
 
-#if defined(MOD_AI_SMART_INTERCEPTIONS)
+#if defined(MOD_AI_SMART_AIR_TACTICS)
 #include "CvMilitaryAI.h"
 #endif
 
@@ -263,8 +263,8 @@ void CvHomelandAI::EstablishHomelandPriorities()
 	m_MovePriorityTurn = GC.getGame().getGameTurn();
 
 #if defined(MOD_AI_SMART_UPGRADES)
-	// AMS: On even turns upgrade acquire much more priority in order to be able to upgrade air units.
-	int randomUpgradePriority = MOD_AI_SMART_UPGRADES ? (m_MovePriorityTurn % 2) * 50 : 0;
+	// On even turns upgrades acquire more priority in order to be able to upgrade air units.
+	int iTurnUpgradePriority = MOD_AI_SMART_UPGRADES ? (m_MovePriorityTurn % 2) * 50 : 0;
 #endif
 
 	// Find required flavor values
@@ -475,7 +475,7 @@ void CvHomelandAI::EstablishHomelandPriorities()
 
 			case AI_HOMELAND_MOVE_UPGRADE:
 #if defined(MOD_AI_SMART_UPGRADES)
-				iPriority += (iFlavorMilitaryTraining + randomUpgradePriority);
+				iPriority += (iFlavorMilitaryTraining + iTurnUpgradePriority);
 #else
 				iPriority += iFlavorMilitaryTraining;
 #endif
@@ -988,7 +988,7 @@ void CvHomelandAI::PlotHealMoves()
 		if(pUnit && !pUnit->isHuman())
 		{
 #if defined(MOD_AI_SMART_HEALING)
-			int unitHpToHeal = pUnit->GetMaxHitPoints();
+			int iHealingLimit = pUnit->GetMaxHitPoints();
 
 			if (MOD_AI_SMART_HEALING) {
 				CvPlot* unitPlot = pUnit->plot();
@@ -996,15 +996,17 @@ void CvHomelandAI::PlotHealMoves()
 
 				if (iDangerLevel > 0)
 				{
-					unitHpToHeal = ((pUnit->GetMaxHitPoints() * 3) / 4);
+					// Set the health limit to 75%
+					iHealingLimit = ((pUnit->GetMaxHitPoints() * 3) / 4);
 				}
 			}
 #endif
 
-			// Am I under 100% health and not at sea or already in a city?
 #if defined(MOD_AI_SMART_HEALING)
-			if(pUnit->GetCurrHitPoints() < unitHpToHeal && !pUnit->isEmbarked() && !pUnit->plot()->isCity())
+			// Am I under my health limit and not at sea or already in a city?
+			if(pUnit->GetCurrHitPoints() < iHealingLimit && !pUnit->isEmbarked() && !pUnit->plot()->isCity())
 #else
+			// Am I under 100% health and not at sea or already in a city?
 			if(pUnit->GetCurrHitPoints() < pUnit->GetMaxHitPoints() && !pUnit->isEmbarked() && !pUnit->plot()->isCity())
 #endif
 			{
@@ -1092,7 +1094,7 @@ void CvHomelandAI::PlotMovesToSafety()
 					{
 #if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
 						if (MOD_AI_SMART_FLEE_FROM_DANGER) {
-					// AMS: Now we use the combat modifier as parameter.
+							// Use the combat modifier as parameter.
 							int iWoundedDamageMultiplier = /*33*/ GC.getWOUNDED_DAMAGE_MULTIPLIER();
 							int alteredCombatStrength = ((pUnit->GetBaseCombatStrengthConsideringDamage() * (100 + iWoundedDamageMultiplier)) / 100);
 							if(pUnit->IsUnderEnemyRangedAttack() || alteredCombatStrength <= pUnit->GetBaseCombatStrength())
@@ -1531,10 +1533,10 @@ void CvHomelandAI::PlotUpgradeMoves()
 #if defined(MOD_AI_SMART_UPGRADES)
 		if(MOD_AI_SMART_UPGRADES && pUnit && !pUnit->isHuman())
 		{
-			int ArmyId = pUnit->getArmyID();
-			if (ArmyId != -1)
+			int iArmyId = pUnit->getArmyID();
+			if (iArmyId != -1)
 			{
-				CvArmyAI* pThisArmy = m_pPlayer->getArmyAI(ArmyId);
+				CvArmyAI* pThisArmy = m_pPlayer->getArmyAI(iArmyId);
 
 				if (pThisArmy)
 				{
@@ -2226,8 +2228,8 @@ void CvHomelandAI::PlotAircraftMoves()
 
 	if(m_CurrentMoveUnits.size() > 0)
 	{
-#if defined(MOD_AI_SMART_INTERCEPTIONS)
-		if (MOD_AI_SMART_INTERCEPTIONS)
+#if defined(MOD_AI_SMART_AIR_TACTICS)
+		if (MOD_AI_SMART_AIR_TACTICS)
 			ExecuteAircraftInterceptions();
 #endif
 		ExecuteAircraftMoves();
@@ -3120,7 +3122,7 @@ void CvHomelandAI::ExecuteMovesToSafestPlot()
 
 					int iScore;
 #if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
-					// AMS: Lower preference if water and uncovered.
+					// Lower preference if water and uncovered.
 					if(MOD_AI_SMART_FLEE_FROM_DANGER && bNeedEmbark && !bIsInCover)
 					{
 						iScore = PREFERENCE_LEVEL(0, iDanger);
@@ -4938,8 +4940,8 @@ void CvHomelandAI::ExecuteTreasureMoves()
 	}
 }
 
-#if defined(MOD_AI_SMART_INTERCEPTIONS)
-//AMS: Similar to interception moves on tacticalAI, grant some interceptions based on number of enemies
+#if defined(MOD_AI_SMART_AIR_TACTICS)
+// Similar to interception moves on tacticalAI, grant some interceptions based on number of enemies
 void CvHomelandAI::ExecuteAircraftInterceptions()
 {
 	FStaticVector<CvHomelandUnit, 64, true, c_eCiv5GameplayDLL>::iterator it;
@@ -4961,7 +4963,7 @@ void CvHomelandAI::ExecuteAircraftInterceptions()
 
 				if (iNumNearbyBombers == 1)
 				{
-					//AMS: To at least intercept once if only one bomber found.
+					// To at least intercept once if only one bomber found.
 					iNumNearbyBombers++;
 				}
 
@@ -5389,7 +5391,7 @@ void CvHomelandAI::ExecuteTradeUnitMoves()
 void CvHomelandAI::ExecuteArchaeologistMoves()
 {
 #if defined(MOD_AI_SMART_ARCHAEOLOGISTS)
-	int unAssignedArchaeologists = 0;
+	int iUnassignedArchaeologists = 0;
 #endif
 
 	FStaticVector< CvHomelandUnit, 64, true, c_eCiv5GameplayDLL >::iterator it;
@@ -5436,21 +5438,20 @@ void CvHomelandAI::ExecuteArchaeologistMoves()
 #if defined(MOD_AI_SMART_ARCHAEOLOGISTS)
 		else
 		{
-			unAssignedArchaeologists++;
+			iUnassignedArchaeologists++;
 		}
 #endif
 	}
 
 #if defined(MOD_AI_SMART_ARCHAEOLOGISTS)
-	//AMS: Unassigned archaeologists due to not valid targets, check against the possible targets left and scrap one if there are too much.
-	if (MOD_AI_SMART_ARCHAEOLOGISTS && unAssignedArchaeologists > 0)
+	// Unassigned archaeologists due to no valid targets, check against the possible targets left and scrap one if there are too many.
+	if (MOD_AI_SMART_ARCHAEOLOGISTS && iUnassignedArchaeologists > 0)
 	{
-		int possibleFutureTargetsLeft = ((m_TargetedAntiquitySites.size() / 5) + 1);
+		int iPossibleSites = ((m_TargetedAntiquitySites.size() / 5) + 1);
 
-		if (unAssignedArchaeologists > possibleFutureTargetsLeft)
+		if (iUnassignedArchaeologists > iPossibleSites)
 		{
-			int unitId = m_CurrentMoveUnits.end()->GetID();
-			CvUnit* pUnit = m_pPlayer->getUnit(unitId);
+			CvUnit* pUnit = m_pPlayer->getUnit(m_CurrentMoveUnits.end()->GetID());
 
 			if (pUnit)
 			{

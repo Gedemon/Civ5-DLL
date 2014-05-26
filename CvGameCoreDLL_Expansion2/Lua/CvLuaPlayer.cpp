@@ -60,7 +60,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 
 	Method(ChooseTech);
 
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 	Method(GetSpecificUnitType);
 	Method(GetSpecificBuildingType);
 #endif
@@ -92,7 +92,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(SetNumWondersBeatenTo);
 
 	Method(IsCapitalConnectedToCity);
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 	Method(IsPlotConnectedToPlot);
 #endif
 
@@ -131,7 +131,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetBuildingProductionNeeded);
 	Method(GetProjectProductionNeeded);
 
-#if defined(MOD_PROCESS_STOCKPILE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROCESS_STOCKPILE)
 	Method(GetMaxStockpile);
 #endif
 
@@ -289,7 +289,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetFaithPerTurnFromReligion);
 	Method(HasCreatedPantheon);
 	Method(GetBeliefInPantheon);
-#if defined(MOD_API_RELIGION)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_RELIGION)
 	Method(GetBeliefsInPantheon);
 #endif
 	Method(HasCreatedReligion);
@@ -397,6 +397,10 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetBranchPicked1);
 	Method(GetBranchPicked2);
 	Method(GetBranchPicked3);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(CanAdoptIdeology);
+	Method(CanAdoptTenet);
+#endif
 
 	Method(GetPolicyCatchSpiesModifier);
 
@@ -464,7 +468,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetGreatScientistRateModifier);
 	Method(GetGreatMerchantRateModifier);
 	Method(GetGreatEngineerRateModifier);
-#if defined(MOD_DIPLOMACY_CITYSTATES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES)
 	Method(GetGreatDiplomatRateModifier);
 	Method(GetScienceRateFromMinorAllies);
 	Method(GetScienceRateFromLeagueAid);
@@ -478,7 +482,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetPolicyGreatScientistRateModifier);
 	Method(GetPolicyGreatMerchantRateModifier);
 	Method(GetPolicyGreatEngineerRateModifier);
-#if defined(MOD_DIPLOMACY_CITYSTATES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES)
 	Method(GetPolicyGreatDiplomatRateModifier);
 #endif
 
@@ -567,7 +571,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetMinorCivType);
 	Method(GetMinorCivTrait);
 	Method(GetPersonality);
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 	Method(SetPersonality);
 #endif
 	Method(IsMinorCivHasUniqueUnit);
@@ -779,11 +783,11 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetBuyPlotCost);
 	Method(GetPlotDanger);
 
-	#if defined(MOD_GLOBAL_CITY_WORKING)
+	#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_CITY_WORKING)
 	Method(GetBuyPlotDistance);
 	Method(GetWorkPlotDistance);
 #endif
-#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TECHS_CITY_WORKING)
 	Method(GetCityWorkingChange);
 	Method(ChangeCityWorkingChange);
 #endif
@@ -921,7 +925,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetTraitCityStateCombatModifier);
 	Method(GetTraitGreatGeneralExtraBonus);
 	Method(GetTraitGreatScientistRateModifier);
-#if defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TRAITS_ANY_BELIEF)
 	Method(IsTraitAnyBelief);
 #endif
 	Method(IsTraitBonusReligiousBelief);
@@ -952,7 +956,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetPolicyEspionageModifier);
 	Method(GetPolicyEspionageCatchSpiesModifier);
 
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 	Method(GetPolicyConversionModifier);
 #endif
 
@@ -972,7 +976,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetNumSpies);
 	Method(GetNumUnassignedSpies);
 	Method(GetEspionageSpies);
-#if defined(MOD_API_ESPIONAGE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_ESPIONAGE)
 	Method(EspionageCreateSpy);
 	Method(EspionagePromoteSpy);
 	Method(EspionageSetPassive);
@@ -996,7 +1000,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetInternationalTradeRoutePlotMouseoverToolTip);
 	Method(GetNumInternationalTradeRoutesUsed);
 	Method(GetNumInternationalTradeRoutesAvailable);
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 	Method(GetPotentialInternationalTradeRouteDestinationsFrom);
 #endif
 	Method(GetPotentialInternationalTradeRouteDestinations);
@@ -1049,7 +1053,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(AddMessage);
 #endif
 
-#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	Method(IsVassalageAcceptable);
 	Method(GetVassalGoldMaintenance);
 	Method(GetJONSCulturePerTurnFromVassals);
@@ -1061,6 +1065,41 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetPlayerMoveTroopsRequestCounter);
 #endif
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(HasBelief);
+	Method(HasBuilding);
+	Method(HasBuildingClass);
+	Method(HasAnyWonder);
+	Method(HasWonder);
+	Method(IsCivilization);
+	Method(IsInEra);
+	Method(HasReachedEra);
+	Method(HasAnyNaturalWonder);
+	Method(HasNaturalWonder);
+	// Method(HasPolicy);
+	Method(HasTenet);
+	Method(HasPolicyBranch);
+	Method(HasIdeology);
+	Method(HasProject);
+	Method(IsAtPeace);
+	Method(IsAtPeaceWith);
+	Method(IsAtWar);
+	Method(IsAtWarWith);
+	Method(HasPantheon);
+	Method(HasAnyReligion);
+	Method(HasReligion);
+	Method(HasEnhancedReligion);
+	Method(IsConnectedTo);
+	Method(HasSpecialistSlot);
+	Method(HasSpecialist);
+	Method(HasTech);
+	Method(HasAnyDomesticTradeRoute);
+	Method(HasAnyInternationalTradeRoute);
+	Method(HasAnyTradeRoute);
+	Method(HasAnyTradeRouteWith);
+	Method(HasUnit);
+	Method(HasUnitClass);
+#endif
 }
 //------------------------------------------------------------------------------
 void CvLuaPlayer::HandleMissingInstance(lua_State* L)
@@ -1107,7 +1146,7 @@ int CvLuaPlayer::lInitCity(lua_State* L)
 	const int y = lua_tointeger(L, 3);
 	const bool bBumpUnits = luaL_optint(L, 4, 1);
 	const bool bInitialFounding = luaL_optint(L, 5, 1);
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 	const ReligionTypes eInitialReligion = (ReligionTypes) luaL_optint(L, 6, NO_RELIGION);
 
 	CvCity* pkCity = pkPlayer->initCity(x, y, bBumpUnits, bInitialFounding, eInitialReligion);
@@ -1221,7 +1260,7 @@ int CvLuaPlayer::lKillUnits(lua_State* L)
 	return BasicLuaMethod(L, &CvPlayerAI::killUnits);
 }
 
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lGetSpecificUnitType(lua_State* L)
 {
@@ -1465,7 +1504,7 @@ int CvLuaPlayer::lIsCapitalConnectedToCity(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lIsPlotConnectedToPlot(lua_State* L)
 {
@@ -1734,7 +1773,7 @@ int CvLuaPlayer::lGetProjectProductionNeeded(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
-#if defined(MOD_PROCESS_STOCKPILE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_PROCESS_STOCKPILE)
 //------------------------------------------------------------------------------
 //int getMaxStockpile();
 int CvLuaPlayer::lGetMaxStockpile(lua_State* L)
@@ -2793,7 +2832,7 @@ int CvLuaPlayer::lGetBeliefInPantheon(lua_State* L)
 
 	return 1;
 }
-#if defined(MOD_API_RELIGION)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_RELIGION)
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lGetBeliefsInPantheon(lua_State* L)
 {
@@ -2835,7 +2874,7 @@ int CvLuaPlayer::lCanCreatePantheon(lua_State* L)
 int CvLuaPlayer::lHasCreatedReligion(lua_State* L)
 {
 	CvPlayerAI* pkPlayer = GetInstance(L);
-#if defined(MOD_RELIGION_LOCAL_RELIGIONS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_RELIGION_LOCAL_RELIGIONS)
 	const bool bIgnoreLocal = luaL_optbool(L, 2, false);
 	const bool bResult = pkPlayer->GetReligions()->HasCreatedReligion(bIgnoreLocal);
 #else
@@ -3343,7 +3382,7 @@ int CvLuaPlayer::lGetNumInternationalTradeRoutesAvailable(lua_State* L)
 }
 
 //------------------------------------------------------------------------------
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 int CvLuaPlayer::lGetPotentialInternationalTradeRouteDestinationsFrom(lua_State* L)
 {
 	CvPlayerAI* pkPlayer = GetInstance(L);
@@ -3887,7 +3926,7 @@ int CvLuaPlayer::lGetTradeUnitType(lua_State* L)
 {
 	CvPlayerAI* pkPlayer = GetInstance(L);
 	DomainTypes eDomain = (DomainTypes)lua_tointeger(L, 2);
-#if defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_BUGFIX_UNITCLASS_NOT_UNIT)
 	lua_pushinteger(L, pkPlayer->GetTrade()->GetTradeUnit(eDomain, pkPlayer));
 #else
 	lua_pushinteger(L, pkPlayer->GetTrade()->GetTradeUnit(eDomain));
@@ -4262,7 +4301,7 @@ int CvLuaPlayer::lGetTradeRoutes(lua_State* L)
 		lua_createtable(L, 0, 0);
 		const int t = lua_gettop(L);
 
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 		lua_pushinteger(L, pConnection->m_eConnectionType);
 		lua_setfield(L, t, "TradeConnectionType");
 #endif
@@ -4328,7 +4367,7 @@ int CvLuaPlayer::lGetTradeRoutes(lua_State* L)
 
 		lua_pushinteger(L, pConnection->m_iTurnRouteComplete - GC.getGame().getGameTurn());
 		lua_setfield(L, t, "TurnsLeft");
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 		lua_pushinteger(L, pConnection->m_unitID);
 		lua_setfield(L, t, "UnitID");
 		lua_pushboolean(L, pConnection->m_bTradeUnitRecalled);
@@ -4433,7 +4472,7 @@ int CvLuaPlayer::lGetTradeRoutesAvailable(lua_State* L)
 							iTurnsLeft = pConnection->m_iTurnRouteComplete - GC.getGame().getGameTurn();
 						}
 
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 						lua_pushinteger(L, kConnection.m_eConnectionType);
 						lua_setfield(L, t, "TradeConnectionType");
 #endif
@@ -4559,7 +4598,7 @@ int CvLuaPlayer::lGetTradeRoutesToYou(lua_State* L)
 		lua_createtable(L, 0, 0);
 		const int t = lua_gettop(L);
 
-#if defined(MOD_API_TRADEROUTES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_TRADEROUTES)
 		lua_pushinteger(L, pConnection->m_eConnectionType);
 		lua_setfield(L, t, "TradeConnectionType");
 #endif
@@ -5136,6 +5175,41 @@ int CvLuaPlayer::lGetBranchPicked3(lua_State* L)
 	return 1;
 }
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//bool CanAdoptIdeology(PolicyBranchTypes  iIndex);
+int CvLuaPlayer::lCanAdoptIdeology(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const PolicyBranchTypes iIndex = (PolicyBranchTypes)lua_tointeger(L, 2);
+
+	const bool bResult = pkPlayer->GetPlayerPolicies()->CanAdoptIdeology(iIndex);
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//bool CanAdoptTenet();
+int CvLuaPlayer::lCanAdoptTenet(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+	const PolicyTypes ePolicy = static_cast<PolicyTypes>(luaL_checkinteger(L, 2));
+	bool bIgnoreCost = luaL_optbool(L, 3, false);
+
+	bool bResult = false;
+
+	CvPlayerPolicies* pkPolicies = pkPlayer->GetPlayerPolicies();
+	CvAssert(pkPolicies != NULL);
+	if(pkPolicies != NULL)
+	{
+		bResult = pkPolicies->CanAdoptPolicy(ePolicy, bIgnoreCost);
+	}
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
+
 //------------------------------------------------------------------------------
 //int GetPolicyCatchSpiesModifier();
 int CvLuaPlayer::lGetPolicyCatchSpiesModifier(lua_State* L)
@@ -5546,7 +5620,7 @@ int CvLuaPlayer::lGetGreatMerchantRateModifier(lua_State* L)
 	return BasicLuaMethod(L, &CvPlayerAI::getGreatMerchantRateModifier);
 }
 
-#if defined(MOD_DIPLOMACY_CITYSTATES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES)
 //------------------------------------------------------------------------------
 //int getGreatDiplomatRateModifier();
 int CvLuaPlayer::lGetGreatDiplomatRateModifier(lua_State* L)
@@ -5651,16 +5725,13 @@ int CvLuaPlayer::lGetPolicyGreatMerchantRateModifier(lua_State* L)
 	return 1;
 }
 
-#if defined(MOD_DIPLOMACY_CITYSTATES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CITYSTATES)
 //------------------------------------------------------------------------------
 //int GetPolicyGreatDiplomatRateModifier();
 int CvLuaPlayer::lGetPolicyGreatDiplomatRateModifier(lua_State* L)
 {
 	CvPlayer* pkPlayer = GetInstance(L);
-	if(pkPlayer)
-	{
-		lua_pushinteger(L, pkPlayer->GetPlayerPolicies()->GetNumericModifier(POLICYMOD_GREAT_DIPLOMAT_RATE));
-	}
+	lua_pushinteger(L, pkPlayer->GetPlayerPolicies()->GetNumericModifier(POLICYMOD_GREAT_DIPLOMAT_RATE));
 	return 1;
 }
 #endif
@@ -6150,7 +6221,7 @@ int CvLuaPlayer::lGetPersonality(lua_State* L)
 	lua_pushinteger(L, iResult);
 	return 1;
 }
-#if defined(MOD_API_EXTENSIONS)
+#if defined(MOD_API_LUA_EXTENSIONS)
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lSetPersonality(lua_State* L)
 {
@@ -7709,7 +7780,7 @@ int CvLuaPlayer::lGetPlotDanger(lua_State* L)
 	lua_pushinteger(L, pkPlayer->GetPlotDanger(*pkPlot));
 	return 1;
 }
-#if defined(MOD_GLOBAL_CITY_WORKING)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_CITY_WORKING)
 //------------------------------------------------------------------------------
 //int getBuyPlotDistance();
 int CvLuaPlayer::lGetBuyPlotDistance(lua_State* L)
@@ -7723,7 +7794,7 @@ int CvLuaPlayer::lGetWorkPlotDistance(lua_State* L)
 	return BasicLuaMethod(L, &CvPlayerAI::getWorkPlotDistance);
 }
 #endif
-#if defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_TECHS_CITY_WORKING)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TRAITS_CITY_WORKING) || defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_BUILDINGS_CITY_WORKING) || defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_POLICIES_CITY_WORKING) || defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TECHS_CITY_WORKING)
 //------------------------------------------------------------------------------
 //int getCityWorkingChange();
 int CvLuaPlayer::lGetCityWorkingChange(lua_State* L)
@@ -8761,7 +8832,7 @@ int CvLuaPlayer::lGetRecommendedWorkerPlots(lua_State* L)
 
 	CvUnit* pWorkerUnit = NULL;
 
-#if defined(MOD_UNITS_LOCAL_WORKERS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_UNITS_LOCAL_WORKERS)
 	if (MOD_UNITS_LOCAL_WORKERS) {
 		//Get head selected unit (which will be a worker).
 		auto_ptr<ICvUnit1> pSelectedUnit(DLLUI->GetHeadSelectedUnit());
@@ -8783,7 +8854,7 @@ int CvLuaPlayer::lGetRecommendedWorkerPlots(lua_State* L)
 				}
 			}
 		}
-#if defined(MOD_UNITS_LOCAL_WORKERS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_UNITS_LOCAL_WORKERS)
 	}
 #endif
 
@@ -8799,13 +8870,13 @@ int CvLuaPlayer::lGetRecommendedWorkerPlots(lua_State* L)
 	bool bUseDirective[cuiDirectiveSize];
 	CvPlot* pDirectivePlots[cuiDirectiveSize] = {0};
 
-#if defined(MOD_UNITS_LOCAL_WORKERS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_UNITS_LOCAL_WORKERS)
 	if (MOD_UNITS_LOCAL_WORKERS) {
 		pkPlayer->GetBuilderTaskingAI()->EvaluateBuilder(pWorkerUnit, aDirective, cuiDirectiveSize, true, false, pkPlayer->isHuman());
 	} else {
 #endif
 		pkPlayer->GetBuilderTaskingAI()->EvaluateBuilder(pWorkerUnit, aDirective, cuiDirectiveSize, true);
-#if defined(MOD_UNITS_LOCAL_WORKERS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_UNITS_LOCAL_WORKERS)
 	}
 #endif
 
@@ -9468,15 +9539,12 @@ int CvLuaPlayer::lGetTraitGreatScientistRateModifier(lua_State* L)
 	}
 	return 1;
 }
-#if defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_TRAITS_ANY_BELIEF)
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lIsTraitAnyBelief(lua_State* L)
 {
 	CvPlayer* pkPlayer = GetInstance(L);
-	if(pkPlayer)
-	{
-		lua_pushboolean(L, pkPlayer->GetPlayerTraits()->IsAnyBelief());
-	}
+	lua_pushboolean(L, pkPlayer->GetPlayerTraits()->IsAnyBelief());
 	return 1;
 }
 #endif
@@ -9798,7 +9866,7 @@ int CvLuaPlayer::lGetPolicyEspionageCatchSpiesModifier(lua_State* L)
 	return 1;
 }
 
-#if defined(MOD_RELIGION_CONVERSION_MODIFIERS)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_RELIGION_CONVERSION_MODIFIERS)
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lGetPolicyConversionModifier(lua_State* L)
 {
@@ -9951,7 +10019,7 @@ int CvLuaPlayer::lGetOpinionTable(lua_State* L)
 		}
 	}
 
-#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	if (iVisibleApproach != MAJOR_CIV_APPROACH_FRIENDLY || (MOD_DIPLOMACY_CIV4_FEATURES && GC.getGame().isOption(GAMEOPTION_ADVANCED_DIPLOMACY))) 
 #else
 	if (iVisibleApproach != MAJOR_CIV_APPROACH_FRIENDLY) 
@@ -10040,7 +10108,7 @@ int CvLuaPlayer::lGetOpinionTable(lua_State* L)
 			aOpinions.push_back(kOpinion);
 		}
 
-#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CIV4_FEATURES)
 		if (MOD_DIPLOMACY_CIV4_FEATURES) {
 			iValue = pDiploAI->GetTooManyVassalsScore(eWithPlayer);
 			if (iValue != 0)
@@ -10455,7 +10523,7 @@ int CvLuaPlayer::lGetOpinionTable(lua_State* L)
 		aOpinions.push_back(kOpinion);
 	}
 
-#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	if (MOD_DIPLOMACY_CIV4_FEATURES) {
 		if (GET_TEAM(pDiploAI->GetTeam()).IsVassal(GET_PLAYER(eWithPlayer).getTeam()))
 		{
@@ -10836,7 +10904,7 @@ int CvLuaPlayer::lGetOpinionTable(lua_State* L)
 			strOutput.insert(0, strFullPositiveColor);
 		}
 
-#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CIV4_FEATURES)
 		if(MOD_DIPLOMACY_CIV4_FEATURES && GC.getGame().isOption(GAMEOPTION_ADVANCED_DIPLOMACY))
 		{
 			CvString strTemp;
@@ -11117,7 +11185,7 @@ int CvLuaPlayer::lGetEspionageSpies(lua_State* L)
 		case SPY_STATE_SCHMOOZE:
 			lua_pushstring(L, "TXT_KEY_SPY_STATE_SCHMOOZING");
 			break;
-#if defined(MOD_API_ESPIONAGE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_ESPIONAGE)
 		case SPY_STATE_TERMINATED:
 			lua_pushstring(L, "TXT_KEY_SPY_STATE_TERMINATED");
 			break;
@@ -11140,7 +11208,7 @@ int CvLuaPlayer::lGetEspionageSpies(lua_State* L)
 		lua_pushboolean(L, pkPlayerEspionage->IsDiplomat(uiSpy));
 		lua_setfield(L, t, "IsDiplomat");
 
-#if defined(MOD_API_ESPIONAGE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_ESPIONAGE)
 		lua_pushboolean(L, pSpy->m_bPassive);
 		lua_setfield(L, t, "Passive");
 #endif
@@ -11148,7 +11216,7 @@ int CvLuaPlayer::lGetEspionageSpies(lua_State* L)
 	}
 	return 1;
 }
-#if defined(MOD_API_ESPIONAGE)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_ESPIONAGE)
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lEspionageCreateSpy(lua_State* L)
 {
@@ -11508,7 +11576,7 @@ int CvLuaPlayer::lAddMessage(lua_State* L)
 }
 #endif
 
-#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_DIPLOMACY_CIV4_FEATURES)
 //-------------------------------------------------------------------------
 int CvLuaPlayer::lGetScoreFromVassals(lua_State* L)
 {
@@ -11581,4 +11649,40 @@ int CvLuaPlayer::lGetPlayerMoveTroopsRequestCounter(lua_State* L)
 	lua_pushinteger(L, pkPlayer->GetDiplomacyAI()->GetPlayerMoveTroopsRequestCounter(eOtherPlayer));
 	return 1;
 }
+#endif
+
+#if defined(MOD_API_LUA_EXTENSIONS)
+LUAAPIIMPL(Player, HasBelief)
+LUAAPIIMPL(Player, HasBuilding)
+LUAAPIIMPL(Player, HasBuildingClass)
+LUAAPIIMPL(Player, HasAnyWonder)
+LUAAPIIMPL(Player, HasWonder)
+LUAAPIIMPL(Player, IsCivilization)
+LUAAPIIMPL(Player, IsInEra)
+LUAAPIIMPL(Player, HasReachedEra)
+LUAAPIIMPL(Player, HasAnyNaturalWonder)
+LUAAPIIMPL(Player, HasNaturalWonder)
+// LUAAPIIMPL(Player, HasPolicy)
+LUAAPIIMPL(Player, HasTenet)
+LUAAPIIMPL(Player, HasPolicyBranch)
+LUAAPIIMPL(Player, HasIdeology)
+LUAAPIIMPL(Player, HasProject)
+LUAAPIIMPL(Player, IsAtPeace)
+LUAAPIIMPL(Player, IsAtPeaceWith)
+LUAAPIIMPL(Player, IsAtWar)
+LUAAPIIMPL(Player, IsAtWarWith)
+LUAAPIIMPL(Player, HasPantheon)
+LUAAPIIMPL(Player, HasAnyReligion)
+LUAAPIIMPL(Player, HasReligion)
+LUAAPIIMPL(Player, HasEnhancedReligion)
+LUAAPIIMPL(Player, IsConnectedTo)
+LUAAPIIMPL(Player, HasSpecialistSlot)
+LUAAPIIMPL(Player, HasSpecialist)
+LUAAPIIMPL(Player, HasTech)
+LUAAPIIMPL(Player, HasAnyDomesticTradeRoute)
+LUAAPIIMPL(Player, HasAnyInternationalTradeRoute)
+LUAAPIIMPL(Player, HasAnyTradeRoute)
+LUAAPIIMPL(Player, HasAnyTradeRouteWith)
+LUAAPIIMPL(Player, HasUnit)
+LUAAPIIMPL(Player, HasUnitClass)
 #endif

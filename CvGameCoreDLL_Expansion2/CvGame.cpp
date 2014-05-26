@@ -11920,3 +11920,275 @@ void CvGame::SetLastTurnAICivsProcessed()
 	}
 }
 
+#if defined(MOD_API_EXTENSIONS)
+bool CvGame::AnyoneHasBelief(BeliefTypes iBeliefType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasBelief(iBeliefType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasBuilding(BuildingTypes iBuildingType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasBuilding(iBuildingType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasBuildingClass(BuildingClassTypes iBuildingClassType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasBuildingClass(iBuildingClassType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasAnyWonder() const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasAnyWonder()) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasWonder(BuildingTypes iBuildingType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasWonder(iBuildingType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+int CvGame::GetCivilizationPlayer(CivilizationTypes iCivilizationType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.IsCivilization(iCivilizationType)) {
+			return i;
+		}
+	}
+
+	return NO_PLAYER;
+}
+
+bool CvGame::AnyoneIsInEra(EraTypes iEraType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.IsInEra(iEraType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasReachedEra(EraTypes iEraType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasReachedEra(iEraType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasAnyNaturalWonder() const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasAnyNaturalWonder()) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasNaturalWonder(FeatureTypes iFeatureType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasNaturalWonder(iFeatureType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasPolicy(PolicyTypes iPolicyType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasPolicy(iPolicyType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasTenet(PolicyTypes iPolicyType) const
+{
+	return AnyoneHasPolicy(iPolicyType);
+}
+
+bool CvGame::AnyoneHasPolicyBranch(PolicyBranchTypes iPolicyBranchType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasPolicyBranch(iPolicyBranchType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasIdeology(PolicyBranchTypes iPolicyBranchType) const
+{
+	return AnyoneHasPolicyBranch(iPolicyBranchType);
+}
+
+bool CvGame::AnyoneHasProject(ProjectTypes iProjectType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasProject(iProjectType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasPantheon() const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasPantheon()) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasAnyReligion() const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasAnyReligion()) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasReligion(ReligionTypes iReligionType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasReligion(iReligionType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::IsResolutionPassed(ResolutionTypes iResolutionType, int iChoice) const
+{
+	CvGameLeagues* pGameLeagues = GC.getGame().GetGameLeagues();
+
+	if (pGameLeagues->GetNumActiveLeagues() > 0) {
+		CvLeague* pLeague = pGameLeagues->GetActiveLeague();
+		if (pLeague) {
+			return pLeague->IsActiveResolution(iResolutionType, iChoice);
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasTech(TechTypes iTechType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasTech(iTechType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasUnit(UnitTypes iUnitType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasUnit(iUnitType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool CvGame::AnyoneHasUnitClass(UnitClassTypes iUnitClassType) const
+{
+	for (int i = 0; i < MAX_PLAYERS; ++i) {
+		CvPlayer& player = GET_PLAYER(static_cast<PlayerTypes>(i));
+
+		if(player.isAlive() && player.HasUnitClass(iUnitClassType)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+#endif

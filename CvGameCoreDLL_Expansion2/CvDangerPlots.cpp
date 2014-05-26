@@ -619,7 +619,7 @@ void CvDangerPlots::AssignUnitDangerValue(CvUnit* pUnit, CvPlot* pPlot)
 			int iPlotY = pPlot->getY();
 
 #if defined(MOD_AI_SMART_FLEE_FROM_DANGER)
-			//AMS: Ranged unit in range?
+			// Ranged unit in range?
 			if (MOD_AI_SMART_FLEE_FROM_DANGER && pUnit->isRanged())
 			{
 				int pDistance = plotDistance(pUnit->getX(), pUnit->getY(), iPlotX, iPlotY);
@@ -628,10 +628,12 @@ void CvDangerPlots::AssignUnitDangerValue(CvUnit* pUnit, CvPlot* pPlot)
 				{
 					iTurnsAway = 1;
 				}
-				else if(pDistance < pUnit->GetRangePlusMoveToshot())
+#if defined(MOD_AI_SMART_RANGED_UNITS)
+				else if(MOD_AI_SMART_RANGED_UNITS && pDistance < pUnit->GetRangeWithMovement())
 				{
 					iTurnsAway = 2;
 				}
+#endif
 			}
 #endif
 

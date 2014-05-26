@@ -1014,7 +1014,7 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveWriter(CvUnit* pGreatWriter)
 	}
 
 #if defined(MOD_AI_SMART_GREAT_PEOPLE)
-	//AMS: If still no directive, defaults at building great work.
+	// If still no directive, defaults at building great work.
 	if (MOD_AI_SMART_GREAT_PEOPLE && eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE)
 	{
 		eDirective = GREAT_PEOPLE_DIRECTIVE_USE_POWER;
@@ -1080,7 +1080,7 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveArtist(CvUnit* pGreatArtist)
 	}
 
 #if defined(MOD_AI_SMART_GREAT_PEOPLE)
-	//AMS: If still no directive, defaults at building great work.
+	// If still no directive, defaults at building great work.
 	if (MOD_AI_SMART_GREAT_PEOPLE && eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE)
 	{
 		eDirective = GREAT_PEOPLE_DIRECTIVE_USE_POWER;
@@ -1130,7 +1130,7 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveMusician(CvUnit* pGreatMusicia
 	}
 
 #if defined(MOD_AI_SMART_GREAT_PEOPLE)
-	//AMS: If still no directive, defaults at building great work.
+	// If still no directive, defaults at building great work.
 	if (MOD_AI_SMART_GREAT_PEOPLE && eDirective == NO_GREAT_PEOPLE_DIRECTIVE_TYPE)
 	{
 		eDirective = GREAT_PEOPLE_DIRECTIVE_USE_POWER;
@@ -1254,7 +1254,7 @@ GreatPeopleDirectiveTypes CvPlayerAI::GetDirectiveScientist(CvUnit* /*pGreatScie
 #if defined(MOD_AI_SMART_GREAT_PEOPLE)
 		else if (MOD_AI_SMART_GREAT_PEOPLE)
 		{
-			//AMS: Even if not going spaceship right now, build academy 66% of times.
+			// Even if not going spaceship right now, build academy 66% of times.
 			if ((GC.getGame().getGameTurn()) % 3 != 0)
 			{
 				eDirective = GREAT_PEOPLE_DIRECTIVE_CONSTRUCT_IMPROVEMENT;
