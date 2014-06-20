@@ -144,6 +144,7 @@ CvBuildingEntry::CvBuildingEntry(void):
 	m_bFreshWater(false),
 #if defined(MOD_API_EXTENSIONS)
 	m_bAddsFreshWater(false),
+	m_bPurchaseOnly(false),
 #endif
 	m_bMountain(false),
 	m_bHill(false),
@@ -274,6 +275,7 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 #if defined(MOD_API_EXTENSIONS)
 	if (MOD_API_EXTENSIONS) {
 		m_bAddsFreshWater = kResults.GetBool("AddsFreshWater");
+		m_bPurchaseOnly = kResults.GetBool("PurchaseOnly");
 	}
 #endif
 	m_bMountain = kResults.GetBool("Mountain");
@@ -1473,6 +1475,12 @@ bool CvBuildingEntry::IsFreshWater() const
 bool CvBuildingEntry::IsAddsFreshWater() const
 {
 	return m_bAddsFreshWater;
+}
+
+/// Do we need to purchase this building (i.e. can't be built)?
+bool CvBuildingEntry::IsPurchaseOnly() const
+{
+	return m_bPurchaseOnly;
 }
 #endif
 

@@ -851,6 +851,7 @@ int CvLuaEnums::pRegister(lua_State* L)
 	EnumEnd(L);
 
 	// MinorCivQuestTypes
+	// TODO - WH - for CS quests we need to load this enum from the database
 	EnumStart(L, "MinorCivQuestTypes");
 	RegisterEnum(NO_MINOR_CIV_QUEST_TYPE);
 	RegisterEnum(MINOR_CIV_QUEST_ROUTE);

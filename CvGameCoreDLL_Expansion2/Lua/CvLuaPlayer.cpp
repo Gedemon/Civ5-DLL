@@ -783,7 +783,7 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetBuyPlotCost);
 	Method(GetPlotDanger);
 
-	#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_CITY_WORKING)
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_CITY_WORKING)
 	Method(GetBuyPlotDistance);
 	Method(GetWorkPlotDistance);
 #endif
@@ -10818,6 +10818,9 @@ int CvLuaPlayer::lGetOpinionTable(lua_State* L)
 		aOpinions.push_back(kOpinion);
 	}
 
+#if defined(MOD_AI_DIPLO_MODIFIERS)
+	ivalue = GetDiploModifiers(eWithPlayer, aOpinions);
+#else
 	iValue = pDiploAI->GetScenarioModifier1(eWithPlayer);
 	if (iValue != 0)
 	{
@@ -10844,6 +10847,7 @@ int CvLuaPlayer::lGetOpinionTable(lua_State* L)
 		kOpinion.m_str = Localization::Lookup("TXT_KEY_SPECIFIC_DIPLO_STRING_3");
 		aOpinions.push_back(kOpinion);
 	}
+#endif
 
 	std::stable_sort(aOpinions.begin(), aOpinions.end(), OpinionEval());
 
@@ -11135,7 +11139,11 @@ int CvLuaPlayer::lGetEspionageSpies(lua_State* L)
 		lua_pushinteger(L, pSpy->m_iCityY);
 		lua_setfield(L, t, "CityY");
 
+#if defined(MOD_BUGFIX_SPY_NAMES)
+		const char* szSpyName = pSpy->GetSpyName(pkThisPlayer).c_str();
+#else
 		const char* szSpyName = pkThisPlayer->getCivilizationInfo().getSpyNames(pSpy->m_iName);
+#endif
 		lua_pushstring(L, szSpyName);
 		lua_setfield(L, t, "Name");
 

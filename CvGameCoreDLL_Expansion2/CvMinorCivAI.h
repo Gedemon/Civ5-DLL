@@ -45,6 +45,7 @@ enum MinorCivPersonalityTypes
 FDataStream& operator<<(FDataStream&, const MinorCivPersonalityTypes&);
 FDataStream& operator>>(FDataStream&, MinorCivPersonalityTypes&);
 
+// TODO - WH - for CS quests we need to load this enum from the database
 enum MinorCivQuestTypes
 {
     NO_MINOR_CIV_QUEST_TYPE = -1,

@@ -339,6 +339,15 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits, 
 	// remove the resource allocation from the current owner.  This would result in double resource points because
 	// the plot has already had setOwner called on it (above), giving the player the resource points.
 	pPlot->setImprovementType(NO_IMPROVEMENT);
+#if defined(MOD_BUGFIX_MINOR)
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+	pPlot->SetImprovementPillaged(false, false);
+	pPlot->SetRoutePillaged(false, false);
+#else
+	pPlot->SetImprovementPillaged(false);
+	pPlot->SetRoutePillaged(false);
+#endif
+#endif
 	pPlot->setPlotCity(this);
 	pPlot->SetCityPurchaseID(m_iID);
 
@@ -2686,7 +2695,11 @@ bool CvCity::canTrain(UnitCombatTypes eUnitCombat) const
 
 
 //	--------------------------------------------------------------------------------
+#if defined(MOD_API_EXTENSIONS)
+bool CvCity::canConstruct(BuildingTypes eBuilding, bool bContinue, bool bTestVisible, bool bIgnoreCost, bool bWillPurchase, CvString* toolTipSink) const
+#else
 bool CvCity::canConstruct(BuildingTypes eBuilding, bool bContinue, bool bTestVisible, bool bIgnoreCost, CvString* toolTipSink) const
+#endif
 {
 	VALIDATE_OBJECT
 	BuildingTypes ePrereqBuilding;
@@ -2707,6 +2720,13 @@ bool CvCity::canConstruct(BuildingTypes eBuilding, bool bContinue, bool bTestVis
 	{
 		return false;
 	}
+
+#if defined(MOD_API_EXTENSIONS)
+	if (!bWillPurchase && pkBuildingInfo->IsPurchaseOnly())
+	{
+		return false;
+	}
+#endif
 
 	if(m_pCityBuildings->GetNumBuilding(eBuilding) >= GC.getCITY_MAX_NUM_BUILDINGS())
 	{
@@ -6167,6 +6187,17 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 #endif
 							else if (pFreeUnit->IsGreatPerson())
 							{
+#if defined(MOD_GLOBAL_SEPARATE_GP_COUNTERS)
+								if (MOD_GLOBAL_SEPARATE_GP_COUNTERS) {
+									if (pkUnitInfo->GetUnitClassType() == GC.getInfoTypeForString("UNITCLASS_MERCHANT")) {
+										owningPlayer.incrementGreatMerchantsCreated();
+									} else if (pkUnitInfo->GetUnitClassType() == GC.getInfoTypeForString("UNITCLASS_SCIENTIST")) {
+										owningPlayer.incrementGreatScientistsCreated();
+									} else {
+										owningPlayer.incrementGreatEngineersCreated();
+									}
+								} else
+#endif
 								owningPlayer.incrementGreatPeopleCreated();
 								if (!pFreeUnit->jumpToNearestValidPlot())
 									pFreeUnit->kill(false);	// Could not find a valid spot!
@@ -9611,12 +9642,6 @@ bool CvCity::IsBlockaded() const
 	
 #if defined(MOD_GLOBAL_ADJACENT_BLOCKADES)
 	if (MOD_GLOBAL_ADJACENT_BLOCKADES) {
-		// The standard logic says "if there is an enemy ship within two hexes of a port, it is blockaded"
-		// HOWEVER - this includes the situations where
-		//   a) an enemy ship on the other side of a two-wide strip of land can blockade a port (ie enemy-land-port-water blockades the port)
-		//   b) a port with two non-adjacent exits (ie on a one-wide strip of land) can be blockaded by a non-adjacent enemy (ie enemy-water-port-water blockades the port)
-		// What is needed is a check for every adjacent water plot to the port being blockaded, not a simple check of the port itself
-
 		for (int iPortLoop = 0; iPortLoop < NUM_DIRECTION_TYPES; ++iPortLoop) {
 			CvPlot* pAdjacentPlot = plotDirection(getX(), getY(), ((DirectionTypes)iPortLoop));
 			if (pAdjacentPlot && pAdjacentPlot->isWater() && !pAdjacentPlot->isBlockaded(getOwner())) {
@@ -13312,7 +13337,11 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 		// Building
 		else if(eBuildingType != NO_BUILDING)
 		{
+#if defined(MOD_API_EXTENSIONS)
+			if(!canConstruct(eBuildingType, false, !bTestTrainable, false /*bIgnoreCost*/, true /*bWillPurchase*/))
+#else
 			if(!canConstruct(eBuildingType, false, !bTestTrainable))
+#endif
 			{
 				bool bAlreadyUnderConstruction = canConstruct(eBuildingType, true, !bTestTrainable) && getFirstBuildingOrder(eBuildingType) != -1;
 				if(!bAlreadyUnderConstruction)
@@ -13447,8 +13476,15 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 				{
 					return false;
 				}
+#if defined(MOD_BUGFIX_MINOR)
+			}
+#endif
 
+#if defined(MOD_API_EXTENSIONS)
+				if(!canConstruct(eBuildingType, false, !bTestTrainable, true /*bIgnoreCost*/, true /*bWillPurchase*/))
+#else
 				if(!canConstruct(eBuildingType, false, !bTestTrainable, true /*bIgnoreCost*/))
+#endif
 				{
 					return false;
 				}
@@ -13493,7 +13529,9 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 						}
 					}
 				}
+#if !defined(MOD_BUGFIX_MINOR)
 			}
+#endif
 
 			iFaithCost = GetFaithPurchaseCost(eBuildingType);
 			if(iFaithCost < 1) return false;

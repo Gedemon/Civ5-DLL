@@ -1105,6 +1105,9 @@ public:
 	int GetSupportedMyProposalScore(PlayerTypes ePlayer);
 	int GetFoiledMyProposalScore(PlayerTypes ePlayer);
 	int GetSupportedMyHostingScore(PlayerTypes ePlayer);
+#if defined(MOD_AI_DIPLO_MODIFIERS)
+	int GetDiploModifiers(PlayerTypes ePlayer, std::vector<Opinion> aOpinions = NULL);
+#endif
 	int GetScenarioModifier1(PlayerTypes ePlayer);
 	int GetScenarioModifier2(PlayerTypes ePlayer);
 	int GetScenarioModifier3(PlayerTypes ePlayer);

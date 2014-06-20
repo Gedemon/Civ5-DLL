@@ -244,15 +244,14 @@ public:
 
 	void AwardFreeBuildings(CvCity* pCity); // slewis - broken out so that Venice can get free buildings when they purchase something
 	bool canFound(int iX, int iY, bool bTestVisible = false) const;
-#if defined(MOD_DIPLOMACY_CITYSTATES)
-	void foundmid(int iX, int iY);
-	void foundlate(int iX, int iY);
-#endif
 
 #if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
 	void found(int iX, int iY, ReligionTypes eReligion = NO_RELIGION);
 #else
 	void found(int iX, int iY);
+#endif
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+	void cityBoost(int iX, int iY, CvUnitEntry* pkUnitEntry, int iExtraPlots, int iPopChange, int iFoodPercent);
 #endif
 
 	bool canTrain(UnitTypes eUnit, bool bContinue = false, bool bTestVisible = false, bool bIgnoreCost = false, bool bIgnoreUniqueUnitStatus = false, CvString* toolTipSink = NULL) const;
@@ -692,6 +691,14 @@ public:
 	void incrementGreatGeneralsCreated();
 	int getGreatAdmiralsCreated() const;
 	void incrementGreatAdmiralsCreated();
+#if defined(MOD_GLOBAL_SEPARATE_GP_COUNTERS)
+	int getGreatMerchantsCreated() const;
+	void incrementGreatMerchantsCreated();
+	int getGreatScientistsCreated() const;
+	void incrementGreatScientistsCreated();
+	int getGreatEngineersCreated() const;
+	void incrementGreatEngineersCreated();
+#endif
 	int getGreatWritersCreated() const;
 	void incrementGreatWritersCreated();
 	int getGreatArtistsCreated() const;
@@ -1814,6 +1821,11 @@ protected:
 	FAutoVariable<int, CvPlayer> m_iGreatPeopleCreated;
 	FAutoVariable<int, CvPlayer> m_iGreatGeneralsCreated;
 	int m_iGreatAdmiralsCreated;
+#if defined(MOD_GLOBAL_SEPARATE_GP_COUNTERS)
+	int m_iGreatMerchantsCreated;
+	int m_iGreatScientistsCreated;
+	int m_iGreatEngineersCreated;
+#endif
 	int m_iGreatWritersCreated;
 	int m_iGreatArtistsCreated;
 	int m_iGreatMusiciansCreated;

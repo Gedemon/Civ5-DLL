@@ -150,6 +150,7 @@ int CvMinorCivQuest::GetEndTurn() const
 	// Other quests are not time-sensitive
 	else
 	{
+		// TODO - WH - send a CS Quest event here to get quest length
 		return NO_TURN;
 	}
 
@@ -283,6 +284,7 @@ int CvMinorCivQuest::GetInfluenceReward() const
 		break;
 #endif
 	default:
+		// TODO - WH - send a CS Quest event here to get quest influence reward
 		iReward = 0;
 		break;
 	}
@@ -332,6 +334,7 @@ int CvMinorCivQuest::GetContestValueForPlayer(PlayerTypes ePlayer)
 	}
 #endif
 
+	// TODO - WH - send a CS Quest event here to get current score for player (eg tourism accumulated during quest)
 	return iValue;
 }
 
@@ -340,6 +343,7 @@ int CvMinorCivQuest::GetContestValueForLeader()
 	MinorCivQuestTypes eType = GetType();
 	int iHighestValue = -1;
 
+	// TODO - WH - send a CS Quest event here to determine if we should run the loop
 	if(eType == MINOR_CIV_QUEST_CONTEST_CULTURE ||
 	        eType == MINOR_CIV_QUEST_CONTEST_FAITH ||
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
@@ -370,6 +374,7 @@ CivsList CvMinorCivQuest::GetContestLeaders()
 	CivsList veTiedForLead;
 	int iHighestValue = GetContestValueForLeader();
 
+	// TODO - WH - send a CS Quest event here to determine if we should run the loop
 	if(eType == MINOR_CIV_QUEST_CONTEST_CULTURE ||
 	        eType == MINOR_CIV_QUEST_CONTEST_FAITH ||
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
@@ -407,6 +412,7 @@ bool CvMinorCivQuest::IsContestLeader(PlayerTypes ePlayer)
 	if(!pMinor->GetMinorCivAI()->IsActiveQuestForPlayer(ePlayer, eType))
 		return false;
 
+	// TODO - WH - send a CS Quest event here to determine if we should run the loop
 	if(eType == MINOR_CIV_QUEST_CONTEST_CULTURE ||
 	        eType == MINOR_CIV_QUEST_CONTEST_FAITH ||
 #if defined(MOD_DIPLOMACY_CITYSTATES_QUESTS)
@@ -732,6 +738,7 @@ bool CvMinorCivQuest::IsComplete()
 	}
 #endif
 
+	// TODO - WH - send a CS Quest event here to see if the quest is complete
 	return false;
 }
 
@@ -795,6 +802,7 @@ bool CvMinorCivQuest::IsRevoked()
 	}
 #endif
 
+	// TODO - WH - send a CS Quest event here to see if the quest is revoked
 	return false;
 }
 
@@ -1110,6 +1118,7 @@ bool CvMinorCivQuest::IsExpired()
 	}
 #endif
 
+	// TODO - WH - send a CS Quest event here to see if the quest has expired
 	return false;
 }
 
@@ -1678,6 +1687,7 @@ void CvMinorCivQuest::DoStartQuest(int iStartTurn)
 		}
 	}
 #endif
+	// TODO - WH - send a CS Quest event here to start the quest for the player
 
 	strMessage << pMinor->getNameKey();
 	strSummary << pMinor->getNameKey();
@@ -1783,6 +1793,7 @@ void CvMinorCivQuest::DoStartQuestUsingExistingData(CvMinorCivQuest* pExistingQu
 	// Personal quests - Should not be started from an existing quest's data!!
 	else
 	{
+		// TODO - WH - send a CS Quest event here if we need to start an existing global quest for the player
 		CvAssertMsg(false, "Trying to start a personal quest using existing quest data.  This should not be done.  Please send Anton your save file and version.");
 		DoStartQuest(pExistingQuest->GetStartTurn());
 	}
@@ -2128,6 +2139,7 @@ bool CvMinorCivQuest::DoFinishQuest()
 		}
 	}
 #endif
+	// TODO - WH - send a CS Quest event here to finish the quest
 
 	// Update the UI with the changed data, in case it is open
 	if(m_eAssignedPlayer == GC.getGame().getActivePlayer())
@@ -2369,6 +2381,7 @@ bool CvMinorCivQuest::DoCancelQuest()
 		// General "Quest Expired" catch statement
 		else
 		{
+			// TODO - WH - send a CS Quest event here to cancel the quest for the player, will need to determine if there are multiple winners to show
 			strMessage = Localization::Lookup("TXT_KEY_NOTIFICATION_QUEST_ENDED_OTHER");
 			strSummary = Localization::Lookup("TXT_KEY_NOTIFICATION_SUMMARY_QUEST_ENDED_OTHER");
 		}
@@ -4144,6 +4157,8 @@ void CvMinorCivAI::DoTestStartGlobalQuest()
 	}
 
 	// Pick a valid quest
+	// TODO - WH - for CS quests need to get NUM_MINOR_CIV_QUEST_TYPES from the db (multiple occurances in only this file)
+	// TODO - WH - for CS quests use std::vector<MinorCivQuestTypes> instead of FStaticVector<MinorCivQuestTypes, ...> (two occurances in this file)
 	FStaticVector<MinorCivQuestTypes, NUM_MINOR_CIV_QUEST_TYPES, true, c_eCiv5GameplayDLL, 0> veValidQuests;
 	MinorCivQuestTypes eQuest;
 	PlayerTypes ePlayer;
@@ -4731,6 +4746,7 @@ bool CvMinorCivAI::IsEnabledQuest(MinorCivQuestTypes eQuest)
 			return false;
 	}
 #endif
+	// TODO - WH - send a CS Quest event here to ascertain if this quest is enabled
 
 	return true;
 }
@@ -5198,6 +5214,7 @@ bool CvMinorCivAI::IsValidQuestForPlayer(PlayerTypes ePlayer, MinorCivQuestTypes
 		}
 	}
 #endif
+	// TODO - WH - send a CS Quest event here to ascertain if this quest is valid for the player
 
 	return true;
 }
@@ -5306,6 +5323,7 @@ bool CvMinorCivAI::IsValidQuestCopyForPlayer(PlayerTypes ePlayer, CvMinorCivQues
 	// Personal quests - This should not be done, just create a new quest from scratch!!
 	else
 	{
+		// TODO - WH - send a CS Quest event here (if it's a global quest) to ascertain if the player can join in
 		CvAssertMsg(false, "Checking validity of copying a personal quest using existing quest data.  This should not be done.  Please send Anton your save file and version.");
 		return IsValidQuestForPlayer(ePlayer, eQuestType);
 	}
@@ -5351,6 +5369,7 @@ bool CvMinorCivAI::IsGlobalQuest(MinorCivQuestTypes eQuest) const
 		return true;
 #endif
 
+	// TODO - WH - send a CS Quest event here to ascertain if it's a global quest
 	return false;
 }
 
@@ -5394,6 +5413,7 @@ int CvMinorCivAI::GetMinPlayersNeededForQuest(MinorCivQuestTypes eQuest) const
 		iPlayersNeeded = 3;
 	}
 #endif
+	// TODO - WH - send a CS Quest event here to get the number of living players needed for the quest
 
 	int iMajorsEverAlive = GC.getGame().countMajorCivsEverAlive();
 	iPlayersNeeded = min(iPlayersNeeded, iMajorsEverAlive);
@@ -5832,6 +5852,7 @@ int CvMinorCivAI::GetPersonalityQuestBias(MinorCivQuestTypes eQuest)
 		iCount /= 100;
 	}
 #endif
+	// TODO - WH - send a CS Quest event here to get the personality bias value
 
 	return iCount / 10;
 }
@@ -11228,7 +11249,11 @@ void CvMinorCivAI::DoElection()
 					strSummary << pCapital->getNameKey();
 					Localization::String strNotification = Localization::Lookup("TXT_KEY_NOTIFICATION_SPY_RIG_ELECTION_SUCCESS");
 					strNotification << GET_PLAYER(ePlayer).GetEspionage()->GetSpyRankName(apSpy[ui]->m_eRank);
+#if defined(MOD_BUGFIX_SPY_NAMES)
+					strNotification << apSpy[ui]->GetSpyName(&GET_PLAYER(ePlayer));
+#else
 					strNotification << GET_PLAYER(ePlayer).getCivilizationInfo().getSpyNames(apSpy[ui]->m_iName);
+#endif
 					strNotification << pCapital->getNameKey();
 					pNotifications->Add(NOTIFICATION_SPY_RIG_ELECTION_SUCCESS, strNotification.toUTF8(), strSummary.toUTF8(), pCapital->getX(), pCapital->getY(), -1);
 				}
@@ -11260,7 +11285,11 @@ void CvMinorCivAI::DoElection()
 						strSummary << pCapital->getNameKey();
 						Localization::String strNotification = Localization::Lookup("TXT_KEY_NOTIFICATION_SPY_RIG_ELECTION_FAILURE");
 						strNotification << GET_PLAYER(ePlayer).GetEspionage()->GetSpyRankName(apSpy[ui]->m_eRank);
+#if defined(MOD_BUGFIX_SPY_NAMES)
+						strNotification << apSpy[ui]->GetSpyName(&GET_PLAYER(ePlayer));
+#else
 						strNotification << GET_PLAYER(ePlayer).getCivilizationInfo().getSpyNames(apSpy[ui]->m_iName);
+#endif
 						strNotification << pCapital->getNameKey();
 						strNotification << GET_PLAYER(eElectionWinner).getCivilizationShortDescriptionKey();
 						pNotifications->Add(NOTIFICATION_SPY_RIG_ELECTION_FAILURE, strNotification.toUTF8(), strSummary.toUTF8(), pCapital->getX(), pCapital->getY(), -1);
@@ -11618,6 +11647,15 @@ void CvMinorCivAI::DoTileImprovementGiftFromMajor(PlayerTypes eMajor, int iPlotX
 	}
 
 	pPlot->setImprovementType(eImprovement, eMajor);
+#if defined(MOD_BUGFIX_MINOR)
+	// Clear the pillage state on this plot (eg Minor builds a farm, barbs pillage it,
+	// minor discovers iron on the plot, player pays to build a mine, but the plot is still pillaged!)
+#if defined(MOD_EVENTS_TILE_IMPROVEMENTS)
+	pPlot->SetImprovementPillaged(false, false);
+#else
+	pPlot->SetImprovementPillaged(false);
+#endif
+#endif
 
 	// VFX
 	auto_ptr<ICvPlot1> pDllPlot(new CvDllPlot(pPlot));

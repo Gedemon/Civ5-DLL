@@ -6443,7 +6443,11 @@ bool CvUnit::plunderTradeRoute()
 	}
 
 	// right now, plunder the first unit
+#if defined(MOD_API_EXTENSIONS)
+	pTrade->PlunderTradeRoute(aiTradeUnitsAtPlot[0], this);
+#else
 	pTrade->PlunderTradeRoute(aiTradeUnitsAtPlot[0]);
+#endif
 	return true;
 }
 
@@ -7231,11 +7235,13 @@ bool CvUnit::found()
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	if(MOD_DIPLOMACY_CITYSTATES && m_pUnitInfo->IsFoundMid())
 	{
-		kPlayer.foundmid(getX(), getY());
+		// TODO - WH - getPIONEER_EXTRA_PLOTS, getPIONEER_FOOD_PERCENT
+		kPlayer.cityBoost(getX(), getY(), m_pUnitInfo, GC.getPIONEER_POPULATION_CHANGE(), GC.getPIONEER_POPULATION_CHANGE(), 25);
 	}
 	if(MOD_DIPLOMACY_CITYSTATES && m_pUnitInfo->IsFoundLate())
 	{
-		kPlayer.foundlate(getX(), getY());
+		// TODO - WH - getCOLONIST_EXTRA_PLOTS, getCOLONIST_FOOD_PERCENT
+		kPlayer.cityBoost(getX(), getY(), m_pUnitInfo, GC.getCOLONIST_POPULATION_CHANGE(), GC.getCOLONIST_POPULATION_CHANGE(), 50);
 	}
 #endif
 

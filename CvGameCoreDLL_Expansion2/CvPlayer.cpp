@@ -200,6 +200,11 @@ CvPlayer::CvPlayer() :
 	, m_iGreatPeopleCreated("CvPlayer::m_iGreatPeopleCreated", m_syncArchive)
 	, m_iGreatGeneralsCreated("CvPlayer::m_iGreatGeneralsCreated", m_syncArchive)
 	, m_iGreatAdmiralsCreated(0)
+#if defined(MOD_GLOBAL_SEPARATE_GP_COUNTERS)
+	, m_iGreatMerchantsCreated(0)
+	, m_iGreatScientistsCreated(0)
+	, m_iGreatEngineersCreated(0)
+#endif
 	, m_iGreatWritersCreated(0)
 	, m_iGreatArtistsCreated(0)
 	, m_iGreatMusiciansCreated(0)
@@ -835,6 +840,11 @@ void CvPlayer::uninit()
 	m_iGreatPeopleCreated = 0;
 	m_iGreatGeneralsCreated = 0;
 	m_iGreatAdmiralsCreated = 0;
+#if defined(MOD_GLOBAL_SEPARATE_GP_COUNTERS)
+	m_iGreatMerchantsCreated = 0;
+	m_iGreatScientistsCreated = 0;
+	m_iGreatEngineersCreated = 0;
+#endif
 	m_iGreatWritersCreated = 0;
 	m_iGreatArtistsCreated = 0;
 	m_iGreatMusiciansCreated = 0;
@@ -2135,14 +2145,22 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 						{
 							strNotification = Localization::Lookup("TXT_KEY_NOTIFICATION_SPY_EVICTED_CONQUEST_YOU");
 							strNotification << pEspionage->GetSpyRankName(pSpy->m_eRank);
+#if defined(MOD_BUGFIX_SPY_NAMES)
+							strNotification << pSpy->GetSpyName(&GET_PLAYER((PlayerTypes)i));
+#else
 							strNotification << GET_PLAYER((PlayerTypes)i).getCivilizationInfo().getSpyNames(pSpy->m_iName);
+#endif
 							strNotification << pOldCity->getNameKey();
 						}
 						else
 						{
 							strNotification = Localization::Lookup("TXT_KEY_NOTIFICATION_SPY_EVICTED_CONQUEST");
 							strNotification << pEspionage->GetSpyRankName(pSpy->m_eRank);
+#if defined(MOD_BUGFIX_SPY_NAMES)
+							strNotification << pSpy->GetSpyName(&GET_PLAYER((PlayerTypes)i));
+#else
 							strNotification << GET_PLAYER((PlayerTypes)i).getCivilizationInfo().getSpyNames(pSpy->m_iName);
+#endif
 							strNotification << pOldCity->getNameKey();
 							strNotification << getCivilizationInfo().getShortDescriptionKey();
 						}
@@ -2154,14 +2172,22 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 						{
 							strNotification = Localization::Lookup("TXT_KEY_NOTIFICATION_SPY_EVICTED_TRADE_YOU");
 							strNotification << pEspionage->GetSpyRankName(pSpy->m_eRank);
+#if defined(MOD_BUGFIX_SPY_NAMES)
+							strNotification << pSpy->GetSpyName(&GET_PLAYER((PlayerTypes)i));
+#else
 							strNotification << GET_PLAYER((PlayerTypes)i).getCivilizationInfo().getSpyNames(pSpy->m_iName);
+#endif
 							strNotification << pOldCity->getNameKey();
 						}
 						else
 						{
 							strNotification = Localization::Lookup("TXT_KEY_NOTIFICATION_SPY_EVICTED_TRADE");
 							strNotification << pEspionage->GetSpyRankName(pSpy->m_eRank);
+#if defined(MOD_BUGFIX_SPY_NAMES)
+							strNotification << pSpy->GetSpyName(&GET_PLAYER((PlayerTypes)i));
+#else
 							strNotification << GET_PLAYER((PlayerTypes)i).getCivilizationInfo().getSpyNames(pSpy->m_iName);
+#endif
 							strNotification << pOldCity->getNameKey();
 							strNotification << getCivilizationInfo().getShortDescriptionKey();
 						}
@@ -7075,152 +7101,6 @@ bool CvPlayer::canFound(int iX, int iY, bool bTestVisible) const
 	return GC.getGame().GetSettlerSiteEvaluator()->CanFound(pPlot, this, bTestVisible);
 }
 
-#if defined(MOD_DIPLOMACY_CITYSTATES)
-void CvPlayer::foundmid(int iX, int iY)
-{
-	//Advanced Settler Buildings
-	if(!isMinorCiv() && !isBarbarian())
-	{
-		CvPlot* pPlot = GC.getMap().plot(iX, iY);
-		CvCity* pCity = NULL;
-		if(pPlot->isCity())
-		{
-			pCity = GC.getMap().findCity(iX, iY, GetID(), NO_TEAM);
-		}
-		CvUnitEntry* pkUnitEntry;
-		UnitTypes eAdvSettler = NO_UNIT;
-		for(int iUnitLoop = 0; iUnitLoop < GC.getNumUnitInfos(); iUnitLoop++)
-		{
-			UnitTypes eLoopUnit = (UnitTypes)iUnitLoop;
-			pkUnitEntry = GC.getUnitInfo(eLoopUnit);
-			if(pkUnitEntry && pkUnitEntry->IsFoundMid())
-			{
-				eAdvSettler = eLoopUnit;
-				break;
-			}
-		}
-		if(eAdvSettler != NO_UNIT)
-		{
-			pkUnitEntry = GC.getUnitInfo(eAdvSettler);
-			if(pkUnitEntry)
-			{
-				CvUnitEntry& thisUnitInfo = *pkUnitEntry;
-				const int iNumBuildingClassInfos = GC.getNumBuildingClassInfos();
-				CvCivilizationInfo& thisCivilization = getCivilizationInfo();
-				for(int iBuildingClassLoop = 0; iBuildingClassLoop < iNumBuildingClassInfos; iBuildingClassLoop++)
-				{
-					const BuildingClassTypes eBuildingClass = (BuildingClassTypes) iBuildingClassLoop;
-					CvBuildingClassInfo* pkBuildingClassInfo = GC.getBuildingClassInfo(eBuildingClass);
-					if(!pkBuildingClassInfo)
-					{
-						continue;
-					}
-					if(thisUnitInfo.GetBuildOnFound(eBuildingClass))
-					{
-						const BuildingTypes eFreeBuilding = (BuildingTypes)(thisCivilization.getCivilizationBuildings(eBuildingClass));
-						if(canConstruct(eFreeBuilding) && pCity->isValidBuildingLocation(eFreeBuilding))
-						{
-							pCity->GetCityBuildings()->SetNumRealBuilding(eFreeBuilding, 1);
-						}
-					}
-				}
-			}
-			if(GetNewCityExtraPopulation() < GC.getPIONEER_POPULATION_CHANGE())
-			{
-				ChangeNewCityExtraPopulation(GC.getPIONEER_POPULATION_CHANGE());
-			}
-			pCity->setPopulation(GetNewCityExtraPopulation());
-			//25% food, to prevent instant-starvation
-			pCity->changeFood((pCity->growthThreshold() / 4));
-			//And a little territory to boot
-			int iExtraTerritoryClaim = GC.getPIONEER_POPULATION_CHANGE();
-			for (int i = 0; i < iExtraTerritoryClaim; i++)
-			{
-				CvPlot* pPlotToAcquire = pCity->GetNextBuyablePlot();
-
-				// maybe the player owns ALL of the plots or there are none available?
-				if(pPlotToAcquire)
-				{
-					pCity->DoAcquirePlot(pPlotToAcquire->getX(), pPlotToAcquire->getY());
-				}
-			}
-		}
-	}
-}
-
-void CvPlayer::foundlate(int iX, int iY)
-{
-	//Advanced Settler Buildings
-	if(!isMinorCiv() && !isBarbarian())
-	{
-		CvPlot* pPlot = GC.getMap().plot(iX, iY);
-		CvCity* pCity = NULL;
-		if(pPlot->isCity())
-		{
-			pCity = GC.getMap().findCity(iX, iY, GetID(), NO_TEAM);
-		}
-		CvUnitEntry* pkUnitEntry;
-		UnitTypes eAdvSettler = NO_UNIT;
-		for(int iUnitLoop = 0; iUnitLoop < GC.getNumUnitInfos(); iUnitLoop++)
-		{
-			UnitTypes eLoopUnit = (UnitTypes)iUnitLoop;
-			pkUnitEntry = GC.getUnitInfo(eLoopUnit);
-			if(pkUnitEntry && pkUnitEntry->IsFoundLate())
-			{
-				eAdvSettler = eLoopUnit;
-				break;
-			}
-		}
-		if(eAdvSettler != NO_UNIT)
-		{
-			pkUnitEntry = GC.getUnitInfo(eAdvSettler);
-			if(pkUnitEntry)
-			{
-				CvUnitEntry& thisUnitInfo = *pkUnitEntry;
-				const int iNumBuildingClassInfos = GC.getNumBuildingClassInfos();
-				CvCivilizationInfo& thisCivilization = getCivilizationInfo();
-				for(int iBuildingClassLoop = 0; iBuildingClassLoop < iNumBuildingClassInfos; iBuildingClassLoop++)
-				{
-					const BuildingClassTypes eBuildingClass = (BuildingClassTypes) iBuildingClassLoop;
-					CvBuildingClassInfo* pkBuildingClassInfo = GC.getBuildingClassInfo(eBuildingClass);
-					if(!pkBuildingClassInfo)
-					{
-						continue;
-					}
-					if(thisUnitInfo.GetBuildOnFound(eBuildingClass))
-					{
-						const BuildingTypes eFreeBuilding = (BuildingTypes)(thisCivilization.getCivilizationBuildings(eBuildingClass));
-						if(canConstruct(eFreeBuilding) && pCity->isValidBuildingLocation(eFreeBuilding))
-						{
-							pCity->GetCityBuildings()->SetNumRealBuilding(eFreeBuilding, 1);
-						}
-					}
-				}
-			}
-			if(GetNewCityExtraPopulation() < GC.getCOLONIST_POPULATION_CHANGE())
-			{
-				ChangeNewCityExtraPopulation(GC.getCOLONIST_POPULATION_CHANGE() - GetNewCityExtraPopulation());
-			}
-			pCity->setPopulation(GetNewCityExtraPopulation());
-			//50% food, to prevent instant-starvation
-			pCity->changeFood((pCity->growthThreshold() / 2));
-			//And a little territory to boot
-			int iExtraTerritoryClaim = GC.getCOLONIST_POPULATION_CHANGE();
-			for (int i = 0; i < iExtraTerritoryClaim; i++)
-			{
-				CvPlot* pPlotToAcquire = pCity->GetNextBuyablePlot();
-
-				// maybe the player owns ALL of the plots or there are none available?
-				if(pPlotToAcquire)
-				{
-					pCity->DoAcquirePlot(pPlotToAcquire->getX(), pPlotToAcquire->getY());
-				}
-			}
-		}
-	}
-}
-#endif
-
 //	--------------------------------------------------------------------------------
 #if defined(MOD_GLOBAL_RELIGIOUS_SETTLERS)
 void CvPlayer::found(int iX, int iY, ReligionTypes eReligion)
@@ -7334,6 +7214,65 @@ void CvPlayer::found(int iX, int iY)
 	}
 }
 
+#if defined(MOD_DIPLOMACY_CITYSTATES)
+void CvPlayer::cityBoost(int iX, int iY, CvUnitEntry* pkUnitEntry, int iExtraPlots, int iPopChange, int iFoodPercent)
+{
+	//Advanced Settler Buildings
+	if(pkUnitEntry && !isMinorCiv() && !isBarbarian())
+	{
+		CvPlot* pPlot = GC.getMap().plot(iX, iY);
+		CvCity* pCity = NULL;
+		if(pPlot->isCity())
+		{
+			pCity = GC.getMap().findCity(iX, iY, GetID(), NO_TEAM);
+		}
+
+		if(pCity)
+		{
+			const int iNumBuildingClassInfos = GC.getNumBuildingClassInfos();
+			CvCivilizationInfo& thisCivilization = getCivilizationInfo();
+			for(int iBuildingClassLoop = 0; iBuildingClassLoop < iNumBuildingClassInfos; iBuildingClassLoop++)
+			{
+				const BuildingClassTypes eBuildingClass = (BuildingClassTypes) iBuildingClassLoop;
+				CvBuildingClassInfo* pkBuildingClassInfo = GC.getBuildingClassInfo(eBuildingClass);
+				if(!pkBuildingClassInfo)
+				{
+					continue;
+				}
+				if(pkUnitEntry->GetBuildOnFound(eBuildingClass))
+				{
+					const BuildingTypes eFreeBuilding = (BuildingTypes)(thisCivilization.getCivilizationBuildings(eBuildingClass));
+					if(canConstruct(eFreeBuilding) && pCity->isValidBuildingLocation(eFreeBuilding))
+					{
+						pCity->GetCityBuildings()->SetNumRealBuilding(eFreeBuilding, 1);
+					}
+				}
+			}
+		}
+
+		if(GetNewCityExtraPopulation() < iPopChange)
+		{
+			ChangeNewCityExtraPopulation(iPopChange - GetNewCityExtraPopulation());
+		}
+		pCity->setPopulation(GetNewCityExtraPopulation());
+
+		//25% food, to prevent instant-starvation
+		pCity->changeFood((pCity->growthThreshold() * iFoodPercent / 100));
+
+		//And a little territory to boot
+		for (int i = 0; i < iExtraPlots; i++)
+		{
+			CvPlot* pPlotToAcquire = pCity->GetNextBuyablePlot();
+
+			// maybe the player owns ALL of the plots or there are none available?
+			if(pPlotToAcquire)
+			{
+				pCity->DoAcquirePlot(pPlotToAcquire->getX(), pPlotToAcquire->getY());
+			}
+		}
+	}
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 bool CvPlayer::canTrain(UnitTypes eUnit, bool bContinue, bool bTestVisible, bool bIgnoreCost, bool bIgnoreUniqueUnitStatus, CvString* toolTipSink) const
@@ -13781,10 +13720,22 @@ void CvPlayer::changeGoldenAgeTurns(int iChange)
 				GC.getGame().addReplayMessage(REPLAY_MESSAGE_MAJOR_EVENT, GetID(), locString.toUTF8(), -1, -1);
 
 				gDLL->GameplayGoldenAgeStarted();
+
+#if defined(MOD_EVENTS_GOLDEN_AGE)
+				if (MOD_EVENTS_GOLDEN_AGE) {
+					GAMEEVENTINVOKE_HOOK(GAMEEVENT_PlayerGoldenAge, GetID(), true, iChange);
+				}
+#endif
 			}
 			else
 			{
 				gDLL->GameplayGoldenAgeEnded();
+
+#if defined(MOD_EVENTS_GOLDEN_AGE)
+				if (MOD_EVENTS_GOLDEN_AGE) {
+					GAMEEVENTINVOKE_HOOK(GAMEEVENT_PlayerGoldenAge, GetID(), false, 0);
+				}
+#endif
 			}
 
 			CvNotifications* pNotifications = GetNotifications();
@@ -13912,6 +13863,44 @@ void CvPlayer::incrementGreatAdmiralsCreated()
 {
 	m_iGreatAdmiralsCreated++;
 }
+
+#if defined(MOD_GLOBAL_SEPARATE_GP_COUNTERS)
+//	--------------------------------------------------------------------------------
+int CvPlayer::getGreatMerchantsCreated() const
+{
+	return m_iGreatMerchantsCreated;
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlayer::incrementGreatMerchantsCreated()
+{
+	m_iGreatMerchantsCreated++;
+}
+
+//	--------------------------------------------------------------------------------
+int CvPlayer::getGreatScientistsCreated() const
+{
+	return m_iGreatScientistsCreated;
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlayer::incrementGreatScientistsCreated()
+{
+	m_iGreatScientistsCreated++;
+}
+
+//	--------------------------------------------------------------------------------
+int CvPlayer::getGreatEngineersCreated() const
+{
+	return m_iGreatEngineersCreated;
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlayer::incrementGreatEngineersCreated()
+{
+	m_iGreatEngineersCreated++;
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 int CvPlayer::getGreatWritersCreated() const
@@ -14655,6 +14644,17 @@ void CvPlayer::DoSpawnGreatPerson(PlayerTypes eMinor)
 #endif
 			else
 			{
+#if defined(MOD_GLOBAL_SEPARATE_GP_COUNTERS)
+				if (MOD_GLOBAL_SEPARATE_GP_COUNTERS) {
+					if (pNewGreatPeople->getUnitInfo().GetUnitClassType() == GC.getInfoTypeForString("UNITCLASS_MERCHANT")) {
+						incrementGreatMerchantsCreated();
+					} else if (pNewGreatPeople->getUnitInfo().GetUnitClassType() == GC.getInfoTypeForString("UNITCLASS_SCIENTIST")) {
+						incrementGreatScientistsCreated();
+					} else {
+						incrementGreatEngineersCreated();
+					}
+				} else
+#endif
 				incrementGreatPeopleCreated();
 			}
 
@@ -15636,7 +15636,11 @@ void CvPlayer::changeConscriptCount(int iChange)
 //	--------------------------------------------------------------------------------
 int CvPlayer::getOverflowResearch() const
 {
+#if defined(MOD_BUGFIX_MINOR)
+	return getOverflowResearchTimes100() / 100;
+#else
 	return m_iOverflowResearch / 100;
+#endif
 }
 
 
@@ -21362,7 +21366,11 @@ void CvPlayer::doResearch()
 			if(GET_TEAM(getTeam()).GetTeamTechs())
 			{
 				int iBeakersTowardsTechTimes100 = GetScienceTimes100() + iOverflowResearch;
+#if defined(MOD_BUGFIX_RESEARCH_OVERFLOW)
+				GET_TEAM(getTeam()).GetTeamTechs()->ChangeResearchProgressTimes100(eCurrentTech, iBeakersTowardsTechTimes100, GetID(), iOverflowResearch, calculateResearchModifier(eCurrentTech));
+#else
 				GET_TEAM(getTeam()).GetTeamTechs()->ChangeResearchProgressTimes100(eCurrentTech, iBeakersTowardsTechTimes100, GetID());
+#endif
 				UpdateResearchAgreements(GetScienceTimes100() / 100);
 			}
 		}
@@ -23250,6 +23258,17 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 #endif
 									else if(pNewUnit->IsGreatPerson())
 									{
+#if defined(MOD_GLOBAL_SEPARATE_GP_COUNTERS)
+										if (MOD_GLOBAL_SEPARATE_GP_COUNTERS) {
+											if (pNewUnit->getUnitInfo().GetUnitClassType() == GC.getInfoTypeForString("UNITCLASS_MERCHANT")) {
+												incrementGreatMerchantsCreated();
+											} else if (pNewUnit->getUnitInfo().GetUnitClassType() == GC.getInfoTypeForString("UNITCLASS_SCIENTIST")) {
+												incrementGreatScientistsCreated();
+											} else {
+												incrementGreatEngineersCreated();
+											}
+										} else
+#endif
 										incrementGreatPeopleCreated();
 										pNewUnit->jumpToNearestValidPlot();
 									}
@@ -23662,6 +23681,11 @@ void CvPlayer::Read(FDataStream& kStream)
 	kStream >> m_iGreatPeopleCreated;
 	kStream >> m_iGreatGeneralsCreated;
 	kStream >> m_iGreatAdmiralsCreated;
+#if defined(MOD_GLOBAL_SEPARATE_GP_COUNTERS)
+	MOD_SERIALIZE_READ(52, kStream, m_iGreatMerchantsCreated, 0);
+	MOD_SERIALIZE_READ(52, kStream, m_iGreatScientistsCreated, 0);
+	MOD_SERIALIZE_READ(52, kStream, m_iGreatEngineersCreated, 0);
+#endif
 	kStream >> m_iGreatWritersCreated;
 	kStream >> m_iGreatArtistsCreated;
 	kStream >> m_iGreatMusiciansCreated;
@@ -24233,6 +24257,11 @@ void CvPlayer::Write(FDataStream& kStream) const
 	kStream << m_iGreatPeopleCreated;
 	kStream << m_iGreatGeneralsCreated;
 	kStream << m_iGreatAdmiralsCreated;
+#if defined(MOD_GLOBAL_SEPARATE_GP_COUNTERS)
+	MOD_SERIALIZE_WRITE(kStream, m_iGreatMerchantsCreated);
+	MOD_SERIALIZE_WRITE(kStream, m_iGreatScientistsCreated);
+	MOD_SERIALIZE_WRITE(kStream, m_iGreatEngineersCreated);
+#endif
 	kStream << m_iGreatWritersCreated;
 	kStream << m_iGreatArtistsCreated;
 	kStream << m_iGreatMusiciansCreated;
@@ -24615,7 +24644,11 @@ void CvPlayer::createGreatGeneral(UnitTypes eGreatPersonUnit, int iX, int iY)
 	{
 		if(GET_PLAYER((PlayerTypes)iI).getTeam() == getTeam())
 		{
+#if defined(MOD_BUGFIX_MINOR)
+			GET_PLAYER((PlayerTypes)iI).changeGreatGeneralsThresholdModifier(/*50*/ GC.getGREAT_GENERALS_THRESHOLD_INCREASE_TEAM() * ((getGreatGeneralsCreated() / 10) + 1));
+#else
 			GET_PLAYER((PlayerTypes)iI).changeGreatGeneralsThresholdModifier(/*50*/ GC.getGREAT_GENERALS_THRESHOLD_INCREASE_TEAM() * ((getGreatPeopleCreated() / 10) + 1));
+#endif
 		}
 	}
 
@@ -24681,7 +24714,11 @@ void CvPlayer::createGreatAdmiral(UnitTypes eGreatPersonUnit, int iX, int iY)
 	{
 		if(GET_PLAYER((PlayerTypes)iI).getTeam() == getTeam())
 		{
+#if defined(MOD_BUGFIX_MINOR)
+			GET_PLAYER((PlayerTypes)iI).changeGreatAdmiralsThresholdModifier(/*50*/ GC.getGREAT_GENERALS_THRESHOLD_INCREASE_TEAM() * ((getGreatAdmiralsCreated() / 10) + 1));
+#else
 			GET_PLAYER((PlayerTypes)iI).changeGreatAdmiralsThresholdModifier(/*50*/ GC.getGREAT_GENERALS_THRESHOLD_INCREASE_TEAM() * ((getGreatPeopleCreated() / 10) + 1));
+#endif
 		}
 	}
 
