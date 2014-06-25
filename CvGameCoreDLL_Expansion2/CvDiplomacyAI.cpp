@@ -2625,8 +2625,9 @@ int CvDiplomacyAI::GetMajorCivOpinionWeight(PlayerTypes ePlayer)
 	//////////////////////////////////////
 	// SCENARIO-SPECIFIC
 	//////////////////////////////////////
-#if defined(MOD_AI_DIPLO_MODIFIERS)
-	iOpinionWeight += GetDiploModifiers(ePlayer);
+#if defined(MOD_EVENTS_DIPLO_MODIFIERS)
+	std::vector<Opinion> aOpinions;
+	iOpinionWeight += GetDiploModifiers(ePlayer, aOpinions);
 #else
 	iOpinionWeight += GetScenarioModifier1(ePlayer);
 	iOpinionWeight += GetScenarioModifier2(ePlayer);
@@ -23394,54 +23395,79 @@ int CvDiplomacyAI::GetSupportedMyHostingScore(PlayerTypes ePlayer)
 	return iOpinionWeight;
 }
 
-#if defined(MOD_AI_DIPLO_MODIFIERS)
-int CvDiplomacyAI::GetDiploModifiers(PlayerTypes ePlayer, std::vector<Opinion> aOpinions)
+#if defined(MOD_EVENTS_DIPLO_MODIFIERS)
+int CvDiplomacyAI::GetDiploModifiers(PlayerTypes eToPlayer, std::vector<Opinion>& aOpinions)
 {
 	int iValue = 0;
 	int iModifier;
-	
-// TODO - WH - How can we make these much more flexible?
-// <DiploModifiers><ID/><Type/><Description/></DiploModifiers>
-// <Row><Type>DIPLOMODIFIER_SCENARIO1</Type><Description>TXT_KEY_SPECIFIC_DIPLO_STRING_1</Description></Row>
-// <Row><Type>DIPLOMODIFIER_SCENARIO2</Type><Description>TXT_KEY_SPECIFIC_DIPLO_STRING_2</Description></Row>
-// <Row><Type>DIPLOMODIFIER_SCENARIO3</Type><Description>TXT_KEY_SPECIFIC_DIPLO_STRING_3</Description></Row>
-	iModifier = GetScenarioModifier1(ePlayer);
-	if (aOpinions && iModifier != 0) {
+
+	iModifier = GetScenarioModifier1(eToPlayer);
+	if (iModifier != 0) {
 		iValue += iModifier;
 		
 		Opinion kOpinion;
-		kOpinion.m_iValue = iValue;
+		kOpinion.m_iValue = iModifier;
 		Localization::String strOpinion = Localization::Lookup("TXT_KEY_SPECIFIC_DIPLO_STRING_1");
-		// strOpinion << iModifier;
-		// strOpinion << ePlayer;
 		kOpinion.m_str = strOpinion.toUTF8();
 		aOpinions.push_back(kOpinion);
 	}
 	
-	iModifier = GetScenarioModifier2(ePlayer);
-	if (aOpinions && iModifier != 0) {
+	iModifier = GetScenarioModifier2(eToPlayer);
+	if (iModifier != 0) {
 		iValue += iModifier;
 		
 		Opinion kOpinion;
-		kOpinion.m_iValue = iValue;
+		kOpinion.m_iValue = iModifier;
 		Localization::String strOpinion = Localization::Lookup("TXT_KEY_SPECIFIC_DIPLO_STRING_2");
-		// strOpinion << iModifier;
-		// strOpinion << ePlayer;
 		kOpinion.m_str = strOpinion.toUTF8();
 		aOpinions.push_back(kOpinion);
 	}
 
-	iModifier = GetScenarioModifier3(ePlayer);
-	if (aOpinions && iModifier != 0) {
+	iModifier = GetScenarioModifier3(eToPlayer);
+	if (iModifier != 0) {
 		iValue += iModifier;
 		
 		Opinion kOpinion;
-		kOpinion.m_iValue = iValue;
+		kOpinion.m_iValue = iModifier;
 		Localization::String strOpinion = Localization::Lookup("TXT_KEY_SPECIFIC_DIPLO_STRING_3");
-		// strOpinion << iModifier;
-		// strOpinion << ePlayer;
 		kOpinion.m_str = strOpinion.toUTF8();
 		aOpinions.push_back(kOpinion);
+	}
+	
+	if (MOD_EVENTS_DIPLO_MODIFIERS)
+	{
+		PlayerTypes eFromPlayer = m_pPlayer->GetID();
+		CivilizationTypes eFromCiv = m_pPlayer->getCivilizationType();
+		
+		CvPlayer* pToPlayer = &GET_PLAYER(eToPlayer);
+		CivilizationTypes eToCiv = pToPlayer->getCivilizationType();
+		
+		
+		for (int iI = 0; iI < GC.getNumDiploModifierInfos(); iI++) {
+			CvDiploModifierInfo* pDiploModifierInfo = GC.getDiploModifierInfo((DiploModifierTypes) iI);
+			
+			if (pDiploModifierInfo && pDiploModifierInfo->isForFromCiv(eFromCiv) && pDiploModifierInfo->isForToCiv(eToCiv)) {
+				iModifier = 0;
+				
+				if (GAMEEVENTINVOKE_VALUE(iModifier, GAMEEVENT_GetDiploModifier, pDiploModifierInfo->GetID(), eFromPlayer, eToPlayer) == GAMEEVENTRETURN_VALUE) {
+					if (iModifier != 0) {
+						iValue += iModifier;
+		
+						Opinion kOpinion;
+						kOpinion.m_iValue = iModifier;
+						Localization::String strOpinion = Localization::Lookup(pDiploModifierInfo->GetDescriptionKey());
+						strOpinion << iModifier;
+						strOpinion << m_pPlayer->getName();
+						strOpinion << m_pPlayer->getCivilizationDescription();
+						strOpinion << pToPlayer->getName();
+						strOpinion << pToPlayer->getCivilizationDescription();
+
+						kOpinion.m_str = strOpinion.toUTF8();
+						aOpinions.push_back(kOpinion);
+					}
+				}
+			}
+		}
 	}
 	
 	return iValue;

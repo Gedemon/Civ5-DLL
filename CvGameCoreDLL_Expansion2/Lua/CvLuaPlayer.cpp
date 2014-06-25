@@ -9966,11 +9966,13 @@ int CvLuaPlayer::lWasResurrectedThisTurnBy(lua_State* L)
 	return 1;
 }
 //------------------------------------------------------------------------------
+#if !defined(MOD_EVENTS_DIPLO_MODIFIERS)
 struct Opinion
 {
 	Localization::String m_str;
 	int m_iValue;
 };
+#endif
 
 struct OpinionEval
 {
@@ -10818,8 +10820,8 @@ int CvLuaPlayer::lGetOpinionTable(lua_State* L)
 		aOpinions.push_back(kOpinion);
 	}
 
-#if defined(MOD_AI_DIPLO_MODIFIERS)
-	ivalue = GetDiploModifiers(eWithPlayer, aOpinions);
+#if defined(MOD_EVENTS_DIPLO_MODIFIERS)
+	iValue = pDiploAI->GetDiploModifiers(eWithPlayer, aOpinions);
 #else
 	iValue = pDiploAI->GetScenarioModifier1(eWithPlayer);
 	if (iValue != 0)
@@ -11140,7 +11142,7 @@ int CvLuaPlayer::lGetEspionageSpies(lua_State* L)
 		lua_setfield(L, t, "CityY");
 
 #if defined(MOD_BUGFIX_SPY_NAMES)
-		const char* szSpyName = pSpy->GetSpyName(pkThisPlayer).c_str();
+		const char* szSpyName = pSpy->GetSpyName(pkThisPlayer);
 #else
 		const char* szSpyName = pkThisPlayer->getCivilizationInfo().getSpyNames(pSpy->m_iName);
 #endif

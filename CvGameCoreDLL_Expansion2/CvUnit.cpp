@@ -5221,7 +5221,7 @@ bool CvUnit::canHeal(const CvPlot* pPlot, bool bTestVisible) const
 	{
 		return false;
 	}
-
+	
 	// JON - This should change when one-unit-per-plot city stuff is handled better
 	// Unit Healing in cities
 
@@ -5229,30 +5229,39 @@ bool CvUnit::canHeal(const CvPlot* pPlot, bool bTestVisible) const
 	{
 		if(plot()->isCity() && getDomainType() != DOMAIN_AIR)
 		{
-			CvUnit* pUnit;
-			int iBestDefenderValue = 0;
-			int iBestDefenderID = 0;
-
-			for(int iUnitLoop = 0; iUnitLoop < plot()->getNumUnits(); iUnitLoop++)
+#if defined(MOD_BUGFIX_MINOR)
+			// Civilians can heal in cities
+			if (!IsCivilianUnit())
 			{
-				pUnit = plot()->getUnitByIndex(iUnitLoop);
+#endif
 
-				// Only check land Units vs one another, Naval Units vs one another, etc.
-				if(pUnit->getDomainType() == getDomainType())
+				CvUnit* pUnit;
+				int iBestDefenderValue = 0;
+				int iBestDefenderID = 0;
+
+				for(int iUnitLoop = 0; iUnitLoop < plot()->getNumUnits(); iUnitLoop++)
 				{
-					if(pUnit->GetBaseCombatStrength() > iBestDefenderValue)
+					pUnit = plot()->getUnitByIndex(iUnitLoop);
+
+					// Only check land Units vs one another, Naval Units vs one another, etc.
+					if(pUnit->getDomainType() == getDomainType())
 					{
-						iBestDefenderValue = pUnit->GetBaseCombatStrength();
-						iBestDefenderID = pUnit->GetID();
+						if(pUnit->GetBaseCombatStrength() > iBestDefenderValue)
+						{
+							iBestDefenderValue = pUnit->GetBaseCombatStrength();
+							iBestDefenderID = pUnit->GetID();
+						}
 					}
 				}
-			}
 
-			// This is NOT the defending unit, it's in storage, so it can't heal
-			if(iBestDefenderID != GetID())
-			{
-				return false;
+				// This is NOT the defending unit, it's in storage, so it can't heal
+				if(iBestDefenderID != GetID())
+				{
+					return false;
+				}
+#if defined(MOD_BUGFIX_MINOR)
 			}
+#endif
 		}
 	}
 

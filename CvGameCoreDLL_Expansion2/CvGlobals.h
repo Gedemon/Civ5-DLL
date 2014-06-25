@@ -398,6 +398,12 @@ public:
 	std::vector<CvGameSpeedInfo*>& getGameSpeedInfo();
 	_Ret_maybenull_ CvGameSpeedInfo* getGameSpeedInfo(GameSpeedTypes eGameSpeedNum);
 
+#if defined(MOD_EVENTS_DIPLO_MODIFIERS)
+	int getNumDiploModifierInfos();
+	std::vector<CvDiploModifierInfo*>& getDiploModifierInfo();
+	_Ret_maybenull_ CvDiploModifierInfo* getDiploModifierInfo(DiploModifierTypes eDiploModifierNum);
+#endif
+
 	int getNumProcessInfos();
 	std::vector<CvProcessInfo*>& getProcessInfo();
 	CvProcessInfo* getProcessInfo(ProcessTypes e);
@@ -1544,6 +1550,11 @@ public:
 	GD_INT_DEF(AI_CONFIG_MILITARY_MELEE_PER_AA)
 	GD_INT_DEF(AI_CONFIG_MILITARY_AIRCRAFT_PER_CARRIER_SPACE)
 	GD_INT_DEF(AI_CONFIG_MILITARY_TILES_PER_SHIP)
+#endif
+#if defined(MOD_CONFIG_GAME_IN_XML)
+	GD_INT_DEF(RELIGION_LAST_FOUND_ERA)
+	GD_INT_DEF(RELIGION_GP_FAITH_PURCHASE_ERA)
+	GD_INT_DEF(IDEOLOGY_START_ERA)
 #endif
 	inline int getMINOR_BULLY_GOLD()
 	{
@@ -8267,6 +8278,9 @@ protected:
 	std::vector<CvBuildInfo*> m_paBuildInfo;
 	std::vector<CvHandicapInfo*> m_paHandicapInfo;
 	std::vector<CvGameSpeedInfo*> m_paGameSpeedInfo;
+#if defined(MOD_EVENTS_DIPLO_MODIFIERS)
+	std::vector<CvDiploModifierInfo*> m_paDiploModifierInfo;
+#endif
 	std::vector<CvTurnTimerInfo*> m_paTurnTimerInfo;
 	std::vector<CvCivilizationInfo*> m_paCivilizationInfo;
 	int m_iNumPlayableCivilizationInfos;
@@ -8586,6 +8600,11 @@ protected:
 	GD_INT_DECL(AI_CONFIG_MILITARY_MELEE_PER_AA);
 	GD_INT_DECL(AI_CONFIG_MILITARY_AIRCRAFT_PER_CARRIER_SPACE);
 	GD_INT_DECL(AI_CONFIG_MILITARY_TILES_PER_SHIP);
+#endif
+#if defined(MOD_CONFIG_GAME_IN_XML)
+	GD_INT_DECL(RELIGION_LAST_FOUND_ERA);
+	GD_INT_DECL(RELIGION_GP_FAITH_PURCHASE_ERA);
+	GD_INT_DECL(IDEOLOGY_START_ERA);
 #endif
 	int m_iMINOR_BULLY_GOLD;
 	int m_iMINOR_FRIENDSHIP_RATE_MOD_MAXIMUM;

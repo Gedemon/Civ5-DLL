@@ -70,7 +70,7 @@ public:
 	CvEspionageSpy();
 
 #if defined(MOD_BUGFIX_SPY_NAMES)
-	CvString GetSpyName(CvPlayer* pPlayer);
+	const char* GetSpyName(CvPlayer* pPlayer);
 #endif
 
 	// Public data

@@ -346,6 +346,12 @@ CvGlobals::CvGlobals() :
 	GD_INT_INIT(AI_CONFIG_MILITARY_AIRCRAFT_PER_CARRIER_SPACE, 1),
 	GD_INT_INIT(AI_CONFIG_MILITARY_TILES_PER_SHIP, 5),
 #endif
+#if defined(MOD_CONFIG_GAME_IN_XML)
+	// Don't sweat that these are hard-coded by ID, as they will be over-written by the values as set in the PostDefines table
+	GD_INT_INIT(RELIGION_LAST_FOUND_ERA, 3), // ERA_RENAISSANCE
+	GD_INT_INIT(RELIGION_GP_FAITH_PURCHASE_ERA, 4), // ERA_INDUSTRIAL
+	GD_INT_INIT(IDEOLOGY_START_ERA, 4), // ERA_INDUSTRIAL
+#endif
 	m_iMINOR_BULLY_GOLD(100),
 	m_iMINOR_FRIENDSHIP_RATE_MOD_MAXIMUM(150),
 	m_iMINOR_FRIENDSHIP_RATE_MOD_SHARED_RELIGION(50),
@@ -3306,6 +3312,29 @@ CvGameSpeedInfo* CvGlobals::getGameSpeedInfo(GameSpeedTypes eGameSpeedNum)
 		return NULL;
 }
 
+#if defined(MOD_EVENTS_DIPLO_MODIFIERS)
+int CvGlobals::getNumDiploModifierInfos()
+{
+	return (int)m_paDiploModifierInfo.size();
+}
+
+std::vector<CvDiploModifierInfo*>& CvGlobals::getDiploModifierInfo()
+{
+	return m_paDiploModifierInfo;
+}
+
+CvDiploModifierInfo* CvGlobals::getDiploModifierInfo(DiploModifierTypes eDiploModifierNum)
+{
+	CvAssert(eDiploModifierNum > -1);
+	CvAssert(eDiploModifierNum < GC.getNumDiploModifierInfos());
+	if(eDiploModifierNum > -1 && eDiploModifierNum < (int)m_paDiploModifierInfo.size())
+		return m_paDiploModifierInfo[eDiploModifierNum];
+	else
+		return NULL;
+}
+
+#endif
+
 int CvGlobals::getNumProcessInfos()
 {
 	return (int)m_paProcessInfo.size();
@@ -4535,6 +4564,11 @@ void CvGlobals::cacheGlobals()
 	GD_INT_CACHE(AI_CONFIG_MILITARY_MELEE_PER_AA);
 	GD_INT_CACHE(AI_CONFIG_MILITARY_AIRCRAFT_PER_CARRIER_SPACE);
 	GD_INT_CACHE(AI_CONFIG_MILITARY_TILES_PER_SHIP);
+#endif
+#if defined(MOD_CONFIG_GAME_IN_XML)
+	GD_INT_CACHE(RELIGION_LAST_FOUND_ERA);
+	GD_INT_CACHE(RELIGION_GP_FAITH_PURCHASE_ERA);
+	GD_INT_CACHE(IDEOLOGY_START_ERA);
 #endif
 	m_iMINOR_BULLY_GOLD = getDefineINT("MINOR_BULLY_GOLD");
 	m_iMINOR_FRIENDSHIP_RATE_MOD_MAXIMUM = getDefineINT("MINOR_FRIENDSHIP_RATE_MOD_MAXIMUM");
@@ -6375,6 +6409,9 @@ void CvGlobals::deleteInfoArrays()
 	deleteInfoArray(m_paVoteSourceInfo);
 	deleteInfoArray(m_paHandicapInfo);
 	deleteInfoArray(m_paGameSpeedInfo);
+#if defined(MOD_EVENTS_DIPLO_MODIFIERS)
+	deleteInfoArray(m_paDiploModifierInfo);
+#endif
 	deleteInfoArray(m_paTurnTimerInfo);
 	deleteInfoArray(m_paVictoryInfo);
 	deleteInfoArray(m_paSmallAwardInfo);

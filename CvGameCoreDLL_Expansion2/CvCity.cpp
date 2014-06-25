@@ -4877,7 +4877,11 @@ int CvCity::GetFaithPurchaseCost(UnitTypes eUnit, bool bIncludeBeliefDiscounts)
 	if (pkUnitInfo->GetSpecialUnitType() == eSpecialUnitGreatPerson)
 	{
 		// We must be into the industrial era
+#if defined(MOD_CONFIG_GAME_IN_XML)
+		if(kPlayer.GetCurrentEra() >= GD_INT_GET(RELIGION_GP_FAITH_PURCHASE_ERA))
+#else
 		if(kPlayer.GetCurrentEra() >= GC.getInfoTypeForString("ERA_INDUSTRIAL", true /*bHideAssert*/))
+#endif
 		{
 			// Must be proper great person for our civ
 			const UnitClassTypes eUnitClass = (UnitClassTypes)pkUnitInfo->GetUnitClassType();
@@ -4962,10 +4966,50 @@ int CvCity::GetFaithPurchaseCost(UnitTypes eUnit, bool bIncludeBeliefDiscounts)
 						}
 					}
 
-					if (bAllUnlockedByBelief || (eBranch != NO_POLICY_BRANCH_TYPE && kPlayer.GetPlayerPolicies()->IsPolicyBranchFinished(eBranch) && !kPlayer.GetPlayerPolicies()->IsPolicyBranchBlocked(eBranch)))
+#if defined(MOD_RELIGION_POLICY_BRANCH_FAITH_GP)
+					if (MOD_RELIGION_POLICY_BRANCH_FAITH_GP)
 					{
-						iCost = GC.getGame().GetGameReligions()->GetFaithGreatPersonNumber(iNum + 1);	
+						bool bIsUnlocked = bAllUnlockedByBelief;
+
+						if (!bIsUnlocked)
+						{
+							EraTypes eCurrentEra = kPlayer.GetCurrentEra();
+
+							for (int iPolicyLoop = 0; iPolicyLoop < kPlayer.GetPlayerPolicies()->GetPolicies()->GetNumPolicies(); iPolicyLoop++)
+							{
+								const PolicyTypes eLoopPolicy = static_cast<PolicyTypes>(iPolicyLoop);
+								CvPolicyEntry* pkLoopPolicyInfo = GC.getPolicyInfo(eLoopPolicy);
+								if (pkLoopPolicyInfo)
+								{
+									// We have this policy
+									if (kPlayer.HasPolicy(eLoopPolicy))
+									{
+										if (pkLoopPolicyInfo->IsFaithPurchaseUnitClass(eUnitClass, eCurrentEra))
+										{
+											bIsUnlocked = true;
+											break;
+										}
+									}
+								}
+							}
+						}
+
+						if (bIsUnlocked)
+						{
+							iCost = GC.getGame().GetGameReligions()->GetFaithGreatPersonNumber(iNum + 1);	
+						}
 					}
+					else
+					{
+#endif
+					
+						if (bAllUnlockedByBelief || (eBranch != NO_POLICY_BRANCH_TYPE && kPlayer.GetPlayerPolicies()->IsPolicyBranchFinished(eBranch) && !kPlayer.GetPlayerPolicies()->IsPolicyBranchBlocked(eBranch)))
+						{
+							iCost = GC.getGame().GetGameReligions()->GetFaithGreatPersonNumber(iNum + 1);	
+						}
+#if defined(MOD_RELIGION_POLICY_BRANCH_FAITH_GP)
+					}
+#endif
 				}
 			}
 		}

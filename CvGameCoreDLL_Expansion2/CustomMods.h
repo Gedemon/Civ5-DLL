@@ -23,8 +23,8 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 52)
-#define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
+#define MOD_DLL_VERSION_NUMBER ((uint) 54)
+#define MOD_DLL_VERSION_STATUS "a"			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
 
@@ -70,7 +70,9 @@
 // Enables the LUA Extensions API
 #define MOD_API_LUA_EXTENSIONS                      gCustomMods.isAPI_LUA_EXTENSIONS()
 
-// Push various hard-coded values controlling the AI out into XML
+// Push various hard-coded values controlling the game out into XML - see DB/CONFIG/GameInXml.sql for specific values -->
+#define MOD_CONFIG_GAME_IN_XML                      gCustomMods.isCONFIG_GAME_IN_XML()
+// Push various hard-coded values controlling the AI out into XML - see DB/CONFIG/AiInXml.sql for specific values
 #define MOD_CONFIG_AI_IN_XML                        gCustomMods.isCONFIG_AI_IN_XML()
 
 // Changes the stacking limits based on what the tile is (city, fort, plain, etc) - AFFECTS SAVE GAME DATA FORMAT
@@ -242,6 +244,8 @@
 #if defined(MOD_API_PLOT_YIELDS)
 #define MOD_RELIGION_PLOT_YIELDS                    (gCustomMods.isRELIGION_PLOT_YIELDS() && MOD_API_PLOT_YIELDS)
 #endif
+// Adds support for Great People being purchased by faith to be specified on a policy (usually a finisher) and not hard-coded (v53)
+#define MOD_RELIGION_POLICY_BRANCH_FAITH_GP         gCustomMods.isRELIGION_POLICY_BRANCH_FAITH_GP()
 // Adds support for "local" religions (ie ones that only have influence within the civ's own territory) (v48)
 #define MOD_RELIGION_LOCAL_RELIGIONS                gCustomMods.isRELIGION_LOCAL_RELIGIONS()
 
@@ -252,8 +256,6 @@
 #define MOD_AI_SECONDARY_WORKERS                    gCustomMods.isAI_SECONDARY_WORKERS()
 // Fixes the AI's inability to use combat units for founding cities (v26)
 #define MOD_AI_SECONDARY_SETTLERS                   gCustomMods.isAI_SECONDARY_SETTLERS()
-// TODO - WH - MOD_AI_DIPLO_MODIFIERS
-// #define MOD_AI_DIPLO_MODIFIERS                      (true)
 
 // Features from the "Smart AI mod" by Ninakoru - see http://forums.civfanatics.com/showthread.php?t=521955 (v50)
  #define MOD_AI_SMART                                gCustomMods.isAI_SMART()
@@ -309,8 +311,12 @@
 #define MOD_EVENTS_NW_DISCOVERY                     gCustomMods.isEVENTS_NW_DISCOVERY()
 
 // Event sent during Game.DoFromUIDiploEvent, see also DiscussionDialog.lua
-//   GameEvents.UiDiploEvent.Add(function(eEvent, eAIPlayer, iArg1, iArg2) end)
+//   GameEvents.UiDiploEvent.Add(function(iEvent, iAIPlayer, iArg1, iArg2) end)
 #define MOD_EVENTS_DIPLO_EVENTS                     gCustomMods.isEVENTS_DIPLO_EVENTS()
+
+// Enhanced Diplomacy Modifiers events (v53)
+//   GameEvents.GetDiploModifier.Add(function(iEvent, iFromPlayer, iToPlayer) return 0 end)
+#define MOD_EVENTS_DIPLO_MODIFIERS                  gCustomMods.isEVENTS_DIPLO_MODIFIERS()
 
 // Events sent on status change with City States
 //   GameEvents.MinorFriendsChanged.Add(function(iMinor, iMajor, bIsFriend, iOldFriendship, iNewFriendship) end)
@@ -498,8 +504,8 @@
 
 // Minor bug fixes (missing catch-all else clauses, etc) (v30 onwards)
 #define MOD_BUGFIX_MINOR 							(true)
-// TODO - WH - Fixes the spy name crash
-// #define MOD_BUGFIX_SPY_NAMES                        (true)
+// Fixes the spy name crash (v53)
+#define MOD_BUGFIX_SPY_NAMES                        (true)
 // Fixes the research overflow bug/exploit (v52)
 #define MOD_BUGFIX_RESEARCH_OVERFLOW                gCustomMods.isBUGFIX_RESEARCH_OVERFLOW()
 // Fixes the bug where a city doesn't work its centre tile (v45)
@@ -691,6 +697,7 @@ enum TerraformingEventTypes {
 #define GAMEEVENT_CustomMissionTargetPlot	"CustomMissionTargetPlot",		"iiiiiii"
 #define GAMEEVENT_CustomMissionTimerInc		"CustomMissionTimerInc",		"iiiiiii"
 #define GAMEEVENT_DeclareWar				"DeclareWar",					"ii"
+#define GAMEEVENT_GetDiploModifier			"GetDiploModifier",				"iii"
 #define GAMEEVENT_GetBombardRange			"GetBombardRange",				"ii"
 #define GAMEEVENT_GetReligionToFound		"GetReligionToFound",			"iib"
 #define GAMEEVENT_GoodyHutCanNotReceive		"GoodyHutCanNotReceive",		"iiib"
@@ -917,6 +924,7 @@ public:
 	MOD_OPT_DECL(RELIGION_KEEP_PROPHET_OVERFLOW);
 	MOD_OPT_DECL(RELIGION_RECURRING_PURCHASE_NOTIFIY);
 	MOD_OPT_DECL(RELIGION_PLOT_YIELDS);
+	MOD_OPT_DECL(RELIGION_POLICY_BRANCH_FAITH_GP);
 	MOD_OPT_DECL(RELIGION_LOCAL_RELIGIONS);
 
 	MOD_OPT_DECL(PROCESS_STOCKPILE);
@@ -944,6 +952,7 @@ public:
 	MOD_OPT_DECL(EVENTS_NEW_ERA);
 	MOD_OPT_DECL(EVENTS_NW_DISCOVERY);
 	MOD_OPT_DECL(EVENTS_DIPLO_EVENTS);
+	MOD_OPT_DECL(EVENTS_DIPLO_MODIFIERS);
 	MOD_OPT_DECL(EVENTS_MINORS);
 	MOD_OPT_DECL(EVENTS_GOODY_CHOICE);
 	MOD_OPT_DECL(EVENTS_GOODY_TECH);
@@ -992,6 +1001,7 @@ public:
 	MOD_OPT_DECL(API_EXTENSIONS);
 	MOD_OPT_DECL(API_LUA_EXTENSIONS);
 
+	MOD_OPT_DECL(CONFIG_GAME_IN_XML);
 	MOD_OPT_DECL(CONFIG_AI_IN_XML);
 
 	MOD_OPT_DECL(BUGFIX_RESEARCH_OVERFLOW);
