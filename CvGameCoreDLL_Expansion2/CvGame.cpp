@@ -8653,7 +8653,7 @@ bool CvGame::testVictory(VictoryTypes eVictory, TeamTypes eTeam, bool* pbEndScor
 	CvAssert(eVictory >= 0 && eVictory < GC.getNumVictoryInfos());
 	CvAssert(eTeam >=0 && eTeam < MAX_CIV_TEAMS);
 	CvAssert(GET_TEAM(eTeam).isAlive());
-
+	
 	CvVictoryInfo* pkVictoryInfo = GC.getVictoryInfo(eVictory);
 	if(pkVictoryInfo == NULL)
 	{
@@ -9180,6 +9180,7 @@ void CvGame::testVictory()
 	if(bEndGame && !aaiGameWinners.empty())
 	{
 		int iWinner = getJonRandNum(aaiGameWinners.size(), "Victory tie breaker");
+		CUSTOMLOG("Calling setWinner from testVictory: %i, %i", aaiGameWinners[iWinner][0], aaiGameWinners[iWinner][1]);
 		setWinner(((TeamTypes)aaiGameWinners[iWinner][0]), ((VictoryTypes)aaiGameWinners[iWinner][1]));
 	}
 
@@ -10663,6 +10664,7 @@ void CvGame::DoTestConquestVictory()
 			{
 				if(pkVictoryInfo->isConquest() && isVictoryValid(eVictory))
 				{
+					CUSTOMLOG("Calling setWinner from DoTestConquestVictory: %i, %i", eTeamWhoWon, eVictory);
 					setWinner(eTeamWhoWon, eVictory);
 				}
 			}

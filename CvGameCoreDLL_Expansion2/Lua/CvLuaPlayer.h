@@ -1108,6 +1108,13 @@ protected:
 	LUAAPIEXTN(HasAnyTradeRouteWith, bool, iPlayer);
 	LUAAPIEXTN(HasUnit, bool, iUnitType);
 	LUAAPIEXTN(HasUnitClass, bool, iUnitClassType);
+
+	LUAAPIEXTN(HasTrait, bool, iTrait);
+	LUAAPIEXTN(HasAnyHolyCity, bool);
+	LUAAPIEXTN(HasHolyCity, bool, eReligion);
+	LUAAPIEXTN(HasCapturedHolyCity, bool, eReligion);
+	LUAAPIEXTN(HasEmbassyWith, bool, iOtherPlayer);
+	LUAAPIEXTN(DoForceDefPact, void, iOtherPlayer);
 #endif
 };
 

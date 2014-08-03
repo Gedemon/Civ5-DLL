@@ -1286,6 +1286,7 @@ int CvLuaGame::lGetVictory(lua_State* L)
 //void setWinner(TeamTypes eNewWinner, VictoryTypes eNewVictory);
 int CvLuaGame::lSetWinner(lua_State* L)
 {
+	CUSTOMLOG("Calling setWinner from Lua: %i, %i", lua_tointeger(L, 1), lua_tointeger(L, 2));
 	return BasicLuaMethod(L, &CvGame::setWinner);
 }
 //------------------------------------------------------------------------------

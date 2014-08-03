@@ -23,8 +23,8 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 54)
-#define MOD_DLL_VERSION_STATUS "a"			// a (alpha), b (beta) or blank (released)
+#define MOD_DLL_VERSION_NUMBER ((uint) 59)
+#define MOD_DLL_VERSION_STATUS "b"			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
 
@@ -44,6 +44,9 @@
 #define CUSTOMLOGDEBUG "CustomMods.log"
 // true/false to include/exclude file name and line number in the log
 #define CUSTOMLOGFILEINFO true
+
+// Comment out this line to switch off all unified yield logging
+#define UNIFIEDLOGDEBUG "UnifiedYields.log"
 
 // Comment out this line to remove minidumps - see http://forums.civfanatics.com/showthread.php?t=498919
 // If minidumps are enabled, do NOT set GenerateDebugInfo=No (Props -> Config Props -> Linker -> Debugging)
@@ -69,6 +72,13 @@
 #define MOD_API_EXTENSIONS                          gCustomMods.isAPI_EXTENSIONS()
 // Enables the LUA Extensions API
 #define MOD_API_LUA_EXTENSIONS                      gCustomMods.isAPI_LUA_EXTENSIONS()
+// Enables the Unified Yields extensions - thanks to bane_, JFD and Ulixes for extensive testing (v54)
+#define MOD_API_UNIFIED_YIELDS                      (true)
+#define MOD_API_UNIFIED_YIELDS_CONSOLIDATION        (true)
+// Enables the Unified Yields (YIELD_TOURISM) extensions (v56)
+#define MOD_API_UNIFIED_YIELDS_TOURISM              (true)
+// Enables the Unified Yields (YIELD_GOLDEN_AGE_POINTS) extensions (v57)
+#define MOD_API_UNIFIED_YIELDS_GOLDEN_AGE           (true)
 
 // Push various hard-coded values controlling the game out into XML - see DB/CONFIG/GameInXml.sql for specific values -->
 #define MOD_CONFIG_GAME_IN_XML                      gCustomMods.isCONFIG_GAME_IN_XML()
@@ -298,6 +308,10 @@
 //   GameEvents.TileRouteChanged.Add(function(iPlotX, iPlotY, iOwner, iOldRoute, iNewRoute, bPillaged) end)
 #define MOD_EVENTS_TILE_IMPROVEMENTS                gCustomMods.isEVENTS_TILE_IMPROVEMENTS()
 
+// Event sent when a plot is revealed (v58)
+//   GameEvents.TileRevealed.Add(function(iPlotX, iPlotY, iteam, iFromTeam, bFirst) end)
+#define MOD_EVENTS_TILE_REVEALED                    gCustomMods.isEVENTS_TILE_REVEALED()
+
 // Event sent when a team circumnavigates the globe
 //   GameEvents.CircumnavigatedGlobe.Add(function(iTeam) end)
 #define MOD_EVENTS_CIRCUMNAVIGATION                 gCustomMods.isEVENTS_CIRCUMNAVIGATION()
@@ -366,8 +380,12 @@
 #define MOD_EVENTS_PARADROPS                        gCustomMods.isEVENTS_PARADROPS()
 
 // Event sent when a unit is created (v46)
-//   GameEvents.UnitCreated.Add(function(iPlayer, iUnit, iUnitType, iPlotX, iPlotY, bTestVisible) end)
+//   GameEvents.UnitCreated.Add(function(iPlayer, iUnit, iUnitType, iPlotX, iPlotY) end)
 #define MOD_EVENTS_UNIT_CREATED                     gCustomMods.isEVENTS_UNIT_CREATED()
+
+// Event sent when a unit founds a city (v58)
+//   GameEvents.UnitCityFounded.Add(function(iPlayer, iUnit, iUnitType, iPlotX, iPlotY) end)
+#define MOD_EVENTS_UNIT_FOUNDED                     gCustomMods.isEVENTS_UNIT_FOUNDED()
 
 // Event sent just before a unit is killed (via CvUnit::kill()) (v22)
 //   GameEvents.UnitPrekill.Add(function(iPlayer, iUnit, iUnitType, iX, iY, bDelay, iByPlayer) end)
@@ -630,6 +648,17 @@ enum TerraformingEventTypes {
 #define CUSTOMLOG(sFmt, ...) __noop
 #endif
 
+// Unified yields logger
+#if defined(UNIFIEDLOGDEBUG)
+#define UNIFIEDLOG(sFmt, ...) {																		\
+	CvString sMsg; CvString::format(sMsg, sFmt, __VA_ARGS__);										\
+	CvString sLine; CvString::format(sLine, "%s: %i - %s", __FILE__, __LINE__, sMsg.c_str());	    \
+	LOGFILEMGR.GetLog(UNIFIEDLOGDEBUG, FILogFile::kDontTimeStamp)->Msg(sLine.c_str());			    \
+}
+#else
+#define UNIFIEDLOG(sFmt, ...) __noop
+#endif
+
 
 // Message wrappers
 #define SHOW_PLAYER_MESSAGE(pPlayer, szMessage)       DLLUI->AddMessage(0, pPlayer->GetID(), false, GC.getEVENT_MESSAGE_TIME(), szMessage)
@@ -742,6 +771,7 @@ enum TerraformingEventTypes {
 #define GAMEEVENT_TileFeatureChanged		"TileFeatureChanged",			"iiiii"
 #define GAMEEVENT_TileImprovementChanged	"TileImprovementChanged",		"iiiiib"
 #define GAMEEVENT_TileOwnershipChanged		"TileOwnershipChanged",			"iiii"
+#define GAMEEVENT_TileRevealed				"TileRevealed",					"iiiib"
 #define GAMEEVENT_TileRouteChanged			"TileRouteChanged",				"iiiiib"
 #define GAMEEVENT_UiDiploEvent				"UiDiploEvent",					"iiii"
 #define GAMEEVENT_UnitCanHaveAnyUpgrade		"UnitCanHaveAnyUpgrade",		"ii"
@@ -750,6 +780,7 @@ enum TerraformingEventTypes {
 #define GAMEEVENT_UnitCanHavePromotion		"UnitCanHavePromotion",			"iii"
 #define GAMEEVENT_UnitCanHaveUpgrade		"UnitCanHaveUpgrade",			"iiii"
 #define GAMEEVENT_UnitCaptureType			"UnitCaptureType",				"iiii"
+#define GAMEEVENT_UnitCityFounded			"UnitCityFounded",				"iiiii"
 #define GAMEEVENT_UnitCreated				"UnitCreated",					"iiiii"
 #define GAMEEVENT_UnitPrekill				"UnitPrekill",					"iiiiibi"
 #define GAMEEVENT_UnitPromoted				"UnitPromoted",					"iii"
@@ -948,6 +979,7 @@ public:
 
 	MOD_OPT_DECL(EVENTS_TERRAFORMING);
 	MOD_OPT_DECL(EVENTS_TILE_IMPROVEMENTS);
+	MOD_OPT_DECL(EVENTS_TILE_REVEALED);
 	MOD_OPT_DECL(EVENTS_CIRCUMNAVIGATION);
 	MOD_OPT_DECL(EVENTS_NEW_ERA);
 	MOD_OPT_DECL(EVENTS_NW_DISCOVERY);
@@ -971,6 +1003,7 @@ public:
 	MOD_OPT_DECL(EVENTS_AREA_RESOURCES);
 	MOD_OPT_DECL(EVENTS_PARADROPS);
 	MOD_OPT_DECL(EVENTS_UNIT_CREATED);
+	MOD_OPT_DECL(EVENTS_UNIT_FOUNDED);
 	MOD_OPT_DECL(EVENTS_UNIT_PREKILL);
 	MOD_OPT_DECL(EVENTS_UNIT_CAPTURE);
 	MOD_OPT_DECL(EVENTS_CAN_MOVE_INTO);

@@ -208,6 +208,9 @@ CvBuildingEntry::CvBuildingEntry(void):
 	m_ppaiSpecialistYieldChange(NULL),
 	m_ppaiResourceYieldModifier(NULL),
 	m_ppaiTerrainYieldChange(NULL),
+#if defined(MOD_API_UNIFIED_YIELDS) && defined(MOD_API_PLOT_YIELDS)
+	m_ppaiPlotYieldChange(NULL),
+#endif
 	m_ppiBuildingClassYieldChanges(NULL),
 	m_paiBuildingClassHappiness(NULL),
 	m_paThemingBonusInfo(NULL),
@@ -256,6 +259,9 @@ CvBuildingEntry::~CvBuildingEntry(void)
 	CvDatabaseUtility::SafeDelete2DArray(m_ppaiSpecialistYieldChange);
 	CvDatabaseUtility::SafeDelete2DArray(m_ppaiResourceYieldModifier);
 	CvDatabaseUtility::SafeDelete2DArray(m_ppaiTerrainYieldChange);
+#if defined(MOD_API_UNIFIED_YIELDS) && defined(MOD_API_PLOT_YIELDS)
+	CvDatabaseUtility::SafeDelete2DArray(m_ppaiPlotYieldChange);
+#endif
 	CvDatabaseUtility::SafeDelete2DArray(m_ppiBuildingClassYieldChanges);
 }
 
@@ -599,6 +605,32 @@ bool CvBuildingEntry::CacheResults(Database::Results& kResults, CvDatabaseUtilit
 			m_ppaiTerrainYieldChange[TerrainID][YieldID] = yield;
 		}
 	}
+	
+#if defined(MOD_API_UNIFIED_YIELDS) && defined(MOD_API_PLOT_YIELDS)
+	//PlotYieldChanges
+	if (MOD_API_UNIFIED_YIELDS && MOD_API_PLOT_YIELDS)
+	{
+		kUtility.Initialize2DArray(m_ppaiPlotYieldChange, "Plots", "Yields");
+
+		std::string strKey("Building_PlotYieldChanges");
+		Database::Results* pResults = kUtility.GetResults(strKey);
+		if(pResults == NULL)
+		{
+			pResults = kUtility.PrepareResults(strKey, "select Plots.ID as PlotID, Yields.ID as YieldID, Yield from Building_PlotYieldChanges inner join Plots on Plots.Type = PlotType inner join Yields on Yields.Type = YieldType where BuildingType = ?");
+		}
+
+		pResults->Bind(1, szBuildingType);
+
+		while(pResults->Step())
+		{
+			const int PlotID = pResults->GetInt(0);
+			const int YieldID = pResults->GetInt(1);
+			const int yield = pResults->GetInt(2);
+
+			m_ppaiPlotYieldChange[PlotID][YieldID] = yield;
+		}
+	}
+#endif
 
 	//SpecialistYieldChanges
 	{
@@ -2096,6 +2128,30 @@ int* CvBuildingEntry::GetTerrainYieldChangeArray(int i) const
 	return m_ppaiTerrainYieldChange[i];
 }
 
+#if defined(MOD_API_UNIFIED_YIELDS) && defined(MOD_API_PLOT_YIELDS)
+/// Change to Plot yield by type
+int CvBuildingEntry::GetPlotYieldChange(int i, int j) const
+{
+	if (MOD_API_PLOT_YIELDS) {
+		CvAssertMsg(i < GC.getNumPlotInfos(), "Index out of bounds");
+		CvAssertMsg(i > -1, "Index out of bounds");
+		CvAssertMsg(j < NUM_YIELD_TYPES, "Index out of bounds");
+		CvAssertMsg(j > -1, "Index out of bounds");
+		return m_ppaiPlotYieldChange ? m_ppaiPlotYieldChange[i][j] : -1;
+	} else {
+		return 0;
+	}
+}
+
+/// Array of changes to Plot yield
+int* CvBuildingEntry::GetPlotYieldChangeArray(int i) const
+{
+	CvAssertMsg(i < GC.getNumPlotInfos(), "Index out of bounds");
+	CvAssertMsg(i > -1, "Index out of bounds");
+	return m_ppaiPlotYieldChange[i];
+}
+#endif
+
 /// Yield change for a specific BuildingClass by yield type
 int CvBuildingEntry::GetBuildingClassYieldChange(int i, int j) const
 {
@@ -3039,6 +3095,9 @@ void CvCityBuildings::SetBuildingGreatWork(BuildingClassTypes eBuildingClass, in
 		m_aBuildingGreatWork.push_back(kWork);
 	}
 
+	// TODO - WH - by caching m_eCurrentOwner, m_iCurrentCity, m_iCurrentBuilding and m_iCurrentSlot for the Great Work here,
+	//	           a load of code that scans players/cities/buildings/slots can be speeded up
+
 	GC.GetEngineUserInterface()->setDirty(CityInfo_DIRTY_BIT, true);
 }
 
@@ -3223,14 +3282,31 @@ bool CvCityBuildings::GetNextAvailableGreatWorkSlot(GreatWorkSlotType eGreatWork
 	return false;
 }
 
-#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES) || defined(MOD_API_UNIFIED_YIELDS)
 /// Accessor: How much of this yield are we generating from Great Works in our buildings?
 int CvCityBuildings::GetYieldFromGreatWorks(YieldTypes eYield) const
 {
-	int iYieldPerWork = GC.getBASE_CULTURE_PER_GREAT_WORK();
-	iYieldPerWork += GET_PLAYER(m_pCity->getOwner()).GetGreatWorkYieldChange(eYield);
+	int iYieldPerBuilding = GC.getBASE_CULTURE_PER_GREAT_WORK();
+	int iYieldPerWork = GET_PLAYER(m_pCity->getOwner()).GetGreatWorkYieldChange(eYield);
+	iYieldPerWork += GET_PLAYER(m_pCity->getOwner()).GetPlayerTraits()->GetGreatWorkYieldChanges(eYield);
 
-	int iCount = 0;
+	ReligionTypes eMajority = m_pCity->GetCityReligions()->GetReligiousMajority();
+	if(eMajority >= RELIGION_PANTHEON)
+	{
+		const CvReligion* pReligion = GC.getGame().GetGameReligions()->GetReligion(eMajority, m_pCity->getOwner());
+		if(pReligion)
+		{
+			iYieldPerWork += pReligion->m_Beliefs.GetGreatWorkYieldChange(m_pCity->getPopulation(), eYield);
+			BeliefTypes eSecondaryPantheon = m_pCity->GetCityReligions()->GetSecondaryReligionPantheonBelief();
+			if (eSecondaryPantheon != NO_BELIEF)
+			{
+				iYieldPerWork += GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon)->GetGreatWorkYieldChange(eYield);
+			}
+		}
+	}
+
+	int iWorkCount = 0;
+	int iBuildingCount = 0;
 
 	CvCivilizationInfo *pkCivInfo = GC.getCivilizationInfo(m_pCity->getCivilizationType());
 	if (pkCivInfo)
@@ -3245,18 +3321,24 @@ int CvCityBuildings::GetYieldFromGreatWorks(YieldTypes eYield) const
 				CvBuildingEntry *pkInfo = GC.getBuildingInfo(eBuilding);
 				if (pkInfo)
 				{
-					if (pkInfo->GetGreatWorkYieldType() == eYield)
+					iWorkCount++;
+					
+					if ((MOD_GLOBAL_GREATWORK_YIELDTYPES && eYield == pkInfo->GetGreatWorkYieldType()) || (!MOD_GLOBAL_GREATWORK_YIELDTYPES && eYield == YIELD_CULTURE))
 					{
-						iCount++;
+						iBuildingCount++;
 					}
 				}
 			}
 		}
 	}
-	// CUSTOMLOG("There are %i great works in %s with yield type %i", iCount, m_pCity->getName().c_str(), (int) eYield);
-	
-	int iRtnValue = iYieldPerWork * iCount;
+	int iRtnValue = (iWorkCount * iYieldPerWork) + (iBuildingCount * iYieldPerBuilding);
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
 	iRtnValue += GetThemingBonuses(eYield);
+#else
+	if (eYield == YIELD_CULTURE) {
+		iRtnValue += GetThemingBonuses();
+	}
+#endif
 
 	return iRtnValue;
 }
@@ -3265,7 +3347,7 @@ int CvCityBuildings::GetYieldFromGreatWorks(YieldTypes eYield) const
 /// Accessor: How much culture are we generating from Great Works in our buildings?
 int CvCityBuildings::GetCultureFromGreatWorks() const
 {
-#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES)
+#if defined(MOD_GLOBAL_GREATWORK_YIELDTYPES) || defined(MOD_API_UNIFIED_YIELDS)
 	return GetYieldFromGreatWorks(YIELD_CULTURE);
 #else
 	int iCulturePerWork = GC.getBASE_CULTURE_PER_GREAT_WORK();

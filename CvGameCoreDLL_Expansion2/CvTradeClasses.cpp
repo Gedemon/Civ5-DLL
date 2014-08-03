@@ -2334,6 +2334,12 @@ int CvPlayerTrade::GetTradeConnectionOtherTraitValueTimes100(const TradeConnecti
 		{
 			iValue += GET_PLAYER(kTradeConnection.m_eDestOwner).GetPlayerTraits()->GetYieldChangeIncomingTradeRoute(eYield) * 100;
 		}
+#if defined(MOD_API_UNIFIED_YIELDS)
+	}
+	else
+	{
+		iValue += GET_PLAYER(kTradeConnection.m_eOriginOwner).GetPlayerTraits()->GetYieldChangeIncomingTradeRoute(eYield) * 100;
+#endif
 	}
 
 	return iValue;
@@ -2448,10 +2454,26 @@ int CvPlayerTrade::GetTradeConnectionValueTimes100 (const TradeConnection& kTrad
 					iValue = max(100, iValue);
 				}
 				break;
+#if defined(MOD_API_UNIFIED_YIELDS)
+			case YIELD_CULTURE:
+			case YIELD_FAITH:
+#endif
+#if defined(MOD_API_UNIFIED_YIELDS_TOURISM)
+			case YIELD_TOURISM:
+#endif
+#if defined(MOD_API_UNIFIED_YIELDS_GOLDEN_AGE)
+			case YIELD_GOLDEN_AGE_POINTS:
+#endif
 			case YIELD_SCIENCE:
 				int iBaseValue = GetTradeConnectionBaseValueTimes100(kTradeConnection, eYield, bAsOriginPlayer);
+#if defined(MOD_API_UNIFIED_YIELDS)
+				int iTraitBonus = GetTradeConnectionOtherTraitValueTimes100(kTradeConnection, eYield, bAsOriginPlayer);
+#endif
 
 				iValue = iBaseValue;
+#if defined(MOD_API_UNIFIED_YIELDS)
+				iValue += iTraitBonus;
+#endif
 
 				int iModifier = 100;
 				
@@ -2492,13 +2514,29 @@ int CvPlayerTrade::GetTradeConnectionValueTimes100 (const TradeConnection& kTrad
 						iValue /= 100;
 					}
 					break;
+#if defined(MOD_API_UNIFIED_YIELDS)
+				case YIELD_CULTURE:
+				case YIELD_FAITH:
+#endif
+#if defined(MOD_API_UNIFIED_YIELDS_TOURISM)
+				case YIELD_TOURISM:
+#endif
+#if defined(MOD_API_UNIFIED_YIELDS_GOLDEN_AGE)
+				case YIELD_GOLDEN_AGE_POINTS:
+#endif
 				case YIELD_SCIENCE:
 					{
 						int iBaseValue = GetTradeConnectionBaseValueTimes100(kTradeConnection, eYield, bAsOriginPlayer);
+#if defined(MOD_API_UNIFIED_YIELDS)
+						int iTraitBonus = GetTradeConnectionOtherTraitValueTimes100(kTradeConnection, eYield, bAsOriginPlayer);
+#endif
 
 						int iModifier = 100;
 
 						iValue = iBaseValue;
+#if defined(MOD_API_UNIFIED_YIELDS)
+						iValue += iTraitBonus;
+#endif
 
 						iValue *= iModifier;
 						iValue /= 100;						
@@ -2519,6 +2557,9 @@ int CvPlayerTrade::GetTradeConnectionValueTimes100 (const TradeConnection& kTrad
 #else
 					iValue = 300;
 #endif
+#if defined(MOD_API_UNIFIED_YIELDS)
+					iValue += GetTradeConnectionOtherTraitValueTimes100(kTradeConnection, YIELD_FOOD, bAsOriginPlayer);
+#endif
 					iValue += GC.getEraInfo(GET_PLAYER(kTradeConnection.m_eDestOwner).GetCurrentEra())->getTradeRouteFoodBonusTimes100();
 					iValue *= GC.getEraInfo(GC.getGame().getStartEra())->getGrowthPercent();
 					iValue /= 100;
@@ -2538,6 +2579,9 @@ int CvPlayerTrade::GetTradeConnectionValueTimes100 (const TradeConnection& kTrad
 					iValue = GD_INT_GET(TRADE_ROUTE_BASE_PRODUCTION_VALUE);
 #else
 					iValue = 300;
+#endif
+#if defined(MOD_API_UNIFIED_YIELDS)
+					iValue += GetTradeConnectionOtherTraitValueTimes100(kTradeConnection, YIELD_PRODUCTION, bAsOriginPlayer);
 #endif
 					iValue += GC.getEraInfo(GET_PLAYER(kTradeConnection.m_eDestOwner).GetCurrentEra())->getTradeRouteProductionBonusTimes100();
 					iValue *= (GC.getEraInfo(GC.getGame().getStartEra())->getConstructPercent() + GC.getEraInfo(GC.getGame().getStartEra())->getTrainPercent()) / 2;
