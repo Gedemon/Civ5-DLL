@@ -243,6 +243,9 @@ protected:
 #endif
 
 	static int lGetBaseRangedCombatStrength(lua_State* L);
+#if defined(MOD_API_EXTENSIONS)
+	LUAAPIEXTN(SetBaseRangedCombatStrength, void, int);
+#endif
 	static int lGetMaxRangedCombatStrength(lua_State* L);
 	static int lGetCombatLimit(lua_State* L);
 	static int lGetRangedCombatLimit(lua_State* L);

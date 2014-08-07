@@ -1621,6 +1621,7 @@ public:
 
 #if defined(MOD_API_EXTENSIONS)
 	const char* getIconString() const;
+	const char* getColorString() const;
 #endif
 	int getHillsChange() const;
 	int getMountainChange() const;
@@ -1639,6 +1640,7 @@ public:
 protected:
 #if defined(MOD_API_EXTENSIONS)
 	CvString m_strIconString;
+	CvString m_strColorString;
 #endif
 	int m_iHillsChange;
 	int m_iMountainChange;

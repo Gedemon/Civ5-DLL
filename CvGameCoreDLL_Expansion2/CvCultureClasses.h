@@ -32,9 +32,6 @@ public:
 	int m_iTurnFounded;
 	EraTypes m_eEra;
 	PlayerTypes m_ePlayer;
-	
-	// TODO - WH - by adding m_eCurrentOwner, m_iCurrentCity, m_iCurrentBuilding and m_iCurrentSlot here,
-	//	           a load of code that scans players/cities/buildings/slots can be speeded up
 };
 
 FDataStream& operator>>(FDataStream&, CvGreatWork&);

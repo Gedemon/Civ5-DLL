@@ -341,8 +341,6 @@ PlayerTypes CvGameCulture::GetGreatWorkController(int iIndex) const
 {
 	CvAssertMsg (iIndex < GetNumGreatWorks(), "Bad Great Work index");
 	
-	// TODO - WH - by caching m_eCurrentOwner, m_iCurrentCity, m_iCurrentBuilding and m_iCurrentSlot this code can be speeded up
-
 	// for each player
 	//   for each building
 	//     for each slot
@@ -391,8 +389,6 @@ CvCity* CvGameCulture::GetGreatWorkCity(int iIndex) const
 {
 	CvAssertMsg (iIndex < GetNumGreatWorks(), "Bad Great Work index");
 	
-	// TODO - WH - by caching m_eCurrentOwner, m_iCurrentCity, m_iCurrentBuilding and m_iCurrentSlot this code can be speeded up
-
 	// for each player
 	//   for each building
 	//     for each slot
@@ -440,8 +436,6 @@ CvCity* CvGameCulture::GetGreatWorkCity(int iIndex) const
 int CvGameCulture::GetGreatWorkCurrentThemingBonus (int iIndex) const
 {
 	CvAssertMsg (iIndex < GetNumGreatWorks(), "Bad Great Work index");
-
-	// TODO - WH - by caching m_eCurrentOwner, m_iCurrentCity, m_iCurrentBuilding and m_iCurrentSlot this code can be speeded up
 
 	// for each player
 	//   for each building
@@ -599,8 +593,6 @@ bool CvGameCulture::SwapGreatWorks (PlayerTypes ePlayer1, int iWork1, PlayerType
 	{
 		return false;
 	}
-
-	// TODO - WH - by caching m_eCurrentOwner, m_iCurrentCity, m_iCurrentBuilding and m_iCurrentSlot this code can be speeded up
 
 	CvCity* pCity1 = NULL;
 	BuildingClassTypes eBuildingClass1 = NO_BUILDINGCLASS;

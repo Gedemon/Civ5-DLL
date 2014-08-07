@@ -5200,6 +5200,11 @@ int CvUnit::GetPower() const
 		iPower = iPower * GetBaseCombatStrength() / getUnitInfo().GetCombat();
 	}
 #endif
+#if defined(MOD_API_EXTENSIONS) && defined(MOD_BUGFIX_UNIT_POWER_CALC)
+	if (getUnitInfo().GetRangedCombat() > 0) {
+		iPower = iPower * GetBaseRangedCombatStrength() / getUnitInfo().GetRangedCombat();
+	}
+#endif
 	
 	//Take promotions into account: unit with 4 promotions worth ~50% more
 	int iPowerMod = getLevel() * 125;
@@ -11732,8 +11737,23 @@ int CvUnit::GetBaseRangedCombatStrength() const
 	}
 #endif
 
+#if defined(MOD_API_EXTENSIONS)
+	return m_iBaseRangedCombat;
+#else
 	return m_pUnitInfo->GetRangedCombat();
+#endif
 }
+
+
+#if defined(MOD_API_EXTENSIONS)
+//	--------------------------------------------------------------------------------
+void CvUnit::SetBaseRangedCombatStrength(int iStrength)
+{
+	VALIDATE_OBJECT
+
+	m_iBaseRangedCombat = iStrength;
+}
+#endif
 
 
 //	--------------------------------------------------------------------------------

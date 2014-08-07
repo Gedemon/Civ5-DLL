@@ -5300,6 +5300,7 @@ bool CvFeatureInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility&
 CvYieldInfo::CvYieldInfo() :
 #if defined(MOD_API_EXTENSIONS)
 	m_strIconString(""),
+	m_strColorString(""),
 #endif
 	m_iHillsChange(0),
 	m_iMountainChange(0),
@@ -5319,6 +5320,11 @@ CvYieldInfo::CvYieldInfo() :
 const char* CvYieldInfo::getIconString() const
 {
 	return m_strIconString;
+}
+//------------------------------------------------------------------------------
+const char* CvYieldInfo::getColorString() const
+{
+	return m_strColorString;
 }
 #endif
 //------------------------------------------------------------------------------
@@ -5384,6 +5390,7 @@ bool CvYieldInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 
 #if defined(MOD_API_EXTENSIONS)
 	m_strIconString = kResults.GetText("IconString");
+	m_strColorString = kResults.GetText("ColorString");
 #endif
 	kResults.GetValue("HillsChange", m_iHillsChange);
 	kResults.GetValue("MountainChange", m_iMountainChange);

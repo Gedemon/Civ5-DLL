@@ -3344,7 +3344,19 @@ bool CvCityReligions::IsDefendedAgainstSpread(ReligionTypes eReligion)
 			CvUnitEntry* pkEntry = GC.getUnitInfo(pLoopUnit->getUnitType());
 			if(pkEntry && pkEntry->IsProhibitsSpread())
 			{
+#if defined(MOD_RELIGION_ALLIED_INQUISITORS)
+				bool bProtected = (pLoopUnit->getOwner() == m_pCity->getOwner() && pLoopUnit->GetReligionData()->GetReligion() != eReligion);
+				if (!bProtected && MOD_RELIGION_ALLIED_INQUISITORS) {
+					CvPlayer* pCityPlayer = &GET_PLAYER(m_pCity->getOwner());
+					if (pCityPlayer->isMinorCiv() && pCityPlayer->GetMinorCivAI()->GetAlly() == pLoopUnit->getOwner()) {
+						bProtected = true;
+					}
+				}
+				
+				if (bProtected)
+#else
 				if(pLoopUnit->getOwner() == m_pCity->getOwner() && pLoopUnit->GetReligionData()->GetReligion() != eReligion)
+#endif
 				{
 					return true;
 				}
@@ -3365,7 +3377,19 @@ bool CvCityReligions::IsDefendedAgainstSpread(ReligionTypes eReligion)
 				CvUnitEntry* pkEntry = GC.getUnitInfo(pLoopUnit->getUnitType());
 				if(pkEntry && pkEntry->IsProhibitsSpread())
 				{
+#if defined(MOD_RELIGION_ALLIED_INQUISITORS)
+					bool bProtected = (pLoopUnit->getOwner() == m_pCity->getOwner() && pLoopUnit->GetReligionData()->GetReligion() != eReligion);
+					if (!bProtected && MOD_RELIGION_ALLIED_INQUISITORS) {
+						CvPlayer* pCityPlayer = &GET_PLAYER(m_pCity->getOwner());
+						if (pCityPlayer->isMinorCiv() && pCityPlayer->GetMinorCivAI()->GetAlly() == pLoopUnit->getOwner()) {
+							bProtected = true;
+						}
+					}
+					
+					if (bProtected)
+#else
 					if(pLoopUnit->getOwner() == m_pCity->getOwner() && pLoopUnit->GetReligionData()->GetReligion() != eReligion)
+#endif
 					{
 						return true;
 					}
