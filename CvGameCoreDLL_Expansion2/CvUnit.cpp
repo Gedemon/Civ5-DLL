@@ -332,6 +332,10 @@ CvUnit::CvUnit() :
 	, m_extraTerrainDefensePercent("CvUnit::m_extraTerrainDefensePercent", m_syncArchive/*, true*/)
 	, m_extraFeatureAttackPercent("CvUnit::m_extraFeatureAttackPercent", m_syncArchive/*, true*/)
 	, m_extraFeatureDefensePercent("CvUnit::m_extraFeatureDefensePercent", m_syncArchive/*, true*/)
+#if defined(MOD_API_UNIFIED_YIELDS)
+	, m_yieldFromKills("CvUnit::m_yieldFromKills", m_syncArchive/*, true*/)
+	, m_yieldFromBarbarianKills("CvUnit::m_yieldFromBarbarianKills", m_syncArchive/*, true*/)
+#endif
 	, m_extraUnitCombatModifier("CvUnit::m_extraUnitCombatModifier", m_syncArchive/*, true*/)
 	, m_unitClassModifier("CvUnit::m_unitClassModifier", m_syncArchive/*, true*/)
 	, m_iMissionTimer(0)
@@ -1107,6 +1111,20 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 			m_extraFeatureDefensePercent.setAt(i,0);
 		}
 
+#if defined(MOD_API_UNIFIED_YIELDS)
+		m_yieldFromKills.clear();
+		m_yieldFromBarbarianKills.clear();
+		
+		m_yieldFromKills.resize(NUM_YIELD_TYPES);
+		m_yieldFromBarbarianKills.resize(NUM_YIELD_TYPES);
+
+		for(int i = 0; i < NUM_YIELD_TYPES; i++)
+		{
+			m_yieldFromKills.setAt(i,0);
+			m_yieldFromBarbarianKills.setAt(i,0);
+		}
+#endif
+
 		CvAssertMsg((0 < GC.getNumUnitCombatClassInfos()), "GC.getNumUnitCombatClassInfos() is not greater than zero but an array is being allocated in CvUnit::reset");
 		m_extraUnitCombatModifier.clear();
 		m_extraUnitCombatModifier.resize(GC.getNumUnitCombatClassInfos());
@@ -1217,6 +1235,10 @@ void CvUnit::uninitInfos()
 	m_extraTerrainDefensePercent.clear();
 	m_extraFeatureAttackPercent.clear();
 	m_extraFeatureDefensePercent.clear();
+#if defined(MOD_API_UNIFIED_YIELDS)
+	m_yieldFromKills.clear();
+	m_yieldFromBarbarianKills.clear();
+#endif
 	m_extraUnitCombatModifier.clear();
 	m_unitClassModifier.clear();
 }
@@ -5633,8 +5655,12 @@ void CvUnit::DoAttrition()
 
 						char text[256];
 						sprintf_s (text, "%s [COLOR_WHITE]-%d [ICON_PEACE][ENDCOLOR]", string.toUTF8(), iStrengthLoss);
+#if defined(SHOW_PLOT_POPUP)
+						SHOW_PLOT_POPUP(plot(), getOwner(), text, 0.0f);
+#else
 						float fDelay = 0.0f;
 						DLLUI->AddPopupText(getX(), getY(), text, fDelay);
+#endif
 					}
 				}
 			}
@@ -6293,7 +6319,13 @@ bool CvUnit::changeTradeUnitHomeCity(int iX, int iY)
 //	--------------------------------------------------------------------------------
 bool CvUnit::canChangeAdmiralPort(const CvPlot* pPlot) const
 {
+#if defined(MOD_GLOBAL_SEPARATE_GREAT_ADMIRAL)
+	bool bHasSkill = !MOD_GLOBAL_SEPARATE_GREAT_ADMIRAL && IsGreatAdmiral();
+	bHasSkill = bHasSkill || (MOD_GLOBAL_SEPARATE_GREAT_ADMIRAL && m_pUnitInfo->IsCanChangePort());
+	if (!bHasSkill)
+#else
 	if (!IsGreatAdmiral())
+#endif
 	{
 		return false;
 	}
@@ -6731,8 +6763,12 @@ bool CvUnit::sellExoticGoods()
 		GET_PLAYER(getOwner()).GetTreasury()->ChangeGold(iGold);
 		char text[256] = {0};
 		sprintf_s(text, "[COLOR_YELLOW]+%d[ENDCOLOR][ICON_GOLD]", iGold);
+#if defined(SHOW_PLOT_POPUP)
+		SHOW_PLOT_POPUP(plot(), getOwner(), text, 0.0f);
+#else
 		float fDelay = 0.0f;
 		DLLUI->AddPopupText(getX(), getY(), text, fDelay);
+#endif
 
 		changeNumExoticGoods(-1);
 	}
@@ -7262,12 +7298,12 @@ bool CvUnit::found()
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	if(MOD_DIPLOMACY_CITYSTATES && m_pUnitInfo->IsFoundMid())
 	{
-		// TODO - WH - getPIONEER_EXTRA_PLOTS, getPIONEER_FOOD_PERCENT
+		// In an ideal world we'd have getPIONEER_EXTRA_PLOTS and getPIONEER_FOOD_PERCENT (which are in CSD v24 if the standalone source code for that is ever released)
 		kPlayer.cityBoost(getX(), getY(), m_pUnitInfo, GC.getPIONEER_POPULATION_CHANGE(), GC.getPIONEER_POPULATION_CHANGE(), 25);
 	}
 	if(MOD_DIPLOMACY_CITYSTATES && m_pUnitInfo->IsFoundLate())
 	{
-		// TODO - WH - getCOLONIST_EXTRA_PLOTS, getCOLONIST_FOOD_PERCENT
+		// In an ideal world we'd have getCOLONIST_EXTRA_PLOTS and getCOLONIST_FOOD_PERCENT (which are in CSD v24 if the standalone source code for that is ever released)
 		kPlayer.cityBoost(getX(), getY(), m_pUnitInfo, GC.getCOLONIST_POPULATION_CHANGE(), GC.getCOLONIST_POPULATION_CHANGE(), 50);
 	}
 #endif
@@ -7726,7 +7762,9 @@ bool CvUnit::CanSpreadReligion(const CvPlot* pPlot) const
 //	--------------------------------------------------------------------------------
 bool CvUnit::DoSpreadReligion()
 {
+#if !defined(MOD_API_UNIFIED_YIELDS)
 	int iScienceBonus = 0;
+#endif
 
 	CvCity* pCity = GetSpreadReligionTargetCity();
 
@@ -7746,6 +7784,84 @@ bool CvUnit::DoSpreadReligion()
 				const CvReligion* pReligion = pReligions->GetReligion(eReligion, getOwner());
 				if(pReligion)
 				{
+#if defined(MOD_API_UNIFIED_YIELDS)
+					// Requires majority for this city to be another religion
+					ReligionTypes eCurrentReligion = pCity->GetCityReligions()->GetReligiousMajority();
+					int iOtherFollowers = pCity->GetCityReligions()->GetFollowersOtherReligions(eReligion);
+					if (eCurrentReligion != NO_RELIGION && eCurrentReligion != eReligion && iOtherFollowers > 0)
+					{
+						CvPlayer &kPlayer = GET_PLAYER(m_eOwner);
+#if !defined(SHOW_PLOT_POPUP)
+						int iDelay = 0;
+#endif
+						bool bFloatText = pCity->plot() && pCity->plot()->GetActiveFogOfWarMode() == FOGOFWARMODE_OFF;
+						for (int iI = 0; iI < NUM_YIELD_TYPES; iI++)
+						{
+							YieldTypes eYield = (YieldTypes) iI;
+							
+							if (eYield == YIELD_FOOD || eYield == YIELD_PRODUCTION)
+							{
+								continue;
+							}
+							
+							int iYieldBonus = pReligion->m_Beliefs.GetYieldPerOtherReligionFollower(eYield);
+
+							if (eYield == YIELD_SCIENCE)
+							{
+								iYieldBonus += pReligion->m_Beliefs.GetSciencePerOtherReligionFollower();
+							}
+
+							if (iYieldBonus > 0)
+							{
+								iYieldBonus *= iOtherFollowers;
+									
+								switch(eYield)
+								{
+								case YIELD_GOLD:
+									kPlayer.GetTreasury()->ChangeGold(iYieldBonus);
+									break;
+								case YIELD_CULTURE:
+									kPlayer.changeJONSCulture(iYieldBonus);
+									break;
+								case YIELD_FAITH:
+									kPlayer.ChangeFaith(iYieldBonus);
+									break;
+								case YIELD_GOLDEN_AGE_POINTS:
+									kPlayer.ChangeGoldenAgeProgressMeter(iYieldBonus);
+									break;
+								case YIELD_SCIENCE:
+									{
+									TechTypes eCurrentTech = kPlayer.GetPlayerTechs()->GetCurrentResearch();
+									if(eCurrentTech == NO_TECH)
+									{
+										kPlayer.changeOverflowResearch(iYieldBonus);
+									}
+									else
+									{
+										GET_TEAM(kPlayer.getTeam()).GetTeamTechs()->ChangeResearchProgress(eCurrentTech, iYieldBonus, kPlayer.GetID());
+									}
+									}
+									break;
+								case YIELD_TOURISM:
+									kPlayer.GetCulture()->AddTourismAllKnownCivs(iYieldBonus);
+									break;
+								}
+
+								if (bFloatText)
+								{
+									char text[256] = {0};
+									sprintf_s(text, "%s+%d[ENDCOLOR]%s", GC.getYieldInfo(eYield)->getColorString(), iYieldBonus, GC.getYieldInfo(eYield)->getIconString());
+#if defined(SHOW_PLOT_POPUP)
+									SHOW_PLOT_POPUP(pCity->plot(), getOwner(), text, 0.0f);
+#else
+									float fDelay = GC.getPOST_COMBAT_TEXT_DELAY() * (2 + ((float)(iDelay++) * 0.5f));
+									DLLUI->AddPopupText(pCity->getX(), pCity->getY(), text, fDelay);
+#endif
+								}
+							}
+						}
+					}
+#else
 					iScienceBonus = pReligion->m_Beliefs.GetSciencePerOtherReligionFollower();
 					if(iScienceBonus > 0)
 					{
@@ -7760,6 +7876,7 @@ bool CvUnit::DoSpreadReligion()
 							iScienceBonus = 0;
 						}
 					}
+#endif
 				}
 			}
 
@@ -7782,10 +7899,15 @@ bool CvUnit::DoSpreadReligion()
 				sprintf_s(text, "[COLOR_WHITE]%s: %d [ICON_PEACE][ENDCOLOR]",
 					strReligionName.toUTF8(),
 					iConversionStrength / GC.getRELIGION_MISSIONARY_PRESSURE_MULTIPLIER());
+#if defined(SHOW_PLOT_POPUP)
+				SHOW_PLOT_POPUP(pCity->plot(), getOwner(), text, 0.0f);
+#else
 				float fDelay = 0.0f;
 				DLLUI->AddPopupText(pCity->getX(), pCity->getY(), text, fDelay);
+#endif
 			}
 
+#if !defined(MOD_API_UNIFIED_YIELDS)
 			if (iScienceBonus > 0)
 			{
 				CvPlayer &kPlayer = GET_PLAYER(m_eOwner);
@@ -7806,9 +7928,14 @@ bool CvUnit::DoSpreadReligion()
 					char text[256] = {0};
 					sprintf_s(text, "[COLOR_BLUE]+%d[ENDCOLOR][ICON_RESEARCH]", iScienceBonus);
 					float fDelay = GC.getPOST_COMBAT_TEXT_DELAY() * 2;
+#if defined(SHOW_PLOT_POPUP)
+					SHOW_PLOT_POPUP(pCity->plot(), getOwner(), text, fDelay);
+#else
 					DLLUI->AddPopupText(pCity->getX(), pCity->getY(), text, fDelay);
+#endif
 				}
 			}
+#endif
 
 			bool bShow = plot()->isActiveVisible(false);
 			if(bShow)
@@ -8672,17 +8799,23 @@ bool CvUnit::buyCityState()
 bool CvUnit::canRepairFleet(const CvPlot* /*pPlot*/, bool /*bTestVisible*/) const
 {
 	VALIDATE_OBJECT
-		if(isDelayedDeath())
-		{
-			return false;
-		}
+	if(isDelayedDeath())
+	{
+		return false;
+	}
 
-		if (!IsGreatAdmiral())
-		{
-			return false;
-		}
+#if defined(MOD_GLOBAL_SEPARATE_GREAT_ADMIRAL)
+	bool bHasSkill = !MOD_GLOBAL_SEPARATE_GREAT_ADMIRAL && IsGreatAdmiral();
+	bHasSkill = bHasSkill || (MOD_GLOBAL_SEPARATE_GREAT_ADMIRAL && m_pUnitInfo->IsCanRepairFleet());
+	if (!bHasSkill)
+#else
+	if (!IsGreatAdmiral())
+#endif
+	{
+		return false;
+	}
 
-		return true;
+	return true;
 }
 
 //	--------------------------------------------------------------------------------
@@ -9342,8 +9475,12 @@ bool CvUnit::blastTourism()
 
  		char text[256] = {0};
 		sprintf_s(text, "[COLOR_WHITE]+%d [ICON_TOURISM][ENDCOLOR]   %s", iTourismBlast, strInfluenceText.c_str());
+#if defined(SHOW_PLOT_POPUP)
+		SHOW_PLOT_POPUP(pPlot, getOwner(), text, 0.0f);
+#else
  		float fDelay = 0.0f;
  		DLLUI->AddPopupText(pPlot->getX(), pPlot->getY(), text, fDelay);
+#endif
  	}
 
 #if !defined(NO_ACHIEVEMENTS)
@@ -14446,7 +14583,11 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 									}
 									else
 									{
+#if defined(MOD_API_UNIFIED_YIELDS)
+										kPlayer.DoYieldsFromKill(this, pLoopUnit, iX, iY, 0);
+#else
 										kPlayer.DoYieldsFromKill(getUnitType(), pLoopUnit->getUnitType(), iX, iY, pLoopUnit->isBarbarian(), 0);
+#endif
 										pLoopUnit->kill(false, getOwner());
 									}
 								}
@@ -14510,8 +14651,16 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 											strMessage = Localization::Lookup("TXT_KEY_UNIT_LOST");
 											strSummary = strMessage;
 
+#if defined(MOD_API_UNIFIED_YIELDS)
+											kPlayer.DoYieldsFromKill(this, pLoopUnit, iX, iY, 0);
+#else
 											kPlayer.DoYieldsFromKill(getUnitType(), pLoopUnit->getUnitType(), iX, iY, pLoopUnit->isBarbarian(), 0);
+#endif
+#if defined(MOD_API_EXTENSIONS)
+											kPlayer.DoUnitKilledCombat(this, pLoopUnit->getOwner(), pLoopUnit->getUnitType());
+#else
 											kPlayer.DoUnitKilledCombat(pLoopUnit->getOwner(), pLoopUnit->getUnitType());
+#endif
 										}
 
 										CvNotifications* pNotification = GET_PLAYER(pLoopUnit->getOwner()).GetNotifications();
@@ -15438,7 +15587,11 @@ void CvUnit::setDamage(int iNewValue, PlayerTypes ePlayer, float fAdditionalText
 				}
 
 				if (!isSuicide())	// Show the HP lost, expect if it is a suicide unit (missisle, etc.)
+#if defined(SHOW_PLOT_POPUP)
+					SHOW_PLOT_POPUP(GC.getMap().plot(iX, iY), getOwner(), text.c_str(), fDelay);
+#else
 					DLLUI->AddPopupText(iX, iY, text.c_str(), fDelay);
+#endif
 			}
 		}
 	}
@@ -15477,7 +15630,11 @@ void CvUnit::setDamage(int iNewValue, PlayerTypes ePlayer, float fAdditionalText
 				GET_PLAYER(ePlayer).GetPlayerTraits()->SetDefeatedBarbarianCampGuardType(getUnitType());
 			}
 
+#if defined(MOD_API_EXTENSIONS)
+			GET_PLAYER(ePlayer).DoUnitKilledCombat(NULL, getOwner(), getUnitType());
+#else
 			GET_PLAYER(ePlayer).DoUnitKilledCombat(getOwner(), getUnitType());
+#endif
 		}
 	}
 }
@@ -15661,7 +15818,9 @@ void CvUnit::setExperience(int iNewValue, int iMax)
 			{
 				Localization::String localizedText = Localization::Lookup("TXT_KEY_EXPERIENCE_POPUP");
 				localizedText << iExperienceChange;
+#if !defined(SHOW_PLOT_POPUP)
 				float fDelay = GC.getPOST_COMBAT_TEXT_DELAY();
+#endif
 
 				int iX = m_iX;
 				int iY = m_iY;
@@ -15683,7 +15842,11 @@ void CvUnit::setExperience(int iNewValue, int iMax)
 					}
 				}
 
+#if defined(SHOW_PLOT_POPUP)
+				SHOW_PLOT_POPUP(GC.getMap().plot(iX, iY), getOwner(), localizedText.toUTF8(), 0.0f);
+#else
 				DLLUI->AddPopupText(iX, iY, localizedText.toUTF8(), fDelay);
+#endif
 
 				if(IsSelected())
 				{
@@ -15736,8 +15899,12 @@ void CvUnit::changeExperience(int iChange, int iMax, bool bFromCombat, bool bInB
 
 						CvPromotionEntry* pkNewPromotionInfo = GC.getPromotionInfo(eNewPromotion);
 						Localization::String localizedText = Localization::Lookup(pkNewPromotionInfo->GetDescriptionKey());
+#if defined(SHOW_PLOT_POPUP)
+						SHOW_PLOT_POPUP(plot(), getOwner(), localizedText.toUTF8(), 0.0f);
+#else
 						float fDelay = GC.getPOST_COMBAT_TEXT_DELAY() * 2;
 						DLLUI->AddPopupText(getX(), getY(), localizedText.toUTF8(), fDelay);
+#endif
 					}
 				}
 			}
@@ -17124,7 +17291,12 @@ bool CvUnit::IsStackedGreatGeneral() const
 				if(pLoopUnit)
 				{
 					// Great General unit
+#if defined(MOD_BUGFIX_MINOR)
+					// IsNearGreatGeneral() includes GAs, so we'll add them here as well
+					if(pLoopUnit->IsGreatGeneral() || pLoopUnit->IsGreatAdmiral())
+#else
 					if(pLoopUnit->IsGreatGeneral())
+#endif
 					{
 						// Same domain
 						if(pLoopUnit->getDomainType() == getDomainType())
@@ -18721,6 +18893,54 @@ void CvUnit::changeExtraFeatureDefensePercent(FeatureTypes eIndex, int iChange)
 	}
 }
 
+#if defined(MOD_API_UNIFIED_YIELDS)
+//	--------------------------------------------------------------------------------
+int CvUnit::getYieldFromKills(YieldTypes eIndex) const
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+	return m_yieldFromKills[eIndex];
+}
+
+
+//	--------------------------------------------------------------------------------
+void CvUnit::changeYieldFromKills(YieldTypes eIndex, int iChange)
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+
+	if(iChange != 0)
+	{
+		m_yieldFromKills.setAt(eIndex, m_yieldFromKills[eIndex] + iChange);
+	}
+}
+
+//	--------------------------------------------------------------------------------
+int CvUnit::getYieldFromBarbarianKills(YieldTypes eIndex) const
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+	return m_yieldFromBarbarianKills[eIndex];
+}
+
+
+//	--------------------------------------------------------------------------------
+void CvUnit::changeYieldFromBarbarianKills(YieldTypes eIndex, int iChange)
+{
+	VALIDATE_OBJECT
+	CvAssertMsg(eIndex >= 0, "eIndex is expected to be non-negative (invalid Index)");
+	CvAssertMsg(eIndex < NUM_YIELD_TYPES, "eIndex is expected to be within maximum bounds (invalid Index)");
+
+	if(iChange != 0)
+	{
+		m_yieldFromBarbarianKills.setAt(eIndex, m_yieldFromBarbarianKills[eIndex] + iChange);
+	}
+}
+#endif
+
 //	--------------------------------------------------------------------------------
 int CvUnit::getExtraUnitCombatModifier(UnitCombatTypes eIndex) const
 {
@@ -19236,6 +19456,14 @@ void CvUnit::setHasPromotion(PromotionTypes eIndex, bool bNewValue)
 #endif
 			changeFeatureImpassableCount(((FeatureTypes)iI), ((thisPromotion.GetFeatureImpassable(iI)) ? iChange : 0));
 		}
+
+#if defined(MOD_API_UNIFIED_YIELDS)
+		for(iI = 0; iI < NUM_YIELD_TYPES; iI++)
+		{
+			changeYieldFromKills(((YieldTypes)iI), (thisPromotion.GetYieldFromKills(iI) * iChange));
+			changeYieldFromBarbarianKills(((YieldTypes)iI), (thisPromotion.GetYieldFromBarbarianKills(iI) * iChange));
+		}
+#endif
 
 		for(iI = 0; iI < GC.getNumUnitCombatClassInfos(); iI++)
 		{

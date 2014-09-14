@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 60)
+#define MOD_DLL_VERSION_NUMBER ((uint) 63)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -94,6 +94,8 @@
 #endif
 // Great Generals and Admirals gained from combat experience spawn in the war-zone and not in a distant city
 #define MOD_GLOBAL_LOCAL_GENERALS                   gCustomMods.isGLOBAL_LOCAL_GENERALS()
+// Separates out the repair fleet and change port abilities of the Great Admiral (v61)
+#define MOD_GLOBAL_SEPARATE_GREAT_ADMIRAL           gCustomMods.isGLOBAL_SEPARATE_GREAT_ADMIRAL()
 // Permits units to have promotion trees different from their assigned CombatClass
 #define MOD_GLOBAL_PROMOTION_CLASSES                gCustomMods.isGLOBAL_PROMOTION_CLASSES()
 // Permits ships to enter coastal forts/citadels in friendly lands
@@ -167,6 +169,8 @@
 #define MOD_GLOBAL_CANNOT_EMBARK                    gCustomMods.isGLOBAL_CANNOT_EMBARK()
 // Separates the Engineer, Scientist and Merchant GP counters (v52)
 #define MOD_GLOBAL_SEPARATE_GP_COUNTERS             gCustomMods.isGLOBAL_SEPARATE_GP_COUNTERS()
+// Removes free GP (from buildings, policies, traits, etc) from the GP counters (v61)
+#define MOD_GLOBAL_TRULY_FREE_GP                    gCustomMods.isGLOBAL_TRULY_FREE_GP()
 
 // Tech bonuses from other teams require an embassy or spy in their capital and not from just having met them (v30)
 #define MOD_DIPLOMACY_TECH_BONUSES                  gCustomMods.isDIPLOMACY_TECH_BONUSES()
@@ -222,6 +226,8 @@
 // Permit human players to choose they own city tiles due to cultural expansion
 #define MOD_UI_CITY_EXPANSION                       gCustomMods.isUI_CITY_EXPANSION()
 
+// National Wonders (NW) requiring a building in every city exclude those being razed (in addition to excluding puppets) (v63)
+#define MOD_BUILDINGS_NW_EXCLUDE_RAZING             gCustomMods.isBUILDINGS_NW_EXCLUDE_RAZING()
 // Purchase of buildings in cities allows for any current production
 #define MOD_BUILDINGS_PRO_RATA_PURCHASE             gCustomMods.isBUILDINGS_PRO_RATA_PURCHASE()
 // Permits cities to work more rings - AFFECTS SAVE GAME DATA FORMAT
@@ -375,6 +381,11 @@
 //   GameEvents.PlayerCanRemoveHeresy.Add(function(iPlayer, iUnit, iPlotX, iPlotY) return true end)
 #define MOD_EVENTS_RELIGION                         gCustomMods.isEVENTS_RELIGION()
 
+// Events sents on espionage outcomes (v63)
+//   GameEvents.EspionageResult.Add(function(iPlayer, iSpy, iResult, iCityX, iCityY) end)
+//   GameEvents.EspionageState.Add(function(iPlayer, iSpy, iState, iCityX, iCityY) end)
+#define MOD_EVENTS_ESPIONAGE                         gCustomMods.isEVENTS_ESPIONAGE()
+
 // Event sent to ascertain if a unit can start a paradrop from this tile
 //   GameEvents.CanParadropFrom.Add(function(iPlayer, iUnit, iPlotX, iPlotY) return false end)
 //   GameEvents.CannotParadropFrom.Add(function(iPlayer, iUnit, iPlotX, iPlotY) return false end)
@@ -428,10 +439,10 @@
 // Events sent about war and peace
 //   GameEvents.PlayerCanDeclareWar.Add(function(iPlayer, iAgainstTeam) return true end)
 //   GameEvents.IsAbleToDeclareWar.Add(function(iPlayer, iAgainstTeam) return true end) - deprecated, use PlayerCanDeclareWar
-//   GameEvents.DeclareWar.Add(function(iPlayer, iAgainstTeam) end)
+//   GameEvents.DeclareWar.Add(function(iPlayer, iAgainstTeam, bAggressor) end)
 //   GameEvents.PlayerCanMakePeace.Add(function(iPlayer, iAgainstTeam) return true end)
 //   GameEvents.IsAbleToMakePeace.Add(function(iPlayer, iAgainstTeam) return true end) - deprecated, use PlayerCanMakePeace
-//   GameEvents.MakePeace.Add(function(iPlayer, iAgainstTeam) end)
+//   GameEvents.MakePeace.Add(function(iPlayer, iAgainstTeam, bPacifier) end)
 #define MOD_EVENTS_WAR_AND_PEACE                    gCustomMods.isEVENTS_WAR_AND_PEACE()
 
 // Events sent about resolutions (v51)
@@ -667,7 +678,7 @@ enum TerraformingEventTypes {
 #define SHOW_CITY_MESSAGE(pCity, ePlayer, szMessage)  DLLUI->AddCityMessage(0, pCity->GetIDInfo(), ePlayer, false, GC.getEVENT_MESSAGE_TIME(), szMessage)
 #define SHOW_UNIT_MESSAGE(pUnit, ePlayer, szMessage)  DLLUI->AddUnitMessage(0, pUnit->GetIDInfo(), ePlayer, false, GC.getEVENT_MESSAGE_TIME(), szMessage)
 #define SHOW_PLOT_MESSAGE(pPlot, ePlayer, szMessage)  DLLUI->AddPlotMessage(0, pPlot->GetPlotIndex(), ePlayer, false, GC.getEVENT_MESSAGE_TIME(), szMessage)
-#define SHOW_PLOT_POPUP(pPlot, ePlayer, szMessage, fDelay)  if (pPlot->isVisible(GET_PLAYER(ePlayer).getTeam())) DLLUI->AddPopupText(pPlot->getX(), pPlot->getY(), szMessage, fDelay)
+#define SHOW_PLOT_POPUP(pPlot, ePlayer, szMessage, fDelay)  pPlot->showPopupText(ePlayer, szMessage)
 
 
 // GlobalDefines wrappers
@@ -727,7 +738,9 @@ enum TerraformingEventTypes {
 #define GAMEEVENT_CustomMissionSetActivity	"CustomMissionSetActivity",		"iiiiiii"
 #define GAMEEVENT_CustomMissionTargetPlot	"CustomMissionTargetPlot",		"iiiiiii"
 #define GAMEEVENT_CustomMissionTimerInc		"CustomMissionTimerInc",		"iiiiiii"
-#define GAMEEVENT_DeclareWar				"DeclareWar",					"ii"
+#define GAMEEVENT_DeclareWar				"DeclareWar",					"iib"
+#define GAMEEVENT_EspionageResult			"EspionageResult",				"iiiii"
+#define GAMEEVENT_EspionageState			"EspionageState",				"iiiii"
 #define GAMEEVENT_GetDiploModifier			"GetDiploModifier",				"iii"
 #define GAMEEVENT_GetBombardRange			"GetBombardRange",				"ii"
 #define GAMEEVENT_GetReligionToFound		"GetReligionToFound",			"iib"
@@ -737,7 +750,7 @@ enum TerraformingEventTypes {
 #define GAMEEVENT_GreatPersonExpended		"GreatPersonExpended",			"iiiii"
 #define GAMEEVENT_IsAbleToDeclareWar		"IsAbleToDeclareWar",			"ii"
 #define GAMEEVENT_IsAbleToMakePeace			"IsAbleToMakePeace",			"ii"
-#define GAMEEVENT_MakePeace					"MakePeace",					"ii"
+#define GAMEEVENT_MakePeace					"MakePeace",					"iib"
 #define GAMEEVENT_MinorAlliesChanged		"MinorAlliesChanged",			"iibii"
 #define GAMEEVENT_MinorFriendsChanged		"MinorFriendsChanged",			"iibii"
 #define GAMEEVENT_NaturalWonderDiscovered	"NaturalWonderDiscovered",		"iiiib"
@@ -875,6 +888,7 @@ public:
 	MOD_OPT_DECL(GLOBAL_BREAK_CIVILIAN_1UPT);
 	MOD_OPT_DECL(GLOBAL_BREAK_CIVILIAN_RESTRICTIONS);
 	MOD_OPT_DECL(GLOBAL_LOCAL_GENERALS);
+	MOD_OPT_DECL(GLOBAL_SEPARATE_GREAT_ADMIRAL);
 	MOD_OPT_DECL(GLOBAL_PROMOTION_CLASSES);
 	MOD_OPT_DECL(GLOBAL_PASSABLE_FORTS);
 	MOD_OPT_DECL(GLOBAL_PASSABLE_FORTS_ANY);
@@ -909,6 +923,7 @@ public:
 	MOD_OPT_DECL(GLOBAL_MOVE_AFTER_UPGRADE);
 	MOD_OPT_DECL(GLOBAL_CANNOT_EMBARK);
 	MOD_OPT_DECL(GLOBAL_SEPARATE_GP_COUNTERS);
+	MOD_OPT_DECL(GLOBAL_TRULY_FREE_GP);
 	
 	MOD_OPT_DECL(DIPLOMACY_TECH_BONUSES);
 	MOD_OPT_DECL(DIPLOMACY_AUTO_DENOUNCE);
@@ -941,6 +956,7 @@ public:
 	MOD_OPT_DECL(UI_CITY_PRODUCTION);
 	MOD_OPT_DECL(UI_CITY_EXPANSION);
 
+	MOD_OPT_DECL(BUILDINGS_NW_EXCLUDE_RAZING);
 	MOD_OPT_DECL(BUILDINGS_PRO_RATA_PURCHASE);
 	MOD_OPT_DECL(BUILDINGS_CITY_WORKING);
 
@@ -993,9 +1009,10 @@ public:
 	MOD_OPT_DECL(EVENTS_GOODY_TECH);
 	MOD_OPT_DECL(EVENTS_AI_OVERRIDE_TECH);
 	MOD_OPT_DECL(EVENTS_GREAT_PEOPLE);
-	MOD_OPT_DECL(EVENTS_RELIGION);
 	MOD_OPT_DECL(EVENTS_FOUND_RELIGION);
 	MOD_OPT_DECL(EVENTS_ACQUIRE_BELIEFS);
+	MOD_OPT_DECL(EVENTS_RELIGION);
+	MOD_OPT_DECL(EVENTS_ESPIONAGE);
 	MOD_OPT_DECL(EVENTS_PLOT);
 	MOD_OPT_DECL(EVENTS_GOLDEN_AGE);
 	MOD_OPT_DECL(EVENTS_CITY);

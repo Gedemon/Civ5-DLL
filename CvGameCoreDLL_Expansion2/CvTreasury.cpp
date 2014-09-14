@@ -426,6 +426,9 @@ int CvTreasury::GetGoldPerTurnFromReligion() const
 {
 	int iGoldFromReligion = 0;
 
+#if defined(MOD_API_UNIFIED_YIELDS)
+	iGoldFromReligion += m_pPlayer->GetYieldPerTurnFromReligion(YIELD_GOLD);
+#else
 	CvGameReligions* pReligions = GC.getGame().GetGameReligions();
 
 	// Founder beliefs
@@ -443,12 +446,9 @@ int CvTreasury::GetGoldPerTurnFromReligion() const
 			{
 				iGoldFromReligion += (pReligions->GetNumFollowers(eFoundedReligion) / iGoldPerXFollowers);
 			}
-
-#if defined(MOD_API_UNIFIED_YIELDS)
-			iGoldFromReligion += m_pPlayer->GetYieldPerTurnFromReligion(YIELD_GOLD);
-#endif
 		}
 	}
+#endif
 
 	return iGoldFromReligion;
 }

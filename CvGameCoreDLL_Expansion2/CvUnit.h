@@ -1180,6 +1180,13 @@ public:
 	int getExtraFeatureDefensePercent(FeatureTypes eIndex) const;
 	void changeExtraFeatureDefensePercent(FeatureTypes eIndex, int iChange);
 
+#if defined(MOD_API_UNIFIED_YIELDS)
+	int getYieldFromKills(YieldTypes eIndex) const;
+	void changeYieldFromKills(YieldTypes eIndex, int iChange);
+	int getYieldFromBarbarianKills(YieldTypes eIndex) const;
+	void changeYieldFromBarbarianKills(YieldTypes eIndex, int iChange);
+#endif
+
 	int getExtraUnitCombatModifier(UnitCombatTypes eIndex) const;
 	void changeExtraUnitCombatModifier(UnitCombatTypes eIndex, int iChange);
 
@@ -1631,6 +1638,10 @@ protected:
 	FAutoVariable<std::vector<int>, CvUnit> m_extraTerrainDefensePercent;
 	FAutoVariable<std::vector<int>, CvUnit> m_extraFeatureAttackPercent;
 	FAutoVariable<std::vector<int>, CvUnit> m_extraFeatureDefensePercent;
+#if defined(MOD_API_UNIFIED_YIELDS)
+	FAutoVariable<std::vector<int>, CvUnit> m_yieldFromKills;
+	FAutoVariable<std::vector<int>, CvUnit> m_yieldFromBarbarianKills;
+#endif
 	FAutoVariable<std::vector<int>, CvUnit> m_extraUnitCombatModifier;
 	FAutoVariable<std::vector<int>, CvUnit> m_unitClassModifier;
 	int m_iMissionTimer;

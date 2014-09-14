@@ -2978,7 +2978,11 @@ int CvLuaPlayer::lGetMinimumFaithNextGreatProphet(lua_State* L)
 {
 	CvPlayerAI* pkPlayer = GetInstance(L);
 
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	int iFaith = pkPlayer->GetReligions()->GetCostNextProphet(true /*bIncludeBeliefDiscounts*/, true /*bAdjustForSpeedDifficulty*/, MOD_GLOBAL_TRULY_FREE_GP);
+#else
 	int iFaith = pkPlayer->GetReligions()->GetCostNextProphet(true /*bIncludeBeliefDiscounts*/, true /*bAdjustForSpeedDifficulty*/);
+#endif
 	lua_pushinteger(L, iFaith);
 
 	return 1;
@@ -5578,7 +5582,12 @@ int CvLuaPlayer::lCreateGreatGeneral(lua_State* L)
 	const int x = lua_tointeger(L, 3);
 	const int y = lua_tointeger(L, 4);
 
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	const bool bIsFree = luaL_optint(L, 5, 0);
+	pkPlayer->createGreatGeneral(eGreatPersonUnit, x, y, bIsFree);
+#else
 	pkPlayer->createGreatGeneral(eGreatPersonUnit, x, y);
+#endif
 	return 0;
 }
 //------------------------------------------------------------------------------
@@ -11611,14 +11620,24 @@ int CvLuaPlayer::lHasUnitOfClassType(lua_State* L)
 int CvLuaPlayer::lGetWarmongerPreviewString(lua_State* L)
 {
 	const PlayerTypes eOwner = (PlayerTypes) lua_tointeger(L, 2);
+#if defined(MOD_CONFIG_AI_IN_XML)
+	const bool bIsCapital = luaL_optbool(L, 3, false);
+	lua_pushstring(L, CvDiplomacyAIHelpers::GetWarmongerPreviewString(eOwner, bIsCapital));
+#else
 	lua_pushstring(L, CvDiplomacyAIHelpers::GetWarmongerPreviewString(eOwner));
+#endif
 	return 1;
 }
 
 int CvLuaPlayer::lGetLiberationPreviewString(lua_State* L)
 {
 	const PlayerTypes eOriginalOwner = (PlayerTypes) lua_tointeger(L, 2);
+#if defined(MOD_CONFIG_AI_IN_XML)
+	const bool bIsCapital = luaL_optbool(L, 3, false);
+	lua_pushstring(L, CvDiplomacyAIHelpers::GetLiberationPreviewString(eOriginalOwner, bIsCapital));
+#else
 	lua_pushstring(L, CvDiplomacyAIHelpers::GetLiberationPreviewString(eOriginalOwner));
+#endif
 	return 1;
 }
 

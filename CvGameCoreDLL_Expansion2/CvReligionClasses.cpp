@@ -2389,7 +2389,6 @@ int CvGameReligions::GetBeliefYieldForKill(YieldTypes eYield, int iX, int iY, Pl
 	int iLoop;
 	CvCity* pLoopCity;
 
-	// TODO - WH - support other yields from kills near a city via beliefs
 	// Only Faith supported for now
 	if(eYield != YIELD_FAITH)
 	{
@@ -2499,7 +2498,11 @@ bool CvGameReligions::CheckSpawnGreatProphet(CvPlayer& kPlayer)
 
 	const CvReligion* pReligion = NULL;
 	const int iFaith = kPlayer.GetFaith();
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	int iCost = kPlayer.GetReligions()->GetCostNextProphet(true /*bIncludeBeliefDiscounts*/, true /*bAdjustForSpeedDifficulty*/, MOD_GLOBAL_TRULY_FREE_GP);
+#else
 	int iCost = kPlayer.GetReligions()->GetCostNextProphet(true /*bIncludeBeliefDiscounts*/, true /*bAdjustForSpeedDifficulty*/);
+#endif
 
 	ReligionTypes ePlayerReligion = GetReligionCreatedByPlayer(kPlayer.GetID());
 	if(ePlayerReligion > RELIGION_PANTHEON)
@@ -2541,9 +2544,17 @@ bool CvGameReligions::CheckSpawnGreatProphet(CvPlayer& kPlayer)
 	if(pSpawnCity != NULL && pSpawnCity->getOwner() == kPlayer.GetID())
 	{
 #if defined(MOD_BUGFIX_MINOR)
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+		pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, true /*bIncrementCount*/, true, false);
+#else
 		pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, true /*bIncrementCount*/, true);
+#endif
+#else
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+		pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, false /*bIncrementCount*/, true, false);
 #else
 		pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, false /*bIncrementCount*/, true);
+#endif
 #endif
 #if defined(MOD_RELIGION_KEEP_PROPHET_OVERFLOW)
 		if (MOD_RELIGION_KEEP_PROPHET_OVERFLOW && iBaseChance >= 100) {
@@ -2561,9 +2572,17 @@ bool CvGameReligions::CheckSpawnGreatProphet(CvPlayer& kPlayer)
 		if(pSpawnCity != NULL)
 		{
 #if defined(MOD_BUGFIX_MINOR)
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+			pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, true /*bIncrementCount*/, true, false);
+#else
 			pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, true /*bIncrementCount*/, true);
+#endif
+#else
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+			pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, false /*bIncrementCount*/, true, false);
 #else
 			pSpawnCity->GetCityCitizens()->DoSpawnGreatPerson(eUnit, false /*bIncrementCount*/, true);
+#endif
 #endif
 #if defined(MOD_RELIGION_KEEP_PROPHET_OVERFLOW)
 		if (MOD_RELIGION_KEEP_PROPHET_OVERFLOW && iBaseChance >= 100) {
@@ -2733,6 +2752,9 @@ CvPlayerReligions::CvPlayerReligions(void):
 #if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
 	m_iFaithAtLastNotify(0),
 #endif
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	m_iNumFreeProphetsSpawned(0),
+#endif
 	m_iNumProphetsSpawned(0),
 	m_bFoundingReligion(false)
 {
@@ -2762,6 +2784,9 @@ void CvPlayerReligions::Uninit()
 void CvPlayerReligions::Reset()
 {
 	m_bFoundingReligion = false;
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	m_iNumFreeProphetsSpawned = 0;
+#endif
 	m_iNumProphetsSpawned = 0;
 #if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
 	m_iFaithAtLastNotify = 0;
@@ -2775,6 +2800,9 @@ void CvPlayerReligions::Read(FDataStream& kStream)
 	uint uiVersion;
 	kStream >> uiVersion;
 	MOD_SERIALIZE_INIT_READ(kStream);
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	MOD_SERIALIZE_READ(61, kStream, m_iNumFreeProphetsSpawned, 0);
+#endif
 	kStream >> m_iNumProphetsSpawned;
 	kStream >> m_bFoundingReligion;
 #if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
@@ -2789,6 +2817,9 @@ void CvPlayerReligions::Write(FDataStream& kStream)
 	uint uiVersion = 1;
 	kStream << uiVersion;
 	MOD_SERIALIZE_INIT_WRITE(kStream);
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	MOD_SERIALIZE_WRITE(kStream, m_iNumFreeProphetsSpawned);
+#endif
 	kStream << m_iNumProphetsSpawned;
 	kStream << m_bFoundingReligion;
 #if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)
@@ -2797,21 +2828,46 @@ void CvPlayerReligions::Write(FDataStream& kStream)
 }
 
 /// How many prophets have we spawned
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+int CvPlayerReligions::GetNumProphetsSpawned(bool bExcludeFree) const
+#else
 int CvPlayerReligions::GetNumProphetsSpawned() const
+#endif
 {
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	int iCount = m_iNumProphetsSpawned;
+	if (bExcludeFree) iCount -= m_iNumFreeProphetsSpawned;
+	return iCount;
+#else
 	return m_iNumProphetsSpawned;
+#endif
 }
 
 /// Change count of prophets spawned
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+void CvPlayerReligions::ChangeNumProphetsSpawned(int iValue, bool bIsFree)
+#else
 void CvPlayerReligions::ChangeNumProphetsSpawned(int iValue)
+#endif
 {
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	if (bIsFree) m_iNumFreeProphetsSpawned += iValue;
+#endif
 	m_iNumProphetsSpawned += iValue;
 }
 
 /// How much will the next prophet cost this player?
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+int CvPlayerReligions::GetCostNextProphet(bool bIncludeBeliefDiscounts, bool bAdjustForSpeedDifficulty, bool bExcludeFree) const
+#else
 int CvPlayerReligions::GetCostNextProphet(bool bIncludeBeliefDiscounts, bool bAdjustForSpeedDifficulty) const
+#endif
 {
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	int iCost = GC.getGame().GetGameReligions()->GetFaithGreatProphetNumber(GetNumProphetsSpawned(bExcludeFree) + 1);
+#else
 	int iCost = GC.getGame().GetGameReligions()->GetFaithGreatProphetNumber(m_iNumProphetsSpawned + 1);
+#endif
 
 	// Boost to faith due to belief?
 	ReligionTypes ePlayerReligion = GetReligionCreatedByPlayer();
@@ -4392,7 +4448,11 @@ void CvCityReligions::CityConvertsReligion(ReligionTypes eMajority, ReligionType
 				{
 					char text[256] = {0};
 					sprintf_s(text, "[COLOR_YELLOW]+%d[ENDCOLOR][ICON_GOLD]", iGoldBonus);
+#if defined(SHOW_PLOT_POPUP)
+					SHOW_PLOT_POPUP(m_pCity->plot(), NO_PLAYER, text, 0.5f);
+#else
 					GC.GetEngineUserInterface()->AddPopupText(m_pCity->getX(), m_pCity->getY(), text, 0.5f);
+#endif
 				}
 			}
 		}
@@ -5659,7 +5719,11 @@ void CvReligionAI::DoFaithPurchases()
 #else
 		UnitTypes eProphetType = (UnitTypes)GC.getInfoTypeForString("UNIT_PROPHET", true);
 #endif
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+		if (eProphetType != NO_UNIT && ChooseProphetConversionCity(true/*bOnlyBetterThanEnhancingReligion*/) && m_pPlayer->GetReligions()->GetNumProphetsSpawned(false) <= 5)
+#else
 		if (eProphetType != NO_UNIT && ChooseProphetConversionCity(true/*bOnlyBetterThanEnhancingReligion*/) && m_pPlayer->GetReligions()->GetNumProphetsSpawned() <= 5)
+#endif
 		{
 			BuyGreatPerson(eProphetType);
 
@@ -6920,7 +6984,11 @@ UnitTypes CvReligionAI::GetDesiredFaithGreatPerson() const
 						{
 							iScore = 750;
 						}
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+						iScore /= (1+ m_pPlayer->GetReligions()->GetNumProphetsSpawned(false));
+#else
 						iScore /= (1+ m_pPlayer->GetReligions()->GetNumProphetsSpawned());
+#endif
 					}
 				}
 				else if (eUnitClass == GC.getInfoTypeForString("UNITCLASS_WRITER"))

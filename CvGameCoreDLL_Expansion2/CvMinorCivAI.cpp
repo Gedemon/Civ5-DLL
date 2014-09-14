@@ -8151,8 +8151,10 @@ void CvMinorCivAI::SetAlly(PlayerTypes eNewAlly)
 			}
 		}
 
+#if !defined(NO_ACHIEVEMENTS)
 		//Achievement Test
 		kNewAlly.GetPlayerAchievements().AlliedWithCityState(GetPlayer()->GetID());;
+#endif
 	}
 
 	// Alter who gets this guy's resources
@@ -10405,9 +10407,10 @@ void CvMinorCivAI::DoBuyout(PlayerTypes eMajor)
 	}
 
 	
-
+#if !defined(NO_ACHIEVEMENTS)
 	CvPlayerAI& kMajorPlayer = GET_PLAYER(eMajor);
 	kMajorPlayer.GetPlayerAchievements().BoughtCityState(iNumUnits);
+#endif
 }
 
 #if defined(MOD_GLOBAL_VENICE_KEEPS_RESOURCES)

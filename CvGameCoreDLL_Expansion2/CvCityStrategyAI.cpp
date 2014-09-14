@@ -1742,7 +1742,11 @@ void CvCityStrategyAI::UpdateBestYields()
 				{
 					if(pCityBuildings->GetNumBuilding(eBuilding) > 0)
 					{
+#if defined(MOD_BUGFIX_MINOR)
+						iCityYieldSum += pkBuildingInfo->GetYieldChange(iYield) * pCityBuildings->GetNumBuilding(eBuilding);
+#else
 						iCityYieldSum += pkBuildingInfo->GetYieldChange(iYield);
+#endif
 					}
 				}
 			}
@@ -3345,7 +3349,11 @@ bool CityStrategyAIHelpers::IsTestCityStrategy_NeedTourismBuilding(CvCity *pCity
 	int iTourismValue = 0;
 	iTourismValue += pCity->GetCityCulture()->GetCultureFromWonders();
 	iTourismValue += pCity->GetCityCulture()->GetCultureFromNaturalWonders();
+#if defined(MOD_API_UNIFIED_YIELDS)
+	iTourismValue += pCity->GetCityCulture()->GetYieldFromImprovements(YIELD_CULTURE);
+#else
 	iTourismValue += pCity->GetCityCulture()->GetCultureFromImprovements();
+#endif
 	iTourismValue += pCity->GetCityCulture()->GetBaseTourism();
 
 	if (iTourismValue > 10)

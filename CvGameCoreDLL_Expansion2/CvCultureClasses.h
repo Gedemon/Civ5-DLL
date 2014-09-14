@@ -347,7 +347,11 @@ public:
 
 	int GetCultureFromWonders() const;
 	int GetCultureFromNaturalWonders() const;
+#if defined(MOD_API_UNIFIED_YIELDS)
+	int GetYieldFromImprovements(YieldTypes eYield) const;
+#else
 	int GetCultureFromImprovements() const;
+#endif
 
 	void LogGreatWorks (FILogFile* pLog);
 

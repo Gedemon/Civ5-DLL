@@ -73,6 +73,10 @@ public:
 	const char* GetSpyName(CvPlayer* pPlayer);
 #endif
 
+#if defined(MOD_API_ESPIONAGE)
+	void SetSpyState(PlayerTypes eSpyOwner, int iSpyIndex, CvSpyState eSpyState);
+#endif
+
 	// Public data
 	int m_iName;
 #if defined(MOD_BUGFIX_SPY_NAMES)
@@ -273,7 +277,11 @@ public:
 	void SetLastProgress(PlayerTypes ePlayer, int iProgress);
 	void SetLastPotential(PlayerTypes ePlayer, int iPotential);
 	void SetLastBasePotential(PlayerTypes ePlayer, int iPotential);
-	void SetSpyResult(PlayerTypes ePlayer, int iResult);
+#if defined(MOD_EVENTS_ESPIONAGE)
+	void SetSpyResult(PlayerTypes eSpyOwner, int iSpyIndex, int iResult);
+#else
+	void SetSpyResulttsp(PlayerTypes ePlayer, int iResult);
+#endif
 
 	bool HasCounterSpy();
 

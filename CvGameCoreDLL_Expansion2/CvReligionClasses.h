@@ -323,9 +323,15 @@ public:
 	void Write(FDataStream& kStream);
 
 	// Data accessors
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	int GetNumProphetsSpawned(bool bExcludeFree) const;
+	void ChangeNumProphetsSpawned(int iValue, bool bIsFree);
+	int GetCostNextProphet(bool bIncludeBeliefDiscounts, bool bAdjustForSpeedDifficulty, bool bExcludeFree) const;
+#else
 	int GetNumProphetsSpawned() const;
 	void ChangeNumProphetsSpawned(int iValue);
 	int GetCostNextProphet(bool bIncludeBeliefDiscounts, bool bAdjustForSpeedDifficulty) const;
+#endif
 	bool IsFoundingReligion() const
 	{
 		return m_bFoundingReligion;
@@ -368,6 +374,9 @@ public:
 private:
 	CvPlayer* m_pPlayer;
 
+#if defined(MOD_GLOBAL_TRULY_FREE_GP)
+	int m_iNumFreeProphetsSpawned;
+#endif
 	int m_iNumProphetsSpawned;
 	int m_bFoundingReligion;
 #if defined(MOD_RELIGION_RECURRING_PURCHASE_NOTIFIY)

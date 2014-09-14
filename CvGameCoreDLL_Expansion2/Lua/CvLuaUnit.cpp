@@ -128,6 +128,9 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(CanTrade);
 	Method(CanBuyCityState);
 	Method(CanRepairFleet);
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_SEPARATE_GREAT_ADMIRAL)
+	Method(CanChangePort);
+#endif
 	Method(CanBuildSpaceship);
 
 	Method(CanGoldenAge);
@@ -1521,6 +1524,19 @@ int CvLuaUnit::lCanRepairFleet(lua_State* L)
 	lua_pushboolean(L, bResult);
 	return 1;
 }
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_GLOBAL_SEPARATE_GREAT_ADMIRAL)
+//------------------------------------------------------------------------------
+//bool canChangePort(CvPlot* pPlot);
+int CvLuaUnit::lCanChangePort(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	CvPlot* pkPlot = CvLuaPlot::GetInstance(L, 2);
+	const bool bResult = pkUnit->canChangeAdmiralPort(pkPlot);
+
+	lua_pushboolean(L, bResult);
+	return 1;
+}
+#endif
 //------------------------------------------------------------------------------
 //bool CanBuildSpaceship(CyPlot* pPlot, bool bVisible);
 int CvLuaUnit::lCanBuildSpaceship(lua_State* L)

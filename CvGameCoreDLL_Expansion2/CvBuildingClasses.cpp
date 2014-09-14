@@ -2933,8 +2933,10 @@ void CvCityBuildings::SetNumRealBuildingTimed(BuildingTypes eIndex, int iNewValu
 		auto_ptr<ICvCity1> pCity = GC.WrapCityPointer(m_pCity);
 		GC.GetEngineUserInterface()->SetSpecificCityInfoDirty(pCity.get(), CITY_UPDATE_TYPE_BANNER);
 
+#if !defined(NO_ACHIEVEMENTS)
 		//Test for any achievements being unlocked.
 		pPlayer->GetPlayerAchievements().FinishedBuilding(m_pCity, eIndex);
+#endif
 	}
 }
 
@@ -2954,6 +2956,15 @@ void CvCityBuildings::SetNumFreeBuilding(BuildingTypes eIndex, int iNewValue)
 
 	if(GetNumFreeBuilding(eIndex) != iNewValue)
 	{
+#if defined(MOD_BUGFIX_MINOR)
+		// This condensed logic comes from SetNumRealBuilding()
+		int iChangeNumFreeBuilding = iNewValue - GetNumFreeBuilding(eIndex);
+		
+		m_paiNumFreeBuilding[eIndex] = iNewValue;
+
+		// Process building effects
+		m_pCity->processBuilding(eIndex, iChangeNumFreeBuilding, true);
+#else
 		int iOldNumBuilding = GetNumBuilding(eIndex);
 
 		if (iOldNumBuilding > 0 && iNewValue > 0)
@@ -2972,6 +2983,22 @@ void CvCityBuildings::SetNumFreeBuilding(BuildingTypes eIndex, int iNewValue)
 				m_pCity->processBuilding(eIndex, iNewValue - iOldNumBuilding, true);
 			}
 		}
+#endif
+
+#if defined(MOD_BUGFIX_MINOR)
+		CvBuildingEntry* buildingEntry = GC.getBuildingInfo(eIndex);
+		if(buildingEntry->IsCityWall())
+		{
+			auto_ptr<ICvPlot1> pDllPlot(new CvDllPlot(m_pCity->plot()));
+			gDLL->GameplayWallCreated(pDllPlot.get());
+		}
+
+		m_pCity->updateStrengthValue();
+
+		// Building might affect City Banner stats
+		auto_ptr<ICvCity1> pCity = GC.WrapCityPointer(m_pCity);
+		GC.GetEngineUserInterface()->SetSpecificCityInfoDirty(pCity.get(), CITY_UPDATE_TYPE_BANNER);
+#endif
 	}
 }
 /// Accessor: Get yield boost for a specific building by yield type
@@ -3551,7 +3578,11 @@ int CvCityBuildings::GetCityStateTradeRouteProductionModifier() const
 						int iCityStates = GET_PLAYER(m_pCity->getOwner()).GetTrade()->GetNumberOfCityStateTradeRoutes();
 						if (iProductionModifier > 0  && iCityStates > 0)
 						{
+#if defined(MOD_BUGFIX_MINOR)
+							iRtnValue = iProductionModifier * iCityStates * GetNumBuilding(eBuilding);
+#else
 							iRtnValue = iProductionModifier * iCityStates;
+#endif
 						}
 					}
 				}
