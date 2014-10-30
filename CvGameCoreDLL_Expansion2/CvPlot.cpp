@@ -4323,11 +4323,10 @@ bool CvPlot::isValidDomainForLocation(const CvUnit& unit) const
 	}
 #endif
 
-#if defined(MOD_EVENTS_REBASE)
-	if (unit.getDomainType() == DOMAIN_AIR && MOD_EVENTS_REBASE && unit.canLoad(*this)) {
+	if (unit.getDomainType() == DOMAIN_AIR && unit.canLoad(*this))
+	{
 		return true;
 	}
-#endif
 
 #if defined(MOD_GLOBAL_PASSABLE_FORTS)
 	return (unit.getDomainType() == DOMAIN_SEA) ? isFriendlyCityOrPassableImprovement(unit, true) : isCity();
@@ -8928,6 +8927,22 @@ bool CvPlot::setRevealed(TeamTypes eTeam, bool bNewValue, bool bTerrainOnly, Tea
 #if defined(MOD_EVENTS_NW_DISCOVERY)
 					if (MOD_EVENTS_NW_DISCOVERY) {
 						GAMEEVENTINVOKE_HOOK(GAMEEVENT_NaturalWonderDiscovered, eTeam, getFeatureType(), getX(), getY(), (getNumMajorCivsRevealed() == 0));
+					} else {
+#endif
+					ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+					if (pkScriptSystem) 
+					{
+						CvLuaArgsHandle args;
+						args->Push(eTeam);
+						args->Push(getFeatureType());
+						args->Push(getX());
+						args->Push(getY());
+						args->Push((getNumMajorCivsRevealed() == 0)); // bFirst
+
+						bool bResult = false;
+						LuaSupport::CallHook(pkScriptSystem, "NaturalWonderDiscovered", args.get(), bResult);
+					}
+#if defined(MOD_EVENTS_NW_DISCOVERY)
 					}
 #endif
 					
@@ -9392,15 +9407,16 @@ bool CvPlot::setRevealedImprovementType(TeamTypes eTeam, ImprovementTypes eNewVa
 		{
 			updateSymbols();
 			setLayoutDirty(true);
-
-			// Found a Barbarian Camp
-			if(eNewValue == GC.getBARBARIAN_CAMP_IMPROVEMENT())
-			{
-				CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_FOUND_BARB_CAMP");
-				CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_FOUND_BARB_CAMP");
-				GET_TEAM(eTeam).AddNotification(NOTIFICATION_BARBARIAN, strBuffer, strSummary, getX(), getY());
-			}
 		}
+
+		// Found a Barbarian Camp
+		if(eNewValue == GC.getBARBARIAN_CAMP_IMPROVEMENT())
+		{
+			CvString strBuffer = GetLocalizedText("TXT_KEY_NOTIFICATION_FOUND_BARB_CAMP");
+			CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_FOUND_BARB_CAMP");
+			GET_TEAM(eTeam).AddNotification(NOTIFICATION_BARBARIAN, strBuffer, strSummary, getX(), getY());
+		}
+
 		return true;
 	}
 	return false;

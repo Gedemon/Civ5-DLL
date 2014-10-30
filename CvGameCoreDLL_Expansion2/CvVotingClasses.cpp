@@ -1508,7 +1508,7 @@ void CvActiveResolution::DoEffects(PlayerTypes ePlayer)
 					}
 				}
 			}
-#if defined (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 		}
 #endif
 	}
@@ -1719,7 +1719,7 @@ void CvActiveResolution::DoEffects(PlayerTypes ePlayer)
 		// Refresh yield
 	}
 	
-#if defined (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
+#if defined(MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS)
 	if (MOD_DIPLOMACY_CITYSTATES_RESOLUTIONS) {
 		if (GetEffects()->iLimitSpaceshipProduction != 0)
 		{
@@ -8933,12 +8933,9 @@ void CvLeagueAI::DoVoteCommitments(CvLeague* pLeague)
 }
 
 // How much do we like this vote commitment (either from us to someone else, or from someone else to us)?
-#if defined(MOD_BUGFIX_MINOR)
-CvLeagueAI::DesireLevels CvLeagueAI::EvaluateVoteForTrade(int iResolutionID, int iVoteChoice, int, bool bRepeal)
-#else
 CvLeagueAI::DesireLevels CvLeagueAI::EvaluateVoteForTrade(int iResolutionID, int iVoteChoice, int iNumVotes, bool bRepeal)
-#endif
 {
+	DEBUG_VARIABLE(iNumVotes);
 	DesireLevels eValue = DESIRE_NEVER;
 	
 	if (GC.getGame().GetGameLeagues()->GetNumActiveLeagues() > 0)

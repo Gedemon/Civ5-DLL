@@ -285,6 +285,7 @@ void CvUnitCombat::ResolveMeleeCombat(const CvCombatInfo& kCombatInfo, uint uiPa
 	CvString strBuffer;
 	bool bAttackerDead = false;
 	bool bDefenderDead = false;
+	int iAttackerDamageDelta = 0;
 
 	CvUnit* pkAttacker = kCombatInfo.getUnit(BATTLE_UNIT_ATTACKER);
 	CvUnit* pkDefender = kCombatInfo.getUnit(BATTLE_UNIT_DEFENDER);
@@ -317,9 +318,8 @@ void CvUnitCombat::ResolveMeleeCombat(const CvCombatInfo& kCombatInfo, uint uiPa
 		}
 #endif
 
-		// JON: At some point we want the changeDamage() function to kill a Unit immediately instead of applying a delay, but for now it has to delay to prevent funkiness
 		pkDefender->changeDamage(iAttackerDamageInflicted, pkAttacker->getOwner());
-		pkAttacker->changeDamage(iDefenderDamageInflicted, pkDefender->getOwner());
+		iAttackerDamageDelta = pkAttacker->changeDamage(iDefenderDamageInflicted, pkDefender->getOwner(), -1.f);		// Signal that we don't want the popup text.  It will be added later when the unit is at its final location
 
 		// Update experience for both sides.
 		pkDefender->changeExperience(
@@ -513,6 +513,14 @@ void CvUnitCombat::ResolveMeleeCombat(const CvCombatInfo& kCombatInfo, uint uiPa
 				pkAttacker->finishMoves();
 				GC.GetEngineUserInterface()->changeCycleSelectionCounter(1);
 			}
+
+			// Now that the attacker is in their final location, show any damage popup
+			if (!pkAttacker->IsDead() && iAttackerDamageDelta != 0)
+#if defined(SHOW_PLOT_POPUP)
+				pkAttacker->ShowDamageDeltaText(iAttackerDamageDelta, pkAttacker->plot());
+#else
+				CvUnit::ShowDamageDeltaText(iAttackerDamageDelta, pkAttacker->plot());
+#endif
 		}
 
 		// Report that combat is over in case we want to queue another attack
@@ -607,7 +615,7 @@ void CvUnitCombat::GenerateRangedCombatInfo(CvUnit& kAttacker, CvUnit* pkDefende
 	pkCombatInfo->setExperience(BATTLE_UNIT_ATTACKER, iExperience);
 	pkCombatInfo->setMaxExperienceAllowed(BATTLE_UNIT_ATTACKER, iMaxXP);
 	pkCombatInfo->setInBorders(BATTLE_UNIT_ATTACKER, plot.getOwner() == eDefenderOwner);
-#if defined (MOD_BUGFIX_BARB_GP_XP)
+#if defined(MOD_BUGFIX_BARB_GP_XP)
 	bool bGeneralsXP = !kAttacker.isBarbarian();
 	if (MOD_BUGFIX_BARB_GP_XP) {
 		if (!plot.isCity()) {
@@ -1300,7 +1308,7 @@ void CvUnitCombat::GenerateAirCombatInfo(CvUnit& kAttacker, CvUnit* pkDefender, 
 	pkCombatInfo->setExperience(BATTLE_UNIT_ATTACKER, iExperience);
 	pkCombatInfo->setMaxExperienceAllowed(BATTLE_UNIT_ATTACKER, iMaxXP);
 	pkCombatInfo->setInBorders(BATTLE_UNIT_ATTACKER, plot.getOwner() == eDefenderOwner);
-#if defined (MOD_BUGFIX_BARB_GP_XP)
+#if defined(MOD_BUGFIX_BARB_GP_XP)
 	bool bGeneralsXP = !kAttacker.isBarbarian();
 	if (MOD_BUGFIX_BARB_GP_XP) {
 		if (!plot.isCity()) {
@@ -1924,11 +1932,9 @@ void CvUnitCombat::GenerateNuclearCombatInfo(CvUnit& kAttacker, CvPlot& plot, Cv
 		abTeamsAffected[iI] = kAttacker.isNukeVictim(&plot, ((TeamTypes)iI));
 	}
 
-#if defined(MOD_EVENTS_NUCLEAR_DETONATION)
 	int iPlotTeam = plot.getTeam();
 	bool bWar = false;
 	bool bBystander = false;
-#endif
 
 	for(iI = 0; iI < MAX_TEAMS; iI++)
 	{
@@ -1942,13 +1948,14 @@ void CvUnitCombat::GenerateNuclearCombatInfo(CvUnit& kAttacker, CvPlot& plot, Cv
 				GET_TEAM(kAttacker.getTeam()).declareWar(((TeamTypes)iI));
 #endif
 
-#if defined(MOD_EVENTS_NUCLEAR_DETONATION)
-				if (iPlotTeam == iI) {
+				if (iPlotTeam == iI) 
+				{
 					bWar = true;
-				} else {
+				} 
+				else 
+				{
 					bBystander = true;
 				}
-#endif
 			}
 		}
 	}
@@ -1956,6 +1963,23 @@ void CvUnitCombat::GenerateNuclearCombatInfo(CvUnit& kAttacker, CvPlot& plot, Cv
 #if defined(MOD_EVENTS_NUCLEAR_DETONATION)
 	if (MOD_EVENTS_NUCLEAR_DETONATION) {
 		GAMEEVENTINVOKE_HOOK(GAMEEVENT_NuclearDetonation, kAttacker.getOwner(), plot.getX(), plot.getY(), bWar, bBystander);
+	} else {
+#endif
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if (pkScriptSystem) 
+	{	
+		CvLuaArgsHandle args;
+
+		args->Push(kAttacker.getOwner());
+		args->Push(plot.getX());
+		args->Push(plot.getY());
+		args->Push(bWar);
+		args->Push(bBystander);
+
+		bool bResult;
+		LuaSupport::CallHook(pkScriptSystem, "NuclearDetonation", args.get(), bResult);
+	}
+#if defined(MOD_EVENTS_NUCLEAR_DETONATION)
 	}
 #endif
 

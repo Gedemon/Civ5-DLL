@@ -2168,6 +2168,7 @@ public:
 	int getTradeRouteFoodBonusTimes100() const;
 	int getTradeRouteProductionBonusTimes100() const;
 	int getLeaguePercent() const;
+	int getWarmongerPercent() const;
 
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	bool getVassalageEnabled() const;
@@ -2226,6 +2227,7 @@ protected:
 	int m_iTradeRouteFoodBonusTimes100;
 	int m_iTradeRouteProductionBonusTimes100;
 	int m_iLeaguePercent;
+	int m_iWarmongerPercent;
 
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
 	bool m_bVassalageEnabled;

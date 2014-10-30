@@ -1920,12 +1920,10 @@ void CvPlayerTrade::MoveUnits (void)
 #else
 				UnitTypes eUnitType = GetTradeUnit(eDomain);
 #endif
-#if defined(MOD_BUGFIX_MINOR)
-				m_pPlayer->initUnit(eUnitType, iOriginX, iOriginY, UNITAI_TRADE_UNIT);
-#else
 				CvUnit* pRebornUnit = m_pPlayer->initUnit(eUnitType, iOriginX, iOriginY, UNITAI_TRADE_UNIT);
+
+				DEBUG_VARIABLE(pRebornUnit);
 				CvAssertMsg(pRebornUnit, "pRebornUnit is null. This is bad!!");
-#endif
 			}
 		}
 	}

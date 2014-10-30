@@ -228,9 +228,9 @@ CvAICityStrategyEntry* CvAICityStrategies::GetEntry(int index)
 
 /// defining static
 #if defined(MOD_GLOBAL_CITY_WORKING)
-unsigned char  CvCityStrategyAI::m_acBestYields[NUM_YIELD_TYPES][MAX_CITY_PLOTS - 1];
+unsigned char  CvCityStrategyAI::m_acBestYields[NUM_YIELD_TYPES][MAX_CITY_PLOTS];
 #else
-unsigned char  CvCityStrategyAI::m_acBestYields[NUM_YIELD_TYPES][NUM_CITY_PLOTS - 1];
+unsigned char  CvCityStrategyAI::m_acBestYields[NUM_YIELD_TYPES][NUM_CITY_PLOTS];
 #endif
 
 /// Constructor

@@ -836,7 +836,7 @@ public:
 #endif
 
 	// Great People Expenditure
-#if defined (MOD_EVENTS_GREAT_PEOPLE)
+#if defined(MOD_EVENTS_GREAT_PEOPLE)
 	void DoGreatPersonExpended(UnitTypes eGreatPersonUnit, CvUnit* pGreatPersonUnit);
 #else
 	void DoGreatPersonExpended(UnitTypes eGreatPersonUnit);

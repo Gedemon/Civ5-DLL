@@ -470,7 +470,7 @@ void CvGameReligions::DoPlayerTurn(CvPlayer& kPlayer)
 			}
 			else
 			{
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				const BeliefTypes eBelief = kPlayer.GetReligionAI()->ChoosePantheonBelief(ePlayer);
 #else
 				const BeliefTypes eBelief = kPlayer.GetReligionAI()->ChoosePantheonBelief();
@@ -495,7 +495,7 @@ void CvGameReligions::DoPlayerTurn(CvPlayer& kPlayer)
 	{
 		if (!kPlayer.isHuman())
 		{
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 			BeliefTypes eReformationBelief = kPlayer.GetReligionAI()->ChooseReformationBelief(ePlayer, eReligionCreated);
 #else
 			BeliefTypes eReformationBelief = kPlayer.GetReligionAI()->ChooseReformationBelief();
@@ -683,10 +683,30 @@ CvGameReligions::FOUNDING_RESULT CvGameReligions::CanCreatePantheon(PlayerTypes 
 			if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanFoundPantheon, ePlayer) == GAMEEVENTRETURN_FALSE) {
 				return FOUNDING_INVALID_PLAYER;
 			}
+		} else {
+#endif
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if(pkScriptSystem) 
+			{
+				CvLuaArgsHandle args;
+				args->Push(ePlayer);
+
+				// Attempt to execute the game events.
+				// Will return false if there are no registered listeners.
+				bool bResult = false;
+				if (LuaSupport::CallTestAll(pkScriptSystem, "PlayerCanFoundPantheon", args.get(), bResult))
+				{
+					if (bResult == false) 
+					{
+						return FOUNDING_INVALID_PLAYER;
+					}
+				}
+			}
+#if defined(MOD_EVENTS_FOUND_RELIGION)
 		}
 #endif
 
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 	if (GetAvailablePantheonBeliefs(ePlayer).size() == 0)
 #else
 	if (GetAvailablePantheonBeliefs().size() == 0)
@@ -716,6 +736,26 @@ ReligionTypes CvGameReligions::GetReligionToFound(PlayerTypes ePlayer)
 					eCivReligion = (ReligionTypes)iValue;
 				}
 			}
+		} else {
+#endif
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if(pkScriptSystem) 
+	{
+		CvLuaArgsHandle args;
+		args->Push(ePlayer);
+		args->Push(eCivReligion);
+		args->Push(HasBeenFounded(eCivReligion));
+
+		int iValue = 0;
+		if (LuaSupport::CallAccumulator(pkScriptSystem, "GetReligionToFound", args.get(), iValue)) 
+		{
+			if (iValue >= 0 && iValue < GC.getNumReligionInfos() && iValue != RELIGION_PANTHEON)
+			{
+				eCivReligion = (ReligionTypes)iValue;
+			}
+		}
+	}
+#if defined(MOD_EVENTS_FOUND_RELIGION)
 		}
 #endif
 
@@ -880,6 +920,21 @@ void CvGameReligions::FoundPantheon(PlayerTypes ePlayer, BeliefTypes eBelief)
 #if defined(MOD_EVENTS_FOUND_RELIGION)
 	if (MOD_EVENTS_FOUND_RELIGION) {
 		GAMEEVENTINVOKE_HOOK(GAMEEVENT_PantheonFounded, ePlayer, GET_PLAYER(ePlayer).getCapitalCity()->GetID(), RELIGION_PANTHEON, eBelief);
+	} else {
+#endif
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if(pkScriptSystem) 
+		{
+			CvLuaArgsHandle args;
+			args->Push(ePlayer);
+			args->Push(GET_PLAYER(ePlayer).getCapitalCity()->GetID());
+			args->Push(RELIGION_PANTHEON);
+			args->Push(eBelief);
+
+			bool bResult;
+			LuaSupport::CallHook(pkScriptSystem, "PantheonFounded", args.get(), bResult);
+		}
+#if defined(MOD_EVENTS_FOUND_RELIGION)
 	}
 #endif
 
@@ -1035,6 +1090,25 @@ void CvGameReligions::FoundReligion(PlayerTypes ePlayer, ReligionTypes eReligion
 #if defined(MOD_EVENTS_FOUND_RELIGION)
 	if (MOD_EVENTS_FOUND_RELIGION) {
 		GAMEEVENTINVOKE_HOOK(GAMEEVENT_ReligionFounded, ePlayer, pkHolyCity->GetID(), eReligion, eBelief, eBelief1, eBelief2, eBelief3, eBelief4);
+	} else {
+#endif
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if(pkScriptSystem)
+	{
+		CvLuaArgsHandle args;
+		args->Push(ePlayer);
+		args->Push(pkHolyCity->GetID());
+		args->Push(eReligion);
+		args->Push(eBelief);
+		args->Push(eBelief1);
+		args->Push(eBelief2);
+		args->Push(eBelief3);
+		args->Push(eBelief4);
+
+		bool bResult;
+		LuaSupport::CallHook(pkScriptSystem, "ReligionFounded", args.get(), bResult);
+	}
+#if defined(MOD_EVENTS_FOUND_RELIGION)
 	}
 #endif
 
@@ -1256,6 +1330,21 @@ void CvGameReligions::EnhanceReligion(PlayerTypes ePlayer, ReligionTypes eReligi
 #if defined(MOD_EVENTS_FOUND_RELIGION)
 	if (MOD_EVENTS_FOUND_RELIGION) {
 		GAMEEVENTINVOKE_HOOK(GAMEEVENT_ReligionEnhanced, ePlayer, eReligion, eBelief1, eBelief2);
+	} else {
+#endif
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if(pkScriptSystem) 
+	{
+		CvLuaArgsHandle args;
+		args->Push(ePlayer);
+		args->Push(eReligion);
+		args->Push(eBelief1);
+		args->Push(eBelief2);
+
+		bool bResult;
+		LuaSupport::CallHook(pkScriptSystem, "ReligionEnhanced", args.get(), bResult);
+	}
+#if defined(MOD_EVENTS_FOUND_RELIGION)
 	}
 #endif
 
@@ -1418,6 +1507,12 @@ void CvGameReligions::AddReformationBelief(PlayerTypes ePlayer, ReligionTypes eR
 	// Update game systems
 	UpdateAllCitiesThisReligion(eReligion);
 	kPlayer.UpdateReligion();
+
+#if defined(MOD_EVENTS_FOUND_RELIGION)
+	if (MOD_EVENTS_FOUND_RELIGION) {
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_ReligionReformed, ePlayer, eReligion, eBelief1);
+	}
+#endif
 
 	//Notify the masses
 	for(int iNotifyLoop = 0; iNotifyLoop < MAX_MAJOR_CIVS; ++iNotifyLoop){
@@ -1634,7 +1729,7 @@ int CvGameReligions::GetNumPantheonsCreated() const
 }
 
 /// List of beliefs that can be adopted by pantheons
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
 std::vector<BeliefTypes> CvGameReligions::GetAvailablePantheonBeliefs(PlayerTypes ePlayer)
 #else
 std::vector<BeliefTypes> CvGameReligions::GetAvailablePantheonBeliefs()
@@ -1658,7 +1753,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailablePantheonBeliefs()
 			CvBeliefEntry* pEntry = pkBeliefs->GetEntry(eBelief);
 			if(pEntry && pEntry->IsPantheonBelief())
 			{
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				bool bAvailable = true;
 
 				if (MOD_EVENTS_ACQUIRE_BELIEFS) {
@@ -1670,7 +1765,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailablePantheonBeliefs()
 				if (bAvailable) {
 #endif
 					availableBeliefs.push_back(eBelief);
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				}
 #endif
 			}
@@ -1949,7 +2044,7 @@ int CvGameReligions::GetNumReligionsStillToFound() const
 }
 
 /// List of beliefs that can be adopted by religion founders
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
 std::vector<BeliefTypes> CvGameReligions::GetAvailableFounderBeliefs(PlayerTypes ePlayer, ReligionTypes eReligion)
 #else
 std::vector<BeliefTypes> CvGameReligions::GetAvailableFounderBeliefs()
@@ -1973,7 +2068,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableFounderBeliefs()
 			CvBeliefEntry* pEntry = pkBeliefs->GetEntry(eBelief);
 			if(pEntry && pEntry->IsFounderBelief())
 			{
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				bool bAvailable = true;
 
 				if (MOD_EVENTS_ACQUIRE_BELIEFS) {
@@ -1985,7 +2080,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableFounderBeliefs()
 				if (bAvailable) {
 #endif
 					availableBeliefs.push_back(eBelief);
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				}
 #endif
 			}
@@ -1996,7 +2091,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableFounderBeliefs()
 }
 
 /// List of beliefs that can be adopted by religion followers
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
 std::vector<BeliefTypes> CvGameReligions::GetAvailableFollowerBeliefs(PlayerTypes ePlayer, ReligionTypes eReligion)
 #else
 std::vector<BeliefTypes> CvGameReligions::GetAvailableFollowerBeliefs()
@@ -2020,7 +2115,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableFollowerBeliefs()
 			CvBeliefEntry* pEntry = pkBeliefs->GetEntry(eBelief);
 			if(pEntry && pEntry->IsFollowerBelief())
 			{
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				bool bAvailable = true;
 
 				if (MOD_EVENTS_ACQUIRE_BELIEFS) {
@@ -2032,7 +2127,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableFollowerBeliefs()
 				if (bAvailable) {
 #endif
 					availableBeliefs.push_back(eBelief);
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				}
 #endif
 			}
@@ -2043,7 +2138,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableFollowerBeliefs()
 }
 
 /// List of beliefs that enhance religions
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
 std::vector<BeliefTypes> CvGameReligions::GetAvailableEnhancerBeliefs(PlayerTypes ePlayer, ReligionTypes eReligion)
 #else
 std::vector<BeliefTypes> CvGameReligions::GetAvailableEnhancerBeliefs()
@@ -2067,7 +2162,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableEnhancerBeliefs()
 			CvBeliefEntry* pEntry = pkBeliefs->GetEntry(eBelief);
 			if(pEntry && pEntry->IsEnhancerBelief())
 			{
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				bool bAvailable = true;
 
 				if (MOD_EVENTS_ACQUIRE_BELIEFS) {
@@ -2079,7 +2174,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableEnhancerBeliefs()
 				if (bAvailable) {
 #endif
 					availableBeliefs.push_back(eBelief);
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				}
 #endif
 			}
@@ -2090,7 +2185,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableEnhancerBeliefs()
 }
 
 /// List of all beliefs still available
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
 std::vector<BeliefTypes> CvGameReligions::GetAvailableBonusBeliefs(PlayerTypes ePlayer, ReligionTypes eReligion)
 #else
 std::vector<BeliefTypes> CvGameReligions::GetAvailableBonusBeliefs()
@@ -2114,7 +2209,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableBonusBeliefs()
 			CvBeliefEntry* pEntry = pkBeliefs->GetEntry(eBelief);
 			if(pEntry && (pEntry->IsEnhancerBelief() || pEntry->IsFollowerBelief() || pEntry->IsFounderBelief() || pEntry->IsPantheonBelief()))
 			{
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				bool bAvailable = true;
 
 				if (MOD_EVENTS_ACQUIRE_BELIEFS) {
@@ -2126,7 +2221,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableBonusBeliefs()
 				if (bAvailable) {
 #endif
 					availableBeliefs.push_back(eBelief);
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				}
 #endif
 			}
@@ -2137,7 +2232,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableBonusBeliefs()
 }
 
 /// List of beliefs that are added with Reformation social policy
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
 std::vector<BeliefTypes> CvGameReligions::GetAvailableReformationBeliefs(PlayerTypes ePlayer, ReligionTypes eReligion)
 #else
 std::vector<BeliefTypes> CvGameReligions::GetAvailableReformationBeliefs()
@@ -2161,7 +2256,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableReformationBeliefs()
 			CvBeliefEntry* pEntry = pkBeliefs->GetEntry(eBelief);
 			if(pEntry && pEntry->IsReformationBelief())
 			{
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				bool bAvailable = true;
 
 				if (MOD_EVENTS_ACQUIRE_BELIEFS) {
@@ -2173,7 +2268,7 @@ std::vector<BeliefTypes> CvGameReligions::GetAvailableReformationBeliefs()
 				if (bAvailable) {
 #endif
 					availableBeliefs.push_back(eBelief);
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 				}
 #endif
 			}
@@ -3571,7 +3666,7 @@ BeliefTypes CvCityReligions::GetSecondaryReligionPantheonBelief()
 				{
 					const BeliefTypes eBelief = pReligion->m_Beliefs.GetBelief(iI);
 					CvBeliefEntry* pEntry = GC.GetGameBeliefs()->GetEntry((int)eBelief);
-					if(pEntry->IsPantheonBelief())
+					if(pEntry && pEntry->IsPantheonBelief())
 					{
 						eRtnValue = eBelief;
 						break;
@@ -4927,7 +5022,7 @@ void CvReligionAI::DoTurn()
 }
 
 /// Select the belief most helpful to this pantheon
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 BeliefTypes CvReligionAI::ChoosePantheonBelief(PlayerTypes ePlayer)
 #else
 BeliefTypes CvReligionAI::ChoosePantheonBelief()
@@ -4936,7 +5031,7 @@ BeliefTypes CvReligionAI::ChoosePantheonBelief()
 	CvGameReligions* pGameReligions = GC.getGame().GetGameReligions();
 	CvWeightedVector<BeliefTypes, SAFE_ESTIMATE_NUM_BELIEFS, true> beliefChoices;
 
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailablePantheonBeliefs(ePlayer);
 #else
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailablePantheonBeliefs();
@@ -4972,7 +5067,7 @@ BeliefTypes CvReligionAI::ChoosePantheonBelief()
 }
 
 /// Select the belief most helpful to this pantheon
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 BeliefTypes CvReligionAI::ChooseFounderBelief(PlayerTypes ePlayer, ReligionTypes eReligion)
 #else
 BeliefTypes CvReligionAI::ChooseFounderBelief()
@@ -4981,7 +5076,7 @@ BeliefTypes CvReligionAI::ChooseFounderBelief()
 	CvGameReligions* pGameReligions = GC.getGame().GetGameReligions();
 	CvWeightedVector<BeliefTypes, SAFE_ESTIMATE_NUM_BELIEFS, true> beliefChoices;
 
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailableFounderBeliefs(ePlayer, eReligion);
 #else
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailableFounderBeliefs();
@@ -5017,7 +5112,7 @@ BeliefTypes CvReligionAI::ChooseFounderBelief()
 }
 
 /// Select the belief most helpful to this pantheon
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 BeliefTypes CvReligionAI::ChooseFollowerBelief(PlayerTypes ePlayer, ReligionTypes eReligion)
 #else
 BeliefTypes CvReligionAI::ChooseFollowerBelief()
@@ -5026,7 +5121,7 @@ BeliefTypes CvReligionAI::ChooseFollowerBelief()
 	CvGameReligions* pGameReligions = GC.getGame().GetGameReligions();
 	CvWeightedVector<BeliefTypes, SAFE_ESTIMATE_NUM_BELIEFS, true> beliefChoices;
 
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailableFollowerBeliefs(ePlayer, eReligion);
 #else
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailableFollowerBeliefs();
@@ -5062,7 +5157,7 @@ BeliefTypes CvReligionAI::ChooseFollowerBelief()
 }
 
 /// Select the belief most helpful to enhance this religion
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 BeliefTypes CvReligionAI::ChooseEnhancerBelief(PlayerTypes ePlayer, ReligionTypes eReligion)
 #else
 BeliefTypes CvReligionAI::ChooseEnhancerBelief()
@@ -5071,7 +5166,7 @@ BeliefTypes CvReligionAI::ChooseEnhancerBelief()
 	CvGameReligions* pGameReligions = GC.getGame().GetGameReligions();
 	CvWeightedVector<BeliefTypes, SAFE_ESTIMATE_NUM_BELIEFS, true> beliefChoices;
 
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailableEnhancerBeliefs(ePlayer, eReligion);
 #else
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailableEnhancerBeliefs();
@@ -5107,7 +5202,7 @@ BeliefTypes CvReligionAI::ChooseEnhancerBelief()
 }
 
 /// Select the belief most helpful to enhance this religion
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 BeliefTypes CvReligionAI::ChooseBonusBelief(PlayerTypes ePlayer, ReligionTypes eReligion, int iExcludeBelief1, int iExcludeBelief2, int iExcludeBelief3)
 #else
 BeliefTypes CvReligionAI::ChooseBonusBelief(int iExcludeBelief1, int iExcludeBelief2, int iExcludeBelief3)
@@ -5116,7 +5211,7 @@ BeliefTypes CvReligionAI::ChooseBonusBelief(int iExcludeBelief1, int iExcludeBel
 	CvGameReligions* pGameReligions = GC.getGame().GetGameReligions();
 	CvWeightedVector<BeliefTypes, SAFE_ESTIMATE_NUM_BELIEFS, true> beliefChoices;
 
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailableBonusBeliefs(ePlayer, eReligion);
 #else
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailableBonusBeliefs();
@@ -5155,7 +5250,7 @@ BeliefTypes CvReligionAI::ChooseBonusBelief(int iExcludeBelief1, int iExcludeBel
 }
 
 /// Select the belief most helpful to gain from Reformation social policy
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 BeliefTypes CvReligionAI::ChooseReformationBelief(PlayerTypes ePlayer, ReligionTypes eReligion)
 #else
 BeliefTypes CvReligionAI::ChooseReformationBelief()
@@ -5164,7 +5259,7 @@ BeliefTypes CvReligionAI::ChooseReformationBelief()
 	CvGameReligions* pGameReligions = GC.getGame().GetGameReligions();
 	CvWeightedVector<BeliefTypes, SAFE_ESTIMATE_NUM_BELIEFS, true> beliefChoices;
 
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailableReformationBeliefs(ePlayer, eReligion);
 #else
 	std::vector<BeliefTypes> availableBeliefs = pGameReligions->GetAvailableReformationBeliefs();

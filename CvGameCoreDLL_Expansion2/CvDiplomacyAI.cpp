@@ -2154,6 +2154,11 @@ void CvDiplomacyAI::DoTurn(PlayerTypes eTargetPlayer)
 		DoUpdatePlanningExchanges();
 		DoContactMinorCivs();
 		DoContactMajorCivs();
+		GC.getGame().GetGameDeals()->DoCancelAllProposedDealsWithPlayer(GetPlayer()->GetID());	//Proposed deals with AI players are purely transitional.
+																																														//If there are any remaining now, this is because this civ
+																																														//was previously controlled by a human player who had a proposed
+																																														//human-to-human deal.  AI can't process human-to-human deals
+																																														//so cancel them now to prevent zombie deals.
 	}
 
 	// Update Counters
@@ -4206,31 +4211,47 @@ MinorCivApproachTypes CvDiplomacyAI::GetBestApproachTowardsMinorCiv(PlayerTypes 
 	// See if this minor is on same continent as a major power we want to attack
 	if (bCheckIfGoodWarTarget)
 	{
-		int iPlayerLoop;
-		for(iPlayerLoop = 0; iPlayerLoop < MAX_MAJOR_CIVS; iPlayerLoop++)
+		CvCity *pkMinorCapital = GET_PLAYER(ePlayer).getCapitalCity();
+		if (pkMinorCapital)		// This should always be valid
 		{
-			PlayerTypes eLoopPlayer = (PlayerTypes) iPlayerLoop;
-			CvPlayer &kLoopPlayer = GET_PLAYER(eLoopPlayer);
+			int iMinorAreaID = pkMinorCapital->getArea();
 
-			// Make sure it is another valid player and not already at war with them
-			if (m_pPlayer->GetID() != eLoopPlayer)
+			if (m_pPlayer->getCapitalCity())		// This should always be valid too.
 			{
-				if(IsPlayerValid(eLoopPlayer))
+				int iMyAreaID = m_pPlayer->getCapitalCity()->getArea();
+				int iPlayerLoop;
+				CvTeam& kMyTeam = GET_TEAM(GetTeam());
+				for(iPlayerLoop = 0; iPlayerLoop < MAX_MAJOR_CIVS; iPlayerLoop++)
 				{
-					if (!GET_TEAM(GetTeam()).isAtWar(kLoopPlayer.getTeam()))
+					PlayerTypes eLoopPlayer = (PlayerTypes) iPlayerLoop;
+					CvPlayer &kLoopPlayer = GET_PLAYER(eLoopPlayer);
+
+					// Make sure it is another valid player and not already at war with them
+					if (m_pPlayer->GetID() != eLoopPlayer)
 					{
-						// Do we want to attack them?
-						if (GetMajorCivApproach(eLoopPlayer, false) == MAJOR_CIV_APPROACH_WAR)
+						if(IsPlayerValid(eLoopPlayer))
 						{
-							// All of us neighbors on same landmass?
-							if (kLoopPlayer.getCapitalCity()->getArea() == GET_PLAYER(ePlayer).getCapitalCity()->getArea() &&
-								m_pPlayer->getCapitalCity()->getArea() == kLoopPlayer.getCapitalCity()->getArea())
+							if (!kMyTeam.isAtWar(kLoopPlayer.getTeam()))
 							{
-								if (kLoopPlayer.GetProximityToPlayer(ePlayer) >= PLAYER_PROXIMITY_NEIGHBORS &&
-									m_pPlayer->GetProximityToPlayer(ePlayer) >= PLAYER_PROXIMITY_NEIGHBORS)
+								// Do we want to attack them?
+								if (GetMajorCivApproach(eLoopPlayer, false) == MAJOR_CIV_APPROACH_WAR)
 								{
-									bIsGoodWarTarget = true;
-									break;
+									CvCity* pkLoopPlayerCity = kLoopPlayer.getCapitalCity();
+									if (pkLoopPlayerCity)	// It's possible this is not valid
+									{
+										int iLoopPlayerAreaID = pkLoopPlayerCity->getArea();
+										// All of us neighbors on same landmass?
+										if (iLoopPlayerAreaID == iMinorAreaID &&
+											iMyAreaID == iLoopPlayerAreaID)
+										{
+											if (kLoopPlayer.GetProximityToPlayer(ePlayer) >= PLAYER_PROXIMITY_NEIGHBORS &&
+												m_pPlayer->GetProximityToPlayer(ePlayer) >= PLAYER_PROXIMITY_NEIGHBORS)
+											{
+												bIsGoodWarTarget = true;
+												break;
+											}
+										}
+									}
 								}
 							}
 						}
@@ -4239,7 +4260,6 @@ MinorCivApproachTypes CvDiplomacyAI::GetBestApproachTowardsMinorCiv(PlayerTypes 
 			}
 		}
 	}
-
 	if (bIsGoodWarTarget)
 	{
 		viApproachWeights[MINOR_CIV_APPROACH_CONQUEST] += /*10*/ GC.getMINOR_APPROACH_WAR_CONQUEST_GRAND_STRATEGY_NEIGHBORS();
@@ -10717,7 +10737,7 @@ void CvDiplomacyAI::ChangeOtherPlayerWarmongerAmountTimes100(PlayerTypes ePlayer
 #else
 void CvDiplomacyAI::ChangeOtherPlayerWarmongerAmount(PlayerTypes ePlayer, int iChangeAmount)
 {
-	int iNewValue = m_paiOtherPlayerWarmongerAmount[ePlayer] + iChangeAmount;
+	int iNewValue = m_paiOtherPlayerWarmongerAmount[ePlayer] + (iChangeAmount * GC.getEraInfo(GC.getGame().getCurrentEra())->getWarmongerPercent()) / 100;
 	iNewValue = max(0, iNewValue);
 	m_paiOtherPlayerWarmongerAmount[ePlayer] = iNewValue;
 }
@@ -27846,7 +27866,7 @@ FDataStream& operator>>(FDataStream& loadFrom, DeclarationLogData& writeTo)
 #if defined(MOD_CONFIG_AI_IN_XML)
 int CvDiplomacyAIHelpers::GetWarmongerOffset(PlayerTypes eOriginalOwner, bool bIsCapital)
 #else
-int CvDiplomacyAIHelpers::GetWarmongerOffset(int iNumCitiesRemaining)
+int CvDiplomacyAIHelpers::GetWarmongerOffset(int iNumCitiesRemaining, bool bIsMinor)
 #endif
 {
 	int iEstimatedCitiesOnMap = GC.getMap().getWorldInfo().GetEstimatedNumCities();
@@ -27863,6 +27883,12 @@ int CvDiplomacyAIHelpers::GetWarmongerOffset(int iNumCitiesRemaining)
 	int iWarmongerOffset = (iWarmongerWeight * iEstimatedCitiesOnMap) / (iNumCitiesRemaining * max(iActualCitiesOnMap, 1));
 #else
 	int iWarmongerOffset = (1000 * iEstimatedCitiesOnMap) / (max(iActualCitiesOnMap, 1) * iNumCitiesRemaining);
+
+	// Minor power targeted, half penalty
+	if (bIsMinor)
+	{
+		iWarmongerOffset = (iWarmongerOffset * GC.getWARMONGER_ON_CITY_STATE_MULTIPLIER()) / 100;
+	}
 #endif
 
 	CUSTOMLOG("GetWarmongerOffset(owner=%i, capital=%s) = %i", ((int) eOriginalOwner), (bIsCapital ? "true" : "false"), iWarmongerOffset);
@@ -27882,7 +27908,8 @@ CvString CvDiplomacyAIHelpers::GetWarmongerPreviewString(PlayerTypes eCurrentOwn
 #else
 	CvPlayer &kPlayer = GET_PLAYER(eCurrentOwner);
 	int iNumCities = max(kPlayer.getNumCities(), 1);
-	int iWarmongerOffset = CvDiplomacyAIHelpers::GetWarmongerOffset(iNumCities);
+	int iWarmongerOffset = CvDiplomacyAIHelpers::GetWarmongerOffset(iNumCities, kPlayer.isMinorCiv());
+	iWarmongerOffset = iWarmongerOffset * GC.getEraInfo(GC.getGame().getCurrentEra())->getWarmongerPercent() / 100;
 #endif
 
 	if (iWarmongerOffset < GC.getWARMONGER_THREAT_MINOR_ATTACKED_WEIGHT())
@@ -27914,7 +27941,8 @@ CvString CvDiplomacyAIHelpers::GetLiberationPreviewString(PlayerTypes eOriginalO
 #else
 	CvPlayer &kPlayer = GET_PLAYER(eOriginalOwner);
 	int iNumCities = kPlayer.getNumCities() + 1;
-	int iWarmongerOffset = CvDiplomacyAIHelpers::GetWarmongerOffset(iNumCities);
+	int iWarmongerOffset = CvDiplomacyAIHelpers::GetWarmongerOffset(iNumCities, kPlayer.isMinorCiv());
+	iWarmongerOffset = iWarmongerOffset * GC.getEraInfo(GC.getGame().getCurrentEra())->getWarmongerPercent() / 100;
 #endif
 
 	if (iWarmongerOffset < GC.getWARMONGER_THREAT_MINOR_ATTACKED_WEIGHT())
@@ -28101,7 +28129,7 @@ void CvDiplomacyAIHelpers::ApplyWarmongerPenalties(PlayerTypes eConqueror, Playe
 					}
 #else
 					int iNumCities = max(GET_PLAYER(eConquered).getNumCities(), 1);
-					int iWarmongerOffset = CvDiplomacyAIHelpers::GetWarmongerOffset(iNumCities);
+					int iWarmongerOffset = CvDiplomacyAIHelpers::GetWarmongerOffset(iNumCities, GET_PLAYER(eConquered).isMinorCiv());
 #endif
 
 					// Half penalty if I'm also at war with conquered civ

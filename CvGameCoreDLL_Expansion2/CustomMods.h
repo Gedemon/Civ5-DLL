@@ -17,13 +17,13 @@
  *****  See the comment in CvDllVersion.h regarding the DLL GUID value  *****
  *****                                                                  *****
  *****                                                                  *****
- *****          This DLL is based on the 1.0.3.144 source code          *****
+ *****          This DLL is based on the 1.0.3.276 source code          *****
  *****                                                                  *****
  ****************************************************************************
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 63)
+#define MOD_DLL_VERSION_NUMBER ((uint) 65)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -369,6 +369,7 @@
 //   GameEvents.PantheonFounded.Add(function(iPlayer, iCapitalCity, iReligion, iBelief1) end)
 //   GameEvents.ReligionFounded.Add(function(iPlayer, iHolyCity, iReligion, iBelief1, iBelief2, iBelief3, iBelief4, iBelief5) end)
 //   GameEvents.ReligionEnhanced.Add(function(iPlayer, iReligion, iBelief1, iBelief2) end)
+//   GameEvents.ReligionReformed.Add(function(iPlayer, iReligion, iBelief1) end) (v65)
 #define MOD_EVENTS_FOUND_RELIGION                   gCustomMods.isEVENTS_FOUND_RELIGION()
 
 // Events sent when choosing beliefs
@@ -779,6 +780,7 @@ enum TerraformingEventTypes {
 #define GAMEEVENT_ReligionCanHaveBelief		"ReligionCanHaveBelief",		"iii"
 #define GAMEEVENT_ReligionEnhanced			"ReligionEnhanced",				"iiii"
 #define GAMEEVENT_ReligionFounded			"ReligionFounded",				"iiiiiiii"
+#define GAMEEVENT_ReligionReformed			"ReligionReformed",				"iiiiiii"
 #define GAMEEVENT_ResolutionResult			"ResolutionResult",				"iibb"
 #define GAMEEVENT_TeamSetEra				"TeamSetEra",					"iib"
 #define GAMEEVENT_TerraformingMap			"TerraformingMap",				"ii"

@@ -1315,6 +1315,19 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact, bool bMinorAllyP
 #if defined(MOD_EVENTS_WAR_AND_PEACE)
 	if (MOD_EVENTS_WAR_AND_PEACE) {
 		GAMEEVENTINVOKE_HOOK(GAMEEVENT_DeclareWar, eOriginatingPlayer, eTeam, bAggressor);
+	} else {
+#endif
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if (pkScriptSystem)
+	{
+		CvLuaArgsHandle args;
+		args->Push(GetID());
+		args->Push(eTeam);
+
+		bool bResult;
+		LuaSupport::CallHook(pkScriptSystem, "DeclareWar", args.get(), bResult);
+	}
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
 	}
 #endif
 
@@ -1653,6 +1666,19 @@ void CvTeam::DoMakePeace(TeamTypes eTeam, bool bBumpUnits, bool bSuppressNotific
 #if defined(MOD_EVENTS_WAR_AND_PEACE)
 		if (MOD_EVENTS_WAR_AND_PEACE) {
 			GAMEEVENTINVOKE_HOOK(GAMEEVENT_MakePeace, eOriginatingPlayer, eTeam, bPacifier);
+		} else {
+#endif
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if (pkScriptSystem)
+		{
+			CvLuaArgsHandle args;
+			args->Push(GetID());
+			args->Push(eTeam);
+
+			bool bResult;
+			LuaSupport::CallHook(pkScriptSystem, "MakePeace", args.get(), bResult);
+		}
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
 		}
 #endif
 
@@ -6459,6 +6485,18 @@ void CvTeam::testCircumnavigated()
 						// Notifications should now be sent via the event
 						// CvString strSummary = GetLocalizedText("TXT_KEY_NOTIFICATION_SUMMARY_CIRC_GLOBE");
 						// AddNotification(NOTIFICATION_GENERIC, strBuffer, strSummary, -1, -1, -1);
+					} else {
+#endif
+					ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+					if (pkScriptSystem)
+					{
+						CvLuaArgsHandle args;
+						args->Push(eTeamID);
+
+						bool bResult = false;
+						LuaSupport::CallHook(pkScriptSystem, "CircumnavigatedGlobe", args.get(), bResult);
+					}
+#if defined(MOD_EVENTS_CIRCUMNAVIGATION)
 					}
 #endif
 				}
@@ -7389,6 +7427,19 @@ void CvTeam::SetCurrentEra(EraTypes eNewValue)
 #if defined(MOD_EVENTS_NEW_ERA)
 		if (MOD_EVENTS_NEW_ERA && GetCurrentEra() != GC.getGame().getStartEra()) {
 			GAMEEVENTINVOKE_HOOK(GAMEEVENT_TeamSetEra, GetID(), GetCurrentEra(), ((GetID() < MAX_MAJOR_CIVS) && !bAlreadyProvided));
+		} else {
+#endif
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if(pkScriptSystem)
+		{
+			CvLuaArgsHandle args;
+			args->Push(GetID());
+			args->Push(GetCurrentEra());
+			
+			bool bResult = false;
+			LuaSupport::CallHook(pkScriptSystem, "TeamSetEra", args.get(), bResult);
+		}
+#if defined(MOD_EVENTS_NEW_ERA)
 		}
 #endif
 	}

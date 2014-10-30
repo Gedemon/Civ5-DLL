@@ -1744,7 +1744,7 @@ namespace CvDiplomacyAIHelpers
 	CvString GetLiberationPreviewString(PlayerTypes eOriginalOwner, bool bIsCapital);
 	void ApplyWarmongerPenalties(PlayerTypes eConqueror, PlayerTypes eConquered, bool bIsCapital);
 #else
-	int GetWarmongerOffset(int iNumCitiesRemaining);
+	int GetWarmongerOffset(int iNumCitiesRemaining, bool bIsMinor);
 	CvString GetWarmongerPreviewString(PlayerTypes eCurrentOwner);
 	CvString GetLiberationPreviewString(PlayerTypes eOriginalOwner);
 	void ApplyWarmongerPenalties(PlayerTypes eConqueror, PlayerTypes eConquered);

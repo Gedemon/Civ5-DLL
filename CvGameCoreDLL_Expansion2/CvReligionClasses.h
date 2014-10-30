@@ -205,7 +205,7 @@ public:
 	BeliefTypes GetBeliefInPantheon(PlayerTypes ePlayer) const;
 	bool HasCreatedPantheon(PlayerTypes ePlayer) const;
 	int GetNumPantheonsCreated() const;
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
 	std::vector<BeliefTypes> GetAvailablePantheonBeliefs(PlayerTypes ePlayer=NO_PLAYER);
 #else
 	std::vector<BeliefTypes> GetAvailablePantheonBeliefs();
@@ -240,7 +240,7 @@ public:
 #else
 	int GetNumReligionsStillToFound() const;
 #endif
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS) || defined(MOD_TRAITS_ANY_BELIEF)
 	std::vector<BeliefTypes> GetAvailableFounderBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
 	std::vector<BeliefTypes> GetAvailableFollowerBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
 	std::vector<BeliefTypes> GetAvailableEnhancerBeliefs(PlayerTypes ePlayer=NO_PLAYER, ReligionTypes eReligion=NO_RELIGION);
@@ -553,7 +553,7 @@ public:
 
 	void DoTurn();
 
-#if defined (MOD_EVENTS_ACQUIRE_BELIEFS)
+#if defined(MOD_EVENTS_ACQUIRE_BELIEFS)
 	BeliefTypes ChoosePantheonBelief(PlayerTypes ePlayer/*=NO_PLAYER*/);
 	BeliefTypes ChooseFounderBelief(PlayerTypes ePlayer/*=NO_PLAYER*/, ReligionTypes eReligion/*=NO_RELIGION*/);
 	BeliefTypes ChooseFollowerBelief(PlayerTypes ePlayer/*=NO_PLAYER*/, ReligionTypes eReligion/*=NO_RELIGION*/);

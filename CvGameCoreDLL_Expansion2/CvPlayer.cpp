@@ -3606,7 +3606,7 @@ void CvPlayer::DoLiberatePlayer(PlayerTypes ePlayer, int iOldCityID)
 				GET_PLAYER(eMajor).GetDiplomacyAI()->ChangeOtherPlayerWarmongerAmountTimes100(GetID(), -iWarmongerOffset * iWarmongerModifier);
 #else
 				int iNumCities = max(GET_PLAYER(ePlayer).getNumCities(), 1);
-				int iWarmongerOffset = CvDiplomacyAIHelpers::GetWarmongerOffset(iNumCities);
+				int iWarmongerOffset = CvDiplomacyAIHelpers::GetWarmongerOffset(iNumCities, GET_PLAYER(ePlayer).isMinorCiv());
 				GET_PLAYER(eMajor).GetDiplomacyAI()->ChangeOtherPlayerWarmongerAmount(GetID(), -iWarmongerOffset);
 #endif
 			}
@@ -6360,12 +6360,33 @@ bool CvPlayer::canReceiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit) 
 		int iNumTechInfos = GC.getNumTechInfos();
 		for(iI = 0; iI < iNumTechInfos; iI++)
 		{
-			CvTechEntry* pkTech = GC.getTechInfo((TechTypes) iI);
+			const TechTypes eTech = static_cast<TechTypes>(iI);
+			CvTechEntry* pkTech = GC.getTechInfo(eTech);
 			if(pkTech != NULL && pkTech->IsGoodyTech())
 			{
-				if(GetPlayerTechs()->CanResearch((TechTypes)iI))
+				if(GetPlayerTechs()->CanResearch(eTech))
 				{
-					bTechFound = true;
+					bool bUseTech = true;
+					ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+					if (pkScriptSystem) 
+					{
+						CvLuaArgsHandle args;
+						args->Push(GetID());
+						args->Push(eTech);
+
+						// Attempt to execute the game events.
+						// Will return false if there are no registered listeners.
+						bool bScriptResult = false;
+						if (LuaSupport::CallTestAll(pkScriptSystem, "GoodyHutCanResearch", args.get(), bScriptResult)) 
+						{
+							bUseTech = bResult;
+						}
+					}
+
+					if(bUseTech)
+					{
+						bTechFound = true;
+					}
 					break;
 				}
 			}
@@ -6873,16 +6894,31 @@ void CvPlayer::receiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit)
 			pUnit->finishMoves();
 			pUnit->SetBeenPromotedFromGoody(true);
 
+			CvAssert(pNewUnit);
+			if (pNewUnit != NULL)
+			{
 #if defined(MOD_EVENTS_UNIT_UPGRADES)
 			// MUST call the event before convert() as that kills the old unit
 			if (MOD_EVENTS_UNIT_UPGRADES) {
 				GAMEEVENTINVOKE_HOOK(GAMEEVENT_UnitUpgraded, GetID(), pUnit->GetID(), pNewUnit->GetID(), true);
+			} else {
+#endif
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if (pkScriptSystem)
+				{
+					CvLuaArgsHandle args;
+					args->Push(GetID());
+					args->Push(pUnit->GetID());
+					args->Push(pNewUnit->GetID());
+					args->Push(true); // bGoodyHut
+
+					bool bScriptResult;
+					LuaSupport::CallHook(pkScriptSystem, "UnitUpgraded", args.get(), bScriptResult);
+				}
+#if defined(MOD_EVENTS_UNIT_UPGRADES)
 			}
 #endif
 
-			CvAssert(pNewUnit);
-			if (pNewUnit != NULL)
-			{
 				pNewUnit->convert(pUnit, true);
 				pNewUnit->setupGraphical();
 			}
@@ -6902,32 +6938,50 @@ void CvPlayer::receiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit)
 
 		for(iI = 0; iI < GC.getNumTechInfos(); iI++)
 		{
-			CvTechEntry* pkTech = GC.getTechInfo((TechTypes) iI);
+			const TechTypes eTech = static_cast<TechTypes>(iI);
+			CvTechEntry* pkTech = GC.getTechInfo(eTech);
 			if(pkTech != NULL && pkTech->IsGoodyTech())
 			{
-				if(GetPlayerTechs()->CanResearch((TechTypes)iI))
+				if(GetPlayerTechs()->CanResearch(eTech))
 				{
-#if defined(MOD_EVENTS_GOODY_TECH)
 					bool bUseTech = true;
-					
+
+#if defined(MOD_EVENTS_GOODY_TECH)
 					if (MOD_EVENTS_GOODY_TECH) {
 						if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_GoodyHutCanResearch, GetID(), iI) == GAMEEVENTRETURN_FALSE) {
 							bUseTech = false;
 						}
-					}
-					
-					if (bUseTech) {
+					} else {
 #endif
+					ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+					if (pkScriptSystem)
+					{
+						CvLuaArgsHandle args;
+						args->Push(GetID());
+						args->Push(eTech);
+
+						// Attempt to execute the game events.
+						// Will return false if there are no registered listeners.
+						bool bScriptResult = false;
+						if (LuaSupport::CallTestAll(pkScriptSystem, "GoodyHutCanResearch", args.get(), bScriptResult))
+						{
+							bUseTech = bScriptResult;
+						}
+					}
+#if defined(MOD_EVENTS_GOODY_TECH)
+					}
+#endif
+
+					if(bUseTech)
+					{
 						iValue = (1 + GC.getGame().getJonRandNum(10000, "Goody Tech"));
 
 						if(iValue > iBestValue)
 						{
 							iBestValue = iValue;
-							eBestTech = ((TechTypes)iI);
+							eBestTech = eTech;
 						}
-#if defined(MOD_EVENTS_GOODY_TECH)
 					}
-#endif
 				}
 			}
 		}
@@ -6937,6 +6991,19 @@ void CvPlayer::receiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit)
 #if defined(MOD_EVENTS_GOODY_TECH)
 		if (MOD_EVENTS_GOODY_TECH) {
 			GAMEEVENTINVOKE_HOOK(GAMEEVENT_GoodyHutTechResearched, GetID(), eBestTech);
+		} else {
+#endif
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if (pkScriptSystem) 
+		{
+			CvLuaArgsHandle args;
+			args->Push(GetID());
+			args->Push(eBestTech);
+
+			bool bScriptResult;
+			LuaSupport::CallHook(pkScriptSystem, "GoodyHutTechResearched", args.get(), bScriptResult);
+		}
+#if defined(MOD_EVENTS_GOODY_TECH)
 		}
 #endif
 
@@ -14827,10 +14894,10 @@ void CvPlayer::DoUnitKilledCombat(PlayerTypes eKilledPlayer, UnitTypes eUnitType
 
 //	--------------------------------------------------------------------------------
 /// Do effects when a GP is consumed
-#if defined (MOD_EVENTS_GREAT_PEOPLE)
+#if defined(MOD_EVENTS_GREAT_PEOPLE)
 void CvPlayer::DoGreatPersonExpended(UnitTypes eGreatPersonUnit, CvUnit* pGreatPersonUnit)
 #else
-void CvPlayer::DoGreatPersonExpended(UnitTypes /*eGreatPersonUnit*/)
+void CvPlayer::DoGreatPersonExpended(UnitTypes eGreatPersonUnit)
 #endif
 {
 	// Gold gained
@@ -14989,6 +15056,19 @@ void CvPlayer::DoGreatPersonExpended(UnitTypes /*eGreatPersonUnit*/)
 #if defined(MOD_EVENTS_GREAT_PEOPLE)
 	if (MOD_EVENTS_GREAT_PEOPLE) {
 		GAMEEVENTINVOKE_HOOK(GAMEEVENT_GreatPersonExpended, GetID(), pGreatPersonUnit->GetID(), eGreatPersonUnit, pGreatPersonUnit->getX(), pGreatPersonUnit->getY());
+	} else {
+#endif
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if (pkScriptSystem)
+	{
+		CvLuaArgsHandle args;
+		args->Push(GetID());
+		args->Push(eGreatPersonUnit);
+
+		bool bResult;
+		LuaSupport::CallHook(pkScriptSystem, "GreatPersonExpended", args.get(), bResult);
+	}
+#if defined(MOD_EVENTS_GREAT_PEOPLE)
 	}
 #endif
 }
@@ -18529,7 +18609,15 @@ void CvPlayer::checkRunAutoMovesForEveryone()
 	for(i = 0; i < MAX_PLAYERS; ++i)
 	{
 		CvPlayer& p = CvPlayerAI::getPlayer((PlayerTypes)i);
-		if(p.isHuman() && !p.isObserver() && !p.isEndTurn())
+		if(p.isHuman() && !p.isObserver() 
+			// Check to see if this human player hasn't gotten to the end turn phase of their turn.  
+			// This gets tricky because hot joiners can hop into an ai civ that already finished their turn.
+			// When this occurs, the hot joiner will not be turn active, will have already run their automoves,
+			// and not have end turn set. (AIs do not set end turn) *sigh*
+			// To handle that case, we assume that human players who are not endturn and turn inactive after TurnAllComplete
+			// are ready for the human automoves phase.
+			&& (!p.isEndTurn()
+			&& (!gDLL->HasReceivedTurnAllCompleteFromAllPlayers() || p.isTurnActive()))) 
 		{
 			runAutoMovesForEveryone = false;
 			break;
@@ -28050,7 +28138,11 @@ void CvPlayer::disconnected()
 
 			// Load leaderhead for this new AI player
 			gDLL->NotifySpecificAILeaderInGame(GetID());
-			checkRunAutoMovesForEveryone();
+			
+			if(!GC.getGame().isOption(GAMEOPTION_DYNAMIC_TURNS) && GC.getGame().isOption(GAMEOPTION_SIMULTANEOUS_TURNS))
+			{//When in fully simultaneous turn mode, having a player disconnect might trigger the automove phase for all human players.
+				checkRunAutoMovesForEveryone();
+			}
 		}
 	}
 }
@@ -28066,15 +28158,6 @@ void CvPlayer::reconnected()
 
 	CvGame& kGame = GC.getGame();
 	bool isMultiplayer = kGame.isGameMultiPlayer();
-
-	if(isMultiplayer)
-	{//player is hot joining, make sure their TurnActive status is correct.
-		if(isSimultaneousTurns() && isAlive())
-		{
-			setTurnActive(true); //force their turn status to active.  AI might have assumed control and already completed their turn
-		}
-	}
-
 	if(isMultiplayer && !isLocalPlayer())
 	{
 		FAutoArchive& archive = getSyncArchive();

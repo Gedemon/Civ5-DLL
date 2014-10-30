@@ -8308,6 +8308,23 @@ void CvCity::DoJONSCultureLevelIncrease()
 #if defined(MOD_EVENTS_CITY)
 			if (MOD_EVENTS_CITY) {
 				GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityBoughtPlot, getOwner(), GetID(), pPlotToAcquire->getX(), pPlotToAcquire->getY(), false, true);
+			} else {
+#endif
+		ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+		if (pkScriptSystem) 
+		{
+			CvLuaArgsHandle args;
+			args->Push(getOwner());
+			args->Push(GetID());
+			args->Push(pPlotToAcquire->getX());
+			args->Push(pPlotToAcquire->getY());
+			args->Push(false); // bGold
+			args->Push(true); // bFaith/bCulture
+
+			bool bResult;
+			LuaSupport::CallHook(pkScriptSystem, "CityBoughtPlot", args.get(), bResult);
+		}
+#if defined(MOD_EVENTS_CITY)
 			}
 #endif
 #if defined(MOD_UI_CITY_EXPANSION)
@@ -12278,6 +12295,26 @@ void CvCity::GetBuyablePlotList(std::vector<int>& aiPlotList)
 					if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_CityCanAcquirePlot, getOwner(), GetID(), pLoopPlot->getX(), pLoopPlot->getY()) == GAMEEVENTRETURN_FALSE) {
 						continue;
 					}
+				} else {
+#endif				
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if (pkScriptSystem) 
+				{
+					CvLuaArgsHandle args;
+					args->Push(getOwner());
+					args->Push(GetID());
+					args->Push(pLoopPlot->getX());
+					args->Push(pLoopPlot->getY());
+
+					bool bResult = false;
+					if (LuaSupport::CallTestAll(pkScriptSystem, "CityCanAcquirePlot", args.get(), bResult))
+					{
+						if (bResult == false) {
+							continue;
+						}
+					}
+				}
+#if defined(MOD_EVENTS_CITY_BORDERS)
 				}
 #endif				
 
@@ -12618,6 +12655,23 @@ void CvCity::BuyPlot(int iPlotX, int iPlotY)
 #else
 		GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityBoughtPlot, getOwner(), GetID(), plot()->getX(), plot()->getY(), true, false);
 #endif
+	} else {
+#endif
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if (pkScriptSystem) 
+	{
+		CvLuaArgsHandle args;
+		args->Push(getOwner());
+		args->Push(GetID());
+		args->Push(plot()->getX());
+		args->Push(plot()->getY());
+		args->Push(true); // bGold
+		args->Push(false); // bFaith/bCulture
+
+		bool bResult;
+		LuaSupport::CallHook(pkScriptSystem, "CityBoughtPlot", args.get(), bResult);
+	}
+#if defined(MOD_EVENTS_CITY)
 	}
 #endif
 
@@ -13126,6 +13180,22 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 #if defined(MOD_EVENTS_CITY)
 				if (MOD_EVENTS_CITY) {
 					GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityTrained, getOwner(), GetID(), iResult, false, false);
+				} else {
+#endif
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if (pkScriptSystem) 
+				{
+					CvLuaArgsHandle args;
+					args->Push(getOwner());
+					args->Push(GetID());
+					args->Push(GET_PLAYER(getOwner()).getUnit(iResult)->GetID()); // This is probably just iResult
+					args->Push(false); // bGold
+					args->Push(false); // bFaith/bCulture
+
+					bool bResult;
+					LuaSupport::CallHook(pkScriptSystem, "CityTrained", args.get(), bResult);
+				}
+#if defined(MOD_EVENTS_CITY)
 				}
 #endif
 
@@ -13185,6 +13255,22 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 #if defined(MOD_EVENTS_CITY)
 				if (MOD_EVENTS_CITY) {
 					GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityConstructed, getOwner(), GetID(), eConstructBuilding, false, false);
+				} else {
+#endif
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if (pkScriptSystem) 
+				{
+					CvLuaArgsHandle args;
+					args->Push(getOwner());
+					args->Push(GetID());
+					args->Push(eConstructBuilding);
+					args->Push(false); // bGold
+					args->Push(false); // bFaith/bCulture
+
+					bool bScriptResult;
+					LuaSupport::CallHook(pkScriptSystem, "CityConstructed", args.get(), bScriptResult);
+				}
+#if defined(MOD_EVENTS_CITY)
 				}
 #endif
 
@@ -13276,6 +13362,22 @@ void CvCity::popOrder(int iNum, bool bFinish, bool bChoose)
 #if defined(MOD_EVENTS_CITY)
 			if (MOD_EVENTS_CITY) {
 				GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityCreated, getOwner(), GetID(), eCreateProject, false, false);
+			} else {
+#endif
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem) 
+			{
+				CvLuaArgsHandle args;
+				args->Push(getOwner());
+				args->Push(GetID());
+				args->Push(eCreateProject);
+				args->Push(false); // bGold
+				args->Push(false); // bFaith/bCulture
+
+				bool bScriptResult;
+				LuaSupport::CallHook(pkScriptSystem, "CityCreated", args.get(), bScriptResult);
+			}
+#if defined(MOD_EVENTS_CITY)
 			}
 #endif
 
@@ -14064,8 +14166,9 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 				else
 				{
 					// Missionaries, Inquisitors and Prophets
-					// We need to test that the player can build the unit, specifically the check for civ specific versions unit
-					if(!canTrain(eUnitType, false, !bTestTrainable, true /*bIgnoreCost*/, true /*bWillPurchase*/))
+					// We need a full religion and not just a pantheon,
+					// and also to test that the player can build the unit, specifically the check for a civ specific version of the unit
+					if(eReligion <= RELIGION_PANTHEON || !canTrain(eUnitType, false, !bTestTrainable, true /*bIgnoreCost*/, true /*bWillPurchase*/))
 					{
 						return false;
 					}
@@ -14132,7 +14235,7 @@ bool CvCity::IsCanPurchase(bool bTestPurchaseCost, bool bTestTrainable, UnitType
 
 					if(pkBuildingInfo->IsBuildingClassNeededInCity(iI))
 					{
-						CvCivilizationInfo& thisCivInfo = *GC.getCivilizationInfo(getCivilizationType());
+						CvCivilizationInfo& thisCivInfo = getCivilizationInfo();
 						ePrereqBuilding = ((BuildingTypes)(thisCivInfo.getCivilizationBuildings(iI)));
 
 						if(ePrereqBuilding != NO_BUILDING)
@@ -14230,7 +14333,23 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 #if defined(MOD_EVENTS_CITY)
 				if (MOD_EVENTS_CITY) {
 					GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityTrained, getOwner(), GetID(), pUnit->GetID(), true, false);
+				} else {
+#endif
+				ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+				if (pkScriptSystem) 
+				{
+					CvLuaArgsHandle args;
+					args->Push(getOwner());
+					args->Push(GetID());
+					args->Push(pUnit->GetID());
+					args->Push(true); // bGold
+					args->Push(false); // bFaith/bCulture
+
+					bool bScriptResult;
+					LuaSupport::CallHook(pkScriptSystem, "CityTrained", args.get(), bScriptResult);
 				}
+#if defined(MOD_EVENTS_CITY)
+			}
 #endif
 			}
 		}
@@ -14241,6 +14360,22 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 #if defined(MOD_EVENTS_CITY)
 			if (MOD_EVENTS_CITY) {
 				GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityConstructed, getOwner(), GetID(), eBuildingType, true, false);
+			} else {
+#endif
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem) 
+			{
+				CvLuaArgsHandle args;
+				args->Push(getOwner());
+				args->Push(GetID());
+				args->Push(eBuildingType);
+				args->Push(true); // bGold
+				args->Push(false); // bFaith/bCulture
+
+				bool bScriptResult;
+				LuaSupport::CallHook(pkScriptSystem, "CityConstructed", args.get(), bScriptResult);
+			}
+#if defined(MOD_EVENTS_CITY)
 			}
 #endif
 
@@ -14255,6 +14390,22 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 #if defined(MOD_EVENTS_CITY)
 			if (MOD_EVENTS_CITY) {
 				GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityCreated, getOwner(), GetID(), eProjectType, true, false);
+			} else {
+#endif
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem) 
+			{
+				CvLuaArgsHandle args;
+				args->Push(getOwner());
+				args->Push(GetID());
+				args->Push(eProjectType);
+				args->Push(true); // bGold
+				args->Push(false); // bFaith/bCulture
+
+				bool bScriptResult;
+				LuaSupport::CallHook(pkScriptSystem, "CityCreated", args.get(), bScriptResult);
+			}
+#if defined(MOD_EVENTS_CITY)
 			}
 #endif
 		}
@@ -14295,6 +14446,22 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 #if defined(MOD_EVENTS_CITY)
 			if (MOD_EVENTS_CITY) {
 				GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityTrained, getOwner(), GetID(), pUnit->GetID(), false, true);
+			} else {
+#endif
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem) 
+			{
+				CvLuaArgsHandle args;
+				args->Push(getOwner());
+				args->Push(GetID());
+				args->Push(pUnit->GetID());
+				args->Push(false); // bGold
+				args->Push(true); // bFaith/bCulture
+
+				bool bResult;
+				LuaSupport::CallHook(pkScriptSystem, "CityTrained", args.get(), bResult);
+			}
+#if defined(MOD_EVENTS_CITY)
 			}
 #endif
 
@@ -14409,6 +14576,22 @@ void CvCity::Purchase(UnitTypes eUnitType, BuildingTypes eBuildingType, ProjectT
 #if defined(MOD_EVENTS_CITY)
 			if (MOD_EVENTS_CITY) {
 				GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityConstructed, getOwner(), GetID(), eBuildingType, false, true);
+			} else {
+#endif
+			ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+			if (pkScriptSystem)
+			{
+				CvLuaArgsHandle args;
+				args->Push(getOwner());
+				args->Push(GetID());
+				args->Push(eBuildingType);
+				args->Push(false); // bGold
+				args->Push(true); // bFaith/bCulture
+
+				bool bScriptResult;
+				LuaSupport::CallHook(pkScriptSystem, "CityConstructed", args.get(), bScriptResult);
+			}
+#if defined(MOD_EVENTS_CITY)
 			}
 #endif
 

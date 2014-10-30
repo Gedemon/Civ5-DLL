@@ -523,7 +523,7 @@ void CvPlayerAI::AI_chooseFreeTech()
 
 	if(eBestTech == NO_TECH)
 	{
-		eBestTech = GetPlayerTechs()->GetTechAI()->ChooseNextTech(/*bFreeTech*/ true);
+		eBestTech = GetPlayerTechs()->GetTechAI()->ChooseNextTech(this, /*bFreeTech*/ true);
 	}
 
 	if(eBestTech != NO_TECH)
@@ -580,7 +580,7 @@ void CvPlayerAI::AI_chooseResearch()
 
 		if(eBestTech == NO_TECH)
 		{
-			eBestTech = GetPlayerTechs()->GetTechAI()->ChooseNextTech();
+			eBestTech = GetPlayerTechs()->GetTechAI()->ChooseNextTech(this);
 		}
 
 		if(eBestTech != NO_TECH)
