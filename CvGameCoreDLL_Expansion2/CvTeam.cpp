@@ -221,6 +221,7 @@ void CvTeam::uninit()
 		m_paiTurnMadePeaceTreatyWithTeam[i] = -1;
 		m_aiIgnoreWarningCount[i] = 0;
 		m_abHasMet[i] = false;
+		m_abAtWar[i] = false;
 #if defined(MOD_EVENTS_WAR_AND_PEACE)
 		m_abAggressorPacifier[i] = false;
 #endif
@@ -3905,11 +3906,11 @@ void CvTeam::setAtWar(TeamTypes eIndex, bool bNewValue)
 	if(eIndex != GetID() || bNewValue == false)
 #if defined(MOD_EVENTS_WAR_AND_PEACE)
 	{
-		m_abAtWar[eIndex] = bNewValue;
 		m_abAggressorPacifier[eIndex] = bAggressorPacifier;
-	}
-#else
+#endif
 		m_abAtWar[eIndex] = bNewValue;
+#if defined(MOD_EVENTS_WAR_AND_PEACE)
+	}
 #endif
 
 	gDLL->GameplayWarStateChanged(GetID(), eIndex, bNewValue);
@@ -7646,8 +7647,8 @@ void CvTeam::Read(FDataStream& kStream)
 
 #if defined(MOD_EVENTS_WAR_AND_PEACE)
 	if (uiDllSaveVersion >= 63) {
-		ArrayWrapper<bool> kAtWarWrapper(MAX_TEAMS, &m_abAggressorPacifier[0]);
-		kStream >> kAtWarWrapper;
+		ArrayWrapper<bool> kAggressorPacifierWrapper(MAX_TEAMS, &m_abAggressorPacifier[0]);
+		kStream >> kAggressorPacifierWrapper;
 	} else {
 		for (int i = 0; i < MAX_TEAMS; ++i) {
 			m_abAggressorPacifier[i] = false;
