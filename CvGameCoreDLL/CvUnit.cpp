@@ -2769,6 +2769,10 @@ int CvUnit::getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDa
 
 	iDamage = iDamage > 0 ? iDamage : 1;
 
+	// RED <<<<<
+	iDamage = std::min(iDamage, int(GC.getMAX_HIT_POINTS() / 5)); // at least 5 shoots to kill any unit
+	// RED >>>>>
+
 	return iDamage;
 }
 
@@ -8472,6 +8476,10 @@ int CvUnit::GetAirCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bInc
 
 	iAttackerDamage = max(1,iAttackerDamage);
 
+	// RED <<<<<
+	iAttackerDamage = min(iAttackerDamage, int(GC.getMAX_HIT_POINTS() / 5)); // at least 5 shoots to kill any unit
+	// RED >>>>>
+
 	return iAttackerDamage;
 }
 
@@ -8571,6 +8579,10 @@ int CvUnit::GetRangeCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bI
 	iAttackerDamage /= 100;
 
 	iAttackerDamage = max(1,iAttackerDamage);
+
+	// RED <<<<<
+	iAttackerDamage = min(iAttackerDamage, int(GC.getMAX_HIT_POINTS() / 5)); // at least 5 shoots to kill any unit
+	// RED >>>>>
 
 	return iAttackerDamage;
 }

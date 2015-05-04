@@ -10167,7 +10167,7 @@ CombatPredictionTypes CvGame::GetCombatPrediction (const CvUnit* pAttackingUnit,
 	{
 		ePrediction = COMBAT_PREDICTION_TOTAL_VICTORY;
 	}
-	else if (iAttackingDamageInflicted - iDefenderDamageInflicted > 30)
+	else if (iAttackingDamageInflicted - iDefenderDamageInflicted > 7) // RED >>>>> (was harcoded at 30)
 	{
 		ePrediction = COMBAT_PREDICTION_MAJOR_VICTORY;
 	}
@@ -10175,7 +10175,7 @@ CombatPredictionTypes CvGame::GetCombatPrediction (const CvUnit* pAttackingUnit,
 	{
 		ePrediction = COMBAT_PREDICTION_SMALL_VICTORY;
 	}
-	else if (iDefenderDamageInflicted - iAttackingDamageInflicted > 30)
+	else if (iDefenderDamageInflicted - iAttackingDamageInflicted > 7) // RED >>>>> (was harcoded at 30)
 	{
 		ePrediction = COMBAT_PREDICTION_MAJOR_DEFEAT;
 	}
