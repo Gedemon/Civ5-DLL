@@ -6983,6 +6983,16 @@ void CvGame::doTurn()
 
 	// If player unit cycling has been canceled for this turn, set it back to normal for the next
 	GC.GetEngineUserInterface()->setNoSelectionListCycle(false);
+	
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if(pkScriptSystem)
+	{
+		CvLuaArgsHandle args;
+		//args->Push(GetID());
+
+		bool bResult;
+		LuaSupport::CallHook(pkScriptSystem, "GameDoTurn", args.get(), bResult);
+	}
 
 	gDLL->DoTurn();
 

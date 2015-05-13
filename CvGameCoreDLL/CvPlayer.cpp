@@ -6920,6 +6920,20 @@ int CvPlayer::GetNumUnitsSupplied() const
 	iFreeUnits += GetNumUnitsSuppliedByCities();
 	iFreeUnits += GetNumUnitsSuppliedByPopulation();
 
+	// RED <<<<<
+	int iFreeUnitsFromScenario = 0;
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if(pkScriptSystem)
+	{
+		CvLuaArgsHandle args;
+		args->Push(GetID());
+
+		LuaSupport::CallAccumulator(pkScriptSystem, "GetFreeUnitsFromScenario", args.get(), iFreeUnitsFromScenario);
+
+	}
+	iFreeUnits += iFreeUnitsFromScenario;
+	// RED >>>>>
+
 	if (!isMinorCiv() && !isHuman() && !IsAITeammateOfHuman())
 	{
 		int iMod = (100 + GC.getGame().getHandicapInfo().getAIUnitSupplyPercent());

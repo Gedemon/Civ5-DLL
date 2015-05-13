@@ -2326,6 +2326,15 @@ void CvUnitCombat::ResolveCombat( const CvCombatInfo& kInfo, uint uiParentEventI
 				ResolveCityMeleeCombat(kInfo, uiParentEventID);
 			else
 				ResolveMeleeCombat(kInfo, uiParentEventID);
+
+			// RED <<<<< Just one melee attack from a city...
+			CvUnit* pkAttacker = kInfo.getUnit(BATTLE_UNIT_ATTACKER);
+			if (pkAttacker->plot()->isCity())
+			{
+				CvCity* pCity = pkAttacker->plot()->getPlotCity();
+				pCity->setMadeAttack(true);
+			}
+			// RED >>>>>
 		}
 
 		// RED : CombatEnded

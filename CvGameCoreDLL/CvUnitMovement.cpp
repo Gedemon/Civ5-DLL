@@ -242,6 +242,13 @@ bool CvUnitMovement::CostsOnlyOne(const CvUnit* pUnit, const CvPlot* pFromPlot, 
 //	--------------------------------------------------------------------------------
 bool CvUnitMovement::IsSlowedByZOC(const CvUnit* pUnit, const CvPlot* pFromPlot, const CvPlot* pToPlot)
 {
+	// RED <<<<<
+	if (pUnit->getDomainType() == DOMAIN_SEA || pUnit->isEmbarked())
+	{
+		return false;
+	}
+	// RED >>>>>
+
 	// Zone of Control
 	if (GC.getZONE_OF_CONTROL_ENABLED() > 0)
 	{

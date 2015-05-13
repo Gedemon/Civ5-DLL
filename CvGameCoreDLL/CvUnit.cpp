@@ -8644,6 +8644,10 @@ int CvUnit::GetAirStrikeDefenseDamage(const CvUnit* pAttacker, bool bIncludeRand
 
 	iDefenderDamage = max(1,iDefenderDamage);
 
+	// RED <<<<<
+	iDefenderDamage = min(iDefenderDamage, int(GC.getMAX_HIT_POINTS() / 5)); // at least 5 shoots to kill any unit
+	// RED >>>>>
+
 	return iDefenderDamage;
 }
 
@@ -8778,6 +8782,10 @@ int CvUnit::GetInterceptionDamage(const CvUnit* pAttacker, bool bIncludeRand) co
 	iInterceptorDamage /= 100;
 
 	iInterceptorDamage = max(1,iInterceptorDamage);
+
+	// RED <<<<<
+	iInterceptorDamage = min(iInterceptorDamage, int(GC.getMAX_HIT_POINTS() / 5)); // at least 5 shoots to kill any unit
+	// RED >>>>>
 
 	return iInterceptorDamage;
 }
@@ -16207,27 +16215,24 @@ bool CvUnit::IsCanAttackWithMoveNow() const
 		return false;
 	}
 
-	// Can't attack out of cities if there is more than 1 combat unit of the same domain in it.
-	// This does not apply to air units, which strangely don't show up as combat unit anyhow.
+	// RED <<<<<
+	// One attack from inside cities, except sea units that can't attack at all
 	DomainTypes eSourceDomain = getDomainType();
 	CvPlot* pkPlot = plot();
-	if (pkPlot->isCity() && eSourceDomain != DOMAIN_AIR)
+	if (pkPlot->isCity())
 	{
-		IDInfo* pUnitNode = pkPlot->headUnitNode();
-		int iCount = 0;
-		while(pUnitNode != NULL)
+		if (eSourceDomain == DOMAIN_SEA)
 		{
-			CvUnit* pLoopUnit = GetPlayerUnit(*pUnitNode);
-			if(pLoopUnit && pLoopUnit->IsCombatUnit() && pLoopUnit->getDomainType() == eSourceDomain)
-			{
-				iCount++;
-			}
-
-			pUnitNode = pkPlot->nextUnitNode(pUnitNode);
+			return false;
 		}
-
-		return iCount <= 1;	// Just us?  Then it is ok.
+		
+		CvCity* pCity = pkPlot->getPlotCity();
+		if (eSourceDomain == DOMAIN_LAND && !isRanged() && pCity->isMadeAttack())
+		{
+			return false;
+		}
 	}
+	// RED >>>>>
 
 	return true;
 }
