@@ -534,6 +534,11 @@ public:
 	void NetMessageStaticsReset();
 	void SetLastTurnAICivsProcessed();
 
+	// RED <<<<<
+	bool UpdateREDLoadingFix(const char* szModFolder);
+	int  DeleteDirectory(const std::string &refcstrRootDirectory, bool bDeleteSubdirectories);
+	//RED >>>>>
+
 	//------------------------------------------------------------
 	//------------------------------------------------------------
 	//------------------------------------------------------------

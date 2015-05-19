@@ -304,7 +304,10 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 	Method(GetCombatPrediction);
 
 	Method(GetTimeString);
-
+	
+	// <<<<< RED
+	Method(UpdateREDLoadingFix);
+	// RED >>>>>
 
 	Method(IsProcessingMessages)
 }
@@ -1968,4 +1971,11 @@ int CvLuaGame::lIsProcessingMessages( lua_State* L)
 {
 	lua_pushboolean(L, gDLL->IsProcessingGameCoreMessages());
 	return 1;
+}
+
+//------------------------------------------------------------------------------
+int CvLuaGame::lUpdateREDLoadingFix(lua_State* L)
+{
+	const char* szModFolder = lua_tostring(L, 1);
+	return GC.getGame().UpdateREDLoadingFix(szModFolder);
 }

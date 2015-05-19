@@ -299,6 +299,10 @@ protected:
 
 	static int lGetTimeString( lua_State* L);
 
+	// RED <<<<<
+	static int lUpdateREDLoadingFix(lua_State *L);
+	// RED >>>>>
+
 	static int lIsProcessingMessages(lua_State* L);
 };
 

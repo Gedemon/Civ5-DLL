@@ -6983,16 +6983,6 @@ void CvGame::doTurn()
 
 	// If player unit cycling has been canceled for this turn, set it back to normal for the next
 	GC.GetEngineUserInterface()->setNoSelectionListCycle(false);
-	
-	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
-	if(pkScriptSystem)
-	{
-		CvLuaArgsHandle args;
-		//args->Push(GetID());
-
-		bool bResult;
-		LuaSupport::CallHook(pkScriptSystem, "GameDoTurn", args.get(), bResult);
-	}
 
 	gDLL->DoTurn();
 
@@ -7037,6 +7027,18 @@ void CvGame::doTurn()
 
 	incrementGameTurn();
 	incrementElapsedGameTurns();
+	
+	// <<<<< RED
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if(pkScriptSystem)
+	{
+		CvLuaArgsHandle args;
+		//args->Push(GetID());
+
+		bool bResult;
+		LuaSupport::CallHook(pkScriptSystem, "GameDoTurn", args.get(), bResult);
+	}
+	// RED >>>>>
 
 	if(isOption(GAMEOPTION_DYNAMIC_TURNS))
 	{// update turn mode for dynamic turn mode.
@@ -10240,3 +10242,171 @@ void CvGame::SetLastTurnAICivsProcessed()
 	}
 }
 
+// <<<<< RED
+//
+// create a RED_WWII folder in assets/DLC to override vanilla files to prevent crash on load before deactivating DLCs...
+
+bool CvGame::UpdateREDLoadingFix(const char* szModFolder)
+{
+	// Logging
+	FILogFile* pLog;
+	CvString strTemp;
+	CvString strOutBuf;
+	pLog = LOGFILEMGR.GetLog("RED_WWII.log", FILogFile::kDontTimeStamp);
+	
+	// Delete the previous MP Modspack DLC folder
+	pLog->Msg("Delete RED_WWII fix...");
+	int iRC = 0;
+	iRC = DeleteDirectory("assets\\DLC\\RED_WWII", true);
+	if (iRC)
+	{
+		strTemp.Format("DeleteDirectory failed with Error %d", iRC);
+		pLog->Msg(strTemp);
+		pLog->Msg("--------------------------------------------------------------------------------");
+		return false;
+	}
+	pLog->Msg("Old RED_WWII Folder in assets deleted...");
+	pLog->Msg("--------------------------------------------------------------------------------");
+
+	// Create the RED_WWII folder
+	pLog->Msg("Create new RED_WWII Folder in assets...");
+	CreateDirectory("assets\\DLC\\RED_WWII", NULL);
+	CreateDirectory("assets\\DLC\\RED_WWII\\Mods", NULL);
+	
+
+	// Get Mods folder	
+	strTemp = szModFolder;
+	strOutBuf = "Copy files To RED_WWII Folder from " + strTemp ;
+	pLog->Msg(strOutBuf);
+
+	CvString strModsPath;
+	CvString strINIPath;
+	DWORD dwType = REG_SZ;
+    HKEY hKey = 0;
+	char strPath[1024];
+	DWORD strPath_length = 1024;
+	const char* subkey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";	
+	RegOpenKey(HKEY_CURRENT_USER,subkey,&hKey);
+	RegQueryValueEx(hKey, "Personal", NULL, &dwType, (LPBYTE)&strPath, &strPath_length);
+
+    strTemp = strPath;
+	strOutBuf = "Path to \"My Documents\" folder :" + strTemp;
+	pLog->Msg(strOutBuf);
+	
+	strModsPath = strTemp + "\\my games\\Sid Meier's Civilization 5\\MODS\\";
+	strTemp = szModFolder;	
+	strModsPath += strTemp;
+
+	strOutBuf = "Path to the mod's folder :" + strModsPath;
+	pLog->Msg(strOutBuf);
+
+	// Check if the folder exist
+	DWORD ftyp = GetFileAttributesA(strModsPath.c_str());
+	if (ftyp == INVALID_FILE_ATTRIBUTES)
+	{
+		pLog->Msg("Mod's path does not exist, aborting...");
+		pLog->Msg("--------------------------------------------------------------------------------");
+		return false;
+	}
+
+	strModsPath += "\\";
+
+	// Copy files from the mod folder to the RED_WWII folder
+	pLog->Msg("Copy UI files from base game...");
+
+	strTemp = strModsPath + "RED_WWII\\RED_WWII_BNW.Civ5Pkg";
+	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\RED_WWII_BNW.Civ5Pkg", false);
+
+	strTemp = strModsPath + "RED_WWII\\RED_WWII_GK.Civ5Pkg";
+	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\RED_WWII_GK.Civ5Pkg", false);
+
+	strTemp = strModsPath + "RED_WWII\\RED_WWII_Vanilla.Civ5Pkg";
+	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\RED_WWII_Vanilla.Civ5Pkg", false);
+
+	strTemp = strModsPath + "RED_WWII\\mods\\CustomMod.lua";
+	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\mods\\CustomMod.lua", false);
+
+	strTemp = strModsPath + "RED_WWII\\mods\\ModsMenu.lua";
+	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\mods\\ModsMenu.lua", false);
+
+	strTemp = strModsPath + "RED_WWII\\mods\\ModsSinglePlayer.lua";
+	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\mods\\ModsSinglePlayer.lua", false);
+
+	pLog->Msg("RED_WWII Folder created...");
+	pLog->Msg("--------------------------------------------------------------------------------");
+	return true;
+}
+
+// Code from http://forums.codeguru.com/showthread.php?239271-Windows-SDK-File-System-How-to-delete-a-directory-and-subdirectories
+int CvGame::DeleteDirectory(const std::string &refcstrRootDirectory, bool bDeleteSubdirectories = true)
+{
+  bool            bSubdirectory = false;       // Flag, indicating whether
+                                               // subdirectories have been found
+  HANDLE          hFile;                       // Handle to directory
+  std::string     strFilePath;                 // Filepath
+  std::string     strPattern;                  // Pattern
+  WIN32_FIND_DATA FileInformation;             // File information
+
+
+  strPattern = refcstrRootDirectory + "\\*.*";
+  hFile = ::FindFirstFile(strPattern.c_str(), &FileInformation);
+  if(hFile != INVALID_HANDLE_VALUE)
+  {
+    do
+    {
+      if(FileInformation.cFileName[0] != '.')
+      {
+        strFilePath.erase();
+        strFilePath = refcstrRootDirectory + "\\" + FileInformation.cFileName;
+
+        if(FileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        {
+          if(bDeleteSubdirectories)
+          {
+            // Delete subdirectory
+            int iRC = DeleteDirectory(strFilePath, bDeleteSubdirectories);
+            if(iRC)
+              return iRC;
+          }
+          else
+            bSubdirectory = true;
+        }
+        else
+        {
+          // Set file attributes
+          if(::SetFileAttributes(strFilePath.c_str(),
+                                 FILE_ATTRIBUTE_NORMAL) == FALSE)
+            return ::GetLastError();
+
+          // Delete file
+          if(::DeleteFile(strFilePath.c_str()) == FALSE)
+            return ::GetLastError();
+        }
+      }
+    } while(::FindNextFile(hFile, &FileInformation) == TRUE);
+
+    // Close handle
+    ::FindClose(hFile);
+
+    DWORD dwError = ::GetLastError();
+    if(dwError != ERROR_NO_MORE_FILES)
+      return dwError;
+    else
+    {
+      if(!bSubdirectory)
+      {
+        // Set directory attributes
+        if(::SetFileAttributes(refcstrRootDirectory.c_str(),
+                               FILE_ATTRIBUTE_NORMAL) == FALSE)
+          return ::GetLastError();
+
+        // Delete directory
+        if(::RemoveDirectory(refcstrRootDirectory.c_str()) == FALSE)
+          return ::GetLastError();
+      }
+    }
+  }
+
+  return 0;
+}
+// RED >>>>>
