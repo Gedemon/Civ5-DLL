@@ -10311,7 +10311,7 @@ bool CvGame::UpdateREDLoadingFix(const char* szModFolder)
 
 	strModsPath += "\\";
 
-	// Copy files from the mod folder to the RED_WWII folder
+	// Copy files from the mod's folder to the RED_WWII folder
 	pLog->Msg("Copy UI files from base game...");
 
 	strTemp = strModsPath + "RED_WWII\\RED_WWII_BNW.Civ5Pkg";
@@ -10331,6 +10331,15 @@ bool CvGame::UpdateREDLoadingFix(const char* szModFolder)
 
 	strTemp = strModsPath + "RED_WWII\\mods\\ModsSinglePlayer.lua";
 	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\mods\\ModsSinglePlayer.lua", false);
+
+	strTemp = strModsPath + "RED_WWII\\mods\\MainMenu.lua";
+	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\mods\\MainMenu.lua", false);
+
+	strTemp = strModsPath + "RED_WWII\\mods\\ModsBrowser.lua";
+	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\mods\\ModsBrowser.lua", false);
+
+	strTemp = strModsPath + "RED_WWII\\mods\\EULA.lua";
+	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\mods\\EULA.lua", false);
 
 	pLog->Msg("RED_WWII Folder created...");
 	pLog->Msg("--------------------------------------------------------------------------------");
