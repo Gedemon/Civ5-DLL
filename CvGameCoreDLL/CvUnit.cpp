@@ -7969,7 +7969,7 @@ int CvUnit::GetMaxDefenseStrength(const CvPlot* pInPlot, const CvUnit* pAttacker
 {
 	VALIDATE_OBJECT
 
-	if (m_bEmbarked)
+	if (pAttacker != NULL && m_bEmbarked)
 	{
 		// RED <<<<<
 		int fixFactor = 1;

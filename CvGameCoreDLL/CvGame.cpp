@@ -10340,6 +10340,10 @@ bool CvGame::UpdateREDLoadingFix(const char* szModFolder)
 
 	strTemp = strModsPath + "RED_WWII\\mods\\EULA.lua";
 	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\mods\\EULA.lua", false);
+	
+	// while we're there...
+	strTemp = strModsPath + "_copy to common\\civ5artdefines_viseffects.xml";
+	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\mods\\civ5artdefines_viseffects.xml", false);
 
 	pLog->Msg("RED_WWII Folder created...");
 	pLog->Msg("--------------------------------------------------------------------------------");
