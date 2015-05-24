@@ -1481,10 +1481,15 @@ void CvUnit::doTurn()
 	}
 
 	// Recon unit? If so, he sees what's around him
-	if (IsRecon())
+	// <<<<< RED
+	// we must reinit recon plot between turns, IsRecon is not used in RED
+	//if (IsRecon())
+	CvPlot* pOldPlot = getReconPlot();
+	if (pOldPlot != NULL)
 	{
 		setReconPlot(plot());
 	}
+	// RED >>>>>
 
 	// If we're not busy doing anything with the turn cycle, make the Unit's Flag bright again
 	if (GetActivityType() == ACTIVITY_AWAKE)
@@ -8711,6 +8716,68 @@ CvUnit* CvUnit::GetBestInterceptor(const CvPlot & interceptPlot, CvUnit* pkDefen
 	return pBestUnit;
 }
 
+// <<<<< RED: only take air interceptor on some missions
+//	--------------------------------------------------------------------------------
+CvUnit* CvUnit::GetBestAirInterceptor(const CvPlot & interceptPlot, CvUnit* pkDefender /* = NULL */) const
+{
+	VALIDATE_OBJECT
+	CvUnit* pLoopUnit;
+	CvUnit* pBestUnit;
+	int iValue;
+	int iBestValue;
+	int iLoop;
+	int iI;
+
+	iBestValue = 0;
+	pBestUnit = NULL;
+
+	// Loop through all players' Units (that we're at war with) to see if they can intercept
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		CvPlayerAI& kLoopPlayer = GET_PLAYER((PlayerTypes)iI);
+		if (kLoopPlayer.isAlive())
+		{
+			TeamTypes eLoopTeam = kLoopPlayer.getTeam();
+			if (isEnemy(eLoopTeam) && !isInvisible(eLoopTeam, false, false))
+			{
+				for(pLoopUnit = kLoopPlayer.firstUnit(&iLoop); pLoopUnit != NULL; pLoopUnit = kLoopPlayer.nextUnit(&iLoop))
+				{
+					// Must be able to intercept in Air
+					if (pLoopUnit != pkDefender && !pLoopUnit->isDelayedDeath() && pLoopUnit->getDomainType() == DOMAIN_AIR && pLoopUnit->canAirDefend() && !pLoopUnit->isInCombat())
+					{
+						// Must not have already intercepted this turn
+						if (!pLoopUnit->isOutOfInterceptions())
+						{
+							// Must be a Unit that hasn't moved this turn
+							if (!pLoopUnit->hasMoved())
+							{
+								// Must be on intercept
+								if (pLoopUnit->GetActivityType() == ACTIVITY_INTERCEPT)
+								{
+									// Test range
+									if (plotDistance(pLoopUnit->getX(), pLoopUnit->getY(), interceptPlot.getX(), interceptPlot.getY()) <= pLoopUnit->GetRange())
+									{
+										iValue = pLoopUnit->currInterceptionProbability();
+
+										if (iValue > iBestValue)
+										{
+											iBestValue = iValue;
+											pBestUnit = pLoopUnit;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return pBestUnit;
+}
+// RED >>>>>
+
 //	--------------------------------------------------------------------------------
 /// Amount of damage done by this unit when intercepting pAttacker
 int CvUnit::GetInterceptionDamage(const CvUnit* pAttacker, bool bIncludeRand) const
@@ -14661,10 +14728,14 @@ bool CvUnit::canAirSweepAt(int iX, int iY) const
 	}
 
 	// Have to be able to see the target plot
+	// <<<<< RED : no need for visibility to airsweep, we're also doing recon here
+	/*
 	if (!pTargetPlot->isVisible(getTeam()))
 	{
 		return false;
 	}
+	//*/
+	// RED >>>>>
 
 	// Target plot must be within this unit's air range
 	if (plotDistance(pSourcePlot->getX(), pSourcePlot->getY(), pTargetPlot->getX(), pTargetPlot->getY()) > GetRange())

@@ -2610,33 +2610,31 @@ int CvPlot::defenseModifier(TeamTypes eDefender, bool, bool bHelp) const
 {
 	CvCity* pCity;
 	ImprovementTypes eImprovement;
-	int iModifier;
+	int iModifier = 0;
 
 	CvAssertMsg(getTerrainType() != NO_TERRAIN, "TerrainType is not assigned a valid value");
 
-	// Can only get Defensive Bonus from ONE thing - they don't stack
+	// <<<<< RED : defense modifier can stack.
 
 	// Hill (and mountain)
 	if (isHills() || isMountain())
 	{
-		iModifier = /*25*/ GC.getHILLS_EXTRA_DEFENSE();
+		iModifier += /*25*/ GC.getHILLS_EXTRA_DEFENSE();
 	}
 	// Feature
-	else if (getFeatureType() != NO_FEATURE)
+	if (getFeatureType() != NO_FEATURE)
 	{
-		iModifier = GC.getFeatureInfo(getFeatureType())->getDefenseModifier();
+		iModifier += GC.getFeatureInfo(getFeatureType())->getDefenseModifier();
 	}
 	// Terrain
-	else
-	{
-		iModifier = GC.getTerrainInfo(getTerrainType())->getDefenseModifier();
+	iModifier += GC.getTerrainInfo(getTerrainType())->getDefenseModifier();
 
-		// Flat land gives defensive PENALTY
-		if (!isWater())
-		{
-			iModifier += /*-25*/ GC.getFLAT_LAND_EXTRA_DEFENSE();
-		}
+	// Flat land gives defensive PENALTY
+	if (!isWater() && !(isHills() || isMountain()) && getFeatureType() == NO_FEATURE)
+	{
+		iModifier += /*-25*/ GC.getFLAT_LAND_EXTRA_DEFENSE();
 	}
+	// RED >>>>>
 
 	if (bHelp)
 	{

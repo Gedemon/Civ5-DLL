@@ -2885,12 +2885,17 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackAirSweep(CvUnit& kAttacker, CvPl
 		return eResult;
 	}
 
-	CvUnit* pInterceptor = kAttacker.GetBestInterceptor(targetPlot);
+	CvUnit* pInterceptor = kAttacker.GetBestAirInterceptor(targetPlot); // RED : only Air interceptor when doing an Airsweep
 	kAttacker.SetAutomateType(NO_AUTOMATE);
 
 	// Any interceptor to sweep for?
 	if (pInterceptor != NULL)
 	{
+		// <<<<< RED
+		// Recon the area
+		kAttacker.setReconPlot(&targetPlot);
+		// RED >>>>>
+
 		kAttacker.setMadeAttack(true);
 		CvCombatInfo kCombatInfo;
 		CvUnitCombat::GenerateAirSweepCombatInfo(kAttacker, pInterceptor, targetPlot, &kCombatInfo);
@@ -2943,6 +2948,11 @@ CvUnitCombat::ATTACK_RESULT CvUnitCombat::AttackAirSweep(CvUnit& kAttacker, CvPl
 		{
 			kAttacker.finishMoves();
 		}
+
+		// <<<<< RED
+		// Recon the area
+		kAttacker.setReconPlot(&targetPlot);
+		// RED >>>>>
 	}
 
 	return eResult;
