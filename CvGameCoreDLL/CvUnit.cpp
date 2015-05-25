@@ -5323,6 +5323,7 @@ bool CvUnit::pillage()
 	}
 
 	bool bImprovement = false;
+	bool bRoute = false;
 
 	// Has an Improvement
 	if (pPlot->getImprovementType() != NO_IMPROVEMENT)
@@ -5386,11 +5387,27 @@ bool CvUnit::pillage()
 	else if (pPlot->isRoute())
 	{
 		pPlot->SetRoutePillaged(true);
+		bRoute = true;
 	}
 
 	if (!hasFreePillageMove())
 	{
 		changeMoves(-GC.getMOVE_DENOMINATOR());
+	}
+
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	if(pkScriptSystem)
+	{
+		CvLuaArgsHandle args;
+		args->Push(pPlot->getX());
+		args->Push(pPlot->getY());
+		args->Push(bImprovement);
+		args->Push(bRoute);
+		args->Push(GetID());
+		args->Push(getOwner());
+
+		bool bResult;
+		LuaSupport::CallHook(pkScriptSystem, "UnitHasPillaged", args.get(), bResult);
 	}
 
 	return true;
