@@ -295,59 +295,6 @@ void CvGrandStrategyAI::DoTurn()
 		SetGrandStrategyPriority(eGrandStrategy, iPriority);
 	}
 
-	// Now look at what we think the other players in the game are up to - we might have an opportunity to capitalize somewhere
-	int iNumPlayersAliveAndMet = 0;
-
-	int iMajorLoop;
-
-	for (iMajorLoop = 0; iMajorLoop < MAX_MAJOR_CIVS; iMajorLoop++)
-	{
-		if (GET_PLAYER((PlayerTypes) iMajorLoop).isAlive())
-		{
-			if (GET_TEAM(GetPlayer()->getTeam()).isHasMet(GET_PLAYER((PlayerTypes) iMajorLoop).getTeam()))
-			{
-				iNumPlayersAliveAndMet++;
-			}
-		}
-	}
-
-	FStaticVector< int, 5, true, c_eCiv5GameplayDLL > viNumGrandStrategiesAdopted;
-	int iNumPlayers;
-
-	// Init vector
-	for (iGrandStrategiesLoop = 0; iGrandStrategiesLoop < GetAIGrandStrategies()->GetNumAIGrandStrategies(); iGrandStrategiesLoop++)
-	{
-		iNumPlayers = 0;
-
-		// Tally up how many players we think are pusuing each Grand Strategy
-		for (iMajorLoop = 0; iMajorLoop < MAX_MAJOR_CIVS; iMajorLoop++)
-		{
-			if (GetGuessOtherPlayerActiveGrandStrategy((PlayerTypes) iMajorLoop) == (AIGrandStrategyTypes) iGrandStrategiesLoop)
-			{
-				iNumPlayers++;
-			}
-		}
-
-		viNumGrandStrategiesAdopted.push_back(iNumPlayers);
-	}
-
-	FStaticVector< int, 5, true, c_eCiv5GameplayDLL > viGrandStrategyChangeForLogging;
-
-	int iChange;
-
-	// Now modify our preferences based on how many people are going for stuff
-	for (iGrandStrategiesLoop = 0; iGrandStrategiesLoop < GetAIGrandStrategies()->GetNumAIGrandStrategies(); iGrandStrategiesLoop++)
-	{
-		eGrandStrategy = (AIGrandStrategyTypes) iGrandStrategiesLoop;
-		// If EVERYONE else we know is also going for this Grand Strategy, reduce our Priority by 50%
-		iChange = GetGrandStrategyPriority(eGrandStrategy) * /*50*/ GC.getAI_GRAND_STRATEGY_OTHER_PLAYERS_GS_MULTIPLIER();
-		iChange = iChange * viNumGrandStrategiesAdopted[eGrandStrategy] / iNumPlayersAliveAndMet;
-		iChange /= 100;
-
-		ChangeGrandStrategyPriority(eGrandStrategy, -iChange);
-
-		viGrandStrategyChangeForLogging.push_back(-iChange);
-	}
 
 	ChangeNumTurnsSinceActiveSet(1);
 
@@ -380,7 +327,7 @@ void CvGrandStrategyAI::DoTurn()
 		}
 	}
 
-	LogGrandStrategies(viGrandStrategyChangeForLogging);
+	//LogGrandStrategies(viGrandStrategyChangeForLogging);
 }
 
 /// Returns Priority for Conquest Grand Strategy
@@ -393,173 +340,38 @@ int CvGrandStrategyAI::GetConquestPriority()
 /// Returns Priority for Culture Grand Strategy
 int CvGrandStrategyAI::GetCulturePriority()
 {
-	int iPriority = 0;
-
-	// If Culture Victory isn't even available then don't bother with anything
-	VictoryTypes eVictory = (VictoryTypes) GC.getInfoTypeForString("VICTORY_CULTURAL", true);
-	if (eVictory == NO_VICTORY || !GC.getGame().isVictoryValid(eVictory))
-	{
-		return -100;
-	}
-
-	// for every city lower this
-	int iNumCities = m_pPlayer->getNumCities() - m_pPlayer->GetNumPuppetCities();
-	int iMaxCultureCities = GC.getAI_GS_CULTURE_MAX_CITIES() + 1;
-
-	iPriority += (iMaxCultureCities - iNumCities) * GC.getAI_GS_CULTURE_MAX_CITIES_MODIFIER();
-
-	// for every completed policy branch increase this
-	int iNumBranchesCompleted = m_pPlayer->GetPlayerPolicies()->GetNumPolicyBranchesFinished();
-	iPriority += iNumBranchesCompleted * GC.getAI_GS_CULTURE_POLICY_BRANCH_MOD();
-
-	// If we somehow got to 5 branches...
-	if (iNumBranchesCompleted > 4)
-	{
-		return 1000;
-	}
-
-	return iPriority;
+	// RED
+	return -100;
 }
 
 /// Returns Priority for United Nations Grand Strategy
 int CvGrandStrategyAI::GetUnitedNationsPriority()
 {
-	int iPriority = 0;
-
-	// If UN Victory isn't even available then don't bother with anything
-	VictoryTypes eVictory = (VictoryTypes) GC.getInfoTypeForString("VICTORY_DIPLOMATIC", true);
-	if (eVictory == NO_VICTORY || !GC.getGame().isVictoryValid(eVictory))
-	{
-		return -100;
-	}
-
-	int iNumMinorsAttacked = GET_TEAM(GetPlayer()->getTeam()).GetNumMinorCivsAttacked();
-	iPriority += (iNumMinorsAttacked * /*-30*/ GC.getAI_GRAND_STRATEGY_UN_EACH_MINOR_ATTACKED_WEIGHT());
-
-	TeamTypes eTeam = m_pPlayer->getTeam();
-	PlayerTypes ePlayer = m_pPlayer->GetID();
-
-	int iVotesNeededToWin = GC.getGame().GetVotesNeededForDiploVictory();
-	int iSecuredVotes = 1;
-	// if we own the UN for some reason
-	if (GET_TEAM(eTeam).IsHomeOfUnitedNations())
-	{
-		iSecuredVotes += 1;
-	}
-
-	// Loop through Players to see if they'll vote for this player
-	PlayerTypes eLoopPlayer;
-	TeamTypes eLoopTeam;
-	for (int iPlayerLoop = 0; iPlayerLoop < MAX_CIV_PLAYERS; iPlayerLoop++)
-	{
-		eLoopPlayer = (PlayerTypes) iPlayerLoop;
-
-		if (GET_PLAYER(eLoopPlayer).isAlive())
-		{
-			eLoopTeam = GET_PLAYER(eLoopPlayer).getTeam();
-
-			// Liberated?
-			if (GET_TEAM(eLoopTeam).GetLiberatedByTeam() == eTeam)
-			{
-				iSecuredVotes++;
-			}
-
-			// Minor civ?
-			else if (GET_PLAYER(eLoopPlayer).isMinorCiv())
-			{
-				// Best Relations?
-				if (GET_PLAYER(eLoopPlayer).GetMinorCivAI()->GetAlly() == ePlayer)
-				{
-					iSecuredVotes++;
-				}
-			}
-		}
-	}
-
-	// assume we can get a vote for every 750 gold (but don't bother if the UN isn't in play yet)
-	//if (GC.getGame().GetUnitedNationsCountdown() > 0)
-	{
-		int iGold = max( 0, m_pPlayer->GetTreasury()->GetGold() );
-		iSecuredVotes += iGold / 750;
-	}
-
-	int iUNPriority = iSecuredVotes * 100;
-	iUNPriority /= iVotesNeededToWin;
-
-	iPriority += iUNPriority;
-
-	// if by some fluke we are very close to winning the election, by all means switch focus
-	if (iSecuredVotes - iVotesNeededToWin > -1)
-	{
-		return 1000;
-	}
-
-	// factor in some traits that could be useful (or harmful)
-	iPriority += m_pPlayer->GetPlayerTraits()->GetCityStateFriendshipModifier();
-	iPriority += m_pPlayer->GetPlayerTraits()->GetCityStateBonusModifier();
-	iPriority -= m_pPlayer->GetPlayerTraits()->GetCityStateCombatModifier();
-
-	return iPriority;
+	// RED
+	return -100;
 }
 
 /// Returns Priority for Spaceship Grand Strategy
 int CvGrandStrategyAI::GetSpaceshipPriority()
 {
-	int iPriority = 0;
-
-	// If SS Victory isn't even available then don't bother with anything
-	VictoryTypes eVictory = (VictoryTypes) GC.getInfoTypeForString("VICTORY_SPACE_RACE", true);
-	if (eVictory == NO_VICTORY || !GC.getGame().isVictoryValid(eVictory))
-	{
-		return -100;
-	}
-
-	// the later the game the greater the chance
-	iPriority += m_pPlayer->GetCurrentEra() * 5;
-
-	// if I already built the Apollo Program I am very likely to follow through
-	ProjectTypes eApolloProgram = (ProjectTypes) GC.getInfoTypeForString("PROJECT_APOLLO_PROGRAM", true);
-	if (eApolloProgram != NO_PROJECT)
-	{
-		if (GET_TEAM(m_pPlayer->getTeam()).getProjectCount(eApolloProgram) > 0)
-		{
-			iPriority += /*150*/ GC.getAI_GS_SS_HAS_APOLLO_PROGRAM();
-		}
-	}
-
-	return iPriority;
+	// RED
+	return -100;
 }
 
 /// Get the base Priority for a Grand Strategy; these are elements common to ALL Grand Strategies
 int CvGrandStrategyAI::GetBaseGrandStrategyPriority(AIGrandStrategyTypes eGrandStrategy)
 {
-	CvAIGrandStrategyXMLEntry* pGrandStrategy = GetAIGrandStrategies()->GetEntry(eGrandStrategy);
-
-	int iPriority = 0;
-
-	// Personality effect on Priority
-	for (int iFlavorLoop = 0; iFlavorLoop < GC.getNumFlavorTypes(); iFlavorLoop++)
-	{
-		if (pGrandStrategy->GetFlavorValue(iFlavorLoop) != 0)
-		{
-			iPriority += (pGrandStrategy->GetFlavorValue(iFlavorLoop) * GetPlayer()->GetFlavorManager()->GetPersonalityIndividualFlavor((FlavorTypes) iFlavorLoop));
-		}
-	}
-
-	return iPriority;
+	// RED
+	if (eGrandStrategy) {} // no warning on build
+	return 0;
 }
 
 /// Get the base Priority for a Grand Strategy; these are elements common to ALL Grand Strategies
 int CvGrandStrategyAI::GetPersonalityAndGrandStrategy(FlavorTypes eFlavorType)
 {
-	if (m_eActiveGrandStrategy != NO_AIGRANDSTRATEGY)
-	{
-		CvAIGrandStrategyXMLEntry* pGrandStrategy = GetAIGrandStrategies()->GetEntry(m_eActiveGrandStrategy);
-		int iModdedFlavor = pGrandStrategy->GetFlavorModValue(eFlavorType) + m_pPlayer->GetFlavorManager()->GetPersonalityIndividualFlavor(eFlavorType);
-		iModdedFlavor = max(0,iModdedFlavor);
-		return iModdedFlavor;
-	}
-	return m_pPlayer->GetFlavorManager()->GetPersonalityIndividualFlavor(eFlavorType);
+	// RED
+	if (eFlavorType) {}
+	return 0;
 }
 
 /// Returns the Active Grand Strategy for this Player: how am I trying to win right now?
@@ -656,6 +468,8 @@ void CvGrandStrategyAI::DoGuessOtherPlayersActiveGrandStrategy()
 
 	int iPriority = 0;
 
+	// <<<<< RED
+	/*
 	// Establish world Military strength average
 	int iWorldMilitaryAverage = GC.getGame().GetWorldMilitaryStrengthAverage(GetPlayer()->GetID(), true, true);
 
@@ -689,6 +503,8 @@ void CvGrandStrategyAI::DoGuessOtherPlayersActiveGrandStrategy()
 		}
 	}
 	iWorldNumTechsAverage /= iNumPlayersAlive;
+	//*/
+	// RED >>>>>
 
 	// Look at every Major we've met
 	for (iMajorLoop = 0; iMajorLoop < MAX_MAJOR_CIVS; iMajorLoop++)
@@ -707,19 +523,25 @@ void CvGrandStrategyAI::DoGuessOtherPlayersActiveGrandStrategy()
 
 					if (strGrandStrategyName == "AIGRANDSTRATEGY_CONQUEST")
 					{
-						iPriority = GetGuessOtherPlayerConquestPriority(eMajor, iWorldMilitaryAverage);
+						// <<<<< RED
+						//iPriority = GetGuessOtherPlayerConquestPriority(eMajor, iWorldMilitaryAverage);
+						iPriority = 200;
 					}
 					else if (strGrandStrategyName == "AIGRANDSTRATEGY_CULTURE")
 					{
-						iPriority = GetGuessOtherPlayerCulturePriority(eMajor, iWorldCultureAverage);
+						//iPriority = GetGuessOtherPlayerCulturePriority(eMajor, iWorldCultureAverage);
+						iPriority = 0;
 					}
 					else if (strGrandStrategyName == "AIGRANDSTRATEGY_UNITED_NATIONS")
 					{
-						iPriority = GetGuessOtherPlayerUnitedNationsPriority(eMajor);
+						//iPriority = GetGuessOtherPlayerUnitedNationsPriority(eMajor);
+						iPriority = 0;
 					}
 					else if (strGrandStrategyName == "AIGRANDSTRATEGY_SPACESHIP")
 					{
-						iPriority = GetGuessOtherPlayerSpaceshipPriority(eMajor, iWorldNumTechsAverage);
+						//iPriority = GetGuessOtherPlayerSpaceshipPriority(eMajor, iWorldNumTechsAverage);
+						iPriority = 0;
+						// RED >>>>>
 					}
 
 					vGrandStrategyPriorities.push_back(iGrandStrategiesLoop, iPriority);

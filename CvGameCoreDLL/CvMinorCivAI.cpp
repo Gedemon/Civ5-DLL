@@ -278,24 +278,24 @@ void CvMinorCivAI::DoTurn()
 {
 	if (GetPlayer()->isMinorCiv())
 	{
-		DoTurnStatus();
-
-		DoFriendship();
 
 		// RED <<<<<
 		if(! GC.getGame().isOption("GAMEOPTION_NO_MINOR_DIPLO_SPAM") ) 
 		{
+			DoTurnStatus();
+
+			DoFriendship();
 			DoTestBarbarianQuest();
 			DoTestWarWithMajorQuest();
 			DoTestProxyWarNotification();
+
+			DoTurnQuests();
+
+			DoUnitSpawnTurn();
+
+			DoIntrusion();
 		}
 		// RED >>>>>
-
-		DoTurnQuests();
-
-		DoUnitSpawnTurn();
-
-		DoIntrusion();
 	}
 }
 

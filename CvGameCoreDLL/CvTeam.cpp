@@ -1159,8 +1159,10 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact)
 		// Message everyone about what happened
 		if (!isBarbarian() && !(GET_TEAM(eTeam).isBarbarian()))
 		{
-			// If this is a Minor Civ declaring war on a Warmonger don't give the usual notification
-			//if (!isMinorCiv() || !GET_TEAM(eTeam).IsMinorCivWarmonger())
+			// But if One of the team is a Minor Civ allied to a major, don't give notification
+			//if (!isMinorCiv())
+			if (!(isMinorCiv() && GET_PLAYER(getLeaderID()).GetMinorCivAI()->GetAlly() != NO_PLAYER))
+			//if (!(isMinorCiv() && GET_PLAYER(getLeaderID()).GetMinorCivAI()->GetAlly() != NO_PLAYER) || !(GET_TEAM(eTeam).isMinorCiv() && GET_PLAYER(GET_TEAM(eTeam).getLeaderID()).GetMinorCivAI()->GetAlly() != NO_PLAYER))
 			{
 				PlayerTypes ePlayer;
 				for (iI = 0; iI < MAX_PLAYERS; iI++)
@@ -1188,7 +1190,7 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact)
 						{
 							locString = Localization::Lookup("TXT_KEY_MISC_SOMEONE_DECLARED_WAR");
 							locString << getName().GetCString() << GET_TEAM(eTeam).getName().GetCString();
-							GET_PLAYER(ePlayer).GetNotifications()->Add(NOTIFICATION_WAR, locString.toUTF8(), locString.toUTF8(), -1, -1, this->getLeaderID(), eTeam);
+							GET_PLAYER(ePlayer).GetNotifications()->Add(NOTIFICATION_WAR, locString.toUTF8(), locString.toUTF8(), -1, -1, this->getLeaderID(), GET_TEAM(eTeam).getLeaderID());
 						}
 					}
 				}
@@ -1262,10 +1264,12 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact)
 								{
 									ChangeNumMinorCivsAttacked(1);
 
-									GET_PLAYER((PlayerTypes) iMinorCivLoop).GetMinorCivAI()->DoTeamDeclaredWarOnMe(GetID());
+									// <<<<< RED
+									//GET_PLAYER((PlayerTypes) iMinorCivLoop).GetMinorCivAI()->DoTeamDeclaredWarOnMe(GetID());
 
 									// Hand out "we were attacked!" quest
-									GET_PLAYER((PlayerTypes) iMinorCivLoop).GetMinorCivAI()->DoLaunchWarWithMajorQuest(GetID());
+									//GET_PLAYER((PlayerTypes) iMinorCivLoop).GetMinorCivAI()->DoLaunchWarWithMajorQuest(GetID());
+									// RED >>>>>
 								}
 							}
 						}
@@ -1528,7 +1532,7 @@ void CvTeam::DoMakePeace(TeamTypes eTeam, bool bBumpUnits)
 					{
 						locString = Localization::Lookup("TXT_KEY_MISC_SOMEONE_MADE_PEACE");
 						locString << getName().GetCString() << GET_TEAM(eTeam).getName().GetCString();
-						GET_PLAYER(ePlayer).GetNotifications()->Add(NOTIFICATION_PEACE, locString.toUTF8(), locString.toUTF8(), -1, -1, this->getLeaderID(), eTeam);
+						GET_PLAYER(ePlayer).GetNotifications()->Add(NOTIFICATION_PEACE, locString.toUTF8(), locString.toUTF8(), -1, -1, this->getLeaderID(), GET_TEAM(eTeam).getLeaderID());
 					}
 				}
 			}
