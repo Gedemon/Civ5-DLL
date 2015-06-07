@@ -483,6 +483,7 @@ void CvTeam::addTeam(TeamTypes eTeam)
 	shareCounters(eTeam);
 	GET_TEAM(eTeam).shareCounters(GetID());
 
+	/*
 	for (iI = 0; iI < MAX_PLAYERS; iI++)
 	{
 		if (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam)
@@ -490,6 +491,7 @@ void CvTeam::addTeam(TeamTypes eTeam)
 			GET_PLAYER((PlayerTypes)iI).setTeam(GetID());
 		}
 	}
+	//*/
 
 	const int iNumInvisibleInfos = NUM_INVISIBLE_TYPES;
 	for (iI = 0; iI < GC.getMap().numPlots(); iI++)
@@ -507,7 +509,43 @@ void CvTeam::addTeam(TeamTypes eTeam)
 		{
 			pLoopPlot->setRevealed(GetID(), true, false, eTeam);
 		}
+
+		// <<<<< RED
+		//*
+		if (pLoopPlot->isRevealed(GetID()))
+		{
+			pLoopPlot->setRevealed(eTeam, true, false, GetID());
+		}
+		//*/
+		// RED >>>>>
 	}
+
+	// <<<<< RED
+	// trying to fix the U.K / France Fog of War bug
+	//*
+	{
+		int iNumPlots = GC.getMap().numPlots();
+		int iPlotVisRange = GC.getPLOT_VISIBILITY_RANGE();
+		for (int iI = 0; iI < iNumPlots; iI++)
+		{
+			CvPlot* pPlot = GC.getMap().plotByIndexUnchecked(iI);
+			if (pPlot->getOwner() != NO_PLAYER)
+			{
+				if (GET_PLAYER(pPlot->getOwner()).getTeam() == GetID())
+					pPlot->changeAdjacentSight( eTeam, iPlotVisRange, true, NO_INVISIBLE, NO_DIRECTION, false);
+			}
+		}
+	}
+	//*/
+	
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		if (GET_PLAYER((PlayerTypes)iI).getTeam() == eTeam)
+		{
+			GET_PLAYER((PlayerTypes)iI).setTeam(GetID());
+		}
+	}
+	// RED >>>>>
 
 	GC.getGame().updateScore(true);
 }
@@ -3977,12 +4015,15 @@ void CvTeam::changeProjectCount(ProjectTypes eIndex, int iChange)
 					{
 						if(isHasMet(kPlayer.getTeam()))
 						{
-							if(ePlayer == GC.getGame().getActivePlayer())
+							if(ePlayer == GC.getGame().getActivePlayer() && pLeadersCapital)
 							{
 								DLLUI->AddCityMessage(0, pLeadersCapital->GetIDInfo(), ePlayer, false, GC.getEVENT_MESSAGE_TIME(), strSomeoneCompletedProject);
 							}
 							CvNotifications* pNotifications = kPlayer.GetNotifications();
-							pNotifications->Add(NOTIFICATION_PROJECT_COMPLETED, strSomeoneCompletedProject, strSomeoneCompletedProject, pLeadersCapital->getX(), pLeadersCapital->getY(), eIndex, playerWhoLeadsTeam.GetID());
+							if (pLeadersCapital)
+								pNotifications->Add(NOTIFICATION_PROJECT_COMPLETED, strSomeoneCompletedProject, strSomeoneCompletedProject, pLeadersCapital->getX(), pLeadersCapital->getY(), eIndex, playerWhoLeadsTeam.GetID());
+							else								
+								pNotifications->Add(NOTIFICATION_PROJECT_COMPLETED, strSomeoneCompletedProject, strSomeoneCompletedProject, -1, -1, eIndex, playerWhoLeadsTeam.GetID());
 						}
 						else
 						{

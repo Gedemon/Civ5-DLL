@@ -2234,7 +2234,7 @@ void CvHomelandAI::ExecuteMovesToSafestPlot()
 					iDanger = m_pPlayer->GetPlotDanger(*pPlot);
 					bool bIsZeroDanger = (iDanger <= 0);
 					bool bIsInCity = pPlot->isFriendlyCity(*pUnit, false);
-					bool bIsInCover = (pPlot->getNumDefenders(m_pPlayer->GetID()) > 0) && !pUnit->IsCanDefend();
+					bool bIsInCover = (pPlot->getNumDefenders(m_pPlayer->GetID()) > 0);
 					bool bIsInTerritory = (pPlot->getTeam() == m_pPlayer->getTeam());
 
 					#define MAX_DANGER_VALUE	100000
