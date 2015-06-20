@@ -34,6 +34,32 @@
 #define MAX_DAMAGE_MEMBER_COUNT								32
 #define CVHEADER_VERSIONING_STARTED							7		/// The version of CvSavedGameHeader where we added versions to CvPreGame data.
 
+// RED <<<<<
+#ifndef RED_MODS_H
+#define RED_MODS_H
+
+// GlobalDefines (GD) wrappers
+#define GD_INT_DECL(name)		int m_i##name;
+#define GD_INT_DEF(name)		inline int get##name() { return m_i##name; }
+#define GD_INT_INIT(name)		m_i##name(0),
+#define GD_INT_CACHE(name)		m_i##name = getDefineINT(#name);
+#define GD_INT_GET(name)		GC.get##name()
+
+// Infos (INF) wrappers
+#define INF_INT_DEF(name)		m_i##name = kResults.GetInt(#name)
+#define INF_BOL_DEF(name)		m_b##name = kResults.GetBool(#name)
+
+// Game Option (OPT) wrappers
+#define OPT_BOL_GET(name)		bool CvGame::is##name() const {	return m_bIs##name; }; void CvGame::setIs##name(bool bNewValue) {	if (is##name() != bNewValue) m_bIs##name = bNewValue; }
+#define OPT_BOL_DECL(name)		bool m_bIs##name;
+#define OPT_BOL_DEF(name)		void setIs##name(bool bNewValue);	bool is##name() const;
+#define OPT_BOL_INIT(name)		m_bIs##name = false;
+#define OPT_BOL_READ(name)		kStream >> m_bIs##name;
+#define OPT_BOL_WRITE(name)		kStream << m_bIs##name;
+
+#endif
+// RED >>>>>
+
 // don't use -1 since that is a valid wrap coordinate
 #define INVALID_PLOT_COORD									(-(INT_MAX))
 

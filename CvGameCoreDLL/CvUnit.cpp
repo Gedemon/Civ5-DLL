@@ -1986,7 +1986,7 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 				return true;
 			}
 
-			if (bIsCity && bIsDeclareWarMove && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
+			if (bIsCity && bIsDeclareWarMove && !GC.getGame().isOptionCanEnterForeignCity())
 			{
 				return false;
 			}
@@ -2354,6 +2354,7 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 	// Crashfix: Don't allow embarked special units to stack, ever.
 	// To do: find why embarked special units cause crash when moving over another embarked unit, special or not, during automission...
 	// To do: find why naval AI units cause crash when moving over an embarked unit, special or not, during automission...
+	/*
 	{		
 		bool bCanMoveThrough = true;
 
@@ -2370,11 +2371,10 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 			{
 				
 				//if (pLoopUnit->isEmbarked())
-				{
-					/*
-					bool bSpecialEmbarked = isEmbarked() && (pLoopUnit->isSpecialType() || isSpecialType());
-					bool bSeaUnitIsAI = (getDomainType() == DOMAIN_SEA && !isHuman()) || (isEmbarked() && !isHuman());
-					if (bSpecialEmbarked || bSeaUnitIsAI)//*/
+				{					
+					//bool bSpecialEmbarked = isEmbarked() && (pLoopUnit->isSpecialType() || isSpecialType());
+					//bool bSeaUnitIsAI = (getDomainType() == DOMAIN_SEA && !isHuman()) || (isEmbarked() && !isHuman());
+					//if (bSpecialEmbarked || bSeaUnitIsAI)//
 						//bCanMoveThrough = false ;
 					bCanMoveThrough = !( (isEmbarked() && ( pLoopUnit->getDomainType() == DOMAIN_SEA || pLoopUnit->isEmbarked() )) || (getDomainType() == DOMAIN_SEA && pLoopUnit->isEmbarked()));
 				} 
@@ -2384,6 +2384,7 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 			return false;
 	}
 	// RED >>>>>
+	*/
 
 	// Added in Civ 5: Destination plots can't allow stacked Units of the same type
 	if (bMoveFlags & MOVEFLAG_DESTINATION)
@@ -2401,7 +2402,7 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 						return false;
 				}
 
-				if (getDomainType() != DOMAIN_AIR && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY"))
+				if (getDomainType() != DOMAIN_AIR && !GC.getGame().isOptionCanEnterForeignCity())
 				// RED >>>>>
 				return false;
 			}
@@ -2566,6 +2567,8 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 			bool bEmbarkedAndAdjacent = false;
 			bool bEnemyUnitPresent = false;
 
+			bool bNavalMoveThrough = (!(bMoveFlags & MOVEFLAG_DESTINATION)) && (GC.getGame().isOptionNavalMoveThrough() && getDomainType() == DOMAIN_SEA) || (GC.getGame().isOptionNavalMoveThrough() && isEmbarked()); // RED
+
 			// Without this code, Embarked Units can move on top of enemies because they have no visibility
 			if (isEmbarked() || (bMoveFlags & MOVEFLAG_PRETEND_EMBARKED))
 			{
@@ -2573,6 +2576,12 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 				{
 					bEmbarkedAndAdjacent = true;
 				}
+				// <<<<< RED - yep, confirmed, without this code, Embarked Units can move on top of enemies because they have no visibility and we don't want that for our destination...
+				if (bMoveFlags & MOVEFLAG_DESTINATION)
+				{
+					bNavalMoveThrough = false;
+				}
+				// RED >>>>>
 			}
 
 			bool bPlotContainsCombat = false;
@@ -2607,7 +2616,8 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 					return false;
 				}
 
-				if (plot.isVisibleEnemyUnit(this) || (bEmbarkedAndAdjacent && bEnemyUnitPresent))
+				//if (plot.isVisibleEnemyUnit(this) || (bEmbarkedAndAdjacent && bEnemyUnitPresent))
+				if (!bNavalMoveThrough && (plot.isVisibleEnemyUnit(this) || ((bEmbarkedAndAdjacent && bEnemyUnitPresent)))) // RED
 				{
 					return false;
 				}
@@ -10286,6 +10296,7 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 
 		if (IsCombatUnit())
 		{
+			bool bNavalMoveThrough = (GC.getGame().isOptionNavalMoveThrough() && getDomainType() == DOMAIN_SEA) || (GC.getGame().isOptionNavalMoveThrough() && isEmbarked()); // RED
 			oldUnitList.clear();
 
 			pUnitNode = pNewPlot->headUnitNode();
@@ -10305,7 +10316,9 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 					{
 						if (isEnemy(pLoopUnit->getTeam(), pNewPlot) || pLoopUnit->isEnemy(eOurTeam))
 						{
-							if (!pLoopUnit->canCoexistWithEnemyUnit(eOurTeam))
+							
+							//if (!pLoopUnit->canCoexistWithEnemyUnit(eOurTeam))
+							if (!(pLoopUnit->canCoexistWithEnemyUnit(eOurTeam) || bNavalMoveThrough)) // RED
 							{
 								// Unit somehow ended up on top of an enemy combat unit
 								if (NO_UNITCLASS == pLoopUnit->getUnitInfo().GetUnitCaptureClassType() && pLoopUnit->IsCanDefend(pNewPlot))

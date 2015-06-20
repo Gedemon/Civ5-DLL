@@ -537,7 +537,22 @@ public:
 	// RED <<<<<
 	bool UpdateREDLoadingFix(const char* szModFolder);
 	int  DeleteDirectory(const std::string &refcstrRootDirectory, bool bDeleteSubdirectories);
-	//RED >>>>>
+	
+	OPT_BOL_DEF(OptionCanRebaseInFriendlyCity);
+	OPT_BOL_DEF(OptionCanStackInCity);
+	OPT_BOL_DEF(OptionCanEnterForeignCity);
+	OPT_BOL_DEF(OptionCivilianCanMoveThrough);
+	OPT_BOL_DEF(OptionBestDefenderByHealth);
+	OPT_BOL_DEF(OptionDefensiveSupportFire);
+	OPT_BOL_DEF(OptionOffensiveSupportFire);
+	OPT_BOL_DEF(OptionCounterFire);
+	
+	OPT_BOL_DEF(OptionMinorCanEnterAllyTerritory);
+	OPT_BOL_DEF(OptionGroupedDiploAI);
+	OPT_BOL_DEF(OptionNavalMoveThrough);
+
+	void initOptionsForRED();
+	// RED >>>>>
 
 	//------------------------------------------------------------
 	//------------------------------------------------------------
@@ -728,6 +743,23 @@ protected:
 	void doUpdateCacheOnTurn();
 
 	void CheckPlayerTurnDeactivate();
+
+	// RED <<<<<
+
+	OPT_BOL_DECL(OptionCanRebaseInFriendlyCity);
+	OPT_BOL_DECL(OptionCanStackInCity);
+	OPT_BOL_DECL(OptionCanEnterForeignCity);
+	OPT_BOL_DECL(OptionCivilianCanMoveThrough);
+	OPT_BOL_DECL(OptionBestDefenderByHealth);
+	OPT_BOL_DECL(OptionDefensiveSupportFire);
+	OPT_BOL_DECL(OptionOffensiveSupportFire);
+	OPT_BOL_DECL(OptionCounterFire);
+	
+	OPT_BOL_DECL(OptionMinorCanEnterAllyTerritory);
+	OPT_BOL_DECL(OptionGroupedDiploAI);	
+	OPT_BOL_DECL(OptionNavalMoveThrough);
+
+	// RED >>>>>
 };
 
 #endif

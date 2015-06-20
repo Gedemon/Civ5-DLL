@@ -304,13 +304,16 @@ void CvCity::init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits)
 
 		if (pAdjacentPlot != NULL)
 		{
-			if (pAdjacentPlot->getOwner() == NO_PLAYER)
+			if (!pAdjacentPlot->isWater()) // RED no culture on water
 			{
-				pAdjacentPlot->setOwner(getOwner(), m_iID, bBumpUnits);
-			}
-			if (pAdjacentPlot->getOwner() == getOwner())
-			{
-				pAdjacentPlot->SetCityPurchaseID(m_iID);
+				if (pAdjacentPlot->getOwner() == NO_PLAYER)
+				{
+					pAdjacentPlot->setOwner(getOwner(), m_iID, bBumpUnits);
+				}
+				if (pAdjacentPlot->getOwner() == getOwner())
+				{
+					pAdjacentPlot->SetCityPurchaseID(m_iID);
+				}
 			}
 		}
 	}

@@ -366,6 +366,10 @@ void CvGame::init(HandicapTypes eHandicap)
 	CvGoodyHuts::Reset();
 
 	doUpdateCacheOnTurn();
+
+	// RED <<<<<
+	initOptionsForRED();
+	// RED >>>>>
 }
 
 //	--------------------------------------------------------------------------------
@@ -983,6 +987,25 @@ void CvGame::uninit()
 		m_aiTeamRank[iI] = 0;
 		m_aiTeamScore[iI] = 0;
 	}
+
+	// RED <<<<<
+
+	OPT_BOL_INIT(OptionCanRebaseInFriendlyCity);
+	OPT_BOL_INIT(OptionCanStackInCity);
+	OPT_BOL_INIT(OptionCanEnterForeignCity);
+	OPT_BOL_INIT(OptionCivilianCanMoveThrough);
+	OPT_BOL_INIT(OptionBestDefenderByHealth);
+	OPT_BOL_INIT(OptionDefensiveSupportFire);
+	OPT_BOL_INIT(OptionOffensiveSupportFire);
+	OPT_BOL_INIT(OptionCounterFire);
+
+	OPT_BOL_INIT(OptionMinorCanEnterAllyTerritory);
+	OPT_BOL_INIT(OptionGroupedDiploAI);
+	
+	OPT_BOL_INIT(OptionNavalMoveThrough);
+
+	// RED >>>>>
+
 }
 
 
@@ -7611,7 +7634,10 @@ void CvGame::updateTimers()
 		}
 	}
 
-	if (isHotSeat())
+	// RED <<<<<
+	//if(isHotSeat())	
+	if(isHotSeat() || isOptionGroupedDiploAI())
+	// RED >>>>>
 	{
 		// For Hot Seat, all the AIs will get a chance to do diplomacy with the active human player
 		PlayerTypes eActivePlayer = getActivePlayer();
@@ -8676,6 +8702,23 @@ void CvGame::Read(FDataStream& kStream)
 	kStream >> m_iEarliestBarbarianReleaseTurn;
 	kStream >> m_kGameDeals;
 
+	// RED <<<<<
+
+	OPT_BOL_READ(OptionCanRebaseInFriendlyCity);
+	OPT_BOL_READ(OptionCanStackInCity);
+	OPT_BOL_READ(OptionCanEnterForeignCity);
+	OPT_BOL_READ(OptionCivilianCanMoveThrough);
+	OPT_BOL_READ(OptionBestDefenderByHealth);
+	OPT_BOL_READ(OptionDefensiveSupportFire);
+	OPT_BOL_READ(OptionOffensiveSupportFire);
+	OPT_BOL_READ(OptionCounterFire);
+	
+	OPT_BOL_READ(OptionMinorCanEnterAllyTerritory);
+	OPT_BOL_READ(OptionGroupedDiploAI);
+	OPT_BOL_READ(OptionNavalMoveThrough);
+
+	// RED >>>>>
+
 	if(uiVersion >= 8)
 	{
 		unsigned int lSize = 0;
@@ -8866,6 +8909,23 @@ void CvGame::Write(FDataStream& kStream) const
 	kStream << m_iEarliestBarbarianReleaseTurn;
 
 	kStream << m_kGameDeals;
+
+	// RED <<<<<
+
+	OPT_BOL_WRITE(OptionCanRebaseInFriendlyCity);
+	OPT_BOL_WRITE(OptionCanStackInCity);
+	OPT_BOL_WRITE(OptionCanEnterForeignCity);
+	OPT_BOL_WRITE(OptionCivilianCanMoveThrough);
+	OPT_BOL_WRITE(OptionBestDefenderByHealth);
+	OPT_BOL_WRITE(OptionDefensiveSupportFire);
+	OPT_BOL_WRITE(OptionOffensiveSupportFire);
+	OPT_BOL_WRITE(OptionCounterFire);
+	
+	OPT_BOL_WRITE(OptionMinorCanEnterAllyTerritory);
+	OPT_BOL_WRITE(OptionGroupedDiploAI);
+	OPT_BOL_WRITE(OptionNavalMoveThrough);
+
+	// RED >>>>>
 
 	//In Version 8, Serialize Saved Game database
 	CvString strPath = gDLL->GetCacheFolderPath();
@@ -10179,7 +10239,7 @@ CombatPredictionTypes CvGame::GetCombatPrediction (const CvUnit* pAttackingUnit,
 	{
 		ePrediction = COMBAT_PREDICTION_TOTAL_VICTORY;
 	}
-	else if (iAttackingDamageInflicted - iDefenderDamageInflicted > 7) // RED >>>>> (was harcoded at 30)
+	else if (iAttackingDamageInflicted - iDefenderDamageInflicted > 5) // RED >>>>> (was harcoded at 30)
 	{
 		ePrediction = COMBAT_PREDICTION_MAJOR_VICTORY;
 	}
@@ -10187,7 +10247,7 @@ CombatPredictionTypes CvGame::GetCombatPrediction (const CvUnit* pAttackingUnit,
 	{
 		ePrediction = COMBAT_PREDICTION_SMALL_VICTORY;
 	}
-	else if (iDefenderDamageInflicted - iAttackingDamageInflicted > 7) // RED >>>>> (was harcoded at 30)
+	else if (iDefenderDamageInflicted - iAttackingDamageInflicted > 5) // RED >>>>> (was harcoded at 30)
 	{
 		ePrediction = COMBAT_PREDICTION_MAJOR_DEFEAT;
 	}
@@ -10245,7 +10305,7 @@ void CvGame::SetLastTurnAICivsProcessed()
 // <<<<< RED
 //
 // create a RED_WWII folder in assets/DLC to override vanilla files to prevent crash on load before deactivating DLCs...
-
+//	---------------------------------------------------------------------------
 bool CvGame::UpdateREDLoadingFix(const char* szModFolder)
 {
 	// Logging
@@ -10340,6 +10400,9 @@ bool CvGame::UpdateREDLoadingFix(const char* szModFolder)
 
 	strTemp = strModsPath + "RED_WWII\\mods\\EULA.lua";
 	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\mods\\EULA.lua", false);
+
+	strTemp = strModsPath + "RED_Version.lua";
+	CopyFile(strTemp,"assets\\DLC\\RED_WWII\\RED_Version.lua", false);
 	
 	// while we're there...
 	strTemp = strModsPath + "_copy to common\\civ5artdefines_viseffects.xml";
@@ -10350,6 +10413,7 @@ bool CvGame::UpdateREDLoadingFix(const char* szModFolder)
 	return true;
 }
 
+//	---------------------------------------------------------------------------
 // Code from http://forums.codeguru.com/showthread.php?239271-Windows-SDK-File-System-How-to-delete-a-directory-and-subdirectories
 int CvGame::DeleteDirectory(const std::string &refcstrRootDirectory, bool bDeleteSubdirectories = true)
 {
@@ -10422,4 +10486,55 @@ int CvGame::DeleteDirectory(const std::string &refcstrRootDirectory, bool bDelet
 
   return 0;
 }
+
+// Game Options
+OPT_BOL_GET(OptionCanRebaseInFriendlyCity);
+OPT_BOL_GET(OptionCanStackInCity);
+OPT_BOL_GET(OptionCanEnterForeignCity);
+OPT_BOL_GET(OptionCivilianCanMoveThrough);
+OPT_BOL_GET(OptionBestDefenderByHealth);
+OPT_BOL_GET(OptionDefensiveSupportFire);
+OPT_BOL_GET(OptionOffensiveSupportFire);
+OPT_BOL_GET(OptionCounterFire);
+OPT_BOL_GET(OptionMinorCanEnterAllyTerritory);
+OPT_BOL_GET(OptionGroupedDiploAI);
+OPT_BOL_GET(OptionNavalMoveThrough);
+
+
+// Init RED
+//	---------------------------------------------------------------------------
+void CvGame::initOptionsForRED()
+{	
+	
+	if(isOption("GAMEOPTION_MINOR_CAN_ENTER_ALLY_TERRITORY") )
+	{
+		setIsOptionMinorCanEnterAllyTerritory(true);
+	}
+
+	if(isOption("GAMEOPTION_GROUPED_DIPLO_AI") )
+	{
+		setIsOptionGroupedDiploAI(true);
+	}
+
+	if(isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") )
+	{
+		setIsOptionCanRebaseInFriendlyCity(true);
+	}
+
+	if(isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY") )
+	{
+		setIsOptionCanEnterForeignCity(true);
+	}
+
+	if(isOption("GAMEOPTION_CIVILIAN_MOVE_THROUGH") )
+	{
+		setIsOptionCivilianCanMoveThrough(true);
+	}
+
+	if(isOption("GAMEOPTION_NAVAL_MOVE_THROUGH") )
+	{
+		setIsOptionNavalMoveThrough(true);
+	}
+}
+
 // RED >>>>>

@@ -911,7 +911,7 @@ int PathDestValid(int iToX, int iToY, const void* pointer, CvAStar* finder)
 		CvCity* pCity = pToPlot->getPlotCity();
 		if (pCity)
 		{
-			if(pCacheData->getOwner() != pCity->getOwner() && !GET_TEAM(eTeam).isAtWar(pCity->getTeam()) && !(finder->GetInfo() & MOVE_IGNORE_STACKING) && !GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY")) // RED todo: move the check outta here !
+			if(pCacheData->getOwner() != pCity->getOwner() && !GET_TEAM(eTeam).isAtWar(pCity->getTeam()) && !(finder->GetInfo() & MOVE_IGNORE_STACKING) && !GC.getGame().isOptionCanEnterForeignCity()) // RED add enter foreign city option
 			{
 				return FALSE;
 			}
@@ -1195,7 +1195,9 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 	int iUnitPlotLimit           = GC.getPLOT_UNIT_LIMIT();
 	bool bFromPlotOwned          = pFromPlot->isOwned();
 	TeamTypes eFromPlotTeam      = pFromPlot->getTeam();
-	bool bCanEnterForeignCity    = GC.getGame().isOption("GAMEOPTION_CAN_ENTER_FOREIGN_CITY");
+	bool bCivilianBlocked        = !GC.getGame().isOptionCivilianCanMoveThrough();
+	bool bCanEnterForeignCity    = GC.getGame().isOptionCanEnterForeignCity();
+	bool bNavalMoveThrough	    = (GC.getGame().isOptionNavalMoveThrough() && (pUnit->getDomainType() == DOMAIN_SEA || pUnit->isEmbarked()));
 
 	CvAStarNode* pNode = node;
 	bool bPreviousNodeHostile = false;
@@ -1263,7 +1265,8 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 			bPreviousNodeHostile = true;
 		}
 		// Prevents units from passing through one another on its way to attack another unit
-		else if(kNodeCacheData.bContainsVisibleEnemy)
+		//else if(kNodeCacheData.bContainsVisibleEnemy)
+		else if((!bNavalMoveThrough) && kNodeCacheData.bContainsVisibleEnemy) // RED
 		{
 			// except when attacking an unguarded civilian unit
 			if(kNodeCacheData.bContainsVisibleEnemyDefender)
@@ -1304,7 +1307,7 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 		}
 	}
 
-	if (!bUnitIsCombat && unit_domain_type != DOMAIN_AIR)
+	if (!bUnitIsCombat && unit_domain_type != DOMAIN_AIR && bCivilianBlocked) // RED add bCivilianBlocked
 	{
 		const PlayerTypes eUnitPlayer = unit_owner;
 		const int iUnitCount = pToPlot->getNumUnits();
@@ -1399,6 +1402,29 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 			}
 		}
 	}
+
+	// <<<<< RED - if we're a naval unit at end of moves, make sure we're not stopping on a tile with an enemy unit...
+	if (bNavalMoveThrough && parent->m_iData1 == 0)
+	{
+		const IDInfo* pUnitNode = pFromPlot->headUnitNode();
+		const CvUnit* pLoopUnit;
+		while (pUnitNode != NULL)
+		{
+			pLoopUnit = ::getUnit(*pUnitNode);
+			CvAssertMsg(pLoopUnit, "pUnitNode data should lead to a unit");
+
+			pUnitNode = pFromPlot->nextUnitNode(pUnitNode);
+
+			if (pLoopUnit)
+			{
+				if (GET_TEAM(pUnit->getTeam()).isAtWar(GET_PLAYER(pLoopUnit->getOwner()).getTeam()))
+				{
+					return false;
+				}
+			}
+		}	
+	}
+	// RED >>>>>
 
 	return TRUE;
 }

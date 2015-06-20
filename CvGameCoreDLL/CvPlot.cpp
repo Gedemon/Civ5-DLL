@@ -331,7 +331,10 @@ void CvPlot::doTurn()
 {
  	if (isOwned())
 	{
-		changeOwnershipDuration(1);
+		if (isWater()) // RED
+			setOwner(NO_PLAYER, -1, false, false);
+		else
+			changeOwnershipDuration(1);
 	}
 
 	if (getImprovementType() != NO_IMPROVEMENT)
@@ -4566,6 +4569,12 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 {
 	CvString strBuffer;
 	int iI;
+
+	// <<<<< RED
+	if (isWater() && eNewValue != NO_PLAYER)
+		return;
+
+	// RED >>>>>
 
 	// Remove effects for old owner before changing the member
 	if (getOwner() != eNewValue)
