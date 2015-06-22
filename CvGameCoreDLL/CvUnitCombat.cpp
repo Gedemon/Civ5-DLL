@@ -2224,8 +2224,9 @@ void CvUnitCombat::ResolveCombat( const CvCombatInfo& kInfo, uint uiParentEventI
 		CvUnit* pInterceptor = kInfo.getUnit(BATTLE_UNIT_INTERCEPTOR);
 		CvPlot* pkTargetPlot = kInfo.getPlot();		
 
-		int attackerMaxHP = pkAttacker->GetMaxHitPoints();
-		int defenderMaxHP = pkDefender->GetMaxHitPoints();
+		// RED : initialize first, then change to pUnit->GetMaxHitPoints() if the unit exist...
+		int attackerMaxHP = GC.getMAX_HIT_POINTS();
+		int defenderMaxHP = GC.getMAX_HIT_POINTS();
 		
 		if (pkTargetPlot)
 		{
@@ -2242,11 +2243,13 @@ void CvUnitCombat::ResolveCombat( const CvCombatInfo& kInfo, uint uiParentEventI
 		{
 			iAttackingPlayer = pAttacker->getOwner();
 			iAttackingUnit = pAttacker->GetID();
+			attackerMaxHP = pkAttacker->GetMaxHitPoints(); // RED
 		}
 		if (pkDefender)
 		{
 			iDefendingPlayer = pkDefender->getOwner();
 			iDefendingUnit = pkDefender->GetID();
+			defenderMaxHP = pkDefender->GetMaxHitPoints(); // RED
 		}
 		if (pInterceptor)
 		{
@@ -2368,8 +2371,9 @@ void CvUnitCombat::ResolveCombat( const CvCombatInfo& kInfo, uint uiParentEventI
 			CvUnit* pInterceptor = kInfo.getUnit(BATTLE_UNIT_INTERCEPTOR);
 			CvPlot* pkTargetPlot = kInfo.getPlot();
 
-			int attackerMaxHP = pkAttacker->GetMaxHitPoints();
-			int defenderMaxHP = pkDefender->GetMaxHitPoints();
+			// RED : initialize first, then change to pUnit->GetMaxHitPoints() if the unit exist...
+			int attackerMaxHP = GC.getMAX_HIT_POINTS();
+			int defenderMaxHP = GC.getMAX_HIT_POINTS();
 		
 			if (pkTargetPlot)
 			{
@@ -2386,11 +2390,13 @@ void CvUnitCombat::ResolveCombat( const CvCombatInfo& kInfo, uint uiParentEventI
 			{
 				iAttackingPlayer = pAttacker->getOwner();
 				iAttackingUnit = pAttacker->GetID();
+				attackerMaxHP = pkAttacker->GetMaxHitPoints(); // RED
 			}
 			if (pkDefender)
 			{
 				iDefendingPlayer = pkDefender->getOwner();
 				iDefendingUnit = pkDefender->GetID();
+				defenderMaxHP = pkDefender->GetMaxHitPoints(); // RED
 			}
 			if (pInterceptor)
 			{

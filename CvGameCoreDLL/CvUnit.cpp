@@ -1720,10 +1720,10 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 		//int iDefenderTotalDamageInflicted = iDefenderDamageInflicted + pAttacker->getDamage();
 		//int iOldDefenderTotalDamageInflicted = iOldDefenderDamageInflicted + pAttacker->getDamage();
 
-		int iHealthPercent = (GetMaxHitPoints() - iAttackerTotalDamageInflicted) / GetMaxHitPoints() * 100;
-		int iOldHealthPercent = (pDefender->GetMaxHitPoints() - iOldAttackerTotalDamageInflicted) / pDefender->GetMaxHitPoints() * 100;
+		int iHealthPercent = int((GetMaxHitPoints() - iAttackerTotalDamageInflicted) * 100 / GetMaxHitPoints());
+		int iOldHealthPercent = int((pDefender->GetMaxHitPoints() - iOldAttackerTotalDamageInflicted) * 100 / pDefender->GetMaxHitPoints());
 
-		if (iHealthPercent < iOldHealthPercent)
+		if (iHealthPercent > iOldHealthPercent)
 		{
 			return true;
 		}
@@ -2737,6 +2737,7 @@ bool CvUnit::IsAngerFreeUnit() const
 }
 
 //	---------------------------------------------------------------------------
+/// Amount of damage done by this unit to another unit (bDefenderIsCity || bAttackerIsCity = false) or a city (bDefenderIsCity = true) or amount of damage received by this unit from a city (bAttackerIsCity=true)
 int CvUnit::getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDamage, bool bIncludeRand, bool bAttackerIsCity, bool bDefenderIsCity) const
 {
 	VALIDATE_OBJECT
@@ -2825,14 +2826,21 @@ int CvUnit::getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDa
 	iDamage = iDamage > 0 ? iDamage : 1;
 
 	// RED <<<<<
-	iDamage = std::min(iDamage, int(GC.getMAX_HIT_POINTS() / 5)); // at least 5 shoots to kill any unit
+	if (bDefenderIsCity)
+	    iDamage = std::min(iDamage, int(std::min(GetMaxHitPoints() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, GC.getMAX_CITY_HIT_POINTS() * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100 ))); // limit max damage to prevent 3-4 shoots kill
+	
+	else if (bAttackerIsCity)
+	    iDamage = std::min(iDamage, int(std::min(GC.getMAX_CITY_HIT_POINTS() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, GetMaxHitPoints() * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100 ))); // limit max damage to prevent 3-4 shoots kill
+	
+	else // unit vs unit
+	    iDamage = std::min(iDamage, int(std::min(GetMaxHitPoints() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, GC.getMAX_HIT_POINTS() * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100 ))); // limit max damage to prevent 3-4 shoots kill
 	// RED >>>>>
 
 	return iDamage;
 }
 
 // RED <<<<<
-// Overloaded to use iDefenderMaxHitPoints when possible
+/// Amount of damage done by this unit to another unit of iDefenderMaxHitPoints or a city (bDefenderIsCity=true) or amount of damage received by this unit from a city (bAttackerIsCity=true)
 //	---------------------------------------------------------------------------
 int CvUnit::getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDamage, bool bIncludeRand, bool bAttackerIsCity, bool bDefenderIsCity, int iDefenderMaxHitPoints) const
 {
@@ -2922,7 +2930,14 @@ int CvUnit::getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDa
 	iDamage = iDamage > 0 ? iDamage : 1;
 
 	// RED <<<<<
-	iDamage = std::min(iDamage, int(iDefenderMaxHitPoints / 5)); // at least 5 shoots to kill any unit
+	if (bDefenderIsCity)
+		iDamage = std::min(iDamage, int(std::min(GetMaxHitPoints() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, GC.getMAX_CITY_HIT_POINTS() * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100))); // limit max damage to prevent 3-4 shoots kill
+
+	else if (bAttackerIsCity)
+		iDamage = std::min(iDamage, int(std::min(GC.getMAX_CITY_HIT_POINTS() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, GetMaxHitPoints() * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100))); // limit max damage to prevent 3-4 shoots kill
+
+	else // unit vs unit
+		iDamage = std::min(iDamage, int(std::min(GetMaxHitPoints() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, iDefenderMaxHitPoints * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100))); // limit max damage to prevent 3-4 shoots kill
 	// RED >>>>>
 
 	return iDamage;
@@ -8568,6 +8583,7 @@ bool CvUnit::canAirDefend(const CvPlot* pPlot) const
 
 
 //	--------------------------------------------------------------------------------
+/// Amount of damage done by this unit to pDefender or pCity
 int CvUnit::GetAirCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bIncludeRand, int iAssumeExtraDamage) const
 {
 	VALIDATE_OBJECT
@@ -8655,9 +8671,9 @@ int CvUnit::GetAirCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bInc
 
 	// RED <<<<<
 	if (pCity == NULL)
-		iAttackerDamage = min(iAttackerDamage, int(pDefender->GetMaxHitPoints() / 5)); // at least 5 shoots to kill any unit
-	else		
-		iAttackerDamage = min(iAttackerDamage, int(GC.getMAX_CITY_HIT_POINTS() / 5)); // at least 5 shoots to kill any city
+	    iAttackerDamage = std::min(iAttackerDamage, int(std::min(GetMaxHitPoints() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, pDefender->GetMaxHitPoints() * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100))); // limit max damage to prevent 3-4 shoots kill
+	else    
+	    iAttackerDamage = std::min(iAttackerDamage, int(std::min(GetMaxHitPoints() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, GC.getMAX_CITY_HIT_POINTS() * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100))); // limit max damage to prevent 3-4 shoots kill 
 	// RED >>>>>
 
 	return iAttackerDamage;
@@ -8665,6 +8681,7 @@ int CvUnit::GetAirCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bInc
 
 
 //	--------------------------------------------------------------------------------
+/// Amount of damage done by this unit to pDefender or pCity
 int CvUnit::GetRangeCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bIncludeRand, int iAssumeExtraDamage) const
 {
 	VALIDATE_OBJECT
@@ -8762,15 +8779,16 @@ int CvUnit::GetRangeCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bI
 
 	// RED <<<<<
 	if (pCity == NULL)
-		iAttackerDamage = min(iAttackerDamage, int(pDefender->GetMaxHitPoints() / 5)); // at least 5 shoots to kill any unit
-	else		
-		iAttackerDamage = min(iAttackerDamage, int(GC.getMAX_CITY_HIT_POINTS() / 5)); // at least 5 shoots to kill any city
+	    iAttackerDamage = min(iAttackerDamage, int(std::min(GetMaxHitPoints() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, pDefender->GetMaxHitPoints() * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100))); // limit max damage to prevent 3-4 shoots kill
+	else    
+	    iAttackerDamage = min(iAttackerDamage, int(std::min(GetMaxHitPoints() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, GC.getMAX_CITY_HIT_POINTS() * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100))); // limit max damage to prevent 3-4 shoots kill 
 	// RED >>>>>
 
 	return iAttackerDamage;
 }
 
 //	--------------------------------------------------------------------------------
+/// Amount of damage done by this unit to pAttacker
 int CvUnit::GetAirStrikeDefenseDamage(const CvUnit* pAttacker, bool bIncludeRand) const
 {
 	int iAttackerStrength = pAttacker->GetMaxRangedCombatStrength(this, /*pCity*/ NULL, true, /*bForRangedAttack*/ false);
@@ -8828,7 +8846,7 @@ int CvUnit::GetAirStrikeDefenseDamage(const CvUnit* pAttacker, bool bIncludeRand
 	iDefenderDamage = max(1,iDefenderDamage);
 
 	// RED <<<<<
-	iDefenderDamage = min(iDefenderDamage, int(pAttacker->GetMaxHitPoints() / 5)); // at least 5 shoots to kill any unit
+	iDefenderDamage = min(iDefenderDamage, int(std::min(GetMaxHitPoints() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, pAttacker->GetMaxHitPoints() * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100))); // limit max damage to prevent 3-4 shoots kill
 	// RED >>>>>
 
 	return iDefenderDamage;
@@ -9029,7 +9047,7 @@ int CvUnit::GetInterceptionDamage(const CvUnit* pAttacker, bool bIncludeRand) co
 	iInterceptorDamage = max(1,iInterceptorDamage);
 
 	// RED <<<<<
-	iInterceptorDamage = min(iInterceptorDamage, int(pAttacker->GetMaxHitPoints() / 5)); // at least 5 shoots to kill any unit
+	iInterceptorDamage = min(iInterceptorDamage, int(std::min(GetMaxHitPoints() * GC.getMAX_HP_PERCENT_INFLICTED_DAMAGE() / 100, pAttacker->GetMaxHitPoints() * GC.getMAX_HP_PERCENT_RECEIVED_DAMAGE() / 100))); // limit max damage to prevent 3-4 shoots kill
 	// RED >>>>>
 
 	return iInterceptorDamage;

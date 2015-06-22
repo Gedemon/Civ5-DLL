@@ -4749,8 +4749,9 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 			}
 			// Plot is unowned
 			else
-			{				
-				setOriginalOwner(eNewValue); // RED set original owner
+			{
+				if (getOriginalOwner() == NO_PLAYER)
+					setOriginalOwner(eNewValue); // RED set original owner
 
 				// Someone paying for this improvement
 				if (GetPlayerResponsibleForImprovement() != NO_PLAYER)
@@ -8938,7 +8939,7 @@ void CvPlot::read(FDataStream& kStream)
 	}
 	updateImpassable();
 
-	kStream >> m_eOwner; // RED
+	kStream >> m_eOriginalOwner; // RED
 }
 
 //	--------------------------------------------------------------------------------

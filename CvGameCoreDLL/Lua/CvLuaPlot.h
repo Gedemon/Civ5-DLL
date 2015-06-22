@@ -276,6 +276,10 @@ protected:
 	static int lIsResourceConnectedByImprovement(lua_State* L);
 
 	static int lIsBuildRemovesFeature(lua_State* L);
+
+	// RED <<<<<
+	static int lGetOriginalOwner(lua_State* L);
+	// RED >>>>>
 };
 
 #endif

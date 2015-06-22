@@ -258,6 +258,10 @@ void CvLuaPlot::PushMethods(lua_State *L, int t)
 	Method(IsResourceConnectedByImprovement);
 
 	Method(IsBuildRemovesFeature);
+
+	// RED <<<<<
+	Method(GetOriginalOwner);
+	// RED >>>>>
 }
 //------------------------------------------------------------------------------
 void CvLuaPlot::HandleMissingInstance(lua_State* L)
@@ -1736,3 +1740,14 @@ int CvLuaPlot::lIsBuildRemovesFeature(lua_State* L)
 	lua_pushboolean(L, bFeatureRemoved);
 	return 1;
 }
+
+// RED <<<<<
+
+//------------------------------------------------------------------------------
+//int getOriginalOwner(TeamTypes ePlayer);
+int CvLuaPlot::lGetOriginalOwner(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlot::getOriginalOwner);
+}
+
+// RED >>>>>
