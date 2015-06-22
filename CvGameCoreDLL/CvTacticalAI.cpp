@@ -4743,13 +4743,13 @@ void CvTacticalAI::IdentifyPriorityTargets()
 				{
 					int iAttackerStrength = pEnemyUnit->GetMaxAttackStrength(NULL, pLoopCity->plot(), NULL);
 					int iDefenderStrength = pLoopCity->getStrengthValue();
-					CvUnit* pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pLoopCity->getOwner(), pLoopCity->getX(), pLoopCity->getY(), pEnemyUnit->getX(), pEnemyUnit->getY());
+					CvUnit* pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pLoopCity->getOwner(), pLoopCity->getX(), pLoopCity->getY(), pEnemyUnit->getX(), pEnemyUnit->getY(), CvUnitCombat::FIRE_SUPPORT_DEFENSIVE); // RED
 					int iDefenderFireSupportCombatDamage = 0;
 					if (pFireSupportUnit != NULL)
 					{
 						iDefenderFireSupportCombatDamage = pFireSupportUnit->GetRangeCombatDamage(pEnemyUnit.pointer(), NULL, false);
 					}
-					iExpectedDamage = pEnemyUnit->getCombatDamage(iAttackerStrength, iDefenderStrength, pEnemyUnit->getDamage() + iDefenderFireSupportCombatDamage, /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ true);
+					iExpectedDamage = pEnemyUnit->getCombatDamage(iAttackerStrength, iDefenderStrength, pEnemyUnit->getDamage() + iDefenderFireSupportCombatDamage, /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ true, pEnemyUnit->GetMaxHitPoints());
 				}
 				if (iExpectedDamage > 0)
 				{
@@ -5365,7 +5365,8 @@ void CvTacticalAI::ExecuteMovesToSafestPlot()
 
 								else if (pUnit->AreUnitsOfSameType(*pFirstUnit))
 								{
-									continue;
+									if (pPlot->getNumFriendlyUnitsOfType(pFirstUnit) + pUnit->getStackValue()  >= GC.getPLOT_UNIT_LIMIT()) // RED
+										continue;
 								}
 							}
 						}
@@ -7384,14 +7385,14 @@ int CvTacticalAI::ComputeTotalExpectedDamage(CvTacticalTarget *pTarget, CvPlot *
 					{
 						int iAttackerStrength = pAttacker->GetMaxAttackStrength(NULL, pTargetPlot, NULL);
 						int iDefenderStrength = pDefender->GetMaxDefenseStrength(pTargetPlot, pAttacker.pointer());
-						UnitHandle pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pDefender->getOwner(), pTargetPlot->getX(), pTargetPlot->getY(), pAttacker->getX(), pAttacker->getY());
+						UnitHandle pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pDefender->getOwner(), pTargetPlot->getX(), pTargetPlot->getY(), pAttacker->getX(), pAttacker->getY(), CvUnitCombat::FIRE_SUPPORT_DEFENSIVE); // RED
 						int iDefenderFireSupportCombatDamage = 0;
 						if (pFireSupportUnit)
 						{
 							iDefenderFireSupportCombatDamage = pFireSupportUnit->GetRangeCombatDamage(pAttacker.pointer(), NULL, false);
 						}
-						iExpectedDamage = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage() + iDefenderFireSupportCombatDamage, /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
-						iExpectedSelfDamage = pDefender->getCombatDamage(iDefenderStrength, iAttackerStrength, pDefender->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+						iExpectedDamage = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage() + iDefenderFireSupportCombatDamage, /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false, pDefender->GetMaxHitPoints());
+						iExpectedSelfDamage = pDefender->getCombatDamage(iDefenderStrength, iAttackerStrength, pDefender->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false, pAttacker->GetMaxHitPoints());
 					}
 					m_CurrentMoveUnits[iI].SetExpectedTargetDamage(iExpectedDamage);
 					m_CurrentMoveUnits[iI].SetExpectedSelfDamage(iExpectedSelfDamage);
@@ -7414,14 +7415,14 @@ int CvTacticalAI::ComputeTotalExpectedDamage(CvTacticalTarget *pTarget, CvPlot *
 					{
 						int iAttackerStrength = pAttacker->GetMaxAttackStrength(NULL, pTargetPlot, NULL);
 						int iDefenderStrength = pCity->getStrengthValue();
-						CvUnit* pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pCity->getOwner(), pTargetPlot->getX(), pTargetPlot->getY(), pAttacker->getX(), pAttacker->getY());
+						CvUnit* pFireSupportUnit = CvUnitCombat::GetFireSupportUnit(pCity->getOwner(), pTargetPlot->getX(), pTargetPlot->getY(), pAttacker->getX(), pAttacker->getY(), CvUnitCombat::FIRE_SUPPORT_DEFENSIVE); // RED
 						int iDefenderFireSupportCombatDamage = 0;
 						if (pFireSupportUnit != NULL)
 						{
 							iDefenderFireSupportCombatDamage = pFireSupportUnit->GetRangeCombatDamage(pAttacker.pointer(), NULL, false);
 						}
-						iExpectedDamage = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage() + iDefenderFireSupportCombatDamage, /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ true);
-						iExpectedSelfDamage = pAttacker->getCombatDamage(iDefenderStrength, iAttackerStrength, pCity->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ true, /*bDefenderIsCity*/ false);
+						iExpectedDamage = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage() + iDefenderFireSupportCombatDamage, /*bIncludeRand*/ false, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ true, pAttacker->GetMaxHitPoints());
+						iExpectedSelfDamage = pAttacker->getCombatDamage(iDefenderStrength, iAttackerStrength, pCity->getDamage(), /*bIncludeRand*/ false, /*bAttackerIsCity*/ true, /*bDefenderIsCity*/ false, pAttacker->GetMaxHitPoints());
 					}
 					m_CurrentMoveUnits[iI].SetExpectedTargetDamage(iExpectedDamage);
 					m_CurrentMoveUnits[iI].SetExpectedSelfDamage(iExpectedSelfDamage);

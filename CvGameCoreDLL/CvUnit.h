@@ -138,8 +138,9 @@ public:
 	bool canMoveThrough(const CvPlot & pPlot, byte bMoveFlags = 0) const;
 
 	bool IsAngerFreeUnit() const;
-
+	
 	int getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDamage, bool bIncludeRand, bool bAttackerIsCity, bool bDefenderIsCity) const;
+	int getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDamage, bool bIncludeRand, bool bAttackerIsCity, bool bDefenderIsCity, int iDefenderMaxHitPoints) const;
 	void fightInterceptor(const CvPlot & pPlot);
 	void move(CvPlot & pPlot, bool bShow);
 	bool jumpToNearestValidPlot();
@@ -793,21 +794,11 @@ public:
 	int getDropRange() const;
 	void changeDropRange(int iChange);
 
-	// RED <<<<<<
-	bool isMarkedBestDefender() const;
-	void setMarkedBestDefender(bool bNewValue);
-	// RED >>>>>>
-
 	bool isOutOfAttacks() const;
 	void setMadeAttack(bool bNewValue);
 
 	int GetNumInterceptions() const;
 	void ChangeNumInterceptions(int iChange);
-
-	// RED
-	bool isSpecialType() const;
-	void setIsSpecialType(bool bNewValue);
-	// RED
 
 	bool isOutOfInterceptions() const;
 	int getMadeInterceptionCount() const;
@@ -1066,6 +1057,24 @@ public:
 	std::string debugDump(const FAutoVariableBase &) const;
 	std::string stackTraceRemark(const FAutoVariableBase &) const;
 
+	// RED <<<<<<
+	bool isMarkedBestDefender() const;
+	void setMarkedBestDefender(bool bNewValue);
+	
+	int getMaxHP() const;
+	int getStackValue() const;
+	bool isOnlySupportFire() const;
+	bool isOffensiveSupportFire() const;
+	bool isDefensiveSupportFire() const;
+	bool hasCounterFireCapability() const;
+	bool canCounterFire(CvUnit* pUnit) const;
+	bool isCounterFireSameCombatTypeOnly() const;
+	bool isProvidingSupportFire() const;
+	void setSupportFireState(bool bNewValue);
+	
+	void capturePlot(CvPlot* pPlot);
+	// RED >>>>>>
+
 protected:
 	const MissionQueueNode* HeadMissionQueueNode() const;
 	MissionQueueNode* HeadMissionQueueNode();
@@ -1220,10 +1229,6 @@ protected:
 	FAutoVariable<bool, CvUnit> m_bSetUpForRangedAttack;
 	FAutoVariable<bool, CvUnit> m_bEmbarked;
 	FAutoVariable<bool, CvUnit> m_bAITurnProcessed;
-	FAutoVariable<bool, CvUnit> m_bBestDefender; // RED
-	// RED
-	FAutoVariable<bool, CvUnit> m_bIsSpecialType;
-	// RED
 
 	FAutoVariable<TacticalAIMoveTypes, CvUnit> m_eTacticalMove;
 	FAutoVariable<PlayerTypes, CvUnit> m_eCapturingPlayer;
@@ -1287,6 +1292,11 @@ protected:
 
 	bool CanWithdrawFromMelee(CvUnit &pAttacker);
 	bool DoWithdrawFromMelee(CvUnit &pAttacker);
+	
+	// RED <<<<<
+	FAutoVariable<bool, CvUnit> m_bBestDefender;
+	FAutoVariable<bool, CvUnit> m_bProvidingSupportFire;
+	// RED >>>>>
 
 private:
 

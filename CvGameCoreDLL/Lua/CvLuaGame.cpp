@@ -305,7 +305,7 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 
 	Method(GetTimeString);
 	
-	// <<<<< RED
+	// RED <<<<<
 	Method(UpdateREDLoadingFix);
 	// RED >>>>>
 

@@ -258,6 +258,8 @@ void CvPlot::reset(int iX, int iY, bool bConstructorCall)
 			m_apaiInvisibleVisibilityCount[iI][iJ] = 0;
 		}
 	}
+	
+	m_eOriginalOwner = NO_PLAYER; // RED
 
 }
 
@@ -2617,7 +2619,7 @@ int CvPlot::defenseModifier(TeamTypes eDefender, bool, bool bHelp) const
 
 	CvAssertMsg(getTerrainType() != NO_TERRAIN, "TerrainType is not assigned a valid value");
 
-	// <<<<< RED : defense modifier can stack.
+	// RED <<<<< : defense modifier can stack.
 
 	// Hill (and mountain)
 	if (isHills() || isMountain())
@@ -3581,14 +3583,31 @@ bool CvPlot::IsActualEnemyUnit(PlayerTypes ePlayer, bool bCombatUnitsOnly) const
 // Used to restrict number of units allowed on a plot at one time
 int CvPlot::getNumFriendlyUnitsOfType(const CvUnit * pUnit, bool bBreakOnUnitLimit) const
 {
+	// RED 
+	// The function and variable names from Civ4 code are even more misleading now that we are adding limited stacking.
+	// iNumUnitsOfSameType is now the "weight" of all units of same type on the plot, not their number,
+	// but I'm not modifying the function name to keep compatibility with Lua code...
+
 	int iNumUnitsOfSameType = 0;
-	bool bPretendEmbarked = false;
 
 	// RED <<<<<
-	// To do : limit based by unit domain & type of buildings in city...
-	if (isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))
-		return iNumUnitsOfSameType;
+	if (pUnit->getStackValue() <= 0 ) // Unlimited stacking for some unit
+	{
+		return 0;
+	}
+
+	if (isCity() && GC.getGame().isOptionCanStackInCity()) // Can have unlimited unit stacking in cities
+	{
+		return 0;
+	}
+
+	if (pUnit->plot() != this)
+	{
+		iNumUnitsOfSameType += pUnit->getStackValue(); // Add the unit weight to the stack if we are actually checking if the unit want to go on this plot but is not on it yet, else we can stack more units than the plot unit limit...
+	}
 	// RED >>>>>
+	
+	bool bPretendEmbarked = false;
 
 	if (isWater() && pUnit->canEmbarkOnto(*pUnit->plot(), *this))
 	{
@@ -3615,21 +3634,29 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit * pUnit, bool bBreakOnUnitLim
 			if (!kUnitTeam.isAtWar(pLoopUnit->getTeam()))
 			{
 				// Units of the same type OR Units belonging to different civs
+				// RED <<<<<
+				
 				//if (pUnit->getOwner() != pLoopUnit->getOwner() || pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked))
-				// RED : for air unit in foreign cities, we must allows units belonging to different civs
-				if ((pUnit->getOwner() != pLoopUnit->getOwner() && pUnit->getDomainType() != DOMAIN_AIR ) || (pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked) && (!GC.getGame().isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") || pUnit->getDomainType() != DOMAIN_AIR )))
-				// RED
+				//if (pUnit->getTeam() != pLoopUnit->getTeam() && pUnit->getDomainType() != DOMAIN_AIR ) || (pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked) && (!GC.getGame().isOptionCanRebaseInFriendlyCity() || pUnit->getDomainType() != DOMAIN_AIR )))
+
+				if (pUnit->getTeam() != pLoopUnit->getTeam() && (!GC.getGame().isOptionCanRebaseInFriendlyCity() || pUnit->getDomainType() != DOMAIN_AIR) && !isCity()) // units belonging to different civs can't share this place
+					return iPlotUnitLimit+1;
+
+				if(pLoopUnit->AreUnitsOfSameType(*pUnit, bPretendEmbarked) && (pLoopUnit->getStackValue() > 0))
+				// RED >>>>>
 				{
 					// We should allow as many cargo units as we want
 					if (!pLoopUnit->isCargo())
 					{
 						// Unit is the same domain & combat type, not allowed more than the limit
-						iNumUnitsOfSameType++;
+						//iNumUnitsOfSameType++;
+						iNumUnitsOfSameType += pLoopUnit->getStackValue(); // RED
 					}
 				}
 
 				// Does the calling function want us to break out? (saves processing time)
-				if (bBreakOnUnitLimit)
+				//if(bBreakOnUnitLimit)
+				if (bBreakOnUnitLimit && !isCity()) // RED stack in cities are checked below 
 				{
 					if (iNumUnitsOfSameType > iPlotUnitLimit)
 					{
@@ -3639,6 +3666,49 @@ int CvPlot::getNumFriendlyUnitsOfType(const CvUnit * pUnit, bool bBreakOnUnitLim
 			}
 		}
 	}
+
+	// RED <<<<<	
+	if (isCity())
+	{
+		CvCity* pkCity = getPlotCity();
+		if(pkCity)
+		{
+			int iDefineLimit = 0;
+			int iCityLimit = 0;
+			DomainTypes eDomain = pUnit->getDomainType();
+			switch(eDomain)
+			{
+			case DOMAIN_AIR:
+				iDefineLimit = GC.getCITY_AIR_UNIT_LIMIT();
+				iCityLimit = pkCity->getAirStackLimit();
+				break;
+			case DOMAIN_LAND:
+				iDefineLimit = GC.getCITY_LAND_UNIT_LIMIT();
+				iCityLimit = pkCity->getLandStackLimit();
+				break;
+			case DOMAIN_SEA:
+				iDefineLimit = GC.getCITY_SEA_UNIT_LIMIT();
+				iCityLimit = pkCity->getSeaStackLimit();
+				break;
+			default:
+				break;
+			}
+			
+			if (iDefineLimit == -1 || iCityLimit == -1) // unlimited stacking allowed in this city for this unit's domain
+				return 0;
+			
+			if (iDefineLimit == 0 && iCityLimit == 0) // use default stacking limit
+				return iNumUnitsOfSameType;
+
+			if (std::max(iDefineLimit, iCityLimit) > iNumUnitsOfSameType) // under stacking limit in this city
+				return 0;
+
+			if (std::max(iDefineLimit, iCityLimit) <= iNumUnitsOfSameType) // reached stacking limit in this city
+				return iNumUnitsOfSameType;
+		}
+	}
+	// RED >>>>>
+
 	return iNumUnitsOfSameType;
 }
 
@@ -4570,7 +4640,7 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 	CvString strBuffer;
 	int iI;
 
-	// <<<<< RED
+	// RED <<<<<
 	if (isWater() && eNewValue != NO_PLAYER)
 		return;
 
@@ -4679,7 +4749,9 @@ void CvPlot::setOwner(PlayerTypes eNewValue, int iAcquiringCityID, bool bCheckUn
 			}
 			// Plot is unowned
 			else
-			{
+			{				
+				setOriginalOwner(eNewValue); // RED set original owner
+
 				// Someone paying for this improvement
 				if (GetPlayerResponsibleForImprovement() != NO_PLAYER)
 				{
@@ -8865,6 +8937,8 @@ void CvPlot::read(FDataStream& kStream)
 		kStream >> dummy;
 	}
 	updateImpassable();
+
+	kStream >> m_eOwner; // RED
 }
 
 //	--------------------------------------------------------------------------------
@@ -9005,6 +9079,8 @@ void CvPlot::write(FDataStream& kStream) const
     }
 
 	kStream << m_cContinentType;
+
+	kStream << m_eOriginalOwner; // RED
 }
 
 //	--------------------------------------------------------------------------------
@@ -9922,3 +9998,12 @@ void CvPlot::updateImpassable()
 		}
 	}
 }
+
+// RED <<<<<
+//	--------------------------------------------------------------------------------
+void CvPlot::setOriginalOwner(PlayerTypes eNewValue)
+{
+	if (eNewValue != NO_PLAYER)
+		m_eOriginalOwner = eNewValue;
+}
+// RED >>>>>

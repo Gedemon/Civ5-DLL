@@ -275,7 +275,7 @@ bool CvDeal::IsPossibleToTradeItem(PlayerTypes ePlayer, PlayerTypes eToPlayer, T
 	// Gold
 	if (eItem == TRADE_ITEM_GOLD)
 	{
-		// <<<<< RED trade gold directly only for peace or when in the same team
+		// RED <<<<< trade gold directly only for peace or when in the same team
 		if (!this->IsPeaceTreatyTrade(eToPlayer) && !this->IsPeaceTreatyTrade(ePlayer))
 		{
 			if (pFromPlayer->getTeam() != pToPlayer->getTeam())

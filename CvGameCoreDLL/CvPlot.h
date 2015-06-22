@@ -607,6 +607,16 @@ public:
 
 	bool MustPayMaintenanceHere(PlayerTypes ePlayer) const;
 
+	// RED <<<<<
+
+	inline PlayerTypes getOriginalOwner() const
+	{
+		return (PlayerTypes)m_eOriginalOwner;
+	}
+
+	void setOriginalOwner(PlayerTypes eNewValue);
+	// RED >>>>>
+
 protected:
 	class PlotBoolField
 	{
@@ -759,6 +769,8 @@ protected:
 
 	// added so under cheat mode we can access protected stuff
 	friend class CvGameTextMgr;
+	
+	char /*PlayerTypes*/  m_eOriginalOwner; // RED
 };
 
 namespace FSerialization

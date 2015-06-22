@@ -431,6 +431,19 @@ protected:
 
 	static int lGetSpecialistYield(lua_State* L);
 	static int lGetCultureFromSpecialist(lua_State* L);
+
+	// RED <<<<<
+	static int lGetAirStackLimit(lua_State* L);
+	static int lSetAirStackLimit(lua_State* L);
+	static int lChangeAirStackLimit(lua_State* L);
+	static int lGetLandStackLimit(lua_State* L);
+	static int lSetLandStackLimit(lua_State* L);
+	static int lChangeLandStackLimit(lua_State* L);
+	static int lGetSeaStackLimit(lua_State* L);
+	static int lSetSeaStackLimit(lua_State* L);
+	static int lChangeSeaStackLimit(lua_State* L);
+	// RED >>>>>
+
 };
 
 #endif //CVLUACITY_H

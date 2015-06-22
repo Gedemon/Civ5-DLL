@@ -240,7 +240,6 @@ m_syncArchive(*this)
 , m_iEmbarkedAllWaterCount(0)
 , m_iEmbarkExtraVisibility(0)
 , m_strName("")
-, m_bBestDefender("CvUnit::m_bBestDefender", m_syncArchive) // RED
 , m_bPromotionReady("CvUnit::m_bPromotionReady", m_syncArchive)
 , m_bDeathDelay("CvUnit::m_bDeathDelay", m_syncArchive)
 , m_bCombatFocus("CvUnit::m_bCombatFocus", m_syncArchive)
@@ -250,9 +249,6 @@ m_syncArchive(*this)
 , m_bSetUpForRangedAttack("CvUnit::m_bSetUpForRangedAttack", m_syncArchive)
 , m_bEmbarked("CvUnit::m_bEmbarked", m_syncArchive)
 , m_bAITurnProcessed("CvUnit::m_bAITurnProcessed", m_syncArchive, false, true)
-// RED
-, m_bIsSpecialType("CvUnit::m_bIsSpecialType", m_syncArchive)
-// RED
 , m_eTacticalMove("CvUnit::m_eTacticalMove", m_syncArchive)
 , m_eOwner("CvUnit::m_eOwner", m_syncArchive)
 , m_eOriginalOwner("CvUnit::m_eOriginalOwner", m_syncArchive)
@@ -288,6 +284,10 @@ m_syncArchive(*this)
 , m_eUnitAIType("CvUnit::m_eUnitAIType", m_syncArchive)
 , m_thisHandle(this)
 , m_bWaitingForMove(false)
+// RED <<<<<
+, m_bBestDefender("CvUnit::m_bBestDefender", m_syncArchive)
+, m_bProvidingSupportFire("CvUnit::m_bProvidingSupportFire", m_syncArchive)
+// RED >>>>>
 {
     initPromotions();
 	OBJECT_ALLOCATED
@@ -737,8 +737,6 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	m_iEmbarkedNotCivilianCount = 0;
 	m_iEmbarkedAllWaterCount = 0;
 	m_iEmbarkExtraVisibility = 0;
-
-	m_bBestDefender = false; // RED
 	m_bPromotionReady = false;
 	m_bDeathDelay = false;
 	m_bCombatFocus = false;
@@ -750,10 +748,6 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	m_bAITurnProcessed = false;
 	m_bWaitingForMove = false;
 	m_eTacticalMove = NO_TACTICAL_MOVE;
-
-	// RED
-	m_bIsSpecialType = false;
-	// RED
 
 	m_eOwner = eOwner;
 	m_eOriginalOwner = eOwner;
@@ -793,6 +787,12 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 
 	m_kLastPath.clear();
 	m_uiLastPathCacheDest = (uint)-1;
+
+	
+	// RED <<<<<
+	m_bBestDefender = false;
+	m_bProvidingSupportFire = false;
+	// RED >>>>>
 
 	if (!bConstructorCall)
 	{
@@ -1454,6 +1454,31 @@ void CvUnit::doTurn()
 	VALIDATE_OBJECT
 	CvAssertMsg(!IsDead(), "isDead did not return false as expected");
 
+	// Providing support fire is a temporary state, it should not return true there...
+	if (isProvidingSupportFire())
+	{
+		CvString redLogMessage;
+		FILogFile* pLog = LOGFILEMGR.GetLog("red_combat_debug.log", FILogFile::kDontTimeStamp);	
+		redLogMessage.Format("WARNING: %s (ID= %d - player= %d) is still marked as providing support fire in unit::doTurn() -> removing mark !", getNameKey(), GetID(), getOwner());
+		pLog->Msg("-----------------------------------------------------");
+		pLog->Msg(redLogMessage);
+		pLog->Msg("-----------------------------------------------------");
+		setSupportFireState(false);
+	}
+	
+	// Being marked "BestDefender" is a temporary state, it should not return true there...
+	if (isMarkedBestDefender())
+	{
+		CvString redLogMessage;
+		FILogFile* pLog = LOGFILEMGR.GetLog("red_combat_debug.log", FILogFile::kDontTimeStamp);	
+		redLogMessage.Format("WARNING: %s (ID= %d - player= %d) is still marked as best defender in unit::doTurn() -> removing mark !", getNameKey(), GetID(), getOwner());
+		pLog->Msg("-----------------------------------------------------");
+		pLog->Msg(redLogMessage);
+		pLog->Msg("-----------------------------------------------------");
+		setMarkedBestDefender(false);
+	}
+
+
 	// Wake unit if skipped last turn
 	ActivityTypes eActivityType = GetActivityType();
 	if (((eActivityType == ACTIVITY_HOLD) && (isHuman() || !getFortifyTurns())) ||
@@ -1481,7 +1506,7 @@ void CvUnit::doTurn()
 	}
 
 	// Recon unit? If so, he sees what's around him
-	// <<<<< RED
+	// RED <<<<<
 	// we must reinit recon plot between turns, IsRecon is not used in RED
 	//if (IsRecon())
 	CvPlot* pOldPlot = getReconPlot();
@@ -1647,6 +1672,7 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 			return true;
 		}
 		// RED <<<<<
+		// Get the unit that will have the most Health left after the attack
 		int iOldDefenderStrength = pDefender->GetMaxDefenseStrength(pDefender->plot(), pAttacker);
 		int iDefenderStrength = GetMaxDefenseStrength(plot(), pAttacker);
 		int iOldAttackerStrength = 0;
@@ -1671,11 +1697,11 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 			iOldAttackerStrength = pAttacker->GetMaxAttackStrength(pAttacker->plot(), pDefender->plot(), pDefender);
 		}
 
-		int iAttackerDamageInflicted = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
-		int iOldAttackerDamageInflicted = pAttacker->getCombatDamage(iOldAttackerStrength, iOldDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+		int iAttackerDamageInflicted = pAttacker->getCombatDamage(iAttackerStrength, iDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false, GetMaxHitPoints());
+		int iOldAttackerDamageInflicted = pAttacker->getCombatDamage(iOldAttackerStrength, iOldDefenderStrength, pAttacker->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false, pDefender->GetMaxHitPoints());
 
-		int iDefenderDamageInflicted = getCombatDamage(iDefenderStrength, iAttackerStrength, getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
-		int iOldDefenderDamageInflicted = pDefender->getCombatDamage(iOldDefenderStrength, iOldAttackerStrength, pDefender->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false);
+		int iDefenderDamageInflicted = getCombatDamage(iDefenderStrength, iAttackerStrength, getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false, pAttacker->GetMaxHitPoints());
+		int iOldDefenderDamageInflicted = pDefender->getCombatDamage(iOldDefenderStrength, iOldAttackerStrength, pDefender->getDamage(), /*bIncludeRand*/ true, /*bAttackerIsCity*/ false, /*bDefenderIsCity*/ false, pAttacker->GetMaxHitPoints());
 
 		if (pAttacker->getDomainType() == DOMAIN_AIR && getDomainType() != DOMAIN_AIR)
 		{
@@ -1694,7 +1720,10 @@ bool CvUnit::isBetterDefenderThan(const CvUnit* pDefender, const CvUnit* pAttack
 		//int iDefenderTotalDamageInflicted = iDefenderDamageInflicted + pAttacker->getDamage();
 		//int iOldDefenderTotalDamageInflicted = iOldDefenderDamageInflicted + pAttacker->getDamage();
 
-		if (iAttackerTotalDamageInflicted < iOldAttackerTotalDamageInflicted)
+		int iHealthPercent = (GetMaxHitPoints() - iAttackerTotalDamageInflicted) / GetMaxHitPoints() * 100;
+		int iOldHealthPercent = (pDefender->GetMaxHitPoints() - iOldAttackerTotalDamageInflicted) / pDefender->GetMaxHitPoints() * 100;
+
+		if (iHealthPercent < iOldHealthPercent)
 		{
 			return true;
 		}
@@ -2000,13 +2029,13 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 			// If already intruding on this minor, okay to do it some more
 			bool bIntruding = pMinorAI->IsMajorIntruding(getOwner());
 			
-			// RED
+			// RED <<<<<
 			PlayerTypes ePlayer = getOwner();
 			if (kTheirTeam.isClosedBorder() && (pMinorAI->GetFriendshipWithMajor(ePlayer) < pMinorAI->GetAlliesThreshold())) // Can't enter without having Allied level if borders are closed.
 			{
 				return false;
 			}
-			// RED
+			// RED >>>>>
 
 			if (bAngerFreeUnit || bHasOpenBorders || bIntruding)
 			{
@@ -2014,6 +2043,17 @@ bool CvUnit::canEnterTerritory(TeamTypes eTeam, bool bIgnoreRightOfPassage, bool
 			}
 		}
 	}
+
+	// RED <<<<<
+	if(GC.getGame().isOptionMinorCanEnterAllyTerritory() && kMyTeam.isMinorCiv() && !kTheirTeam.isMinorCiv())
+	{
+		CvMinorCivAI* pMinorAI = GET_PLAYER(kMyTeam.getLeaderID()).GetMinorCivAI();
+		if (pMinorAI->IsAllies(kTheirTeam.getLeaderID()))
+		{
+			return true;
+		}
+	}
+	// RED >>>>>
 
 	if (!bIgnoreRightOfPassage)
 	{
@@ -2576,7 +2616,7 @@ bool CvUnit::canMoveInto(const CvPlot & plot, byte bMoveFlags) const
 				{
 					bEmbarkedAndAdjacent = true;
 				}
-				// <<<<< RED - yep, confirmed, without this code, Embarked Units can move on top of enemies because they have no visibility and we don't want that for our destination...
+				// RED <<<<< - yep, confirmed, without this code, Embarked Units can move on top of enemies because they have no visibility and we don't want that for our destination...
 				if (bMoveFlags & MOVEFLAG_DESTINATION)
 				{
 					bNavalMoveThrough = false;
@@ -2708,19 +2748,19 @@ int CvUnit::getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDa
 
 	if (bAttackerIsCity)
 	{
-		iDamageRatio = GC.getMAX_HIT_POINTS();		// JON: Cities don't do less damage when wounded
+		iDamageRatio = GC.getMAX_CITY_HIT_POINTS();		// JON: Cities don't do less damage when wounded
 	}
 	else
 	{
 		// Mod (Policies, etc.)
 		iWoundedDamageMultiplier += GET_PLAYER(getOwner()).GetWoundedUnitDamageMod();
 
-		iDamageRatio = GC.getMAX_HIT_POINTS() - (iCurrentDamage * iWoundedDamageMultiplier / 100);
+		iDamageRatio = GetMaxHitPoints() - (iCurrentDamage * iWoundedDamageMultiplier / 100);
 	}
 
 	int iDamage = 0;
 
-	iDamage = /*400*/ GC.getATTACK_SAME_STRENGTH_MIN_DAMAGE() * iDamageRatio / GC.getMAX_HIT_POINTS();
+	iDamage = /*400*/ GC.getATTACK_SAME_STRENGTH_MIN_DAMAGE() * iDamageRatio / GetMaxHitPoints();
 
 	// Don't use rand when calculating projected combat results
 	int iRoll = 0;
@@ -2728,14 +2768,14 @@ int CvUnit::getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDa
 	{
 		iRoll = /*400*/ GC.getGame().getJonRandNum(GC.getATTACK_SAME_STRENGTH_POSSIBLE_EXTRA_DAMAGE(), "Unit Combat Damage");
 		iRoll *= iDamageRatio;
-		iRoll /= GC.getMAX_HIT_POINTS();
+		iRoll /= GetMaxHitPoints();
 	}
 	else
 	{
 		iRoll = /*400*/ GC.getATTACK_SAME_STRENGTH_POSSIBLE_EXTRA_DAMAGE();
 		iRoll -= 1;	// Subtract 1 here, because this is the amount normally "lost" when doing a rand roll
 		iRoll *= iDamageRatio;
-		iRoll /= GC.getMAX_HIT_POINTS();
+		iRoll /= GetMaxHitPoints();
 		iRoll /= 2;	// The divide by 2 is to provide the average damage
 	}
 	iDamage += iRoll;
@@ -2790,6 +2830,104 @@ int CvUnit::getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDa
 
 	return iDamage;
 }
+
+// RED <<<<<
+// Overloaded to use iDefenderMaxHitPoints when possible
+//	---------------------------------------------------------------------------
+int CvUnit::getCombatDamage(int iStrength, int iOpponentStrength, int iCurrentDamage, bool bIncludeRand, bool bAttackerIsCity, bool bDefenderIsCity, int iDefenderMaxHitPoints) const
+{
+	VALIDATE_OBJECT
+
+	// The roll will vary damage between 40 and 60 (out of 100) for two units of identical strength
+	int iDamageRatio;
+
+	int iWoundedDamageMultiplier = /*50*/ GC.getWOUNDED_DAMAGE_MULTIPLIER();
+
+	if (bAttackerIsCity)
+	{
+		iDamageRatio = GC.getMAX_CITY_HIT_POINTS();		// JON: Cities don't do less damage when wounded
+	}
+	else
+	{
+		// Mod (Policies, etc.)
+		iWoundedDamageMultiplier += GET_PLAYER(getOwner()).GetWoundedUnitDamageMod();
+
+		iDamageRatio = GetMaxHitPoints() - (iCurrentDamage * iWoundedDamageMultiplier / 100);
+	}
+
+	int iDamage = 0;
+
+	iDamage = /*400*/ GC.getATTACK_SAME_STRENGTH_MIN_DAMAGE() * iDamageRatio / GetMaxHitPoints();
+
+	// Don't use rand when calculating projected combat results
+	int iRoll = 0;
+	if (bIncludeRand)
+	{
+		iRoll = /*400*/ GC.getGame().getJonRandNum(GC.getATTACK_SAME_STRENGTH_POSSIBLE_EXTRA_DAMAGE(), "Unit Combat Damage");
+		iRoll *= iDamageRatio;
+		iRoll /= GetMaxHitPoints();
+	}
+	else
+	{
+		iRoll = /*400*/ GC.getATTACK_SAME_STRENGTH_POSSIBLE_EXTRA_DAMAGE();
+		iRoll -= 1;	// Subtract 1 here, because this is the amount normally "lost" when doing a rand roll
+		iRoll *= iDamageRatio;
+		iRoll /= GetMaxHitPoints();
+		iRoll /= 2;	// The divide by 2 is to provide the average damage
+	}
+	iDamage += iRoll;
+
+	// Calculations performed to dampen amount of damage by units that are close in strength
+	// RATIO = (((((ME / OPP) + 3) / 4) ^ 4) + 1) / 2
+	// Examples:
+	// 1.301 = (((((9 / 6) + 3) / 4) ^ 4) + 1 / 2
+	// 17.5 = (((((40 / 6) + 3) / 4) ^ 4) + 1 / 2
+
+	double fStrengthRatio = (double(iStrength) / iOpponentStrength);
+
+	// In case our strength is less than the other guy's, we'll do things in reverse then make the ratio 1 over the result (we need a # above 1.0)
+	if (iOpponentStrength > iStrength)
+	{
+		fStrengthRatio = (double(iOpponentStrength) / iStrength);
+	}
+
+	fStrengthRatio = (fStrengthRatio + 3) / 4;
+	fStrengthRatio = pow(fStrengthRatio, 4.0);
+	fStrengthRatio = (fStrengthRatio + 1) / 2;
+
+	if (iOpponentStrength > iStrength)
+	{
+		fStrengthRatio = 1 / fStrengthRatio;
+	}
+
+	iDamage = int(iDamage * fStrengthRatio);
+
+	// Modify damage for when a city "attacks" a unit
+	if (bAttackerIsCity)
+	{
+		iDamage *= /*50*/ GC.getCITY_ATTACKING_DAMAGE_MOD();
+		iDamage /= 100;
+	}
+
+	// Modify damage for when unit is attacking a city
+	if (bDefenderIsCity)
+	{
+		iDamage *= /*100*/ GC.getATTACKING_CITY_MELEE_DAMAGE_MOD();
+		iDamage /= 100;
+	}
+
+	// Bring it back out of hundreds
+	iDamage /= 100;
+
+	iDamage = iDamage > 0 ? iDamage : 1;
+
+	// RED <<<<<
+	iDamage = std::min(iDamage, int(iDefenderMaxHitPoints / 5)); // at least 5 shoots to kill any unit
+	// RED >>>>>
+
+	return iDamage;
+}
+// RED >>>
 
 //	--------------------------------------------------------------------------------
 void CvUnit::fightInterceptor(const CvPlot & pPlot)
@@ -3152,7 +3290,7 @@ int CvUnit::GetScrapGold() const
 	iNumGold /= 100;
 
 	// Modify amount based on current health
-	iNumGold *= 100 * (GC.getMAX_HIT_POINTS() - getDamage()) / GC.getMAX_HIT_POINTS();
+	iNumGold *= 100 * (GetMaxHitPoints() - getDamage()) / GetMaxHitPoints();
 	iNumGold /= 100;
 
 
@@ -3629,7 +3767,7 @@ bool CvUnit::canHold(const CvPlot* pPlot) const
 	if (isHuman() && !getFortifyTurns()) // we aren't fortified
 	{
 		// RED //if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
-		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
+		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOptionCanStackInCity()))
 		{
 			return false;
 		}
@@ -3637,7 +3775,7 @@ bool CvUnit::canHold(const CvPlot* pPlot) const
 
 	// slewis - make this an all player rule, not just humans!
 	// RED //if (isHuman() && pPlot->getPlotCity() && (GetBaseCombatStrength() > 0))
-	if (isHuman() && pPlot->getPlotCity() && (GetBaseCombatStrength() > 0) && !GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))
+	if (isHuman() && pPlot->getPlotCity() && (GetBaseCombatStrength() > 0) && !GC.getGame().isOptionCanStackInCity())
 	{
 		if (getDomainType() != DOMAIN_SEA)
 		{
@@ -3661,7 +3799,7 @@ bool CvUnit::canSleep(const CvPlot* pPlot) const
 	if (isHuman() && !getFortifyTurns()) // we aren't fortified
 	{
 		// RED //if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
-		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
+		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOptionCanStackInCity()))
 		{
 			return false;
 		}
@@ -3669,7 +3807,7 @@ bool CvUnit::canSleep(const CvPlot* pPlot) const
 
 	// slewis - make this an all player rule, not just humans!
 	// RED //if (IsCanAttack() && isHuman() && pPlot->getPlotCity() && getDomainType() != DOMAIN_AIR)
-	if (IsCanAttack() && isHuman() && pPlot->getPlotCity() && getDomainType() != DOMAIN_AIR && !GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))
+	if (IsCanAttack() && isHuman() && pPlot->getPlotCity() && getDomainType() != DOMAIN_AIR && !GC.getGame().isOptionCanStackInCity())
 	{
 		if (getDomainType() != DOMAIN_SEA)
 		{
@@ -3698,7 +3836,7 @@ bool CvUnit::canFortify(const CvPlot* pPlot) const
 	if (isHuman() && !getFortifyTurns()) // we aren't fortified
 	{
 		// RED //if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT())
-		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY")))
+		if (pPlot->getNumFriendlyUnitsOfType(this) > GC.getPLOT_UNIT_LIMIT() && !(pPlot->isCity() && GC.getGame().isOptionCanStackInCity()))
 		{
 			return false;
 		}
@@ -4702,7 +4840,7 @@ void CvUnit::DoAttrition()
 		}
 	}
 
-	if (getDamage() >= GC.getMAX_HIT_POINTS())
+	if (getDamage() >= GetMaxHitPoints())
 	{
 		CvString strBuffer;
 		CvNotifications* pNotification = GET_PLAYER(getOwner()).GetNotifications();
@@ -5107,10 +5245,16 @@ bool CvUnit::canRebaseAt(const CvPlot* pPlot, int iX, int iY) const
 		if (pToPlot->getPlotCity()->getOwner() == getOwner())
 		{
 			bCityToRebase = true;
+			// RED <<<<<
+			if(pToPlot->getNumFriendlyUnitsOfType(this) >= GC.getPLOT_UNIT_LIMIT()) // this is the civ5 way of testing stacking limit... 
+ 			{
+ 				return false;
+ 			}
+			// RED >>>>>
 		}
 		// RED <<<<<
 		// Allow air units to rebase in friendly cities.
-		if(GC.getGame().isOption("GAMEOPTION_REBASE_IN_FRIENDLY_CITY") )
+		if(GC.getGame().isOptionCanRebaseInFriendlyCity())
 		{
 			CvPlayer& pOwnerPlayer = GET_PLAYER(pToPlot->getPlotCity()->getOwner());
 			CvTeam& pOwnerTeam = GET_TEAM(pOwnerPlayer.getTeam());
@@ -7584,7 +7728,8 @@ bool CvUnit::isInCombat() const
 int CvUnit::GetMaxHitPoints() const
 {
 	VALIDATE_OBJECT
-	return GC.getMAX_HIT_POINTS();
+	//return GC.getMAX_HIT_POINTS();
+	return getUnitInfo().GetMaxHP();
 }
 
 
@@ -7675,7 +7820,7 @@ int CvUnit::GetBaseCombatStrengthConsideringDamage() const
 	int iDamageMod = m_iDamage * iWoundedDamageMultiplier / 100;
 
 	// Reduce strength points based on damage mod calculated above. Example: 4 damage will normally reduce a 20 strength Unit by 2/10ths, or 1/5, or 4, making it effectively a 16
-	iStrength -= (iStrength * iDamageMod / GC.getMAX_HIT_POINTS());
+	iStrength -= (iStrength * iDamageMod / GetMaxHitPoints());
 
 	return iStrength;
 }
@@ -8454,27 +8599,27 @@ int CvUnit::GetAirCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bInc
 	// The roll will vary damage between 30 and 40 (out of 100) for two units of identical strength
 
 	// Note, 0 is valid - means we don't do anything
-	int iAttackerDamageRatio = GC.getMAX_HIT_POINTS() - getDamage() - iAssumeExtraDamage;
+	int iAttackerDamageRatio = GetMaxHitPoints() - getDamage() - iAssumeExtraDamage;
 	if (iAttackerDamageRatio < 0)
 		iAttackerDamageRatio = 0;
 
 	int iAttackerDamage = /*250*/ GC.getRANGE_ATTACK_SAME_STRENGTH_MIN_DAMAGE();
 	iAttackerDamage *= iAttackerDamageRatio;
-	iAttackerDamage /= GC.getMAX_HIT_POINTS();
+	iAttackerDamage /= GetMaxHitPoints();
 
 	int iAttackerRoll = 0;
 	if (bIncludeRand)
 	{
 		iAttackerRoll = /*300*/ GC.getGame().getJonRandNum(GC.getRANGE_ATTACK_SAME_STRENGTH_POSSIBLE_EXTRA_DAMAGE(), "Unit Ranged Combat Damage");
 		iAttackerRoll *= iAttackerDamageRatio;
-		iAttackerRoll /= GC.getMAX_HIT_POINTS();
+		iAttackerRoll /= GetMaxHitPoints();
 	}
 	else
 	{
 		iAttackerRoll = /*300*/ GC.getRANGE_ATTACK_SAME_STRENGTH_POSSIBLE_EXTRA_DAMAGE();
 		iAttackerRoll -= 1;	// Subtract 1 here, because this is the amount normally "lost" when doing a rand roll
 		iAttackerRoll *= iAttackerDamageRatio;
-		iAttackerRoll /= GC.getMAX_HIT_POINTS();
+		iAttackerRoll /= GetMaxHitPoints();
 		iAttackerRoll /= 2;	// The divide by 2 is to provide the average damage
 	}
 	iAttackerDamage += iAttackerRoll;
@@ -8509,7 +8654,10 @@ int CvUnit::GetAirCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bInc
 	iAttackerDamage = max(1,iAttackerDamage);
 
 	// RED <<<<<
-	iAttackerDamage = min(iAttackerDamage, int(GC.getMAX_HIT_POINTS() / 5)); // at least 5 shoots to kill any unit
+	if (pCity == NULL)
+		iAttackerDamage = min(iAttackerDamage, int(pDefender->GetMaxHitPoints() / 5)); // at least 5 shoots to kill any unit
+	else		
+		iAttackerDamage = min(iAttackerDamage, int(GC.getMAX_CITY_HIT_POINTS() / 5)); // at least 5 shoots to kill any city
 	// RED >>>>>
 
 	return iAttackerDamage;
@@ -8562,27 +8710,27 @@ int CvUnit::GetRangeCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bI
 	iWoundedDamageMultiplier += kPlayer.GetWoundedUnitDamageMod();
 
 
-	int iAttackerDamageRatio = GC.getMAX_HIT_POINTS() - ((getDamage() - iAssumeExtraDamage) * iWoundedDamageMultiplier / 100);
+	int iAttackerDamageRatio = GetMaxHitPoints() - ((getDamage() - iAssumeExtraDamage) * iWoundedDamageMultiplier / 100);
 	if (iAttackerDamageRatio < 0)
 		iAttackerDamageRatio = 0;
 
 	int iAttackerDamage = /*250*/ GC.getRANGE_ATTACK_SAME_STRENGTH_MIN_DAMAGE();
 	iAttackerDamage *= iAttackerDamageRatio;
-	iAttackerDamage /= GC.getMAX_HIT_POINTS();
+	iAttackerDamage /= GetMaxHitPoints();
 
 	int iAttackerRoll = 0;
 	if (bIncludeRand)
 	{
 		iAttackerRoll = /*300*/ GC.getGame().getJonRandNum(GC.getRANGE_ATTACK_SAME_STRENGTH_POSSIBLE_EXTRA_DAMAGE(), "Unit Ranged Combat Damage");
 		iAttackerRoll *= iAttackerDamageRatio;
-		iAttackerRoll /= GC.getMAX_HIT_POINTS();
+		iAttackerRoll /= GetMaxHitPoints();
 	}
 	else
 	{
 		iAttackerRoll = /*300*/ GC.getRANGE_ATTACK_SAME_STRENGTH_POSSIBLE_EXTRA_DAMAGE();
 		iAttackerRoll -= 1;	// Subtract 1 here, because this is the amount normally "lost" when doing a rand roll
 		iAttackerRoll *= iAttackerDamageRatio;
-		iAttackerRoll /= GC.getMAX_HIT_POINTS();
+		iAttackerRoll /= GetMaxHitPoints();
 		iAttackerRoll /= 2;	// The divide by 2 is to provide the average damage
 	}
 	iAttackerDamage += iAttackerRoll;
@@ -8613,7 +8761,10 @@ int CvUnit::GetRangeCombatDamage(const CvUnit* pDefender, CvCity* pCity, bool bI
 	iAttackerDamage = max(1,iAttackerDamage);
 
 	// RED <<<<<
-	iAttackerDamage = min(iAttackerDamage, int(GC.getMAX_HIT_POINTS() / 5)); // at least 5 shoots to kill any unit
+	if (pCity == NULL)
+		iAttackerDamage = min(iAttackerDamage, int(pDefender->GetMaxHitPoints() / 5)); // at least 5 shoots to kill any unit
+	else		
+		iAttackerDamage = min(iAttackerDamage, int(GC.getMAX_CITY_HIT_POINTS() / 5)); // at least 5 shoots to kill any city
 	// RED >>>>>
 
 	return iAttackerDamage;
@@ -8636,22 +8787,22 @@ int CvUnit::GetAirStrikeDefenseDamage(const CvUnit* pAttacker, bool bIncludeRand
 	if (iDefenderStrength == 0)
 		return 0;
 
-	int iDefenderDamageRatio = GC.getMAX_HIT_POINTS() - getDamage();
-	int iDefenderDamage = /*200*/ GC.getAIR_STRIKE_SAME_STRENGTH_MIN_DEFENSE_DAMAGE() * iDefenderDamageRatio / GC.getMAX_HIT_POINTS();
+	int iDefenderDamageRatio = GetMaxHitPoints() - getDamage();
+	int iDefenderDamage = /*200*/ GC.getAIR_STRIKE_SAME_STRENGTH_MIN_DEFENSE_DAMAGE() * iDefenderDamageRatio / GetMaxHitPoints();
 
 	int iDefenderRoll = 0;
 	if (bIncludeRand)
 	{
 		iDefenderRoll = /*200*/ GC.getGame().getJonRandNum(GC.getAIR_STRIKE_SAME_STRENGTH_POSSIBLE_EXTRA_DEFENSE_DAMAGE(), "Unit Air Strike Combat Damage");
 		iDefenderRoll *= iDefenderDamageRatio;
-		iDefenderRoll /= GC.getMAX_HIT_POINTS();
+		iDefenderRoll /= GetMaxHitPoints();
 	}
 	else
 	{
 		iDefenderRoll = /*200*/ GC.getAIR_STRIKE_SAME_STRENGTH_POSSIBLE_EXTRA_DEFENSE_DAMAGE();
 		iDefenderRoll -= 1;	// Subtract 1 here, because this is the amount normally "lost" when doing a rand roll
 		iDefenderRoll *= iDefenderDamageRatio;
-		iDefenderRoll /= GC.getMAX_HIT_POINTS();
+		iDefenderRoll /= GetMaxHitPoints();
 		iDefenderRoll /= 2;	// The divide by 2 is to provide the average damage
 	}
 	iDefenderDamage += iDefenderRoll;
@@ -8677,7 +8828,7 @@ int CvUnit::GetAirStrikeDefenseDamage(const CvUnit* pAttacker, bool bIncludeRand
 	iDefenderDamage = max(1,iDefenderDamage);
 
 	// RED <<<<<
-	iDefenderDamage = min(iDefenderDamage, int(GC.getMAX_HIT_POINTS() / 5)); // at least 5 shoots to kill any unit
+	iDefenderDamage = min(iDefenderDamage, int(pAttacker->GetMaxHitPoints() / 5)); // at least 5 shoots to kill any unit
 	// RED >>>>>
 
 	return iDefenderDamage;
@@ -8743,7 +8894,7 @@ CvUnit* CvUnit::GetBestInterceptor(const CvPlot & interceptPlot, CvUnit* pkDefen
 	return pBestUnit;
 }
 
-// <<<<< RED: only take air interceptor on some missions
+// RED <<<<<: only take air interceptor on some missions
 //	--------------------------------------------------------------------------------
 CvUnit* CvUnit::GetBestAirInterceptor(const CvPlot & interceptPlot, CvUnit* pkDefender /* = NULL */) const
 {
@@ -8829,22 +8980,22 @@ int CvUnit::GetInterceptionDamage(const CvUnit* pAttacker, bool bIncludeRand) co
 
 	// The roll will vary damage between 2 and 3 (out of 10) for two units of identical strength
 
-	int iInterceptorDamageRatio = GC.getMAX_HIT_POINTS() - getDamage();
-	int iInterceptorDamage = /*400*/ GC.getINTERCEPTION_SAME_STRENGTH_MIN_DAMAGE() * iInterceptorDamageRatio / GC.getMAX_HIT_POINTS();
+	int iInterceptorDamageRatio = GetMaxHitPoints() - getDamage();
+	int iInterceptorDamage = /*400*/ GC.getINTERCEPTION_SAME_STRENGTH_MIN_DAMAGE() * iInterceptorDamageRatio / GetMaxHitPoints();
 
 	int iInterceptorRoll = 0;
 	if (bIncludeRand)
 	{
 		iInterceptorRoll = /*300*/ GC.getGame().getJonRandNum(GC.getINTERCEPTION_SAME_STRENGTH_POSSIBLE_EXTRA_DAMAGE(), "Interception Combat Damage");
 		iInterceptorRoll *= iInterceptorDamageRatio;
-		iInterceptorRoll /= GC.getMAX_HIT_POINTS();
+		iInterceptorRoll /= GetMaxHitPoints();
 	}
 	else
 	{
 		iInterceptorRoll = /*300*/ GC.getINTERCEPTION_SAME_STRENGTH_POSSIBLE_EXTRA_DAMAGE();
 		iInterceptorRoll -= 1;	// Subtract 1 here, because this is the amount normally "lost" when doing a rand roll
 		iInterceptorRoll *= iInterceptorDamageRatio;
-		iInterceptorRoll /= GC.getMAX_HIT_POINTS();
+		iInterceptorRoll /= GetMaxHitPoints();
 		iInterceptorRoll /= 2;	// The divide by 2 is to provide the average damage
 	}
 	iInterceptorDamage += iInterceptorRoll;
@@ -8878,7 +9029,7 @@ int CvUnit::GetInterceptionDamage(const CvUnit* pAttacker, bool bIncludeRand) co
 	iInterceptorDamage = max(1,iInterceptorDamage);
 
 	// RED <<<<<
-	iInterceptorDamage = min(iInterceptorDamage, int(GC.getMAX_HIT_POINTS() / 5)); // at least 5 shoots to kill any unit
+	iInterceptorDamage = min(iInterceptorDamage, int(pAttacker->GetMaxHitPoints() / 5)); // at least 5 shoots to kill any unit
 	// RED >>>>>
 
 	return iInterceptorDamage;
@@ -10815,6 +10966,8 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 		LuaSupport::CallHook(pkScriptSystem, "UnitSetXY", args.get(), bResult);
 	}
 
+	capturePlot(pNewPlot); // RED
+
 	if (bOwnerIsActivePlayer)
 		DLLUI->SetDontShowPopups(false);
 }
@@ -11036,7 +11189,7 @@ void CvUnit::setDamage(int iNewValue, PlayerTypes ePlayer, float fAdditionalText
 			if (!IsDead())
 			{
 				CvString text;
-				iNewValue = MIN(GC.getMAX_HIT_POINTS(),iNewValue);
+				iNewValue = MIN(GetMaxHitPoints(),iNewValue);
 				int iDiff = iOldValue - iNewValue;
 				if( iNewValue < iOldValue )
 				{
@@ -12859,26 +13012,6 @@ void CvUnit::rotateFacingDirectionCounterClockwise()
 	setFacingDirection(newDirection);
 }
 
-// RED <<<<<
-//	--------------------------------------------------------------------------------
-bool CvUnit::isMarkedBestDefender() const
-{
-	VALIDATE_OBJECT
-
-	return m_bBestDefender;
-}
-
-//	--------------------------------------------------------------------------------
-void CvUnit::setMarkedBestDefender(bool bNewValue)
-{
-	VALIDATE_OBJECT
-	if (bNewValue != isMarkedBestDefender())
-	{
-		m_bBestDefender = bNewValue;
-	}
-}
-// RED >>>>>
-
 //	--------------------------------------------------------------------------------
 bool CvUnit::isOutOfAttacks() const
 {
@@ -12923,27 +13056,6 @@ void CvUnit::ChangeNumInterceptions(int iChange)
 	if (iChange != 0)
 		m_iNumInterceptions += iChange;
 }
-
-// RED <<<<<
-//	--------------------------------------------------------------------------------
-bool CvUnit::isSpecialType() const
-{
-	VALIDATE_OBJECT
-
-	return m_bIsSpecialType;
-}
-
-
-//	--------------------------------------------------------------------------------
-void CvUnit::setIsSpecialType(bool bNewValue)
-{
-	VALIDATE_OBJECT
-	if (bNewValue != isSpecialType())
-	{
-		m_bIsSpecialType = bNewValue;
-	}
-}
-// RED >>>>>
 
 //	--------------------------------------------------------------------------------
 bool CvUnit::isOutOfInterceptions() const
@@ -14223,17 +14335,6 @@ bool CvUnit::AreUnitsOfSameType(const CvUnit & pUnit2, const bool bPretendEmbark
 	{
 		return true;
 	}
-	
-	// RED <<<<<
-	bool bUnit1isSpecial = isSpecialType();
-	bool bUnit2isSpecial = pUnit2.isSpecialType();
-	bool bSameOwner = getOwner() == pUnit2.getOwner();
-	// Allow stacking with special units, but don't allow 2 special units to stack... 
-	if (bSameOwner && (bUnit1isSpecial || bUnit2isSpecial) && !(bUnit1isSpecial && bUnit2isSpecial))
-	{
-		return false;
-	}
-	// RED >>>>>
 
 	return CvGameQueries::AreUnitsSameType(getUnitType(), pUnit2.getUnitType());
 }
@@ -14519,6 +14620,13 @@ bool CvUnit::canRangeStrike() const
 		}
 	}
 
+	// RED <<<<<
+	if (isOnlySupportFire() && !isProvidingSupportFire())
+	{
+		return false;
+	}
+	// RED >>>>>
+
 	if (isOutOfAttacks())
 	{
 		return false;
@@ -14758,7 +14866,7 @@ bool CvUnit::canAirSweepAt(int iX, int iY) const
 	}
 
 	// Have to be able to see the target plot
-	// <<<<< RED : no need for visibility to airsweep, we're also doing recon here
+	// RED <<<<< : no need for visibility to airsweep, we're also doing recon here
 	/*
 	if (!pTargetPlot->isVisible(getTeam()))
 	{
@@ -15451,6 +15559,9 @@ bool CvUnit::UnitAttack(int iX, int iY, int iFlags, int iSteps)
 	CvMap& kMap = GC.getMap();
 	CvPlot* pDestPlot = kMap.plot(iX, iY);
 
+	// RED <<<<<
+	// This is called too late (after moving) with multiple units per tile allowed...
+	/*
 	if (isHuman() && getOwner() == GC.getGame().getActivePlayer())
 	{
 		TeamTypes eRivalTeam = GetDeclareWarMove(*pDestPlot);
@@ -15483,6 +15594,7 @@ bool CvUnit::UnitAttack(int iX, int iY, int iFlags, int iSteps)
 			return false;
 		}
 	}
+	// RED >>>>> */
 
 	const CvPathNodeArray& kPathNodeArray = GetPathNodeArray();
 
@@ -17625,3 +17737,203 @@ FDataStream & operator>>(FDataStream & loadFrom, CvUnit & writeTo)
 	writeTo.read(loadFrom);
 	return loadFrom;
 }
+
+
+// RED <<<<<
+
+//	--------------------------------------------------------------------------------
+bool CvUnit::isMarkedBestDefender() const
+{
+	VALIDATE_OBJECT
+
+	return m_bBestDefender;
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setMarkedBestDefender(bool bNewValue)
+{
+	VALIDATE_OBJECT
+	if (bNewValue != isMarkedBestDefender())
+	{
+		m_bBestDefender = bNewValue;
+	}
+}
+
+//	--------------------------------------------------------------------------------
+/// MaxHP of this unit
+int CvUnit::getMaxHP() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().GetMaxHP();
+}
+
+//	--------------------------------------------------------------------------------
+/// Weight of this unit on a plot for stacking limit
+int CvUnit::getStackValue() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().GetStackValue();
+}
+
+//	--------------------------------------------------------------------------------
+/// Can this Unit execute only support fire attack ?
+bool CvUnit::isOnlySupportFire() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().IsOnlySupportFire();
+}
+
+//	--------------------------------------------------------------------------------
+/// Can this Unit execute offensive support fire attack ?
+bool CvUnit::isOffensiveSupportFire() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().IsOffensiveSupportFire();
+}
+
+//	--------------------------------------------------------------------------------
+/// Can this Unit execute defensive support fire attack ?
+bool CvUnit::isDefensiveSupportFire() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().IsDefensiveSupportFire();
+}
+
+
+//	--------------------------------------------------------------------------------
+bool CvUnit::hasCounterFireCapability() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().HasCounterFireCapability();
+}
+
+//	--------------------------------------------------------------------------------
+/// Can this Unit execute counter fire against pUnit ?
+bool CvUnit::canCounterFire(CvUnit* pUnit) const
+{
+	if (!hasCounterFireCapability())
+		return false;
+
+	if (isCounterFireSameCombatTypeOnly() && (getUnitCombatType() != pUnit->getUnitCombatType()))
+		return false;
+
+	return true;
+}
+
+//	--------------------------------------------------------------------------------
+bool CvUnit::isCounterFireSameCombatTypeOnly() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().IsCounterFireSameCombatTypeOnly();
+}
+
+//	--------------------------------------------------------------------------------
+/// Is this Unit actually trying to provide support fire ?
+bool CvUnit::isProvidingSupportFire() const
+{
+	VALIDATE_OBJECT
+
+	return m_bProvidingSupportFire;
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setSupportFireState(bool bNewValue)
+{
+
+	VALIDATE_OBJECT
+
+	CvString redLogMessage;
+	FILogFile* pLog = LOGFILEMGR.GetLog("red_support_fire_state_debug.log", FILogFile::kDontTimeStamp);	
+	if (bNewValue == true)
+	{
+		redLogMessage.Format("1- Mark %s (ID= %d - player= %d) to provide support fire", getNameKey(), GetID(), getOwner());
+		pLog->Msg("-----------------------------------------------------");
+		pLog->Msg(redLogMessage);
+		m_bProvidingSupportFire = bNewValue;
+	}
+	else
+	{
+		redLogMessage.Format("2- Remove %s (ID= %d - player= %d) from providing support fire", getNameKey(), GetID(), getOwner());
+		pLog->Msg(redLogMessage);
+		pLog->Msg("-----------------------------------------------------");	
+		m_bProvidingSupportFire = bNewValue;
+	}
+
+	/*
+	if (bNewValue != isProvidingSupportFire())
+	{
+		m_bProvidingSupportFire = bNewValue;
+	}
+	//*/
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::capturePlot(CvPlot* pPlot)
+{
+
+	VALIDATE_OBJECT
+	
+	if (pPlot == NULL)
+		return;
+
+	if (pPlot->isCity() || pPlot->isWater())
+		return;
+
+	if (!IsCombatUnit())
+		return;
+
+	if (getOwner() != pPlot->getOwner() && pPlot->getOwner() != NO_PLAYER)
+	{
+		PlayerTypes eUnitOwner = getOwner();
+		PlayerTypes ePlotOwner = pPlot->getOwner();
+		PlayerTypes ePlotOriginalOwner = pPlot->getOriginalOwner();
+
+		if (GET_TEAM(GET_PLAYER(eUnitOwner).getTeam()).isAtWar(GET_PLAYER(ePlotOwner).getTeam())) // player are at war ?
+		{
+			// Shall we liberate that plot ?
+			bool bLiberated = false;
+
+			if (ePlotOriginalOwner != eUnitOwner && ePlotOriginalOwner != NO_PLAYER && ePlotOriginalOwner != ePlotOwner) // The original owner is not the unit owner or the curent owner
+			{
+				if (GET_TEAM(GET_PLAYER(ePlotOriginalOwner).getTeam()).isAtWar(GET_PLAYER(ePlotOwner).getTeam())) // The original owner is at war with the curent owner
+				{
+					if (!GET_TEAM(GET_PLAYER(ePlotOriginalOwner).getTeam()).isAtWar(GET_PLAYER(eUnitOwner).getTeam()))  // The original owner is not at war with the unit owner
+					{
+
+						if (GET_PLAYER(ePlotOriginalOwner).isMinorCiv() && !GET_PLAYER(eUnitOwner).isMinorCiv())
+						{
+							CvMinorCivAI* pMinorAI = GET_PLAYER(ePlotOriginalOwner).GetMinorCivAI();
+							if (pMinorAI->IsFriends(eUnitOwner))  // a major civ is liberating a friend minor territory
+							{
+								pMinorAI->ChangeFriendshipWithMajor(eUnitOwner, GC.getLIBERATE_PLOT_CS_BONUS(), /*bFromQuest*/ false);
+								if(eUnitOwner == GC.getGame().getActivePlayer())
+								{
+									CvString strBuffer = GetLocalizedText("TXT_KEY_MISC_LIBERATE_MINOR_PLOT_BONUS", GC.getLIBERATE_PLOT_CS_BONUS(), GET_PLAYER(ePlotOriginalOwner).getNameKey());
+									GC.GetEngineUserInterface()->AddMessage(0, eUnitOwner, true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+									bLiberated = true;
+								}
+							}
+						}
+
+						if (!GET_PLAYER(ePlotOriginalOwner).isMinorCiv() && !GET_PLAYER(eUnitOwner).isMinorCiv())
+						{
+							if (!GET_TEAM(GET_PLAYER(ePlotOriginalOwner).getTeam()).IsAllowsOpenBordersToTeam(GET_PLAYER(eUnitOwner).getTeam())) 
+								bLiberated = true;
+						}
+
+						if (bLiberated)
+						{
+							pPlot->setOwner(ePlotOriginalOwner, -1, /*bCheckUnits*/ false);	
+						}
+					}
+				}
+			}
+
+			if (!bLiberated) 
+			{			
+				pPlot->setOwner(eUnitOwner, -1, /*bCheckUnits*/ false);
+			}			
+		}
+	}
+}
+// RED >>>>>

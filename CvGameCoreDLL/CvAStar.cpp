@@ -1403,7 +1403,7 @@ int PathValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poin
 		}
 	}
 
-	// <<<<< RED - if we're a naval unit at end of moves, make sure we're not stopping on a tile with an enemy unit...
+	// RED <<<<< - if we're a naval unit at end of moves, make sure we're not stopping on a tile with an enemy unit...
 	if (bNavalMoveThrough && parent->m_iData1 == 0)
 	{
 		const IDInfo* pUnitNode = pFromPlot->headUnitNode();

@@ -113,6 +113,16 @@ public:
 
 	const char* GetUnitNames(int i) const;
 
+	// RED <<<<<
+	int GetMaxHP() const;
+	int GetStackValue() const;
+	bool IsOffensiveSupportFire() const;
+	bool IsDefensiveSupportFire() const;
+	bool HasCounterFireCapability() const;
+	bool IsOnlySupportFire() const;
+	bool IsCounterFireSameCombatTypeOnly() const;
+	// RED >>>>>
+
 	// Accessor Functions (Arrays)
 	int GetPrereqAndTechs(int i) const;
 	int GetResourceQuantityRequirement(int i) const;
@@ -207,6 +217,16 @@ private:
 	int m_iProjectPrereq;
 	int m_iSpaceshipProject;
 	int m_iLeaderPromotion;
+
+	// RED <<<<<<
+	int m_iMaxHP;
+	int m_iStackValue;
+	bool m_bOffensiveSupportFire;
+	bool m_bDefensiveSupportFire;
+	bool m_bCounterFire;
+	bool m_bCounterFireSameCombatType;
+	bool m_bOnlySupportFire;
+	// RED >>>>>
 
 	// This is not loaded from XML, but cached so we don't have to recalculate every time
 	int m_iCachedPower;

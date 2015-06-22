@@ -360,21 +360,11 @@ protected:
 	static int lGetUpgradeDiscount(lua_State* L);
 	static int lGetExperiencePercent(lua_State* L);
 	static int lGetKamikazePercent(lua_State* L);
-	
-	// RED <<<<<
-	static int lIsMarkedBestDefender(lua_State* L);
-	static int lSetMarkedBestDefender(lua_State* L);
-	// RED >>>>>
 
 	static int lIsOutOfAttacks(lua_State* L);
 	static int lSetMadeAttack(lua_State* L);
 	static int lisOutOfInterceptions(lua_State* L);
 	static int lSetMadeInterception(lua_State* L);
-
-	// RED
-	static int lIsSpecialType(lua_State* L);
-	static int lSetIsSpecialType(lua_State* L);
-	// RED
 
 	static int lIsPromotionReady(lua_State* L);
 	static int lSetPromotionReady(lua_State* L);
@@ -443,7 +433,12 @@ protected:
 
 	static int lExecuteSpecialExploreMove(lua_State* L);
 
-	static int lSetDeployFromOperationTurn(lua_State* L);
+	static int lSetDeployFromOperationTurn(lua_State* L);	
+	
+	// RED <<<<<
+	static int lIsMarkedBestDefender(lua_State* L);
+	static int lSetMarkedBestDefender(lua_State* L);
+	// RED >>>>>
 };
 
 

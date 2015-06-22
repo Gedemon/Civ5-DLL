@@ -238,6 +238,11 @@ m_syncArchive(*this)
 , m_abBaseYieldRankValid("CvCity::m_abBaseYieldRankValid", m_syncArchive)
 , m_aiYieldRank("CvCity::m_aiYieldRank", m_syncArchive)
 , m_abYieldRankValid("CvCity::m_abYieldRankValid", m_syncArchive)
+// RED <<<<<
+, m_iAirStackLimit("CvCity::m_iAirStackLimit", m_syncArchive)
+, m_iLandStackLimit("CvCity::m_iLandStackLimit", m_syncArchive)
+, m_iSeaStackLimit("CvCity::m_iSeaStackLimit", m_syncArchive)
+// RED >>>>>
 {
 	OBJECT_ALLOCATED
 	FSerialization::citiesToCheck.insert(this);
@@ -837,6 +842,11 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 
 		AI_reset();
 	}
+	// RED <<<<<
+	m_iAirStackLimit = 0;
+	m_iLandStackLimit = 0;
+	m_iSeaStackLimit = 0;
+	// RED >>>>>
 }
 
 
@@ -2122,6 +2132,56 @@ bool CvCity::canTrain(UnitTypes eUnit, bool bContinue, bool bTestVisible, bool b
 
 	if (!bTestVisible)
 	{
+		
+		// RED <<<<<
+		// Do not allow construction of new units when a stacking limit is reached
+		if(pkUnitEntry->GetStackValue() > 0)
+		{
+			CvPlot* pPlot = plot();
+
+			const IDInfo* pUnitNode;
+			const CvUnit* pLoopUnit;
+
+			pUnitNode = pPlot->headUnitNode();
+
+			bool bLimit = false;
+			int iWeight = 0;
+
+			while(pUnitNode != NULL)
+			{
+				pLoopUnit = ::getUnit(*pUnitNode);
+				pUnitNode = pPlot->nextUnitNode(pUnitNode);
+
+				if(pLoopUnit != NULL)
+				{
+					// Units of the same type
+					if(CvGameQueries::AreUnitsSameType(eUnit, pLoopUnit->getUnitType()))
+					{
+						iWeight = pPlot->getNumFriendlyUnitsOfType(pLoopUnit) + pkUnitEntry->GetStackValue();
+						if(iWeight >= GC.getPLOT_UNIT_LIMIT())
+						{
+							bLimit = true;
+							break;
+						}
+					}
+				}
+			}
+			if (bLimit)
+			{
+				if (pkUnitEntry->GetDomainType() == DOMAIN_AIR)
+				{
+					GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_NO_ACTION_AIR_STACKING_LIMIT", "", "", std::max(GC.getCITY_AIR_UNIT_LIMIT(), getAirStackLimit()));
+				} else if (pkUnitEntry->GetDomainType() == DOMAIN_LAND) {
+					GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_NO_ACTION_LAND_STACKING_LIMIT", "", "", std::max(GC.getCITY_LAND_UNIT_LIMIT(), getLandStackLimit()));
+				} else { // sea
+					GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_NO_ACTION_SEA_STACKING_LIMIT", "", "", std::max(GC.getCITY_SEA_UNIT_LIMIT(), getSeaStackLimit()));
+				}
+				if(toolTipSink == NULL)
+					return false;
+			}
+		}
+		// RED >>>>>
+
 		CvUnitEntry& thisUnitInfo = *pkUnitEntry;
 		// Settlers may not be trained in Cities that are too small
 		if (thisUnitInfo.IsFound() || thisUnitInfo.IsFoundAbroad())
@@ -8922,7 +8982,7 @@ void CvCity::updateStrengthValue()
 	{
 		if (!pGarrisonedUnit->isOutOfAttacks())
 		{
-			int iMaxHits = GC.getMAX_HIT_POINTS();
+			int iMaxHits = pGarrisonedUnit->GetMaxHitPoints(); // RED change MaxHP
 			iStrengthFromUnits = pGarrisonedUnit->GetBaseCombatStrength() * 100 * (iMaxHits - pGarrisonedUnit->getDamage()) / iMaxHits;
 		}
 	}
@@ -11689,6 +11749,12 @@ void CvCity::read(FDataStream& kStream)
 	m_pCityCitizens->Read(kStream);
 	m_pEmphases->Read(kStream);
 
+	// RED <<<<<
+	kStream >> m_iAirStackLimit;
+	kStream >> m_iLandStackLimit;
+	kStream >> m_iSeaStackLimit;
+	// RED >>>>>
+
 }
 
 //	--------------------------------------------------------------------------------
@@ -11897,6 +11963,12 @@ void CvCity::write(FDataStream& kStream) const
 	m_pCityStrategyAI->Write(kStream);
 	m_pCityCitizens->Write(kStream);
 	m_pEmphases->Write(kStream);
+
+	// RED <<<<<
+	kStream << m_iAirStackLimit;
+	kStream << m_iLandStackLimit;
+	kStream << m_iSeaStackLimit;
+	// RED >>>>>
 
 }
 
@@ -13226,3 +13298,102 @@ bool CvCity::isFighting() const
 {
 	return getCombatUnit() != NULL;
 }
+
+// RED <<<<<
+//	--------------------------------------------------------------------------------
+int CvCity::getAirStackLimit() const
+{
+	VALIDATE_OBJECT
+	return m_iAirStackLimit;
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::setAirStackLimit(int iValue)
+{
+
+	VALIDATE_OBJECT
+
+	if(iValue < -1)
+		iValue = -1;
+
+	if(iValue != getAirStackLimit())
+	{
+		m_iAirStackLimit = iValue;
+	}
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::changeAirStackLimit(int iChange)
+{
+	VALIDATE_OBJECT
+	if(0 != iChange)
+	{
+		setAirStackLimit(getAirStackLimit() + iChange);
+	}
+}
+
+//	--------------------------------------------------------------------------------
+int CvCity::getLandStackLimit() const
+{
+	VALIDATE_OBJECT
+	return m_iLandStackLimit;
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::setLandStackLimit(int iValue)
+{
+
+	VALIDATE_OBJECT
+
+	if(iValue < -1)
+		iValue = -1;
+
+	if(iValue != getLandStackLimit())
+	{
+		m_iLandStackLimit = iValue;
+	}
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::changeLandStackLimit(int iChange)
+{
+	VALIDATE_OBJECT
+	if(0 != iChange)
+	{
+		setLandStackLimit(getLandStackLimit() + iChange);
+	}
+}
+
+//	--------------------------------------------------------------------------------
+int CvCity::getSeaStackLimit() const
+{
+	VALIDATE_OBJECT
+	return m_iSeaStackLimit;
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::setSeaStackLimit(int iValue)
+{
+
+	VALIDATE_OBJECT
+
+	if(iValue < -1)
+		iValue = -1;
+
+	if(iValue != getSeaStackLimit())
+	{
+		m_iSeaStackLimit = iValue;
+	}
+}
+
+//	--------------------------------------------------------------------------------
+void CvCity::changeSeaStackLimit(int iChange)
+{
+	VALIDATE_OBJECT
+	if(0 != iChange)
+	{
+		setSeaStackLimit(getSeaStackLimit() + iChange);
+	}
+}
+
+// RED >>>>>

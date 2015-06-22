@@ -95,7 +95,17 @@ m_paszUnitNames(NULL),
 m_bUnitArtInfoEraVariation(false),
 m_bUnitArtInfoCulturalVariation(false),
 m_iUnitFlagIconOffset(0),
-m_iUnitPortraitOffset(0)
+m_iUnitPortraitOffset(0),
+
+// RED <<<<<
+m_iMaxHP(75),
+m_iStackValue(1),
+m_bOffensiveSupportFire(false),
+m_bDefensiveSupportFire(false),
+m_bCounterFire(false),
+m_bCounterFireSameCombatType(false),
+m_bOnlySupportFire(false)
+// RED >>>>>
 {
 }
 
@@ -179,6 +189,16 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	m_strUnitArtInfoTag = kResults.GetText("UnitArtInfo");
 	m_bUnitArtInfoCulturalVariation = kResults.GetBool("UnitArtInfoCulturalVariation");
 	m_bUnitArtInfoEraVariation = kResults.GetBool("UnitArtInfoEraVariation");
+
+	// RED <<<<<
+	m_iMaxHP = kResults.GetInt("MaxHP");
+	m_iStackValue = kResults.GetInt("StackValue");
+	m_bOffensiveSupportFire = kResults.GetBool("OffensiveSupportFire");
+	m_bDefensiveSupportFire = kResults.GetBool("DefensiveSupportFire");
+	m_bCounterFire = kResults.GetBool("CounterFire");
+	m_bCounterFireSameCombatType = kResults.GetBool("CounterFireSameCombatType");
+	m_bOnlySupportFire = kResults.GetBool("OnlySupportFire");
+	// RED >>>>>
 
 	//References
 	const char* szTextVal = NULL;
@@ -1275,3 +1295,48 @@ void UnitArrayHelpers::Write(FDataStream &kStream, int *paiUnitArray, int iArray
 		}
 	}
 }
+
+// RED <<<<<
+
+/// 
+int CvUnitEntry::GetMaxHP() const
+{
+	return m_iMaxHP;
+}
+/// 
+int CvUnitEntry::GetStackValue() const
+{
+	return m_iStackValue;
+}
+
+/// 
+bool CvUnitEntry::IsOffensiveSupportFire() const
+{
+	return m_bOffensiveSupportFire;
+}
+
+/// 
+bool CvUnitEntry::IsDefensiveSupportFire() const
+{
+	return m_bDefensiveSupportFire;
+}
+
+/// 
+bool CvUnitEntry::HasCounterFireCapability() const
+{
+	return m_bCounterFire;
+}
+
+/// 
+bool CvUnitEntry::IsOnlySupportFire() const
+{
+	return m_bOnlySupportFire;
+}
+
+/// 
+bool CvUnitEntry::IsCounterFireSameCombatTypeOnly() const
+{
+	return m_bCounterFireSameCombatType;
+}
+
+// RED >>>>>

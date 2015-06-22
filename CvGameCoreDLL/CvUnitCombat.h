@@ -31,6 +31,15 @@ public:
 		ATTACK_OPTION_NO_DEFENSIVE_SUPPORT = 1
 	};
 
+	// RED <<<<<
+	enum FIRE_SUPPORT
+	{
+	    FIRE_SUPPORT_COUNTER = 0,
+	    FIRE_SUPPORT_OFFENSIVE = 1,
+	    FIRE_SUPPORT_DEFENSIVE = 2
+	};
+	// RED >>>>>
+
 	static void GenerateMeleeCombatInfo(CvUnit &kAttacker, CvUnit *pkDefender, CvPlot &kPlot, CvCombatInfo *pkCombatInfo);
 	static void GenerateRangedCombatInfo(CvUnit &kAttacker, CvUnit *pkDefender, CvPlot &kPlot, CvCombatInfo *pkCombatInfo);
 	static void GenerateRangedCombatInfo(CvCity& kAttacker, CvUnit *pkDefender, CvPlot &plot, CvCombatInfo *pkCombatInfo);
@@ -48,7 +57,7 @@ public:
 	static ATTACK_RESULT AttackNuclear(CvUnit& kAttacker, int iX, int iY, ATTACK_OPTION eOption);
 
 	//	Return a ranged unit that will defend the supplied location against the attacker at the specified location.
-	static CvUnit*		GetFireSupportUnit(PlayerTypes eDefender, int iDefendX, int iDefendY, int iAttackX, int iAttackY);
+	static CvUnit*		GetFireSupportUnit(PlayerTypes eDefender, int iDefendX, int iDefendY, int iAttackX, int iAttackY, FIRE_SUPPORT eSupport);
 	static uint			ApplyNuclearExplosionDamage(CvPlot *pkTargetPlot, int iDamageLevel, CvUnit* pkAttacker = NULL);
 
 protected:

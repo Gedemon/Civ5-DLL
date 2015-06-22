@@ -1984,7 +1984,7 @@ void CvGame::updateTestEndTurn()
 							}
 							else
 							{
-								if (!(pUnit->plot()->isCity() && GC.getGame().isOption("GAMEOPTION_CAN_STACK_IN_CITY"))) // RED
+								if (!(pUnit->plot()->isCity() && GC.getGame().isOptionCanStackInCity())) // RED
 								eEndTurnBlockingType = ENDTURN_BLOCKING_STACKED_UNITS;
 							}
 						}
@@ -7051,7 +7051,7 @@ void CvGame::doTurn()
 	incrementGameTurn();
 	incrementElapsedGameTurns();
 	
-	// <<<<< RED
+	// RED <<<<<
 	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
 	if(pkScriptSystem)
 	{
@@ -7533,6 +7533,9 @@ void CvGame::updateMoves()
 					//if (player.isHuman())
 
 					// slewis - I changed this to only be the AI because human players should have the tools to deal with this now
+					// RED <<<<<
+					// Completely removed 
+					/*
 					if (!player.isHuman())
 					{
 						for (pLoopUnit = player.firstUnit(&iLoop); pLoopUnit; pLoopUnit = player.nextUnit(&iLoop))
@@ -7550,7 +7553,7 @@ void CvGame::updateMoves()
 									{
 										if (pLoopUnit->getOwner() == pLoopUnitInner->getOwner())	// Could be a dying Unit from another player here
 										{
-											if (pLoopUnit->AreUnitsOfSameType(*pLoopUnitInner))
+											if (pLoopUnit->AreUnitsOfSameType(*pLoopUnitInner)) // RED change this to 
 											{
 												if (pLoopUnitInner->getFortifyTurns() >= iNumTurnsFortified)
 												{
@@ -7571,6 +7574,8 @@ void CvGame::updateMoves()
 							}
 						}
 					}
+					// RED >>>>>
+					//*/
 
 					// If we completed the processing of the auto-moves, flag it.
 					if (player.isEndTurn() || !player.isHuman())
@@ -10201,28 +10206,29 @@ CombatPredictionTypes CvGame::GetCombatPrediction (const CvUnit* pAttackingUnit,
 
 	int iDefenderStrength = pDefendingUnit->GetMaxDefenseStrength(pToPlot, pAttackingUnit, false);
 
-	int iAttackingDamageInflicted = pAttackingUnit->getCombatDamage(iAttackingStrength, iDefenderStrength, pAttackingUnit->getDamage(), false, false, false);
-	int iDefenderDamageInflicted  = pDefendingUnit->getCombatDamage(iDefenderStrength, iAttackingStrength, pDefendingUnit->getDamage(), false, false, false);
+	int iAttackingDamageInflicted = pAttackingUnit->getCombatDamage(iAttackingStrength, iDefenderStrength, pAttackingUnit->getDamage(), false, false, false, pDefendingUnit->GetMaxHitPoints());
+	int iDefenderDamageInflicted  = pDefendingUnit->getCombatDamage(iDefenderStrength, iAttackingStrength, pDefendingUnit->getDamage(), false, false, false, pAttackingUnit->GetMaxHitPoints());
 
-	int iMaxUnitHitPoints = GC.getMAX_HIT_POINTS();
-	if (iAttackingDamageInflicted > iMaxUnitHitPoints)
+	// RED change MaxHP
+	// int iMaxUnitHitPoints = GC.getMAX_HIT_POINTS();
+	if (iAttackingDamageInflicted > pDefendingUnit->GetMaxHitPoints())
 	{
-		iAttackingDamageInflicted = iMaxUnitHitPoints;
+		iAttackingDamageInflicted = pDefendingUnit->GetMaxHitPoints();
 	}
-	if (iDefenderDamageInflicted > iMaxUnitHitPoints)
+	if (iDefenderDamageInflicted > pAttackingUnit->GetMaxHitPoints())
 	{
-		iDefenderDamageInflicted = iMaxUnitHitPoints;
+		iDefenderDamageInflicted = pAttackingUnit->GetMaxHitPoints();
 	}
 
 	bool bAttackerDies = false;
 	bool bDefenderDies = false;
 
-	if (pAttackingUnit->getDamage() + iDefenderDamageInflicted >= iMaxUnitHitPoints)
+	if (pAttackingUnit->getDamage() + iDefenderDamageInflicted >= pAttackingUnit->GetMaxHitPoints()) // RED change MaxHP
 	{
 		bAttackerDies = true;
 	}
 
-	if (pDefendingUnit->getDamage() + iAttackingDamageInflicted >= iMaxUnitHitPoints)
+	if (pDefendingUnit->getDamage() + iAttackingDamageInflicted >= pDefendingUnit->GetMaxHitPoints()) // RED change MaxHP
 	{
 		bDefenderDies = true;
 	}
@@ -10239,7 +10245,7 @@ CombatPredictionTypes CvGame::GetCombatPrediction (const CvUnit* pAttackingUnit,
 	{
 		ePrediction = COMBAT_PREDICTION_TOTAL_VICTORY;
 	}
-	else if (iAttackingDamageInflicted - iDefenderDamageInflicted > 5) // RED >>>>> (was harcoded at 30)
+	else if (iAttackingDamageInflicted - iDefenderDamageInflicted > 10) // RED >>>>> (was harcoded at 30)
 	{
 		ePrediction = COMBAT_PREDICTION_MAJOR_VICTORY;
 	}
@@ -10247,7 +10253,7 @@ CombatPredictionTypes CvGame::GetCombatPrediction (const CvUnit* pAttackingUnit,
 	{
 		ePrediction = COMBAT_PREDICTION_SMALL_VICTORY;
 	}
-	else if (iDefenderDamageInflicted - iAttackingDamageInflicted > 5) // RED >>>>> (was harcoded at 30)
+	else if (iDefenderDamageInflicted - iAttackingDamageInflicted > 10) // RED >>>>> (was harcoded at 30)
 	{
 		ePrediction = COMBAT_PREDICTION_MAJOR_DEFEAT;
 	}
@@ -10302,7 +10308,7 @@ void CvGame::SetLastTurnAICivsProcessed()
 	}
 }
 
-// <<<<< RED
+// RED <<<<<
 //
 // create a RED_WWII folder in assets/DLC to override vanilla files to prevent crash on load before deactivating DLCs...
 //	---------------------------------------------------------------------------
@@ -10501,11 +10507,23 @@ OPT_BOL_GET(OptionGroupedDiploAI);
 OPT_BOL_GET(OptionNavalMoveThrough);
 
 
-// Init RED
+// Cache RED options
 //	---------------------------------------------------------------------------
 void CvGame::initOptionsForRED()
 {	
 	
+	// always activated
+
+	GC.getGame().setOption(GAMEOPTION_NO_SCIENCE, true);
+	GC.getGame().setOption(GAMEOPTION_NO_POLICIES, true);
+	GC.getGame().setOption(GAMEOPTION_NO_HAPPINESS, true);
+	GC.getGame().setOption(GAMEOPTION_NO_TUTORIAL, true);
+	GC.getGame().setOption(GAMEOPTION_NO_RELIGION, true);
+	GC.getGame().setOption(GAMEOPTION_NO_BARBARIANS, true);
+
+
+	// may be changed by scenario setting
+
 	if(isOption("GAMEOPTION_MINOR_CAN_ENTER_ALLY_TERRITORY") )
 	{
 		setIsOptionMinorCanEnterAllyTerritory(true);
@@ -10534,6 +10552,26 @@ void CvGame::initOptionsForRED()
 	if(isOption("GAMEOPTION_NAVAL_MOVE_THROUGH") )
 	{
 		setIsOptionNavalMoveThrough(true);
+	}
+
+	if(isOption("GAMEOPTION_CAN_STACK_IN_CITY") )
+	{
+		setIsOptionCanStackInCity(true);
+	}
+
+	if(isOption("GAMEOPTION_OFFENSIVE_SUPPORT_FIRE") )
+	{
+		setIsOptionOffensiveSupportFire(true);
+	}
+
+	if(isOption("GAMEOPTION_DEFENSIVE_SUPPORT_FIRE") )
+	{
+		setIsOptionDefensiveSupportFire(true);
+	}
+
+	if(isOption("GAMEOPTION_COUNTER_FIRE") )
+	{
+		setIsOptionCounterFire(true);
 	}
 }
 

@@ -468,7 +468,7 @@ void CvGrandStrategyAI::DoGuessOtherPlayersActiveGrandStrategy()
 
 	int iPriority = 0;
 
-	// <<<<< RED
+	// RED <<<<<
 	/*
 	// Establish world Military strength average
 	int iWorldMilitaryAverage = GC.getGame().GetWorldMilitaryStrengthAverage(GetPlayer()->GetID(), true, true);
@@ -523,7 +523,7 @@ void CvGrandStrategyAI::DoGuessOtherPlayersActiveGrandStrategy()
 
 					if (strGrandStrategyName == "AIGRANDSTRATEGY_CONQUEST")
 					{
-						// <<<<< RED
+						// RED <<<<<
 						//iPriority = GetGuessOtherPlayerConquestPriority(eMajor, iWorldMilitaryAverage);
 						iPriority = 200;
 					}

@@ -510,7 +510,7 @@ void CvTeam::addTeam(TeamTypes eTeam)
 			pLoopPlot->setRevealed(GetID(), true, false, eTeam);
 		}
 
-		// <<<<< RED
+		// RED <<<<<
 		//*
 		if (pLoopPlot->isRevealed(GetID()))
 		{
@@ -520,7 +520,7 @@ void CvTeam::addTeam(TeamTypes eTeam)
 		// RED >>>>>
 	}
 
-	// <<<<< RED
+	// RED <<<<<
 	// trying to fix the U.K / France Fog of War bug
 	//*
 	{
@@ -1302,7 +1302,7 @@ void CvTeam::DoDeclareWar(TeamTypes eTeam, bool bDefensivePact)
 								{
 									ChangeNumMinorCivsAttacked(1);
 
-									// <<<<< RED
+									// RED <<<<<
 									//GET_PLAYER((PlayerTypes) iMinorCivLoop).GetMinorCivAI()->DoTeamDeclaredWarOnMe(GetID());
 
 									// Hand out "we were attacked!" quest

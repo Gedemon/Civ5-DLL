@@ -327,15 +327,7 @@ bool CvUnitMovement::IsSlowedByZOC(const CvUnit* pUnit, const CvPlot* pFromPlot,
 								DomainTypes loop_unit_domain_type = pLoopUnit->getDomainType();
 								if (loop_unit_domain_type != unit_domain_type)
 								{
-									// this is valid
-									if (loop_unit_domain_type == DOMAIN_SEA && unit_domain_type)
-									{
-										// continue on
-									}
-									else
-									{
-										continue;
-									}
+									continue; // RED changed this to remove naval units exclusion from this rule
 								}
 
 								// Embarked?

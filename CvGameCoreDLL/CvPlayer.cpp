@@ -3004,7 +3004,10 @@ void CvPlayer::doTurn()
 			if (!isMinorCiv())
 			{
 				GetGrandStrategyAI()->DoTurn();
-				if (GC.getGame().isHotSeat() && !isHuman())
+				// RED <<<<<
+				//if(GC.getGame().isHotSeat() && !isHuman())
+				if((GC.getGame().isHotSeat() || GC.getGame().isOptionGroupedDiploAI()) && !isHuman())
+				// RED >>>>>
 				{
 					// In Hotseat, AIs only do their diplomacy pass for other AIs on their turn
 					// Diplomacy toward a human is done at the beginning of the humans turn.
@@ -4823,7 +4826,8 @@ void CvPlayer::receiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit)
 		{
 			CvUnit* pNewUnit = initUnit(eUnit, pPlot->getX(), pPlot->getY());
 			// see if there is an open spot to put him - no over-stacking allowed!
-			if (pNewUnit && pUnit && pUnit->AreUnitsOfSameType(*pNewUnit)) // pUnit isn't in this plot yet (if it even exists) so we can't check on if we are over-stacked directly
+			//if (pNewUnit && pUnit && pUnit->AreUnitsOfSameType(*pNewUnit)) // pUnit isn't in this plot yet (if it even exists) so we can't check on if we are over-stacked directly
+			if (pNewUnit && pUnit && pPlot->getNumFriendlyUnitsOfType(pUnit) > GC.getPLOT_UNIT_LIMIT()) // RED : getNumFriendlyUnitsOfType can now check overstacking even if pUnit is not on the plot yet.
 			{
 				pBestPlot = NULL;
 				iBestValue = INT_MAX;

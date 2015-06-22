@@ -760,6 +760,18 @@ public:
 	void			clearCombat();
 	bool			isFighting() const;
 
+	// RED <<<<<
+	int getAirStackLimit() const;
+	void setAirStackLimit(int iValue);
+	void changeAirStackLimit(int iChange);
+	int getLandStackLimit() const;
+	void setLandStackLimit(int iValue);
+	void changeLandStackLimit(int iChange);
+	int getSeaStackLimit() const;
+	void setSeaStackLimit(int iValue);
+	void changeSeaStackLimit(int iChange);
+	// RED >>>>>
+
 protected:
 	FAutoArchiveClassContainer<CvCity> m_syncArchive;
 
@@ -936,6 +948,12 @@ protected:
 	int getHurryGold(HurryTypes eHurry, int iHurryCost, int iFullCost) const;
 	bool canHurryUnit(HurryTypes eHurry, UnitTypes eUnit, bool bIgnoreNew) const;
 	bool canHurryBuilding(HurryTypes eHurry, BuildingTypes eBuilding, bool bIgnoreNew) const;
+
+	// RED <<<<<	
+	FAutoVariable<int, CvCity> m_iAirStackLimit;
+	FAutoVariable<int, CvCity> m_iLandStackLimit;
+	FAutoVariable<int, CvCity> m_iSeaStackLimit;
+	// RED >>>>>
 };
 
 namespace FSerialization
