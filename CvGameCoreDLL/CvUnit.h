@@ -1063,6 +1063,7 @@ public:
 	
 	int getMaxHP() const;
 	int getStackValue() const;
+	bool canCaptureTerritory() const;
 	bool isOnlySupportFire() const;
 	bool isOffensiveSupportFire() const;
 	bool isDefensiveSupportFire() const;

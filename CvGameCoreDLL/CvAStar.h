@@ -50,8 +50,19 @@ typedef void(*CvAEnd)(const void*, CvAStar*);
 #define MOVE_MAXIMIZE_EXPLORE				(0x00000080)
 //
 // Used for route information
-#define MOVE_ANY_ROUTE					    (0x80000000) // because we're passing in the player number as well as the route flag
-#define MOVE_ROUTE_ALLOW_UNEXPLORED			(0x40000000) // When searching for a route, allow the search to use unrevealed plots
+//#define MOVE_ANY_ROUTE					    (0x80000000) // because we're passing in the player number as well as the route flag
+//#define MOVE_ROUTE_ALLOW_UNEXPLORED			(0x40000000) // When searching for a route, allow the search to use unrevealed plots
+
+// RED <<<<< 
+#define MOVE_ANY_ROUTE					    (0x00800000)
+#define MOVE_ROUTE_ALLOW_UNEXPLORED			(0x01000000)
+
+// New flags
+#define MOVE_OWN_TERRITORY_ONLY				(0x02000000)
+#define MOVE_FRIENDLY_TERRITORY_ONLY		(0x04000000)
+#define MOVE_LAND_AS_ROUTE					(0x08000000)
+// RED >>>>>
+
 //#define MOVE_NON_WAR_ROUTE				 // we're passing the player id and other flags in as well. This flag checks to see if it can get from point to point without going into territory with a team we're at war with
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

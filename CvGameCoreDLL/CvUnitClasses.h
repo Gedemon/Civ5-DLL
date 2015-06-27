@@ -116,6 +116,7 @@ public:
 	// RED <<<<<
 	int GetMaxHP() const;
 	int GetStackValue() const;
+	bool CanCaptureTerritory() const;
 	bool IsOffensiveSupportFire() const;
 	bool IsDefensiveSupportFire() const;
 	bool HasCounterFireCapability() const;
@@ -221,6 +222,7 @@ private:
 	// RED <<<<<<
 	int m_iMaxHP;
 	int m_iStackValue;
+	bool m_bCanCaptureTerritory;
 	bool m_bOffensiveSupportFire;
 	bool m_bDefensiveSupportFire;
 	bool m_bCounterFire;

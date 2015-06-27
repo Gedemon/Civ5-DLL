@@ -2181,19 +2181,44 @@ int RouteValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poi
 		}
 	}
 
-	RouteTypes eRouteType = pNewPlot->getRouteType();
-	if (eRouteType == NO_ROUTE)
+	// RED <<<<<
+	if (iFlags & MOVE_OWN_TERRITORY_ONLY)
 	{
-		return FALSE;
+		if (pNewPlot->getOwner() != ePlayer)
+			return false;
 	}
 
-	if (pNewPlot->IsRoutePillaged())
+	bool bLandAsRoute = false;
+	if (iFlags & MOVE_LAND_AS_ROUTE)
 	{
-		return FALSE;
+		if (pNewPlot->isWater())
+			return false;
+
+		if (!pNewPlot->isImpassable())
+			bLandAsRoute = true;
+	}
+	// RED >>>>>
+
+	RouteTypes eRouteType = pNewPlot->getRouteType();
+	if (!bLandAsRoute) // RED
+	{
+		if (eRouteType == NO_ROUTE)
+		{
+			return FALSE;
+		}
+
+		if (pNewPlot->IsRoutePillaged())
+		{
+			return FALSE;
+		}
 	}
 
 	if (!pNewPlot->IsFriendlyTerritory(ePlayer))
 	{
+		if (iFlags & MOVE_FRIENDLY_TERRITORY_ONLY)
+		{
+			return false;
+		}
 		PlayerTypes ePlotOwnerPlayer = pNewPlot->getOwner();
 		if (ePlotOwnerPlayer != NO_PLAYER)
 		{
@@ -2222,6 +2247,13 @@ int RouteValid(CvAStarNode* parent, CvAStarNode* node, int data, const void* poi
 			}
 		}
 	}
+
+	// RED <<<<<
+	if (bLandAsRoute) // Land is a route, we don't need to check route type... 
+	{
+		return true;
+	}
+	// RED >>>>>
 
 	if (finder->GetInfo() & MOVE_ANY_ROUTE)
 	{

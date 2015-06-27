@@ -261,6 +261,7 @@ void CvLuaPlot::PushMethods(lua_State *L, int t)
 
 	// RED <<<<<
 	Method(GetOriginalOwner);
+	Method(GetControlString);
 	// RED >>>>>
 }
 //------------------------------------------------------------------------------
@@ -1748,6 +1749,16 @@ int CvLuaPlot::lIsBuildRemovesFeature(lua_State* L)
 int CvLuaPlot::lGetOriginalOwner(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlot::getOriginalOwner);
+}
+
+//------------------------------------------------------------------------------
+//int getControlString(TeamTypes ePlayer);
+int CvLuaPlot::lGetControlString(lua_State* L)
+{
+	CvPlot* pkPlot = GetInstance(L);
+	const CvString strResult = pkPlot->getControlString();
+	lua_pushstring(L, strResult.c_str());
+	return 1;
 }
 
 // RED >>>>>

@@ -100,6 +100,7 @@ m_iUnitPortraitOffset(0),
 // RED <<<<<
 m_iMaxHP(75),
 m_iStackValue(1),
+m_bCanCaptureTerritory(false),
 m_bOffensiveSupportFire(false),
 m_bDefensiveSupportFire(false),
 m_bCounterFire(false),
@@ -193,6 +194,7 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	// RED <<<<<
 	m_iMaxHP = kResults.GetInt("MaxHP");
 	m_iStackValue = kResults.GetInt("StackValue");
+	m_bCanCaptureTerritory = kResults.GetBool("CanCaptureTerritory");
 	m_bOffensiveSupportFire = kResults.GetBool("OffensiveSupportFire");
 	m_bDefensiveSupportFire = kResults.GetBool("DefensiveSupportFire");
 	m_bCounterFire = kResults.GetBool("CounterFire");
@@ -1307,6 +1309,12 @@ int CvUnitEntry::GetMaxHP() const
 int CvUnitEntry::GetStackValue() const
 {
 	return m_iStackValue;
+}
+
+/// 
+bool CvUnitEntry::CanCaptureTerritory() const
+{
+	return m_bCanCaptureTerritory;
 }
 
 /// 

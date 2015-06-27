@@ -279,6 +279,7 @@ protected:
 
 	// RED <<<<<
 	static int lGetOriginalOwner(lua_State* L);
+	static int lGetControlString(lua_State* L);
 	// RED >>>>>
 };
 

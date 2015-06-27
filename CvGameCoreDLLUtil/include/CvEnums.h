@@ -3200,4 +3200,18 @@ enum GreatWorkSlotType
 	NO_GREAT_WORK_SLOT = -1,
 };
 
+// RED <<<<<
+
+enum PopupTextDelay				
+{
+
+	NO_TEXT_DELAY,
+	POST_COMBAT_TEXT_DELAY,
+	PLOT_CONTROL_TEXT_DELAY,
+	REINFORCEMENT_TEXT_DELAY,
+
+	NUM_TEXT_DELAY
+};
+// RED >>>>>
+
 #endif //CVENUMS_H

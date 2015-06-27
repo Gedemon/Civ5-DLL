@@ -259,7 +259,10 @@ void CvPlot::reset(int iX, int iY, bool bConstructorCall)
 		}
 	}
 	
+	// RED <<<<<
 	m_eOriginalOwner = NO_PLAYER; // RED
+	m_strControl = "";
+	// RED >>>>>
 
 }
 
@@ -338,6 +341,8 @@ void CvPlot::doTurn()
 		else
 			changeOwnershipDuration(1);
 	}
+
+	checkOwnership(); // RED
 
 	if (getImprovementType() != NO_IMPROVEMENT)
 	{
@@ -3271,6 +3276,18 @@ bool CvPlot::IsFriendlyTerritory(PlayerTypes ePlayer) const
 	{
 		return true;
 	}
+
+	// RED <<<<<
+	if(GET_TEAM(eTeam).isMinorCiv())
+	{
+		CvMinorCivAI* pMinorAI = GET_PLAYER(ePlayer).GetMinorCivAI();
+		if (pMinorAI->IsFriends(getOwner()))
+		{
+			return true;
+		}
+	}
+	// RED >>>>>
+
 
 	return false;
 }
@@ -8939,7 +8956,10 @@ void CvPlot::read(FDataStream& kStream)
 	}
 	updateImpassable();
 
-	kStream >> m_eOriginalOwner; // RED
+	// RED <<<<<
+	kStream >> m_eOriginalOwner;
+	kStream >> m_strControl;
+	// RED >>>>>
 }
 
 //	--------------------------------------------------------------------------------
@@ -9081,7 +9101,10 @@ void CvPlot::write(FDataStream& kStream) const
 
 	kStream << m_cContinentType;
 
-	kStream << m_eOriginalOwner; // RED
+	// RED <<<<<
+	kStream << m_eOriginalOwner;	
+	kStream << m_strControl;
+	// RED >>>>>
 }
 
 //	--------------------------------------------------------------------------------
@@ -10006,5 +10029,455 @@ void CvPlot::setOriginalOwner(PlayerTypes eNewValue)
 {
 	if (eNewValue != NO_PLAYER)
 		m_eOriginalOwner = eNewValue;
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlot::checkOwnership()
+{
+	if (! isOwned())
+		return;
+
+	if (isWater())
+		return;
+	
+	PlayerTypes ePlotOwner = getOwner();
+	PlayerTypes eOriginalOwner = getOriginalOwner();
+
+	CvPlayer& kOriginalOwner = GET_PLAYER(eOriginalOwner);
+
+	bool bCaptured = ePlotOwner != eOriginalOwner;
+
+	if (bCaptured && IsFriendlyTerritory(eOriginalOwner))
+	{
+		setOwner(eOriginalOwner, -1, false);
+		bCaptured = false;
+	}
+
+	if (GC.getCHECK_FOR_ORPHAN_TILE() && ! isUnderControl(bCaptured))
+	{
+		bool bChangedOwner = findEnemyControl(bCaptured);
+		if (!bChangedOwner && !kOriginalOwner.isAlive())
+		{
+			giveControlToNearestPlayer();
+		}
+	}
+}
+
+//	--------------------------------------------------------------------------------
+bool CvPlot::isUnderControl(bool bCaptured)
+{
+	PlayerTypes ePlotOwner = getOwner();
+	CvPlayer& kPlotOwner = GET_PLAYER(ePlotOwner);
+
+	if (!kPlotOwner.isAlive())
+	{
+		return false;
+	}
+	
+	CvAStar* pkLandRouteFinder;
+	pkLandRouteFinder = &GC.getRouteFinder();
+
+	int iPlotArea = getArea();
+	int iPathfinderFlags;
+
+	if (bCaptured)
+		// Path must be direct to keep captured plots (not going through friendly territory)
+		iPathfinderFlags = MOVE_LAND_AS_ROUTE | MOVE_OWN_TERRITORY_ONLY;
+	else
+		// For "free territory", friendly path is allowed
+		iPathfinderFlags = MOVE_LAND_AS_ROUTE | MOVE_FRIENDLY_TERRITORY_ONLY;
+
+
+	// Check cities in range first (faster)
+	CvCity* pLoopCity;
+	int iLoop;
+	for (pLoopCity = kPlotOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlotOwner.nextCity(&iLoop))
+	{
+		int iDistance = plotDistance(getX(), getY(), pLoopCity->getX(), pLoopCity->getY());
+		if (iDistance <= GC.getCITY_MAX_PLOT_CONTROL_RANGE())
+		{
+			if (pLoopCity->getArea() == iPlotArea || isMountain()) // Mountains have their own area ID
+				if (pkLandRouteFinder->GeneratePath(getX(), getY(), pLoopCity->getX(), pLoopCity->getY(), iPathfinderFlags | ePlotOwner, true))
+				{
+					CvString strBuffer = GetLocalizedText("TXT_KEY_PLOT_CITY_CONTROL", pLoopCity->getName());
+					setControlString(strBuffer);
+					return true;
+				}
+		}
+	}
+
+	if (!bCaptured)
+	{
+		// For "free territory", we allow control by cities out of range.
+		CvCity* pLoopCity;
+		int iLoop;
+		for (pLoopCity = kPlotOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlotOwner.nextCity(&iLoop))
+		{
+			int iDistance = plotDistance(getX(), getY(), pLoopCity->getX(), pLoopCity->getY());
+			if (iDistance > GC.getCITY_MAX_PLOT_CONTROL_RANGE()) // Don't test cities in range again...
+			{
+				if (pLoopCity->getArea() == iPlotArea) // Mountains have their own Area ID, but we don't check out of range mountains...
+					if (pkLandRouteFinder->GeneratePath(getX(), getY(), pLoopCity->getX(), pLoopCity->getY(), iPathfinderFlags | ePlotOwner, true))
+					{
+						CvString strBuffer = GetLocalizedText("TXT_KEY_PLOT_ORIGINAL_OWNER_CONTROL");
+						setControlString(strBuffer);
+						return true;
+					}
+			}
+		}
+	}
+
+	// Still no control, check units and other players city
+	// (code borrowed from CvCityCitizens.cpp)
+	// do a pass on cities / units instead ?
+
+	int iCityControlDistance = GC.getCITY_MAX_PLOT_CONTROL_RANGE();
+	int iUnitControlDistance = GC.getUNIT_MAX_PLOT_CONTROL_RANGE();
+	int iControlDistance = max(iCityControlDistance, iUnitControlDistance);
+
+	int iDX, iDY;
+	CvPlot* pNearbyPlot;
+	// Might be a better way to do this that'd be slightly less CPU-intensive <- that would be welcome, this function is called for every land plot on a map...
+	for (iDX = -(iControlDistance); iDX <= iControlDistance; iDX++)
+	{
+		for (iDY = -(iControlDistance); iDY <= iControlDistance; iDY++)
+		{
+			pNearbyPlot = plotXY(getX(), getY(), iDX, iDY);
+
+			if (pNearbyPlot != NULL)
+			{
+				if (pNearbyPlot->getArea() == iPlotArea || isMountain()) // Mountains have their own area ID
+				{
+					int iDistance = plotDistance(pNearbyPlot->getX(), pNearbyPlot->getY(), getX(), getY());
+					if (iDistance <= iUnitControlDistance)
+					{
+						const IDInfo* pUnitNode;
+						const CvUnit* pLoopUnit;
+						pUnitNode = pNearbyPlot->headUnitNode();
+						while (pUnitNode != NULL)
+						{
+							pLoopUnit = GetPlayerUnit(*pUnitNode);
+							pUnitNode = pNearbyPlot->nextUnitNode(pUnitNode);
+							PlayerTypes eUnitOwner = pLoopUnit->getOwner();
+							if (pLoopUnit && pLoopUnit->canCaptureTerritory())
+							{
+								if (eUnitOwner == ePlotOwner)
+								{
+									if (pkLandRouteFinder->GeneratePath(getX(), getY(), pNearbyPlot->getX(), pNearbyPlot->getY(), iPathfinderFlags | ePlotOwner, true))
+									{
+										CvString strBuffer = GetLocalizedText("TXT_KEY_PLOT_UNIT_CONTROL", pLoopUnit->getName());
+										setControlString(strBuffer);										
+										return true;
+									}
+								}
+								else if (!bCaptured && IsFriendlyTerritory(eUnitOwner)) // Allow friendly units control for plots that are not captured
+								{
+									if (pkLandRouteFinder->GeneratePath(getX(), getY(), pNearbyPlot->getX(), pNearbyPlot->getY(), iPathfinderFlags | eUnitOwner, true))
+									{
+										CvString strBuffer = GetLocalizedText("TXT_KEY_PLOT_UNIT_CONTROL", pLoopUnit->getName());
+										setControlString(strBuffer);
+										return true;
+									}
+								}
+							}
+						}
+					}
+
+					if (iDistance <= iCityControlDistance)
+					{
+						CvCity *pCity = pNearbyPlot->getPlotCity();
+						if (pCity) 
+						{
+							PlayerTypes eCityOwner = pCity->getOwner(); // don't check plot's owner cities again !
+							if (!bCaptured && eCityOwner != ePlotOwner && IsFriendlyTerritory(eCityOwner)) // Allow friendly cities control for plots that are not captured
+							{
+								if (pkLandRouteFinder->GeneratePath(getX(), getY(), pNearbyPlot->getX(), pNearbyPlot->getY(), iPathfinderFlags | pCity->getOwner(), true))
+								{
+									CvString strBuffer = GetLocalizedText("TXT_KEY_PLOT_CITY_CONTROL", pLoopCity->getName());
+									setControlString(strBuffer);
+									return true;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// can't keep that plot under control
+	return false;
+
+}
+
+//	--------------------------------------------------------------------------------
+bool CvPlot::findEnemyControl(bool bCaptured)
+{
+
+	CvAStar* pkLandRouteFinder;
+	pkLandRouteFinder = &GC.getRouteFinder();
+
+	int iPlotArea = getArea();
+
+	int iPathfinderFlags = MOVE_LAND_AS_ROUTE | MOVE_OWN_TERRITORY_ONLY;
+
+	int iCityControlDistance = GC.getCITY_MAX_PLOT_CONTROL_RANGE();
+	int iUnitControlDistance = GC.getUNIT_MAX_PLOT_CONTROL_RANGE();
+	int iControlDistance = max(iCityControlDistance, iUnitControlDistance);
+
+	const CvCity *pClosestCity = NULL;
+	const CvUnit *pClosestUnit = NULL;
+	
+	int iBestCityDistance = iControlDistance+1;
+	int iBestUnitDistance = iControlDistance+1;
+
+	int iDX, iDY;
+	CvPlot* pNearbyPlot;
+	// Might be a better way to do this that'd be slightly less CPU-intensive <- that would be welcome, this function is called for every land plot on a map...
+	for (iDX = -(iControlDistance); iDX <= iControlDistance; iDX++)
+	{
+		for (iDY = -(iControlDistance); iDY <= iControlDistance; iDY++)
+		{
+			pNearbyPlot = plotXY(getX(), getY(), iDX, iDY);
+
+			if (pNearbyPlot != NULL)
+			{
+				if (pNearbyPlot->getArea() == iPlotArea || isMountain()) // Mountains have their own area ID
+				{
+					int iDistance = plotDistance(pNearbyPlot->getX(), pNearbyPlot->getY(), getX(), getY());
+
+					if (iDistance < iBestUnitDistance && iDistance <= iUnitControlDistance)
+					{
+						const IDInfo* pUnitNode;
+						const CvUnit* pLoopUnit;
+						pUnitNode = pNearbyPlot->headUnitNode();
+						while (pUnitNode != NULL)
+						{
+							pLoopUnit = GetPlayerUnit(*pUnitNode);
+							pUnitNode = pNearbyPlot->nextUnitNode(pUnitNode);
+							if (pLoopUnit && pLoopUnit->canCaptureTerritory())
+							{
+								// if unit's team is at war with the current owner or if the tile is actually captured and unit's team is at war with the original owner of the plot
+								if (GET_TEAM(pLoopUnit->getTeam()).isAtWar(getTeam()) || (bCaptured && GET_TEAM(pLoopUnit->getTeam()).isAtWar(GET_PLAYER(getOriginalOwner()).getTeam())))
+								{
+									if (pkLandRouteFinder->GeneratePath(getX(), getY(), pNearbyPlot->getX(), pNearbyPlot->getY(), iPathfinderFlags | pLoopUnit->getOwner(), true))
+									{
+										pClosestUnit = pLoopUnit;
+										iBestUnitDistance = iDistance;
+									}
+								}
+							}
+						}
+					}
+					if (iDistance < iBestCityDistance && iDistance <= iCityControlDistance)
+					{
+						CvCity *pCity = pNearbyPlot->getPlotCity();
+						if (pCity)
+						{
+							if (GET_TEAM(pCity->getTeam()).isAtWar(getTeam()) || (bCaptured && GET_TEAM(pCity->getTeam()).isAtWar(GET_PLAYER(getOriginalOwner()).getTeam())))
+							{
+								if (pkLandRouteFinder->GeneratePath(getX(), getY(), pNearbyPlot->getX(), pNearbyPlot->getY(), iPathfinderFlags | pCity->getOwner(), true))
+								{
+									pClosestCity = pCity;
+									iBestCityDistance = iDistance;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (iBestCityDistance <= iBestUnitDistance && pClosestCity)
+	{
+		// display control changed
+		char text[256];
+		text[0] = NULL;
+		if (GET_PLAYER(getOwner()).isLocalPlayer())
+		{			
+			sprintf_s( text, GetLocalizedText("TXT_KEY_PLOT_CONTROL_LOST"));
+			DLLUI->AddPopupText( getX(), getY(), text, PLOT_CONTROL_TEXT_DELAY ); 
+		}
+		else if (GET_PLAYER(pClosestCity->getOwner()).isLocalPlayer())
+		{			
+			sprintf_s( text, GetLocalizedText("TXT_KEY_PLOT_CONTROL_GAINED"));
+			DLLUI->AddPopupText( getX(), getY(), text, PLOT_CONTROL_TEXT_DELAY ); 
+		}
+		// Set new owner
+		setOwner(pClosestCity->getOwner(), -1, false);
+		// Set control string for mouse over plot
+		CvString strBuffer = GetLocalizedText("TXT_KEY_PLOT_CITY_CONTROL", pClosestCity->getName());
+		setControlString(strBuffer);
+		return true;
+	}
+	else if (pClosestUnit)
+	{
+		// display control changed
+		char text[256];
+		text[0] = NULL;
+		if (GET_PLAYER(getOwner()).isLocalPlayer())
+		{			
+			sprintf_s( text, GetLocalizedText("TXT_KEY_PLOT_CONTROL_LOST"));
+			DLLUI->AddPopupText( getX(), getY(), text, PLOT_CONTROL_TEXT_DELAY ); 
+		}
+		else if (GET_PLAYER(pClosestUnit->getOwner()).isLocalPlayer())
+		{			
+			sprintf_s( text, GetLocalizedText("TXT_KEY_PLOT_CONTROL_GAINED"));
+			DLLUI->AddPopupText( getX(), getY(), text, PLOT_CONTROL_TEXT_DELAY ); 
+		}
+		// Set new owner
+		setOwner(pClosestUnit->getOwner(), -1, false);
+		// Set control string for mouse over plot
+		CvString strBuffer = GetLocalizedText("TXT_KEY_PLOT_UNIT_CONTROL", pClosestUnit->getName());
+		setControlString(strBuffer);
+		return true;
+	}
+	return false;
+
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlot::giveControlToNearestPlayer()
+{
+
+	CvAStar* pkLandRouteFinder;
+	pkLandRouteFinder = &GC.getRouteFinder();
+
+	int iPlotArea = getArea();
+
+	int iPathfinderFlags = MOVE_LAND_AS_ROUTE | MOVE_OWN_TERRITORY_ONLY;
+
+	int iCityControlDistance = GC.getCITY_MAX_PLOT_CONTROL_RANGE();
+	int iUnitControlDistance = GC.getUNIT_MAX_PLOT_CONTROL_RANGE();
+	int iControlDistance = max(iCityControlDistance, iUnitControlDistance);
+
+	const CvCity *pClosestCity = NULL;
+	const CvUnit *pClosestUnit = NULL;
+	
+	int iBestCityDistance = iControlDistance+1;
+	int iBestUnitDistance = iControlDistance+1;
+
+	int iDX, iDY;
+	CvPlot* pNearbyPlot;
+	// Might be a better way to do this that'd be slightly less CPU-intensive <- that would be welcome, this function is called for every land plot on a map...
+	for (iDX = -(iControlDistance); iDX <= iControlDistance; iDX++)
+	{
+		for (iDY = -(iControlDistance); iDY <= iControlDistance; iDY++)
+		{
+			pNearbyPlot = plotXY(getX(), getY(), iDX, iDY);
+
+			if (pNearbyPlot != NULL)
+			{
+				if (pNearbyPlot->getArea() == iPlotArea || isMountain()) // Mountains have their own area ID
+				{
+					int iDistance = plotDistance(pNearbyPlot->getX(), pNearbyPlot->getY(), getX(), getY());
+
+					if (iDistance < iBestUnitDistance && iDistance <= iUnitControlDistance)
+					{
+						const IDInfo* pUnitNode;
+						const CvUnit* pLoopUnit;
+						pUnitNode = pNearbyPlot->headUnitNode();
+						while (pUnitNode != NULL)
+						{
+							pLoopUnit = GetPlayerUnit(*pUnitNode);
+							pUnitNode = pNearbyPlot->nextUnitNode(pUnitNode);
+							if (pLoopUnit && pLoopUnit->canCaptureTerritory())
+							{
+								if (pkLandRouteFinder->GeneratePath(getX(), getY(), pNearbyPlot->getX(), pNearbyPlot->getY(), iPathfinderFlags | pLoopUnit->getOwner(), true))
+								{
+									pClosestUnit = pLoopUnit;
+									iBestUnitDistance = iDistance;
+								}
+							}
+						}
+					}
+					if (iDistance < iBestCityDistance && iDistance <= iCityControlDistance)
+					{
+						CvCity *pCity = pNearbyPlot->getPlotCity();
+						if (pCity)
+						{
+							if (pkLandRouteFinder->GeneratePath(getX(), getY(), pNearbyPlot->getX(), pNearbyPlot->getY(), iPathfinderFlags | pCity->getOwner(), true))
+							{
+								pClosestCity = pCity;
+								iBestCityDistance = iDistance;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (iBestCityDistance <= iBestUnitDistance && pClosestCity)
+	{
+		// display control changed
+		char text[256];
+		text[0] = NULL;
+		if (GET_PLAYER(getOwner()).isLocalPlayer())
+		{			
+			sprintf_s( text, GetLocalizedText("TXT_KEY_PLOT_CONTROL_LOST"));
+			DLLUI->AddPopupText( getX(), getY(), text, PLOT_CONTROL_TEXT_DELAY ); 
+		}
+		else if (GET_PLAYER(pClosestCity->getOwner()).isLocalPlayer())
+		{			
+			sprintf_s( text, GetLocalizedText("TXT_KEY_PLOT_CONTROL_GAINED"));
+			DLLUI->AddPopupText( getX(), getY(), text, PLOT_CONTROL_TEXT_DELAY ); 
+		}
+		// Set new owner
+		setOwner(pClosestCity->getOwner(), -1, false);
+		CvString strBuffer = GetLocalizedText("TXT_KEY_PLOT_CITY_CONTROL", pClosestCity->getName());
+		setControlString(strBuffer);
+	}
+	else if (pClosestUnit)
+	{
+		// display control changed
+		char text[256];
+		text[0] = NULL;
+		if (GET_PLAYER(getOwner()).isLocalPlayer())
+		{			
+			sprintf_s( text, GetLocalizedText("TXT_KEY_PLOT_CONTROL_LOST"));
+			DLLUI->AddPopupText( getX(), getY(), text, PLOT_CONTROL_TEXT_DELAY ); 
+		}
+		else if (GET_PLAYER(pClosestUnit->getOwner()).isLocalPlayer())
+		{			
+			sprintf_s( text, GetLocalizedText("TXT_KEY_PLOT_CONTROL_GAINED"));
+			DLLUI->AddPopupText( getX(), getY(), text, PLOT_CONTROL_TEXT_DELAY ); 
+		}
+		// Set new owner
+		setOwner(pClosestUnit->getOwner(), -1, false);
+		CvString strBuffer = GetLocalizedText("TXT_KEY_PLOT_UNIT_CONTROL", pClosestUnit->getName());
+		setControlString(strBuffer);
+	}
+
+
+}
+
+//	--------------------------------------------------------------------------------
+void CvPlot::setControlString(CvString strNewValue)
+{
+	VALIDATE_OBJECT
+	gDLL->stripSpecialCharacters(strNewValue);
+
+	m_strControl = strNewValue;
+}
+
+//	--------------------------------------------------------------------------------
+const CvString CvPlot::getControlString() const
+{
+	VALIDATE_OBJECT
+	CvString strBuffer;
+
+	if (m_strControl.IsEmpty())
+	{
+		Localization::String strLoc = Localization::Lookup( "TXT_KEY_PLOT_UNKNOWN_CONTROL" );
+		strBuffer.Format(strLoc.toUTF8());
+		return strBuffer;
+	}
+
+	Localization::String strControlString = Localization::Lookup(m_strControl);
+	strBuffer.Format(strControlString.toUTF8());
+
+	return strBuffer;
 }
 // RED >>>>>

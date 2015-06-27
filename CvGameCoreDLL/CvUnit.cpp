@@ -17794,6 +17794,14 @@ int CvUnit::getStackValue() const
 }
 
 //	--------------------------------------------------------------------------------
+/// Can this Unit capture territory ?
+bool CvUnit::canCaptureTerritory() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().CanCaptureTerritory();
+}
+
+//	--------------------------------------------------------------------------------
 /// Can this Unit execute only support fire attack ?
 bool CvUnit::isOnlySupportFire() const
 {
@@ -17898,6 +17906,9 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 		return;
 
 	if (!IsCombatUnit())
+		return;
+
+	if (!canCaptureTerritory())
 		return;
 
 	if (getOwner() != pPlot->getOwner() && pPlot->getOwner() != NO_PLAYER)

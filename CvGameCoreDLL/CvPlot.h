@@ -615,6 +615,13 @@ public:
 	}
 
 	void setOriginalOwner(PlayerTypes eNewValue);
+
+	void checkOwnership();
+	bool isUnderControl(bool bCapturedPlot);
+	bool findEnemyControl(bool bCapturedPlot);
+	void giveControlToNearestPlayer();
+	const CvString getControlString() const;
+	void setControlString(const CvString strNewValue);
 	// RED >>>>>
 
 protected:
@@ -770,7 +777,10 @@ protected:
 	// added so under cheat mode we can access protected stuff
 	friend class CvGameTextMgr;
 	
-	char /*PlayerTypes*/  m_eOriginalOwner; // RED
+	// RED <<<<<
+	char /*PlayerTypes*/  m_eOriginalOwner;
+	CvString m_strControl;
+	// RED >>>>>
 };
 
 namespace FSerialization
