@@ -122,6 +122,8 @@ public:
 	bool HasCounterFireCapability() const;
 	bool IsOnlySupportFire() const;
 	bool IsCounterFireSameCombatTypeOnly() const;
+	bool IsImmuneToCounterFire() const;
+	int GetFirePoints() const;
 	// RED >>>>>
 
 	// Accessor Functions (Arrays)
@@ -227,7 +229,9 @@ private:
 	bool m_bDefensiveSupportFire;
 	bool m_bCounterFire;
 	bool m_bCounterFireSameCombatType;
+	bool m_bImmuneToCounterFire;
 	bool m_bOnlySupportFire;
+	int m_iFirePoints;
 	// RED >>>>>
 
 	// This is not loaded from XML, but cached so we don't have to recalculate every time

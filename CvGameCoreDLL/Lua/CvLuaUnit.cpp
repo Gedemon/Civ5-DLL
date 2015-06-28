@@ -430,6 +430,10 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	// RED <<<<<<
 	Method(IsMarkedBestDefender);
 	Method(SetMarkedBestDefender);
+	Method(GetStackValue);
+	Method(GetFirePoints);
+	Method(GetCounterFireUnit);
+	Method(GetOffensiveSupportFireUnit);
 	// RED >>>>>>
 }
 //------------------------------------------------------------------------------
@@ -4099,5 +4103,55 @@ int CvLuaUnit::lSetMarkedBestDefender(lua_State* L)
 
 	pkUnit->setMarkedBestDefender(bNewValue);
 	return 0;
+}
+//------------------------------------------------------------------------------
+//void getStackValue();
+int CvLuaUnit::lGetStackValue(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+
+	const int iResult = pkUnit->getStackValue();
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+//------------------------------------------------------------------------------
+//void getFirePoints();
+int CvLuaUnit::lGetFirePoints(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+
+	const int iResult = pkUnit->getFirePoints();
+	lua_pushinteger(L, iResult);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//CvUnit* getCounterFireUnit(PlayerTypes eDefender, int iX, int iY);
+int CvLuaUnit::lGetCounterFireUnit(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const PlayerTypes eDefender = (PlayerTypes) lua_tointeger(L, 2);
+	const int iX = lua_tointeger(L, 3);
+	const int iY = lua_tointeger(L, 4);
+
+	CvUnit* pkUnitToReturn = CvUnitCombat::GetFireSupportUnit(eDefender, iX, iY, pkUnit->getX(), pkUnit->getY(), CvUnitCombat::FIRE_SUPPORT_COUNTER);
+	CvLuaUnit::Push(L, pkUnitToReturn);
+
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//CvUnit* getCounterFireUnit(PlayerTypes eDefender, int iX, int iY);
+int CvLuaUnit::lGetOffensiveSupportFireUnit(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+	const PlayerTypes eAttacker = (PlayerTypes) lua_tointeger(L, 2);
+	const int iX = lua_tointeger(L, 3);
+	const int iY = lua_tointeger(L, 4);
+
+	CvUnit* pkUnitToReturn = CvUnitCombat::GetFireSupportUnit(eAttacker, iX, iY, pkUnit->getX(), pkUnit->getY(), CvUnitCombat::FIRE_SUPPORT_OFFENSIVE);
+	CvLuaUnit::Push(L, pkUnitToReturn);
+
+	return 1;
 }
 // RED >>>>>

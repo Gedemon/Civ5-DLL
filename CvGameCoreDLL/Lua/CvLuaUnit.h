@@ -438,6 +438,10 @@ protected:
 	// RED <<<<<
 	static int lIsMarkedBestDefender(lua_State* L);
 	static int lSetMarkedBestDefender(lua_State* L);
+	static int lGetStackValue(lua_State* L);
+	static int lGetFirePoints(lua_State* L);
+	static int lGetCounterFireUnit(lua_State* L);
+	static int lGetOffensiveSupportFireUnit(lua_State* L);
 	// RED >>>>>
 };
 

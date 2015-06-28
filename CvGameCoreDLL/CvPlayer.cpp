@@ -3332,6 +3332,11 @@ void CvPlayer::DoUnitReset()
 		pLoopUnit->setMadeAttack(false);
 		pLoopUnit->setMadeInterception(false);
 
+		if (pLoopUnit->hasCounterFireCapability() || pLoopUnit->isDefensiveSupportFire() || pLoopUnit->isOffensiveSupportFire())
+		{
+			pLoopUnit->setFirePoints(pLoopUnit->getUnitInfo().GetFirePoints());
+		}
+
 		if (!isHuman())
 		{
 			const MissionData* pkMissionData = pLoopUnit->GetHeadMissionData();

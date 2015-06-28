@@ -100,11 +100,13 @@ m_iUnitPortraitOffset(0),
 // RED <<<<<
 m_iMaxHP(75),
 m_iStackValue(1),
+m_iFirePoints(0),
 m_bCanCaptureTerritory(false),
 m_bOffensiveSupportFire(false),
 m_bDefensiveSupportFire(false),
 m_bCounterFire(false),
 m_bCounterFireSameCombatType(false),
+m_bImmuneToCounterFire(false),
 m_bOnlySupportFire(false)
 // RED >>>>>
 {
@@ -194,11 +196,13 @@ bool CvUnitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& k
 	// RED <<<<<
 	m_iMaxHP = kResults.GetInt("MaxHP");
 	m_iStackValue = kResults.GetInt("StackValue");
+	m_iFirePoints = kResults.GetInt("FirePoints");
 	m_bCanCaptureTerritory = kResults.GetBool("CanCaptureTerritory");
 	m_bOffensiveSupportFire = kResults.GetBool("OffensiveSupportFire");
 	m_bDefensiveSupportFire = kResults.GetBool("DefensiveSupportFire");
 	m_bCounterFire = kResults.GetBool("CounterFire");
 	m_bCounterFireSameCombatType = kResults.GetBool("CounterFireSameCombatType");
+	m_bImmuneToCounterFire = kResults.GetBool("ImmuneToCounterFire");
 	m_bOnlySupportFire = kResults.GetBool("OnlySupportFire");
 	// RED >>>>>
 
@@ -1345,6 +1349,18 @@ bool CvUnitEntry::IsOnlySupportFire() const
 bool CvUnitEntry::IsCounterFireSameCombatTypeOnly() const
 {
 	return m_bCounterFireSameCombatType;
+}
+
+/// 
+bool CvUnitEntry::IsImmuneToCounterFire() const
+{
+	return m_bImmuneToCounterFire;
+}
+
+/// 
+int CvUnitEntry::GetFirePoints() const
+{
+	return m_iFirePoints;
 }
 
 // RED >>>>>

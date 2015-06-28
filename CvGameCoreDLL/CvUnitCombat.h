@@ -58,6 +58,9 @@ public:
 
 	//	Return a ranged unit that will defend the supplied location against the attacker at the specified location.
 	static CvUnit*		GetFireSupportUnit(PlayerTypes eDefender, int iDefendX, int iDefendY, int iAttackX, int iAttackY, FIRE_SUPPORT eSupport);
+	// RED <<<<<
+	static CvUnit*		GetFireSupportUnitFromPlotToPlot(PlayerTypes ePlayer, CvPlot* pPlot, CvPlot* pTargetedPlot, FIRE_SUPPORT eSupport);
+	// RED >>>>>
 	static uint			ApplyNuclearExplosionDamage(CvPlot *pkTargetPlot, int iDamageLevel, CvUnit* pkAttacker = NULL);
 
 protected:

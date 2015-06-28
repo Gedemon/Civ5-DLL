@@ -287,6 +287,8 @@ m_syncArchive(*this)
 // RED <<<<<
 , m_bBestDefender("CvUnit::m_bBestDefender", m_syncArchive)
 , m_bProvidingSupportFire("CvUnit::m_bProvidingSupportFire", m_syncArchive)
+, m_iStackValue("CvUnit::m_iStackValue", m_syncArchive)
+, m_iFirePoints("CvUnit::m_iFirePoints", m_syncArchive)
 // RED >>>>>
 {
     initPromotions();
@@ -792,6 +794,8 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	// RED <<<<<
 	m_bBestDefender = false;
 	m_bProvidingSupportFire = false;
+	m_iStackValue = (NO_UNIT != m_eUnitType) ? m_pUnitInfo->GetStackValue() : 1;
+	m_iFirePoints = (NO_UNIT != m_eUnitType) ? m_pUnitInfo->GetFirePoints() : 1;
 	// RED >>>>>
 
 	if (!bConstructorCall)
@@ -1454,6 +1458,7 @@ void CvUnit::doTurn()
 	VALIDATE_OBJECT
 	CvAssertMsg(!IsDead(), "isDead did not return false as expected");
 
+	// RED <<<<<
 	// Providing support fire is a temporary state, it should not return true there...
 	if (isProvidingSupportFire())
 	{
@@ -1477,6 +1482,12 @@ void CvUnit::doTurn()
 		pLog->Msg("-----------------------------------------------------");
 		setMarkedBestDefender(false);
 	}
+
+	if (hasCounterFireCapability() || isDefensiveSupportFire() || isOffensiveSupportFire())
+	{
+		setFirePoints(m_pUnitInfo->GetFirePoints());
+	}
+	// RED >>>>>
 
 
 	// Wake unit if skipped last turn
@@ -11278,6 +11289,13 @@ void CvUnit::setDamage(int iNewValue, PlayerTypes ePlayer, float fAdditionalText
 			GET_PLAYER(ePlayer).DoUnitKilledCombat(getOwner(), getUnitType());
 		}
 	}
+	// RED <<<<<
+	else
+	{
+		// update unit weight
+		setStackValue();
+	}
+	// RED >>>>>
 }
 
 
@@ -17789,8 +17807,16 @@ int CvUnit::getMaxHP() const
 /// Weight of this unit on a plot for stacking limit
 int CvUnit::getStackValue() const
 {
+	VALIDATE_OBJECT	
+	return m_iStackValue;
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setStackValue()
+{
 	VALIDATE_OBJECT
-	return getUnitInfo().GetStackValue();
+	// add option on/off
+	m_iStackValue = int (getUnitInfo().GetStackValue() * (GetMaxHitPoints() - getDamage()) / GetMaxHitPoints());
 }
 
 //	--------------------------------------------------------------------------------
@@ -17839,6 +17865,9 @@ bool CvUnit::canCounterFire(CvUnit* pUnit) const
 {
 	if (!hasCounterFireCapability())
 		return false;
+	
+	if (pUnit->isImmuneToCounterFire())
+		return false;
 
 	if (isCounterFireSameCombatTypeOnly() && (getUnitCombatType() != pUnit->getUnitCombatType()))
 		return false;
@@ -17851,6 +17880,13 @@ bool CvUnit::isCounterFireSameCombatTypeOnly() const
 {
 	VALIDATE_OBJECT
 	return getUnitInfo().IsCounterFireSameCombatTypeOnly();
+}
+
+//	--------------------------------------------------------------------------------
+bool CvUnit::isImmuneToCounterFire() const
+{
+	VALIDATE_OBJECT
+	return getUnitInfo().IsImmuneToCounterFire();
 }
 
 //	--------------------------------------------------------------------------------
@@ -17891,6 +17927,57 @@ void CvUnit::setSupportFireState(bool bNewValue)
 		m_bProvidingSupportFire = bNewValue;
 	}
 	//*/
+}
+
+//	--------------------------------------------------------------------------------
+/// Weight of this unit on a plot for stacking limit
+int CvUnit::getFirePoints() const
+{
+	VALIDATE_OBJECT	
+	return m_iFirePoints;
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setFirePoints(int iNewValue)
+{
+	VALIDATE_OBJECT
+	if (iNewValue < 0) // You can fire as long as you have at least 1 fire point left, even if it cost more than 1. 
+		m_iFirePoints = 0;
+	else
+		m_iFirePoints = iNewValue;
+}
+
+//	--------------------------------------------------------------------------------
+void CvUnit::changeFirePoints(int iChange)
+{
+	VALIDATE_OBJECT
+	setFirePoints(getFirePoints() + iChange);
+}
+
+
+//	--------------------------------------------------------------------------------
+bool CvUnit::canLaunchSupportFire()
+{
+	int iRoll = GC.getGame().getJonRandNum(100, "Support Fire attempt");
+	int iChance = 0;
+	int iDiv = 1;
+	if (GC.getSUPPORT_FIRE_CHANCE_BY_HEALTH())
+	{
+		iChance += (GetMaxHitPoints() - getDamage()) * 100;
+		iDiv = GetMaxHitPoints();
+	}
+	else
+	{
+		iChance += 100;
+		iDiv = 100;
+	}
+
+	iChance *= GC.getSUPPORT_FIRE_BASE_CHANCE_PERCENT();	
+
+	iChance /= iDiv;	
+	iChance /= 100;
+
+	return iRoll < iChance;
 }
 
 //	--------------------------------------------------------------------------------

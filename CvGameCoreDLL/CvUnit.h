@@ -1063,6 +1063,7 @@ public:
 	
 	int getMaxHP() const;
 	int getStackValue() const;
+	void setStackValue();
 	bool canCaptureTerritory() const;
 	bool isOnlySupportFire() const;
 	bool isOffensiveSupportFire() const;
@@ -1070,8 +1071,13 @@ public:
 	bool hasCounterFireCapability() const;
 	bool canCounterFire(CvUnit* pUnit) const;
 	bool isCounterFireSameCombatTypeOnly() const;
+	bool isImmuneToCounterFire() const;
 	bool isProvidingSupportFire() const;
 	void setSupportFireState(bool bNewValue);
+	int getFirePoints() const;
+	void setFirePoints(int iValue);
+	void changeFirePoints(int iValue);
+	bool canLaunchSupportFire();
 	
 	void capturePlot(CvPlot* pPlot);
 	// RED >>>>>>
@@ -1297,6 +1303,8 @@ protected:
 	// RED <<<<<
 	FAutoVariable<bool, CvUnit> m_bBestDefender;
 	FAutoVariable<bool, CvUnit> m_bProvidingSupportFire;
+	FAutoVariable<int, CvUnit> m_iStackValue;
+	FAutoVariable<int, CvUnit> m_iFirePoints;
 	// RED >>>>>
 
 private:
