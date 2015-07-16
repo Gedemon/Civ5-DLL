@@ -3647,3 +3647,56 @@ const CvPathNode* CvPathNodeArray::GetTurnDest(int iTurn)
 
 	return NULL;
 }
+
+// RED <<<<<
+//	--------------------------------------------------------------------------------
+/// Supply Line cost
+int SupplyLineCost(CvAStarNode* parent, CvAStarNode* node, int data, const void* pointer, CvAStar* finder)
+{
+	CvMap& kMap = GC.getMap();
+	int iFromPlotX = parent->m_iX;
+	int iFromPlotY = parent->m_iY;
+	CvPlot* pFromPlot = kMap.plotUnchecked(iFromPlotX, iFromPlotY);
+
+	int iToPlotX = node->m_iX;
+	int iToPlotY = node->m_iY;
+	CvPlot* pToPlot = kMap.plotUnchecked(iToPlotX, iToPlotY);
+	
+	bool bRiverCrossing = pFromPlot->isRiverCrossing(directionXY(pFromPlot, pToPlot));
+
+	FeatureTypes eFeature = pToPlot->getFeatureType();
+	CvFeatureInfo* pFeatureInfo = (eFeature > NO_FEATURE) ? GC.getFeatureInfo(eFeature) : 0;
+	TerrainTypes eTerrain = pToPlot->getTerrainType();
+	CvTerrainInfo* pTerrainInfo = (eTerrain > NO_TERRAIN) ? GC.getTerrainInfo(eTerrain) : 0;
+
+	int iCost = 0;
+
+	if (pFromPlot->getRouteType() != NO_ROUTE && pToPlot->getRouteType() != NO_ROUTE)
+	{
+		CvRouteInfo* pFromRouteInfo = GC.getRouteInfo(pFromPlot->getRouteType());
+		CvRouteInfo* pToRouteInfo = GC.getRouteInfo(pToPlot->getRouteType());
+		iCost = max(pFromRouteInfo->getFlatMovementCost(), pToRouteInfo->getFlatMovementCost());
+	}
+	else
+	{
+		iCost = ((eFeature == NO_FEATURE) ? (pTerrainInfo ? pTerrainInfo->getMovementCost() : 0) : (pFeatureInfo ? pFeatureInfo->getMovementCost() : 0));
+
+		// Hill cost, except for when a City is present here, then it just counts as flat land
+		if((PlotTypes)pToPlot->getPlotType() == PLOT_HILLS && !pToPlot->isCity())
+		{
+			iCost += GC.getHILLS_EXTRA_MOVEMENT();
+		}
+
+		if (bRiverCrossing)
+		{
+			iCost += GC.getRIVER_EXTRA_MOVEMENT();
+		}
+
+		iCost = max(1, iCost);
+		iCost *= GC.getMOVE_DENOMINATOR();
+	}
+
+	return iCost;
+}
+
+// RED >>>>>

@@ -304,12 +304,18 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 	Method(GetCombatPrediction);
 
 	Method(GetTimeString);
+
+	Method(IsProcessingMessages);
 	
 	// RED <<<<<
 	Method(UpdateREDLoadingFix);
+	Method(HideSupplyLine);
+	
+	Method(GetNumeralDate);
+	Method(SetNumeralDate);
+	Method(GetDateString);
+	Method(SetDateString);
 	// RED >>>>>
-
-	Method(IsProcessingMessages)
 }
 //------------------------------------------------------------------------------
 
@@ -1973,9 +1979,61 @@ int CvLuaGame::lIsProcessingMessages( lua_State* L)
 	return 1;
 }
 
+// RED <<<<<
 //------------------------------------------------------------------------------
 int CvLuaGame::lUpdateREDLoadingFix(lua_State* L)
 {
 	const char* szModFolder = lua_tostring(L, 1);
-	return GC.getGame().UpdateREDLoadingFix(szModFolder);
+	lua_pushboolean(L, GC.getGame().UpdateREDLoadingFix(szModFolder));
+	return 1;
 }
+
+//------------------------------------------------------------------------------
+int CvLuaGame::lHideSupplyLine(lua_State* L)
+{
+	gDLL->TradeVisuals_DestroyRoute(TEMPORARY_POPUPROUTE_ID,GC.getGame().getActivePlayer());
+	return 0;
+}
+
+
+//------------------------------------------------------------------------------
+int CvLuaGame::lGetDateString( lua_State* L)
+{
+	CvGame& kGame = GC.getGame();
+	const CvString dateString = kGame.GetDateString();
+
+	lua_pushstring(L, dateString.c_str());
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+int CvLuaGame::lGetNumeralDate( lua_State* L)
+{
+	CvGame& kGame = GC.getGame();
+
+	long lNumeralDate = kGame.GetNumeralDate();
+
+	lua_pushinteger(L, lNumeralDate);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+int CvLuaGame::lSetDateString( lua_State* L)
+{
+	CvGame& kGame = GC.getGame();
+	CvString strDate = lua_tostring(L, 1);
+
+	kGame.SetDateString(strDate);
+	return 0;
+}
+
+//------------------------------------------------------------------------------
+int CvLuaGame::lSetNumeralDate( lua_State* L)
+{
+	CvGame& kGame = GC.getGame();
+	long lNumeralDate = lua_tointeger(L, 1);
+
+	kGame.SetNumeralDate(lNumeralDate);
+	return 0;
+}
+// RED >>>>>

@@ -1461,6 +1461,8 @@ GD_INT_INIT(SUPPORT_FIRE_MIN_HEALTH_PERCENT_LEFT)
 GD_INT_INIT(SUPPORT_FIRE_BASE_CHANCE_PERCENT)
 GD_INT_INIT(SUPPORT_FIRE_CHANCE_BY_HEALTH)
 GD_INT_INIT(SUPPORT_FIRE_NO_COUNTER)
+GD_INT_INIT(SUPPLY_TRUCKS_MOVEMENT)
+GD_INT_INIT(SUPPLY_TRUCKS_MINIMAL_EFFICIENCY)
 GD_INT_INIT(MAX_HP_PERCENT_RECEIVED_DAMAGE)
 GD_INT_INIT(MAX_HP_PERCENT_INFLICTED_DAMAGE)
 GD_INT_INIT(LIBERATE_MINOR_CITY_BONUS)
@@ -1582,9 +1584,16 @@ GD_INT_INIT(OPTIMAL_SEA_HEALTH_PERCENT)
 GD_INT_INIT(CLOSE_LAND_DISTANCE)
 GD_INT_INIT(CLOSE_SEA_DISTANCE)
 GD_INT_INIT(MAX_LANDING_PLOT_DISTANCE)
+
+m_supplyLineFinder(NULL),
 // RED >>>>>
 
 // -- post defines --
+
+// RED <<<<<
+
+m_iPROMOTION_NO_SUPPLY(-1), // can't use GD_INT_INIT, we don't want the default value to be 0
+// RED >>>>>
 
 m_iLAND_TERRAIN(0),
 m_iDEEP_WATER_TERRAIN(6),
@@ -1822,6 +1831,10 @@ void CvGlobals::init()
 	setInfluenceFinder( FNEW(CvAStar, c_eCiv5GameplayDLL, 0) );
 	SetBuildRouteFinder( FNEW(CvAStar, c_eCiv5GameplayDLL, 0) );
 	SetTacticalAnalysisMapFinder( FNEW(CvTwoLayerPathFinder, c_eCiv5GameplayDLL, 0) );
+
+	// RED <<<<<
+	setSupplyLineFinder( FNEW(CvAStar, c_eCiv5GameplayDLL, 0) );
+	// RED >>>>>
 }
 
 //
@@ -1870,6 +1883,10 @@ void CvGlobals::uninit()
 	SAFE_DELETE(m_buildRouteFinder);
 	SAFE_DELETE(m_tacticalAnalysisMapFinder);
 
+	// RED <<<<<
+	SAFE_DELETE(m_supplyLineFinder);
+	// RED >>>>>
+
 	// already deleted outside of the dll, set to null for safety
 	m_pathFinder=NULL;
 	m_interfacePathFinder=NULL;
@@ -1881,6 +1898,10 @@ void CvGlobals::uninit()
 	m_influenceFinder=NULL;
 	m_buildRouteFinder = NULL;
 	m_tacticalAnalysisMapFinder = NULL;
+
+	// RED <<<<<
+	m_supplyLineFinder=NULL;
+	// RED >>>>>
 
 }
 
@@ -4880,6 +4901,8 @@ void CvGlobals::cacheGlobals()
 	GD_INT_CACHE(SUPPORT_FIRE_BASE_CHANCE_PERCENT)
 	GD_INT_CACHE(SUPPORT_FIRE_CHANCE_BY_HEALTH)
 	GD_INT_CACHE(SUPPORT_FIRE_NO_COUNTER)
+	GD_INT_CACHE(SUPPLY_TRUCKS_MOVEMENT)
+	GD_INT_CACHE(SUPPLY_TRUCKS_MINIMAL_EFFICIENCY)
 	GD_INT_CACHE(MAX_HP_PERCENT_RECEIVED_DAMAGE)
 	GD_INT_CACHE(MAX_HP_PERCENT_INFLICTED_DAMAGE)
 	GD_INT_CACHE(LIBERATE_MINOR_CITY_BONUS)
@@ -5004,6 +5027,10 @@ void CvGlobals::cacheGlobals()
 	// RED >>>>>
 
 	// -- post defines --
+
+	// RED <<<<<
+	GD_INT_CACHE(PROMOTION_NO_SUPPLY)
+	// RED >>>>>
 
 	m_iLAND_TERRAIN = getDefineINT("LAND_TERRAIN");
 	m_iDEEP_WATER_TERRAIN = getDefineINT("DEEP_WATER_TERRAIN");
@@ -5328,3 +5355,14 @@ bool CvGlobals::getOutOfSyncDebuggingEnabled() const
 {
 	return m_bOutOfSyncDebuggingEnabled;
 }
+
+// RED <<<<<
+
+void CvGlobals::setSupplyLineFinder(CvAStar* pVal) { m_supplyLineFinder = pVal; }
+
+CvAStar& CvGlobals::getSupplyLineFinder()
+{
+	return *m_supplyLineFinder;
+}
+
+// RED >>>>>

@@ -38,6 +38,11 @@ typedef FFastSmallFixedList< MissionQueueNode, 12, true, c_eCiv5GameplayDLL > Mi
 typedef FObjectHandle<CvUnit> UnitHandle;
 typedef FStaticVector<CvPlot*, 20, true, c_eCiv5GameplayDLL, 0> UnitMovementQueue;
 
+// RED <<<<<
+#define TEMPORARY_POPUPROUTE_ID (-1) //m_aTradeConnections will never use this as an index
+#define MAX_PLOTS_TO_DISPLAY 256
+// RED >>>>>
+
 struct CvUnitCaptureDefinition
 {
 	PlayerTypes eOriginalOwner;		// Who first created the unit
@@ -1080,6 +1085,15 @@ public:
 	bool canLaunchSupportFire();
 	
 	void capturePlot(CvPlot* pPlot);
+
+	bool hasNoSupplyLine();
+	CvPlot* setSupplyPlot();
+	void showSupplyLine() const;
+	int getSupplyLineEfficiency() const;
+	int getSupplyPlotX() const;
+	int getSupplyPlotY() const;
+	const CvString getSupplyPlotString() const;
+	void setSupplyPlotString(const CvString strNewValue);
 	// RED >>>>>>
 
 protected:
@@ -1305,6 +1319,11 @@ protected:
 	FAutoVariable<bool, CvUnit> m_bProvidingSupportFire;
 	FAutoVariable<int, CvUnit> m_iStackValue;
 	FAutoVariable<int, CvUnit> m_iFirePoints;
+	FAutoVariable<int, CvUnit> m_iSupplyPlotX;
+	FAutoVariable<int, CvUnit> m_iSupplyPlotY;
+	FAutoVariable<int, CvUnit> m_iSupplyLineEfficiency;
+
+	CvString m_strSupplyPlot;
 	// RED >>>>>
 
 private:

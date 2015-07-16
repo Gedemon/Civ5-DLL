@@ -299,11 +299,17 @@ protected:
 
 	static int lGetTimeString( lua_State* L);
 
+	static int lIsProcessingMessages(lua_State* L);
+
 	// RED <<<<<
 	static int lUpdateREDLoadingFix(lua_State *L);
-	// RED >>>>>
+	static int lHideSupplyLine(lua_State* L);
 
-	static int lIsProcessingMessages(lua_State* L);
+	static int lGetNumeralDate(lua_State* L);
+	static int lSetNumeralDate(lua_State* L);
+	static int lGetDateString(lua_State* L);
+	static int lSetDateString(lua_State* L);
+	// RED >>>>>
 };
 
 #endif //CVLUAGAME_H

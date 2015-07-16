@@ -442,6 +442,9 @@ protected:
 	static int lGetFirePoints(lua_State* L);
 	static int lGetCounterFireUnit(lua_State* L);
 	static int lGetOffensiveSupportFireUnit(lua_State* L);
+	static int lGetSupplyPlotXY(lua_State* L);
+	static int lGetSupplyLineEfficiency(lua_State* L);
+	static int lShowSupplyLine(lua_State* L);
 	// RED >>>>>
 };
 

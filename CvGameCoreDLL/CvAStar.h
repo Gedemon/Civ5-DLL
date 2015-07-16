@@ -466,6 +466,10 @@ bool CanReachInXTurns(UnitHandle pUnit, CvPlot* pTarget, int iTurns, bool bIgnor
 void UnitPathInitialize(const void* pointer, CvAStar* finder);
 void UnitPathUninitialize(const void* pointer, CvAStar* finder);
 
+// RED <<<<<
+int SupplyLineCost(CvAStarNode* parent, CvAStarNode* node, int data, const void* pointer, CvAStar* finder);
+// RED >>>>>
+
 // Derived classes (for more convenient access to pathfinding)
 class CvTwoLayerPathFinder: public CvAStar
 {

@@ -289,6 +289,10 @@ m_syncArchive(*this)
 , m_bProvidingSupportFire("CvUnit::m_bProvidingSupportFire", m_syncArchive)
 , m_iStackValue("CvUnit::m_iStackValue", m_syncArchive)
 , m_iFirePoints("CvUnit::m_iFirePoints", m_syncArchive)
+, m_iSupplyPlotX("CvUnit::m_iSupplyPlotX", m_syncArchive)
+, m_iSupplyPlotY("CvUnit::m_iSupplyPlotY", m_syncArchive)
+, m_iSupplyLineEfficiency("CvUnit::m_iSupplyLineEfficiency", m_syncArchive)
+, m_strSupplyPlot("")
 // RED >>>>>
 {
     initPromotions();
@@ -796,6 +800,10 @@ void CvUnit::reset(int iID, UnitTypes eUnit, PlayerTypes eOwner, bool bConstruct
 	m_bProvidingSupportFire = false;
 	m_iStackValue = (NO_UNIT != m_eUnitType) ? m_pUnitInfo->GetStackValue() : 1;
 	m_iFirePoints = (NO_UNIT != m_eUnitType) ? m_pUnitInfo->GetFirePoints() : 1;
+	m_iSupplyPlotX = -1;
+	m_iSupplyPlotY = -1;
+	m_iSupplyLineEfficiency = 0;
+	m_strSupplyPlot = "";
 	// RED >>>>>
 
 	if (!bConstructorCall)
@@ -1483,9 +1491,21 @@ void CvUnit::doTurn()
 		setMarkedBestDefender(false);
 	}
 
+	// Reset number of Fire Points
 	if (hasCounterFireCapability() || isDefensiveSupportFire() || isOffensiveSupportFire())
 	{
 		setFirePoints(m_pUnitInfo->GetFirePoints());
+	}
+	
+	// Check for supply line
+	PromotionTypes ePromotionNosupply = PromotionTypes(GC.getPROMOTION_NO_SUPPLY());
+	if (hasNoSupplyLine())
+	{
+		setHasPromotion(ePromotionNosupply, true);
+	}
+	else
+	{
+		setHasPromotion(ePromotionNosupply, false);
 	}
 	// RED >>>>>
 
@@ -14570,6 +14590,10 @@ void CvUnit::read(FDataStream& kStream)
 
         m_missionQueue.insertAtEnd( &Node );
     }
+		
+	// RED <<<<<
+	kStream >> m_strSupplyPlot;
+	// RED >>>>>
 }
 
 
@@ -14627,6 +14651,10 @@ void CvUnit::write(FDataStream& kStream) const
         kStream << pNode->iFlags;
         kStream << pNode->iPushTurn;
     }
+
+	// RED <<<<<
+	kStream << m_strSupplyPlot;
+	// RED >>>>>
 }
 
 //	--------------------------------------------------------------------------------
@@ -18051,5 +18079,201 @@ void CvUnit::capturePlot(CvPlot* pPlot)
 			}			
 		}
 	}
+}
+
+//	--------------------------------------------------------------------------------
+bool CvUnit::hasNoSupplyLine()
+{
+
+	if (getDomainType() == DOMAIN_AIR || getDomainType() == DOMAIN_SEA || isEmbarked())
+	{
+		return false;
+	}
+
+	if (setSupplyPlot())
+	{
+		return false;
+	}
+
+	return true;
+
+}
+
+//	--------------------------------------------------------------------------------
+CvPlot* CvUnit::setSupplyPlot()
+{
+	PlayerTypes eUnitOwner = getOwner();
+	CvPlayer& kUnitOwner = GET_PLAYER(eUnitOwner);
+
+	CvAStar* pkLandRouteFinder;
+	pkLandRouteFinder = &GC.getSupplyLineFinder();
+
+	int iUnitArea = getArea();
+	int iPathfinderFlags;
+
+	// Can get supply through friendly territory
+	iPathfinderFlags = MOVE_LAND_AS_ROUTE | MOVE_FRIENDLY_TERRITORY_ONLY;
+
+	//
+	CvAStarNode* pPathfinderNode = NULL;
+	
+	// 
+	int iBestCost = MAX_INT;
+	CvPlot* pBestPlot = NULL;
+
+	CvCity* pLoopCity;
+	int iLoop;
+	for (pLoopCity = kUnitOwner.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kUnitOwner.nextCity(&iLoop))
+	{
+		if (pLoopCity->getArea() == iUnitArea)
+		{
+			if (pkLandRouteFinder->GeneratePath(getX(), getY(), pLoopCity->getX(), pLoopCity->getY(), iPathfinderFlags | eUnitOwner, true))
+			{
+
+				pPathfinderNode = pkLandRouteFinder->GetLastNode();
+				int iCost = pPathfinderNode->m_iTotalCost;
+
+				if (iCost < iBestCost)
+				{
+					iBestCost = iCost;
+					pBestPlot = pLoopCity->plot();
+				}
+			}
+		}
+	}
+
+	if (pBestPlot)
+	{
+		int iOptimalPathCost = GC.getSUPPLY_TRUCKS_MOVEMENT() * GC.getMOVE_DENOMINATOR();
+
+		if (iBestCost > iOptimalPathCost)
+		{
+			CvAssertMsg(GC.getSUPPLY_TRUCKS_MINIMAL_EFFICIENCY() >= 0, "SUPPLY_TRUCKS_MINIMAL_EFFICIENCY is a negative value");
+			CvAssertMsg(GC.getSUPPLY_TRUCKS_MINIMAL_EFFICIENCY() < 100, "SUPPLY_TRUCKS_MINIMAL_EFFICIENCY is superior to 100%");
+
+			int iMaxEfficiencyLost = 100 - GC.getSUPPLY_TRUCKS_MINIMAL_EFFICIENCY();
+			m_iSupplyLineEfficiency = int ((100 - iMaxEfficiencyLost) + (iMaxEfficiencyLost * iOptimalPathCost / iBestCost));
+		}
+		else
+		{
+			m_iSupplyLineEfficiency = 100;
+		}
+
+		m_iSupplyPlotX = pBestPlot->getX();
+		m_iSupplyPlotY = pBestPlot->getY();
+	}
+	else
+	{
+		m_iSupplyLineEfficiency = 0;
+		m_iSupplyPlotX = -1;
+		m_iSupplyPlotY = -1;
+	}
+
+	return pBestPlot;
+}
+
+
+//	--------------------------------------------------------------------------------
+void CvUnit::showSupplyLine() const
+{	
+	PlayerTypes eUnitOwner = getOwner();
+
+	CvAStar* pkLandRouteFinder;
+	pkLandRouteFinder = &GC.getSupplyLineFinder();
+	
+	// Can get supply through friendly territory
+	int iPathfinderFlags = MOVE_LAND_AS_ROUTE | MOVE_FRIENDLY_TERRITORY_ONLY;
+
+	CvAStarNode* pPathfinderNode = NULL;
+
+	if (pkLandRouteFinder->GeneratePath(getX(), getY(), getSupplyPlotX(), getSupplyPlotY(), iPathfinderFlags | eUnitOwner, true))
+	{
+		gDLL->TradeVisuals_DestroyRoute(TEMPORARY_POPUPROUTE_ID,GC.getGame().getActivePlayer());
+
+		pPathfinderNode = pkLandRouteFinder->GetLastNode();
+		int iCost = pPathfinderNode->m_iTotalCost;
+
+		int plotsX[MAX_PLOTS_TO_DISPLAY], plotsY[MAX_PLOTS_TO_DISPLAY];
+
+		if (pPathfinderNode != NULL) {						
+			int iPathSteps = 0;
+			CvAStarNode* pWalkingPath = pPathfinderNode;
+			while (pWalkingPath)
+			{
+				iPathSteps++;
+				pWalkingPath = pWalkingPath->m_pParent;
+			}
+
+			int iIndex = iPathSteps;
+			if (iIndex > 0 && iIndex <=MAX_PLOTS_TO_DISPLAY)
+			{
+				int i = 0;
+				int n = iIndex;
+				while (pPathfinderNode != NULL)
+				{
+					plotsX[i] = pPathfinderNode->m_iX;
+					plotsY[i] = pPathfinderNode->m_iY;
+					pPathfinderNode = pPathfinderNode->m_pParent;
+					iIndex--;
+					i++;
+				}
+
+				gDLL->TradeVisuals_NewRoute(TEMPORARY_POPUPROUTE_ID,eUnitOwner,TRADE_CONNECTION_INTERNATIONAL,n,plotsX,plotsY);
+				gDLL->TradeVisuals_ActivatePopupRoute(TEMPORARY_POPUPROUTE_ID);
+
+				//iCost
+				char text[256];
+				text[0] = NULL;
+				sprintf_s( text, GetLocalizedText("{1}", iCost));
+				DLLUI->AddPopupText( getX(), getY(), text, PLOT_CONTROL_TEXT_DELAY ); 
+			}
+		}
+	}
+}
+
+//	--------------------------------------------------------------------------------
+int CvUnit::getSupplyLineEfficiency() const
+{
+	return m_iSupplyLineEfficiency;
+}
+
+//	--------------------------------------------------------------------------------
+int CvUnit::getSupplyPlotX() const
+{
+	return m_iSupplyPlotX;
+}
+//	--------------------------------------------------------------------------------
+int CvUnit::getSupplyPlotY() const
+{
+	return m_iSupplyPlotY;
+}
+
+
+//	--------------------------------------------------------------------------------
+void CvUnit::setSupplyPlotString(CvString strNewValue)
+{
+	VALIDATE_OBJECT
+	gDLL->stripSpecialCharacters(strNewValue);
+
+	m_strSupplyPlot = strNewValue;
+}
+
+//	--------------------------------------------------------------------------------
+const CvString CvUnit::getSupplyPlotString() const
+{
+	VALIDATE_OBJECT
+	CvString strBuffer;
+
+	if (m_strSupplyPlot.IsEmpty())
+	{
+		Localization::String strLoc = Localization::Lookup( "TXT_KEY_SUPPLY_PLOT_UNKNOWN" );
+		strBuffer.Format(strLoc.toUTF8());
+		return strBuffer;
+	}
+
+	Localization::String strSupplyPlotString = Localization::Lookup(m_strSupplyPlot);
+	strBuffer.Format(strSupplyPlotString.toUTF8());
+
+	return strBuffer;
 }
 // RED >>>>>

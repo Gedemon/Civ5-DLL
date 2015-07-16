@@ -19,6 +19,17 @@
 
 void CvGameTextMgr::setYearStr(CvString& strString, int iGameTurn, bool bSave, CalendarTypes eCalendar, int iStartYear, GameSpeedTypes eSpeed)
 {
+	// RED <<<<<
+	CvGame& kGame = GC.getGame();
+	CvString dateString = kGame.GetDateString();
+
+	if (dateString != "January 1, 1900")
+	{
+		strString = dateString;
+		return;
+	}
+	// RED >>>>>>
+
 	int iTurnYear = getTurnYearForGame(iGameTurn, iStartYear, eCalendar, eSpeed);
 
 	if (iTurnYear < 0)
@@ -58,6 +69,18 @@ void CvGameTextMgr::setYearStr(CvString& strString, int iGameTurn, bool bSave, C
 
 void CvGameTextMgr::setDateStr(CvString& strString, int iGameTurn, bool bSave, CalendarTypes eCalendar, int iStartYear, GameSpeedTypes eSpeed)
 {
+	// RED <<<<<
+	CvGame& kGame = GC.getGame();
+	CvString dateString = kGame.GetDateString();
+
+	if (dateString != "January 1, 1900")
+	{
+		strString = dateString;
+		return;
+	}
+	// RED >>>>>>
+
+
 	CvString strYearBuffer;
 	CvString strWeekBuffer;
 

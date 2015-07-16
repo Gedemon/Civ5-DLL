@@ -434,6 +434,9 @@ void CvLuaUnit::PushMethods(lua_State* L, int t)
 	Method(GetFirePoints);
 	Method(GetCounterFireUnit);
 	Method(GetOffensiveSupportFireUnit);
+	Method(GetSupplyPlotXY);
+	Method(GetSupplyLineEfficiency);
+	Method(ShowSupplyLine);
 	// RED >>>>>>
 }
 //------------------------------------------------------------------------------
@@ -4153,5 +4156,47 @@ int CvLuaUnit::lGetOffensiveSupportFireUnit(lua_State* L)
 	CvLuaUnit::Push(L, pkUnitToReturn);
 
 	return 1;
+}
+
+//------------------------------------------------------------------------------
+//CvUnit* getSupplyPlotX(); getSupplyPlotY();
+int CvLuaUnit::lGetSupplyPlotXY(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+
+	int iX = pkUnit->getSupplyPlotX();
+	int iY = pkUnit->getSupplyPlotY();
+
+	lua_pushinteger(L, iX);
+	lua_pushinteger(L, iY);
+	return 2;
+}
+
+//------------------------------------------------------------------------------
+//CvUnit* getSupplyLineEfficiency();
+int CvLuaUnit::lGetSupplyLineEfficiency(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+
+	int iEfficiency = pkUnit->getSupplyLineEfficiency();
+
+	lua_pushinteger(L, iEfficiency);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+//CvUnit* showSupplyLine();
+int CvLuaUnit::lShowSupplyLine(lua_State* L)
+{
+	CvUnit* pkUnit = GetInstance(L);
+
+	if (!GC.getMap().isPlot(pkUnit->getSupplyPlotX(), pkUnit->getSupplyPlotY()))
+	{
+		return 0;
+	}
+
+	pkUnit->showSupplyLine();
+
+	return 0;
 }
 // RED >>>>>

@@ -5817,6 +5817,24 @@ bool CvPlayer::canCreate(ProjectTypes eProject, bool bContinue, bool bTestVisibl
 		}
 	}
 
+	// RED <<<<<
+	for (iI = 0; iI < GC.getNumUnitInfos(); iI++)
+	{
+		CvUnitEntry* pkUnitEntry = GC.getUnitInfo((UnitTypes)iI);
+		// Is this project required by an unit ?
+		if (pkUnitEntry && pkUnitEntry->GetProjectPrereq() == pProjectInfo.GetID())
+		{
+			UnitTypes eThisPlayersUnitType = (UnitTypes) getCivilizationInfo().getCivilizationUnits((UnitClassTypes) pkUnitEntry->GetUnitClassType());
+
+			// If the player isn't allowed to train this Unit (via Civilization_UnitClassOverrides) then return false
+			if (pkUnitEntry->GetID() != eThisPlayersUnitType)
+			{
+				return false;
+			}		
+		}
+	}
+	// RED >>>>>
+
 	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
 	if(pkScriptSystem)
 	{

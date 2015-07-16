@@ -97,6 +97,10 @@ m_jonRand(false)
 , m_pDiploResponseQuery(NULL)
 , m_bFOW(true)
 , m_lastTurnAICivsProcessed(-1)
+// RED <<<<<
+, m_lNumeralDate(19000101)
+, m_strDate("January 1, 1900")
+// RED >>>>>
 {
 	m_aiEndTurnMessagesReceived = FNEW(int[MAX_PLAYERS], c_eCiv5GameplayDLL, 0);
 	m_aiRankPlayer = FNEW(int[MAX_PLAYERS], c_eCiv5GameplayDLL, 0);        // Ordered by rank...
@@ -1003,6 +1007,9 @@ void CvGame::uninit()
 	OPT_BOL_INIT(OptionGroupedDiploAI);
 	
 	OPT_BOL_INIT(OptionNavalMoveThrough);
+
+	m_lNumeralDate = 19000101;
+	m_strDate = "January 1, 1900";
 
 	// RED >>>>>
 
@@ -8722,6 +8729,8 @@ void CvGame::Read(FDataStream& kStream)
 	OPT_BOL_READ(OptionGroupedDiploAI);
 	OPT_BOL_READ(OptionNavalMoveThrough);
 
+	m_lNumeralDate = 19000101;
+	kStream >> m_strDate;
 	// RED >>>>>
 
 	if(uiVersion >= 8)
@@ -8930,6 +8939,7 @@ void CvGame::Write(FDataStream& kStream) const
 	OPT_BOL_WRITE(OptionGroupedDiploAI);
 	OPT_BOL_WRITE(OptionNavalMoveThrough);
 
+	kStream << m_strDate;
 	// RED >>>>>
 
 	//In Version 8, Serialize Saved Game database
@@ -10575,4 +10585,25 @@ void CvGame::initOptionsForRED()
 	}
 }
 
+//	---------------------------------------------------------------------------
+long CvGame::GetNumeralDate() const
+{	
+	return m_lNumeralDate;
+}
+
+//	---------------------------------------------------------------------------
+void CvGame::SetNumeralDate(const long lNewValue)
+{	
+	m_lNumeralDate = lNewValue;
+}
+//	---------------------------------------------------------------------------
+const CvString CvGame::GetDateString() const
+{	
+	return m_strDate;
+}
+//	---------------------------------------------------------------------------
+void CvGame::SetDateString(const CvString strNewValue)
+{	
+	m_strDate = strNewValue;
+}
 // RED >>>>>

@@ -552,6 +552,12 @@ public:
 	OPT_BOL_DEF(OptionNavalMoveThrough);
 
 	void initOptionsForRED();
+
+	long GetNumeralDate() const;
+	void SetNumeralDate(const long lNewValue);
+	
+	const CvString GetDateString() const;
+	void SetDateString(const CvString strNewValue);
 	// RED >>>>>
 
 	//------------------------------------------------------------
@@ -758,7 +764,9 @@ protected:
 	OPT_BOL_DECL(OptionMinorCanEnterAllyTerritory);
 	OPT_BOL_DECL(OptionGroupedDiploAI);	
 	OPT_BOL_DECL(OptionNavalMoveThrough);
-
+	
+	long m_lNumeralDate;
+	CvString m_strDate;
 	// RED >>>>>
 };
 
