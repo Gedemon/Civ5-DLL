@@ -208,7 +208,7 @@ void CvDangerPlots::UpdateDanger (bool bPretendWarWithAllCivs, bool bIgnoreVisib
 
 						if (pAdjacentPlot != NULL)
 						{
-							AddDanger(pAdjacentPlot->getX(), pAdjacentPlot->getY(), iCitadelValue);
+							AddDanger(pAdjacentPlot->getX(), pAdjacentPlot->getY(), iCitadelValue, true);
 						}
 					}
 				}
@@ -229,9 +229,20 @@ void CvDangerPlots::UpdateDanger (bool bPretendWarWithAllCivs, bool bIgnoreVisib
 }
 
 /// Add an amount of danger to a given tile
-void CvDangerPlots::AddDanger (int iPlotX, int iPlotY, int iValue)
+void CvDangerPlots::AddDanger (int iPlotX, int iPlotY, int iValue, bool bWithinOneMove)
 {
 	const int idx = iPlotX + iPlotY * GC.getMap().getGridWidth();
+	if (iValue > 0)
+	{
+		if (bWithinOneMove)
+		{
+			iValue |= 0x1;
+		}
+		else
+		{
+			iValue &= ~0x1;
+		}
+	}
 	m_DangerPlots[idx] += iValue;
 }
 
@@ -604,7 +615,7 @@ void CvDangerPlots::AssignUnitDangerValue (CvUnit* pUnit, CvPlot* pPlot)
 
 			int iUnitCombatValue = iBaseUnitCombatValue / iTurnsAway;
 			iUnitCombatValue = ModifyDangerByRelationship(pUnit->getOwner(), pPlot, iUnitCombatValue);
-			AddDanger(iPlotX, iPlotY, iUnitCombatValue);
+			AddDanger(iPlotX, iPlotY, iUnitCombatValue, iTurnsAway <= 1);
 		}
 	}
 }
@@ -615,7 +626,7 @@ void CvDangerPlots::AssignCityDangerValue (CvCity* pCity, CvPlot* pPlot)
 {
 	int iCombatValue = pCity->getStrengthValue();
 	iCombatValue = ModifyDangerByRelationship(pCity->getOwner(), pPlot, iCombatValue);
-	AddDanger(pPlot->getX(), pPlot->getY(), iCombatValue);
+	AddDanger(pPlot->getX(), pPlot->getY(), iCombatValue, false);
 }
 
 /// How much danger should we apply to a citadel?
@@ -674,3 +685,11 @@ void CvDangerPlots::SetDirty()
 {
 	m_bDirty = true;
 }
+
+// RED <<<<<
+/// Returns if the unit is in immediate danger
+bool CvDangerPlots::IsUnderImmediateThreat(const CvPlot& pPlot) const
+{
+	return GetDanger(pPlot) & 0x1;
+}
+// RED >>>>>

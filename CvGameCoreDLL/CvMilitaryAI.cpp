@@ -1072,29 +1072,29 @@ int CvMilitaryAI::ScoreTarget(CvMilitaryTarget &target)
 		// Much higher value on close target (keep a frontline !)
 		if (target.m_iPathLength < 5)
 		{
-			uliRtnValue *= 16000;
+			uliRtnValue *= 1024;
 		}
 		else if (target.m_iPathLength < 8)
 		{
-			uliRtnValue *= 8000;
+			uliRtnValue *= 512;
 		}
 		else if (target.m_iPathLength < 10)
 		{
-			uliRtnValue *= 4000;
+			uliRtnValue *= 128;
 		}
 		else if (target.m_iPathLength < 12) 
 		// RED >>>>>
 		//if (target.m_iPathLength < 10) // RED
 		{
-			uliRtnValue *= 400; // RED (was 16)
+			uliRtnValue *= 64; // RED (was 16)
 		}
 		else if (target.m_iPathLength < 15)
 		{
-			uliRtnValue *= 40; // RED (was 8)
+			uliRtnValue *= 32; // RED (was 8)
 		}
 		else if (target.m_iPathLength < 20)
 		{
-			uliRtnValue *= 4; // RED (was 4)
+			uliRtnValue *= 8; // RED (was 4)
 		}
 		else
 		{
@@ -1135,7 +1135,7 @@ int CvMilitaryAI::ScoreTarget(CvMilitaryTarget &target)
 		{
 			// RED
 			//iFriendlyStrength = pZone->GetFriendlyStrength();
-			iFriendlyStrength = pZone->GetFriendlyStrength() / 25; 
+			iFriendlyStrength = pZone->GetFriendlyStrength() / 25; // RED
 		}
 		iFriendlyStrength = max (1, iFriendlyStrength); 
 		uliRtnValue *= iFriendlyStrength;
@@ -1146,8 +1146,8 @@ int CvMilitaryAI::ScoreTarget(CvMilitaryTarget &target)
 		if (pZone)
 		{
 			// RED
-			//iEnemyStrength = pZone->GetEnemyStrength();
-			iEnemyStrength = pZone->GetEnemyStrength() / 25;
+			iEnemyStrength = pZone->GetEnemyStrength();
+			//iEnemyStrength = pZone->GetEnemyStrength() / 25; // RED
 		}
 		iEnemyStrength = max (1, iEnemyStrength); // RED (was 1000 ???)
 		uliRtnValue /= iEnemyStrength;
@@ -1163,7 +1163,7 @@ int CvMilitaryAI::ScoreTarget(CvMilitaryTarget &target)
 	// Defense value of target
 	// RED
 	//int iTargetStrengthMultipler = (5000 - target.m_pTargetCity->getStrengthValue()) / 100;
-	int iTargetStrengthMultipler = (5000 - target.m_pTargetCity->getStrengthValue()) / 2000;
+	int iTargetStrengthMultipler = (5000 - target.m_pTargetCity->getStrengthValue()) / 2000; // RED
 	iTargetStrengthMultipler = max (1, iTargetStrengthMultipler);
 	uliRtnValue *= iTargetStrengthMultipler;
 
@@ -3788,3 +3788,224 @@ int MilitaryAIHelpers::NumberOfFillableSlots(CvPlayer *pPlayer, MultiunitFormati
 	}
 	return iWillBeFilled;
 }
+
+// RED <<<<<
+// to do : remove magic number
+/// Do we want to move this air unit to a new base?
+bool CvMilitaryAI::WillAirUnitRebase(CvUnit* pUnit) const
+{
+	CvPlot* pUnitPlot = pUnit->plot();
+
+	//CvPlot* pBestPlot = NULL;
+
+	// Is this unit in a base in danger?
+	bool bNeedsToMove = false;
+	if (pUnitPlot->isCity())
+	{
+		if (3 * pUnitPlot->getPlotCity()->getDamage() > pUnitPlot->getPlotCity()->GetMaxHitPoints() && m_pPlayer->IsPlotUnderImmediateThreat(*pUnitPlot))
+		{
+			bNeedsToMove = true;
+		}
+	}
+	/*//
+	else
+	{
+		CvUnit *pCarrier = pUnit->getTransportUnit();
+		if (pCarrier)
+		{
+			if (pCarrier->getDamage() > (pCarrier->GetMaxHitPoints() / 5))
+			{
+				bNeedsToMove = true;
+			}
+		}
+	}
+	//*/
+
+	// Is this a fighter that doesn't have any useful missions nearby
+	if (pUnit->canAirPatrol(NULL) || pUnit->canAirSweep())
+	{
+		int iNumNearbyEnemyAirUnits = GetNumEnemyAirUnitsInRange(pUnitPlot, pUnit->GetRange(), true /*bCountFighters*/, true /*bCountBombers*/);
+		if (iNumNearbyEnemyAirUnits == 0 && !GetBestAirSweepTarget(pUnit))
+		{
+			bNeedsToMove = true;
+		}
+	}
+
+	if (!bNeedsToMove)
+	{
+		return false;
+	}
+
+	// first look for open carrier slots
+	/*//
+	int iLoopUnit = 0;
+	for(CvUnit* pLoopUnit = m_pPlayer->firstUnit(&iLoopUnit); pLoopUnit != NULL; pLoopUnit = m_pPlayer->nextUnit(&iLoopUnit))
+	{
+		CvPlot* pLoopUnitPlot = pLoopUnit->plot();
+
+		if(pLoopUnit->getDamage() > (pLoopUnit->GetMaxHitPoints() / 5))  // this might not be a good place to land
+		{
+			continue;
+		}
+
+		if(pBestPlot != pUnitPlot && !pUnit->canRebaseAt(pUnitPlot, pLoopUnitPlot->getX(),pLoopUnitPlot->getY()))
+		{
+			continue;
+		}
+
+		if(!pUnit->canLoadUnit(*pLoopUnit, *pLoopUnitPlot))
+		{
+			continue;
+		}
+		
+		// Found somewhere to rebase to
+		return true;
+	}
+	//*/
+
+	CvCity* pLoopCity;
+	int iLoopCity = 0;
+	for(pLoopCity = m_pPlayer->firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = m_pPlayer->nextCity(&iLoopCity))
+	{
+		CvPlot* pTarget = pLoopCity->plot();
+
+		if (3 * pUnitPlot->getPlotCity()->getDamage() > pUnitPlot->getPlotCity()->GetMaxHitPoints() && m_pPlayer->IsPlotUnderImmediateThreat(*pUnitPlot))
+		{
+			continue;
+		}
+
+		if (pTarget != pUnitPlot && !pUnit->canRebaseAt(pUnitPlot, pTarget->getX(),pTarget->getY()))
+		{
+			continue;
+		}
+
+		// Found somewhere to rebase to
+		return true;
+	}
+
+	return false;
+}
+
+/// Assess nearby enemy air assets
+int CvMilitaryAI::GetNumEnemyAirUnitsInRange(CvPlot* pCenterPlot, int /*iRange*/, bool bCountFighters, bool bCountBombers) const
+{
+	int iRtnValue = 0;
+
+	// Loop through all the players
+	for(int iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iI);
+		if(kPlayer.isAlive() && kPlayer.GetID() != m_pPlayer->GetID())
+		{
+			if (atWar(kPlayer.getTeam(), m_pPlayer->getTeam()))
+			{
+				// Loop through their units looking for bombers (this will allow us to find bombers on carriers also
+				int iLoopUnit = 0;
+				for(CvUnit* pLoopUnit = kPlayer.firstUnit(&iLoopUnit); pLoopUnit != NULL; pLoopUnit = kPlayer.nextUnit(&iLoopUnit))
+				{
+					if (pLoopUnit->getDomainType() == DOMAIN_AIR)
+					{
+						if ( plotDistance(pCenterPlot->getX(), pCenterPlot->getY(), pLoopUnit->getX(), pLoopUnit->getY()) <= 10 )
+						{
+							// Let's not factor in revealed or visible - As a human I can remember past attacks and intuit whether a bomber could be in range of the city, AIs don't have great intuition...
+							if (pLoopUnit->IsAirSweepCapable() || pLoopUnit->canAirDefend())
+							{
+								if (bCountFighters) iRtnValue++;
+							}
+							else
+							{
+								if (bCountBombers) iRtnValue++;
+							}
+						}
+					}
+				}
+
+				// Loop through each of their cities
+				//int iLoop;
+				//CvCity* pLoopCity;
+				//for(pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
+				//{
+				//	CvPlot *pCityPlot = pLoopCity->plot();
+				//	if (pCityPlot->isRevealed(m_pPlayer->getTeam()) && plotDistance(pCenterPlot->getX(), pCenterPlot->getY(), pLoopCity->getX(), pLoopCity->getY()) <= iRange)
+				//	{
+				//		for (int iUnitLoop = 0; iUnitLoop < pCityPlot->getNumUnits(); iUnitLoop++)
+				//		{
+				//			CvUnit *pUnit = pCityPlot->getUnitByIndex(iUnitLoop);
+				//			{
+				//				if (pUnit->getDomainType() == DOMAIN_AIR)
+				//				{
+				//					if (pUnit->IsAirSweepCapable() || pUnit->canAirDefend())
+				//					{
+				//						if (bCountFighters) iRtnValue++;
+				//					}
+				//					else
+				//					{
+				//						if (bCountBombers) iRtnValue++;
+				//					}
+				//				}
+				//			}
+				//		}
+				//	}
+				//}
+			}
+		}
+	}
+
+	return iRtnValue;
+}
+
+/// See if this fighter has an air sweep target we like
+CvPlot *CvMilitaryAI::GetBestAirSweepTarget(CvUnit* pFighter) const
+{
+	CvPlot *pBestTarget = NULL;
+	int iBestCount = 0;
+
+	// Loop through all the players
+	for(int iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		CvPlayer& kPlayer = GET_PLAYER((PlayerTypes)iI);
+		if(kPlayer.isAlive() && kPlayer.GetID() != m_pPlayer->GetID())
+		{
+			if (atWar(kPlayer.getTeam(), m_pPlayer->getTeam()))
+			{
+				// Loop through each of their cities
+				int iLoop;
+				CvCity* pLoopCity;
+				for(pLoopCity = kPlayer.firstCity(&iLoop); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoop))
+				{
+					CvPlot *pCityPlot = pLoopCity->plot();
+					if (pCityPlot->isVisible(m_pPlayer->getTeam()) && plotDistance(pFighter->getX(), pFighter->getY(), pLoopCity->getX(), pLoopCity->getY()) <= pFighter->GetRange())
+					{
+						if (pFighter->canAirSweepAt(pCityPlot->getX(), pCityPlot->getY()))
+						{
+							int iCountFighters = 0;
+
+							for (int iUnitLoop = 0; iUnitLoop < pCityPlot->getNumUnits(); iUnitLoop++)
+							{
+								CvUnit *pUnit = pCityPlot->getUnitByIndex(iUnitLoop);
+								{
+									if (pUnit->getDomainType() == DOMAIN_AIR)
+									{
+										if (pUnit->IsAirSweepCapable() || pUnit->canAirDefend())
+										{
+											iCountFighters++;
+										}
+									}
+								}
+							}
+
+							if (iCountFighters > iBestCount)
+							{
+								iBestCount = iCountFighters;
+								pBestTarget = pCityPlot;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return pBestTarget;
+}
+//RED >>>>>

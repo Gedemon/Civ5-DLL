@@ -198,7 +198,7 @@ void CvFlavorManager::Init(CvPlayer *pPlayer)
 			}
 
 			// Human player, just set all flavors to average (5)
-			else
+			//else // RED : every one at 5...
 			{
 				int iDefaultFlavorValue = GC.getDEFAULT_FLAVOR_VALUE();
 				unsigned int uiNumFlavors = GC.getNumFlavorTypes();

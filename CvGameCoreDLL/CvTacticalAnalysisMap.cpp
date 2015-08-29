@@ -688,7 +688,8 @@ void CvTacticalAnalysisMap::AddToDominanceZones(int iIndex, CvTacticalAnalysisCe
 		CvUnit *pFriendlyUnit = pCell->GetFriendlyMilitaryUnit();
 		if (pFriendlyUnit)
 		{
-			if (pFriendlyUnit->getDomainType() == DOMAIN_AIR ||
+			//if (pFriendlyUnit->getDomainType() == DOMAIN_AIR ||
+			if ( // RED 
 				(pFriendlyUnit->getDomainType() == DOMAIN_LAND && !pZone->IsWater()) ||
 				(pFriendlyUnit->getDomainType() == DOMAIN_SEA && pZone->IsWater()))
 			{
@@ -718,7 +719,8 @@ void CvTacticalAnalysisMap::AddToDominanceZones(int iIndex, CvTacticalAnalysisCe
 		CvUnit *pEnemyUnit = pCell->GetEnemyMilitaryUnit();
 		if (pEnemyUnit)
 		{
-			if (pEnemyUnit->getDomainType() == DOMAIN_AIR ||
+			//if (pEnemyUnit->getDomainType() == DOMAIN_AIR ||
+			if ( // RED 
 				(pEnemyUnit->getDomainType() == DOMAIN_LAND && !pZone->IsWater()) ||
 				(pEnemyUnit->getDomainType() == DOMAIN_SEA && pZone->IsWater()))
 			{

@@ -30,7 +30,7 @@ public:
 	void Reset();
 
 	void UpdateDanger (bool bPretendWarWithAllCivs = false, bool bIgnoreVisibility = false);
-	void AddDanger (int iPlotX, int iPlotY, int iValue);
+	void AddDanger (int iPlotX, int iPlotY, int iValue, bool bWithinOneMove);
 	int GetDanger (const CvPlot & pPlot) const;
 	int GetCityDanger (CvCity* pCity); // sums the plots around the city to determine it's danger value
 
@@ -48,6 +48,10 @@ public:
 
 	void Read  (FDataStream& kStream);
 	void Write (FDataStream& kStream) const;
+
+	// RED
+	bool IsUnderImmediateThreat(const CvPlot& pPlot) const;
+	// RED
 
 protected:
 

@@ -1275,6 +1275,10 @@ public:
 
 	bool hasTurnTimerExpired();
 
+	// RED <<<<<
+	bool IsPlotUnderImmediateThreat(CvPlot& Plot) const;
+	// RED >>>>>
+
 protected:
 	class ConqueredByBoolField
 	{

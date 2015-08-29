@@ -453,6 +453,67 @@ private:
 	MultiunitPositionTypes m_ePosition;
 };
 
+enum TacticalAIInfoTypes
+{
+	eTACTICAL_UNASSIGNED,
+	eTACTICAL_POSTURE_SIT_AND_BOMBARD,
+	eTACTICAL_POSTURE_ATTRIT_FROM_RANGE,
+	eTACTICAL_POSTURE_EXPLOIT_FLANKS,
+	eTACTICAL_POSTURE_STEAMROLL,
+	eTACTICAL_POSTURE_SURGICAL_CITY_STRIKE,
+	eTACTICAL_POSTURE_COUNTERATTACK,
+	eTACTICAL_MOVE_NONCOMBATANTS_TO_SAFETY,
+	eTACTICAL_CAPTURE_CITY,
+	eTACTICAL_DAMAGE_CITY,
+	eTACTICAL_DESTROY_HIGH_UNIT,
+	eTACTICAL_DESTROY_MEDIUM_UNIT,
+	eTACTICAL_DESTROY_LOW_UNIT,
+	eTACTICAL_TO_SAFETY,
+	eTACTICAL_ATTRIT_HIGH_UNIT,
+	eTACTICAL_ATTRIT_MEDIUM_UNIT,
+	eTACTICAL_ATTRIT_LOW_UNIT,
+	eTACTICAL_REPOSITION,
+	eTACTICAL_BARBARIAN_CAMP,
+	eTACTICAL_PILLAGE,
+	eTACTICAL_ATTACK_VERY_HIGH_PRIORITY_CIVILIAN,
+	eTACTICAL_ATTACK_HIGH_PRIORITY_CIVILIAN,
+	eTACTICAL_ATTACK_MEDIUM_PRIORITY_CIVILIAN,
+	eTACTICAL_ATTACK_LOW_PRIORITY_CIVILIAN,
+	eTACTICAL_SAFE_BOMBARDS,
+	eTACTICAL_HEAL,
+	eTACTICAL_ANCIENT_RUINS,
+	eTACTICAL_GARRISON_TO_ALLOW_BOMBARD,
+	eTACTICAL_GARRISON_ALREADY_THERE,
+	eTACTICAL_BASTION_ALREADY_THERE,
+	eTACTICAL_GUARD_IMPROVEMENT_ALREADY_THERE,
+	eTACTICAL_GARRISON_1_TURN,
+	eTACTICAL_BASTION_1_TURN,
+	eTACTICAL_GUARD_IMPROVEMENT_1_TURN,
+	eTACTICAL_AIR_INTERCEPT,
+	eTACTICAL_AIR_SWEEP,
+	eTACTICAL_POSTURE_HEDGEHOG,
+	eTACTICAL_POSTURE_WITHDRAW,
+	eTACTICAL_POSTURE_SHORE_BOMBARDMENT,
+	eTACTICAL_CLOSE_ON_TARGET,
+	eTACTICAL_MOVE_OPERATIONS,
+	eTACTICAL_EMERGENCY_PURCHASES,
+	eTACTICAL_ESCORT_EMBARKED_UNIT,
+	eTACTICAL_PLUNDER_TRADE_UNIT,
+	eTACTICAL_PARK_ON_TRADE_ROUTE,
+	eTACTICAL_DEFENSIVE_AIRLIFT,
+	eTACTICAL_PILLAGE_CITADEL,
+	eTACTICAL_PILLAGE_RESOURCE,
+	eTACTICAL_PILLAGE_CITADEL_NEXT_TURN,
+	eTACTICAL_PILLAGE_RESOURCE_NEXT_TURN,
+	eTACTICAL_PILLAGE_NEXT_TURN,
+	eTACTICAL_TARGET_UNIT_TO_DEFEND,
+	eMUPOSITION_CIVILIAN_SUPPORT,
+	eMUPOSITION_NAVAL_ESCORT,
+	eMUPOSITION_BOMBARD,
+	eMUPOSITION_FRONT_LINE,
+	eNUM_TACTICAL_INFOTYPES
+};
+
 typedef FStaticVector<CvTacticalTarget, 100, false, c_eCiv5GameplayDLL > TacticalList;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -603,7 +664,7 @@ private:
 	// Internal low-level utility routines
 	void TurnOffMove(TacticalAIMoveTypes eType);
 	bool FindUnitsForThisMove(TacticalAIMoveTypes eMove, CvPlot *pTargetPlot, int iNumTurnsAway=0, bool bRangedOnly=false);
-	bool FindUnitsWithinStrikingDistance(CvPlot *pTargetPlot, int iNumTurnsAway, bool bNoRangedUnits=false, bool bNavalOnly=false, bool bMustMoveThrough=false);
+	bool FindUnitsWithinStrikingDistance(CvPlot *pTargetPlot, int iNumTurnsAway, bool bNoRangedUnits=false, bool bNavalOnly=false, bool bMustMoveThrough=false, bool bNoAircraft=false);
 	bool FindCitiesWithinStrikingDistance(CvPlot *pTargetPlot);
 	bool FindClosestUnit(CvPlot *pTargetPlot, int iNumTurnsAway, bool bMustBeRangedUnit=false, int iRangeRequired=2, bool bNeedsIgnoreLOS=false, bool bMustBeMeleeUnit=false, CvPlot *pRangedAttackTarget=NULL);
 	bool FindClosestOperationUnit(CvPlot *pTargetPlot, bool bSafeForRanged, bool bIncludeGenerals);
@@ -693,6 +754,12 @@ private:
 	// Operational AI support data
 	FStaticVector<CvOperationUnit, SAFE_ESTIMATE_NUM_MULTIUNITFORMATION_ENTRIES, true, c_eCiv5GameplayDLL, 0> m_OperationUnits;
 	FStaticVector<CvOperationUnit, SAFE_ESTIMATE_NUM_MULTIUNITFORMATION_ENTRIES, true, c_eCiv5GameplayDLL, 0> m_GeneralsToMove;
+
+	// RED <<<<<
+	int m_CachedInfoTypes[eNUM_TACTICAL_INFOTYPES];
+	
+	void PlotGuardUnitMoves();
+	// RED >>>>>
 };
 
 namespace TacticalAIHelpers

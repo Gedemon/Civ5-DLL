@@ -2968,7 +2968,11 @@ void CvHomelandAI::ExecuteAircraftMoves()
 		{
 			CvPlot* pLoopUnitPlot = pLoopUnit->plot();
 
-			if (pLoopUnit->getDamage() > 3) // this might not be a good place to land
+			// RED <<<<<
+			// Todo : remove magic number 
+			//if (pLoopUnit->getDamage() > 3) // this might not be a good place to land
+			if (3 * pLoopUnit->getDamage() > pLoopUnit->GetMaxHitPoints() && m_pPlayer->IsPlotUnderImmediateThreat(*pLoopUnitPlot))
+			// RED >>>>>
 			{
 				continue;
 			}
@@ -2998,7 +3002,11 @@ void CvHomelandAI::ExecuteAircraftMoves()
 		{
 			CvPlot *pTarget = pLoopCity->plot();
 
-			if (pLoopCity->getDamage() > 5)
+			// RED <<<<<
+			// Todo : remove magic number 
+			//if (pLoopCity->getDamage() > 5)
+			if (3 * pLoopCity->getDamage() > pLoopCity->GetMaxHitPoints() && m_pPlayer->IsPlotUnderImmediateThreat(*pTarget))
+			// RED >>>>>
 			{
 				continue;
 			}

@@ -217,6 +217,12 @@ public:
 	void LogPeace(TeamTypes eOpponentTeam);
 	void LogDeficitScrapUnit(UnitHandle pUnit);
 
+	// RED <<<<<	
+	bool WillAirUnitRebase(CvUnit* pUnit) const;
+	int GetNumEnemyAirUnitsInRange(CvPlot* pCenterPlot, int iRange, bool bCountFighters, bool bCountBombers) const;
+	CvPlot *GetBestAirSweepTarget(CvUnit* pFighter) const;
+	// RED >>>>>
+
 private:
 
 	// Functions to process a turn

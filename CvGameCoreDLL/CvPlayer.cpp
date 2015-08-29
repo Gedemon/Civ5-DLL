@@ -20332,3 +20332,11 @@ bool CancelActivePlayerEndTurn()
 	}
 	return true;
 }
+
+// RED <<<<<
+//	--------------------------------------------------------------------------------
+bool CvPlayer::IsPlotUnderImmediateThreat(CvPlot& pPlot) const
+{
+	return m_pDangerPlots->IsUnderImmediateThreat(pPlot);
+}
+// RED >>>>>
