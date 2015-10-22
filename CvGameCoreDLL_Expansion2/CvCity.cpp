@@ -1566,7 +1566,7 @@ void CvCity::PostKill(bool bCapital, CvPlot* pPlot, PlayerTypes eOwner)
 	if(bCapital)
 	{
 #if defined(MOD_GLOBAL_NO_CONQUERED_SPACESHIPS)
-		owningPlayer.disassembleSpaceship();
+		owningPlayer.disassembleSpaceship(pPlot);
 #endif
 		owningPlayer.findNewCapital();
 		owningPlayer.SetHasLostCapital(true, getOwner());
@@ -8525,6 +8525,7 @@ void CvCity::ChangeJONSCulturePerTurnFromBuildings(int iChange)
 	VALIDATE_OBJECT
 	if(iChange != 0)
 	{
+		CUSTOMLOG("ChangeJONSCulturePerTurnFromBuildings(%i)", iChange);
 		m_iJONSCulturePerTurnFromBuildings = (m_iJONSCulturePerTurnFromBuildings + iChange);
 	}
 }
@@ -8543,6 +8544,7 @@ void CvCity::ChangeJONSCulturePerTurnFromPolicies(int iChange)
 	VALIDATE_OBJECT
 	if(iChange != 0)
 	{
+		CUSTOMLOG("ChangeJONSCulturePerTurnFromPolicies(%i)", iChange);
 		m_iJONSCulturePerTurnFromPolicies = (m_iJONSCulturePerTurnFromPolicies + iChange);
 	}
 }
@@ -8705,6 +8707,7 @@ void CvCity::ChangeFaithPerTurnFromBuildings(int iChange)
 	VALIDATE_OBJECT
 	if(iChange != 0)
 	{
+		CUSTOMLOG("ChangeFaithPerTurnFromBuildings(%i)", iChange);
 		m_iFaithPerTurnFromBuildings = (m_iFaithPerTurnFromBuildings + iChange);
 	}
 }
@@ -8723,6 +8726,7 @@ void CvCity::ChangeFaithPerTurnFromPolicies(int iChange)
 	VALIDATE_OBJECT
 	if(iChange != 0)
 	{
+		CUSTOMLOG("ChangeFaithPerTurnFromPolicies(%i)", iChange);
 		m_iFaithPerTurnFromPolicies = (m_iFaithPerTurnFromPolicies + iChange);
 	}
 }
@@ -10828,6 +10832,7 @@ void CvCity::ChangeBaseYieldRateFromBuildings(YieldTypes eIndex, int iChange)
 
 	if(iChange != 0)
 	{
+		CUSTOMLOG("ChangeBaseYieldRateFromBuildings(%i, %i)", eIndex, iChange);
 		m_aiBaseYieldRateFromBuildings.setAt(eIndex, m_aiBaseYieldRateFromBuildings[eIndex] + iChange);
 
 		if(getTeam() == GC.getGame().getActiveTeam())
@@ -12651,9 +12656,9 @@ void CvCity::BuyPlot(int iPlotX, int iPlotY)
 #if defined(MOD_EVENTS_CITY)
 	if (MOD_EVENTS_CITY) {
 #if defined(MOD_UI_CITY_EXPANSION)
-		GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityBoughtPlot, getOwner(), GetID(), plot()->getX(), plot()->getY(), bWithGold, !bWithGold);
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityBoughtPlot, getOwner(), GetID(), iPlotX, iPlotY, bWithGold, !bWithGold);
 #else
-		GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityBoughtPlot, getOwner(), GetID(), plot()->getX(), plot()->getY(), true, false);
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_CityBoughtPlot, getOwner(), GetID(), iPlotX, iPlotY, true, false);
 #endif
 	} else {
 #endif
@@ -12663,8 +12668,13 @@ void CvCity::BuyPlot(int iPlotX, int iPlotY)
 		CvLuaArgsHandle args;
 		args->Push(getOwner());
 		args->Push(GetID());
+#if defined(MOD_BUGFIX_MINOR)
+		args->Push(iPlotX);
+		args->Push(iPlotY);
+#else
 		args->Push(plot()->getX());
 		args->Push(plot()->getY());
+#endif
 		args->Push(true); // bGold
 		args->Push(false); // bFaith/bCulture
 

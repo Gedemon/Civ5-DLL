@@ -567,6 +567,9 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 
 	Method(IsGoldenAgeCultureBonusDisabled);
 
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(IsMajorCiv);
+#endif
 	Method(IsMinorCiv);
 	Method(GetMinorCivType);
 	Method(GetMinorCivTrait);
@@ -662,6 +665,9 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 	Method(GetHandicapType);
 	Method(GetCivilizationType);
 	Method(GetLeaderType);
+#if defined(MOD_API_EXTENSIONS) && defined(MOD_API_LUA_EXTENSIONS)
+	Method(SetLeaderType);
+#endif
 	Method(GetPersonalityType);
 	Method(SetPersonalityType);
 	Method(GetCurrentEra);
@@ -6243,7 +6249,14 @@ int CvLuaPlayer::lIsGoldenAgeCultureBonusDisabled(lua_State* L)
 	return BasicLuaMethod(L, &CvPlayerAI::IsGoldenAgeCultureBonusDisabled);
 }
 
-
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//bool isMajorCiv();
+int CvLuaPlayer::lIsMajorCiv(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::isMajorCiv);
+}
+#endif
 //------------------------------------------------------------------------------
 //bool isMinorCiv();
 int CvLuaPlayer::lIsMinorCiv(lua_State* L)
@@ -7093,6 +7106,14 @@ int CvLuaPlayer::lGetLeaderType(lua_State* L)
 {
 	return BasicLuaMethod(L, &CvPlayerAI::getLeaderType);
 }
+#if defined(MOD_API_EXTENSIONS) && defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+//void  setLeaderType(LeaderHeadTypes eNewleader);
+int CvLuaPlayer::lSetLeaderType(lua_State* L)
+{
+	return BasicLuaMethod(L, &CvPlayerAI::setLeaderType);
+}
+#endif
 //------------------------------------------------------------------------------
 //LeaderHeadTypes  getPersonalityType()
 int CvLuaPlayer::lGetPersonalityType(lua_State* L)
@@ -8783,8 +8804,12 @@ int CvLuaPlayer::lDoForceDenounce(lua_State* L)
 	// Show leader if active player is being denounced
 	if(GC.getGame().getActivePlayer() == eOtherPlayer)
 	{
+#if defined(MOD_DIPLOMACY_STFU)
+		pkPlayer->GetDiplomacyAI()->DisplayAILeaderMessage(pkPlayer->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NEGATIVE);
+#else
 		const char* strText = pkPlayer->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_NO);
 		gDLL->GameplayDiplomacyAILeaderMessage(pkPlayer->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 	}
 
 	return 1;

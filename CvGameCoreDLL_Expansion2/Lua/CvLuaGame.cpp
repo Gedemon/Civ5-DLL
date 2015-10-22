@@ -27,6 +27,10 @@
 #include "../CvGameTextMgr.h"
 #include "../CvReplayMessage.h"
 
+#if defined(MOD_DIPLOMACY_STFU)
+#include "../CvDiplomacyAI.h"
+#endif
+
 #define Method(func) RegisterMethod(L, l##func, #func);
 
 //------------------------------------------------------------------------------
@@ -348,6 +352,9 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 #endif
 	Method(FoundReligion);
 	Method(EnhanceReligion);
+#if defined(MOD_API_LUA_EXTENSIONS)
+	Method(AddReformation);
+#endif
 	Method(SetHolyCity);
 	Method(GetFounder);
 	Method(SetFounder);
@@ -396,6 +403,10 @@ void CvLuaGame::RegisterMembers(lua_State* L)
 
 	Method(GetNumArchaeologySites);
 	Method(GetNumHiddenArchaeologySites);
+
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_EXTENSIONS)
+	Method(ExitLeaderScreen);
+#endif
 
 #if defined(MOD_API_LUA_EXTENSIONS)
 	Method(ReloadGameDataDefines);
@@ -1857,6 +1868,7 @@ int CvLuaGame::lGameplayDiplomacyAILeaderMessage(lua_State* L)
 	const int iPlayer = lua_tointeger(L, 1);
 	const int eMessage = lua_tointeger(L, 2);
 	const int iData1 = lua_tointeger(L, 3);
+CUSTOMLOG("STFU: CvLuaGame::GameplayDiplomacyAILeaderMessage");
 	gDLL->GameplayDiplomacyAILeaderMessage((PlayerTypes) iPlayer, DIPLO_UI_STATE_DEFAULT_ROOT, "TEMP", (LeaderheadAnimationTypes) eMessage, iData1);
 
 	return 1;
@@ -2558,6 +2570,24 @@ int CvLuaGame::lEnhanceReligion(lua_State* L)
 
 	return 0;
 }
+#if defined(MOD_API_LUA_EXTENSIONS)
+//------------------------------------------------------------------------------
+int CvLuaGame::lAddReformation(lua_State* L)
+{
+	const PlayerTypes ePlayer = static_cast<PlayerTypes>(luaL_checkint(L, 1));
+	const ReligionTypes eReligion = static_cast<ReligionTypes>(luaL_checkint(L, 2));
+	const BeliefTypes eBelief = static_cast<BeliefTypes>(luaL_checkint(L, 3));
+
+	CvPlayerAI& kPlayer = GET_PLAYER(ePlayer);
+	CvGameReligions* pkGameReligions = GC.getGame().GetGameReligions();
+	if (!pkGameReligions->HasAddedReformationBelief(ePlayer) && kPlayer.GetReligions()->HasCreatedReligion() && kPlayer.GetReligions()->GetReligionCreatedByPlayer() == eReligion)
+	{
+		pkGameReligions->AddReformationBelief(ePlayer, eReligion, eBelief);
+	}
+
+	return 0;
+}
+#endif
 //------------------------------------------------------------------------------
 int CvLuaGame::lSetHolyCity(lua_State* L)
 {
@@ -3080,6 +3110,14 @@ int CvLuaGame::lGetNumHiddenArchaeologySites(lua_State* L)
 	lua_pushinteger(L, GC.getGame().GetNumHiddenArchaeologySites());
 	return 1;
 }
+
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_EXTENSIONS)
+int CvLuaGame::lExitLeaderScreen(lua_State* L)
+{
+	CvPreGame::popGameType();
+	return 0;
+}
+#endif
 
 #if defined(MOD_API_LUA_EXTENSIONS)
 //------------------------------------------------------------------------------

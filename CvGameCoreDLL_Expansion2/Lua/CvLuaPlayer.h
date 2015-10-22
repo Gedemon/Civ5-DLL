@@ -555,6 +555,9 @@ protected:
 	static int lIsGoldenAgeCultureBonusDisabled(lua_State* L);
 
 	// Minor Civ stuff
+#if defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(IsMajorCiv, bool);
+#endif
 	static int lIsMinorCiv(lua_State* L);
 	static int lGetMinorCivType(lua_State* L);
 	static int lGetMinorCivTrait(lua_State* L);
@@ -650,6 +653,9 @@ protected:
 	static int lGetHandicapType(lua_State* L);
 	static int lGetCivilizationType(lua_State* L);
 	static int lGetLeaderType(lua_State* L);
+#if defined(MOD_API_EXTENSIONS) && defined(MOD_API_LUA_EXTENSIONS)
+	LUAAPIEXTN(SetLeaderType, void, iNewLeader);
+#endif
 	static int lGetPersonalityType(lua_State* L);
 	static int lSetPersonalityType(lua_State* L);
 	static int lGetCurrentEra(lua_State* L);

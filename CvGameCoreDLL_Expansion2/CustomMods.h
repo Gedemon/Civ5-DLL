@@ -23,7 +23,7 @@
  ****************************************************************************/
 #define MOD_DLL_GUID {0xcf7d28a8, 0x1684, 0x4420, { 0xaf, 0x45, 0x11, 0x7, 0xc, 0xb, 0x8c, 0x4a }} // {CF7D28A8-1684-4420-AF45-11070C0B8C4A}
 #define MOD_DLL_NAME "Pick'N'Mix BNW DLL"
-#define MOD_DLL_VERSION_NUMBER ((uint) 66)
+#define MOD_DLL_VERSION_NUMBER ((uint) 67)
 #define MOD_DLL_VERSION_STATUS ""			// a (alpha), b (beta) or blank (released)
 #define MOD_DLL_CUSTOM_BUILD_NAME ""
 
@@ -74,6 +74,7 @@
 #define MOD_API_LUA_EXTENSIONS                      gCustomMods.isAPI_LUA_EXTENSIONS()
 // Enables the Unified Yields extensions - thanks to bane_, JFD and Ulixes for extensive testing (v54)
 #define MOD_API_UNIFIED_YIELDS                      (true)
+// TODO - WH - Enabling consolidation introduces a double counting bug with faith added to buildings from a policy - which I don't have time to track down
 #define MOD_API_UNIFIED_YIELDS_CONSOLIDATION        (true)
 // Enables the Unified Yields (YIELD_TOURISM) extensions (v56)
 #define MOD_API_UNIFIED_YIELDS_TOURISM              (true)
@@ -176,6 +177,11 @@
 #define MOD_DIPLOMACY_TECH_BONUSES                  gCustomMods.isDIPLOMACY_TECH_BONUSES()
 // Human players will auto-denounce AI players before going to war with them (v39)
 #define MOD_DIPLOMACY_AUTO_DENOUNCE                 gCustomMods.isDIPLOMACY_AUTO_DENOUNCE()
+// Gags the AI for annoying, inter-turn, so called, diplomacy messages "You're army is weak", "You're so powerful", etc. (v67)
+//   GameEvents.DiplomacyStfu.Add(function(iAI, iResponseType, iDiploUIState, iAction, iExtraData) return GameInfoTypes.STFU_DEFAULT; end)
+#define MOD_DIPLOMACY_STFU                          gCustomMods.isDIPLOMACY_STFU()
+// Don't display leader heads (behaves more like multi-player diplomacy) (v67)
+#define MOD_DIPLOMACY_NO_LEADERHEADS                gCustomMods.isDIPLOMACY_NO_LEADERHEADS()
 // Changes for the City State Diplomacy mod by Gazebo - AFFECTS SAVE GAME DATA FORMAT (v35)
 #define MOD_DIPLOMACY_CITYSTATES                    gCustomMods.isDIPLOMACY_CITYSTATES()
 #if defined(MOD_DIPLOMACY_CITYSTATES)
@@ -276,7 +282,7 @@
 #define MOD_AI_SECONDARY_SETTLERS                   gCustomMods.isAI_SECONDARY_SETTLERS()
 
 // Features from the "Smart AI mod" by Ninakoru - see http://forums.civfanatics.com/showthread.php?t=521955 (v50)
- #define MOD_AI_SMART                                gCustomMods.isAI_SMART()
+#define MOD_AI_SMART                                gCustomMods.isAI_SMART()
 #if defined(MOD_AI_SMART)
 // Omit obsolete/no value items as part of a deal if asked to balance things out (v50)
 #define MOD_AI_SMART_DEALS                          (MOD_AI_SMART && gCustomMods.isAI_SMART_DEALS())
@@ -652,7 +658,7 @@ enum TerraformingEventTypes {
 #define CUSTOMLOG(sFmt, ...) {																		\
 	CvString sMsg; CvString::format(sMsg, sFmt, __VA_ARGS__);										\
 	if (CUSTOMLOGFILEINFO) {																		\
-		CvString sLine; CvString::format(sLine, "%s: %i - %s", __FILE__, __LINE__, sMsg.c_str());	\
+		CvString sLine; CvString::format(sLine, "%s[%i] - %s", __FILE__, __LINE__, sMsg.c_str());	\
 		LOGFILEMGR.GetLog(CUSTOMLOGDEBUG, FILogFile::kDontTimeStamp)->Msg(sLine.c_str());			\
 	} else {																						\
 		LOGFILEMGR.GetLog(CUSTOMLOGDEBUG, FILogFile::kDontTimeStamp)->Msg(sMsg.c_str());			\
@@ -666,7 +672,7 @@ enum TerraformingEventTypes {
 #if defined(UNIFIEDLOGDEBUG)
 #define UNIFIEDLOG(sFmt, ...) {																		\
 	CvString sMsg; CvString::format(sMsg, sFmt, __VA_ARGS__);										\
-	CvString sLine; CvString::format(sLine, "%s: %i - %s", __FILE__, __LINE__, sMsg.c_str());	    \
+	CvString sLine; CvString::format(sLine, "%s[%i] - %s", __FILE__, __LINE__, sMsg.c_str());	    \
 	LOGFILEMGR.GetLog(UNIFIEDLOGDEBUG, FILogFile::kDontTimeStamp)->Msg(sLine.c_str());			    \
 }
 #else
@@ -740,6 +746,8 @@ enum TerraformingEventTypes {
 #define GAMEEVENT_CustomMissionTargetPlot	"CustomMissionTargetPlot",		"iiiiiii"
 #define GAMEEVENT_CustomMissionTimerInc		"CustomMissionTimerInc",		"iiiiiii"
 #define GAMEEVENT_DeclareWar				"DeclareWar",					"iib"
+#define GAMEEVENT_DiplomacyStfu				"DiplomacyStfu",				"iiiii"
+#define GAMEEVENT_DiplomacyStfuLeaveLeader	"DiplomacyStfuLeaveLeader",		"i"
 #define GAMEEVENT_EspionageResult			"EspionageResult",				"iiiii"
 #define GAMEEVENT_EspionageState			"EspionageState",				"iiiii"
 #define GAMEEVENT_GetDiploModifier			"GetDiploModifier",				"iii"
@@ -929,6 +937,8 @@ public:
 	
 	MOD_OPT_DECL(DIPLOMACY_TECH_BONUSES);
 	MOD_OPT_DECL(DIPLOMACY_AUTO_DENOUNCE);
+	MOD_OPT_DECL(DIPLOMACY_STFU);
+	MOD_OPT_DECL(DIPLOMACY_NO_LEADERHEADS);
 	MOD_OPT_DECL(DIPLOMACY_CITYSTATES); 
 	MOD_OPT_DECL(DIPLOMACY_CITYSTATES_DIFFICULTY); 
 	MOD_OPT_DECL(DIPLOMACY_CITYSTATES_QUESTS); 

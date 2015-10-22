@@ -922,6 +922,17 @@ public:
 	bool IsTooSoonForMoveTroopsRequest(PlayerTypes ePlayer) const;
 #endif
 
+#if defined(MOD_DIPLOMACY_STFU)
+	bool WantAILeaderMessage(DiploMessageTypes eDiploMessage, PlayerTypes eAI, DiploUIStateTypes eDiploUIState, LeaderheadAnimationTypes eAction, int iExtraData);
+	void DisplayAILeaderMessage(PlayerTypes ePlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, LeaderheadAnimationTypes eAction, int iExtraData = -1);
+	void DisplayAILeaderMessage(PlayerTypes ePlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, LeaderheadAnimationTypes eAction, int iExtraData = -1);
+	void DisplayAILeaderMessage(PlayerTypes ePlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, const Localization::String& strOptionalKey1, LeaderheadAnimationTypes eAction, int iExtraData = -1);
+	void SendAILeaderMessage(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, LeaderheadAnimationTypes eAction, int iExtraData = -1);
+	void SendAILeaderMessage(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, LeaderheadAnimationTypes eAction, int iExtraData = -1);
+	void SendAILeaderMessage(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, const Localization::String& strOptionalKey1, LeaderheadAnimationTypes eAction, int iExtraData = -1);
+	void SendAILeaderMessage(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2, LeaderheadAnimationTypes eAction, int iExtraData = -1);
+#endif
+
 	/////////////////////////////////////////////////////////
 	// A Player's adherence to statements made to this AI
 	/////////////////////////////////////////////////////////
@@ -1508,6 +1519,11 @@ private:
 
 	bool* m_pabMoveTroopsRequestAccepted;
 	short* m_paiMoveTroopsRequestCounter;
+#endif
+
+#if defined(MOD_DIPLOMACY_STFU)
+	Database::Results* m_pStfuResponseQuery;
+	Database::Results* m_pStfuQuery;
 #endif
 
 	// Scratch pad to keep track of Diplo Messages we've sent out in the past

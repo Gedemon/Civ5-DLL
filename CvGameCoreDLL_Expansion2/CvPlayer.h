@@ -436,12 +436,24 @@ public:
 
 #if defined(MOD_API_UNIFIED_YIELDS)
 	void DoYieldsFromKill(CvUnit* pAttackingUnit, CvUnit* pDefendingUnit, int iX, int iY, int iExistingDelay);
+#if defined(MOD_API_EXTENSIONS)
+	void DoYieldBonusFromKill(YieldTypes eYield, CvUnit* pAttackingUnit, CvUnit* pKilledUnit, UnitTypes eKilledUnitType, int iX, int iY, bool bWasBarbarian, int &iNumBonuses);
+#else
 	void DoYieldBonusFromKill(YieldTypes eYield, CvUnit* pAttackingUnit, UnitTypes eKilledUnitType, int iX, int iY, bool bWasBarbarian, int &iNumBonuses);
+#endif
 #else
 	void DoYieldsFromKill(UnitTypes eAttackingUnitType, UnitTypes eKilledUnitType, int iX, int iY, bool bWasBarbarian, int iExistingDelay);
+#if defined(MOD_API_EXTENSIONS)
+	void DoYieldBonusFromKill(YieldTypes eYield, UnitTypes eAttackingUnitType, CvUnit* pKilledUnit, UnitTypes eKilledUnitType, int iX, int iY, bool bWasBarbarian, int &iNumBonuses);
+#else
 	void DoYieldBonusFromKill(YieldTypes eYield, UnitTypes eAttackingUnitType, UnitTypes eKilledUnitType, int iX, int iY, bool bWasBarbarian, int &iNumBonuses);
 #endif
+#endif
+#if defined(MOD_API_EXTENSIONS)
+	void DoUnresearchedTechBonusFromKill(CvUnit* pKilledUnit, UnitTypes eKilledUnitType, int iX, int iY, int &iNumBonuses);
+#else
 	void DoUnresearchedTechBonusFromKill(UnitTypes eKilledUnitType, int iX, int iY, int &iNumBonuses);
+#endif
 	void ReportYieldFromKill(YieldTypes eYield, int iValue, int iX, int iY, int iDelay);
 
 	void DoTechFromCityConquer(CvCity* pConqueredCity);
@@ -1072,7 +1084,7 @@ public:
 	bool IsHasLostCapital() const;
 	void SetHasLostCapital(bool bValue, PlayerTypes eConqueror);
 #if defined(MOD_GLOBAL_NO_CONQUERED_SPACESHIPS)
-	void disassembleSpaceship();
+	void disassembleSpaceship(CvPlot* pPlot);
 #endif
 	PlayerTypes GetCapitalConqueror() const;
 
@@ -1191,6 +1203,9 @@ public:
 
 	CvLeaderHeadInfo& getLeaderInfo() const;
 	LeaderHeadTypes getLeaderType() const;
+#if defined(MOD_API_EXTENSIONS)
+	void setLeaderType(LeaderHeadTypes eNewLeader);
+#endif
 
 	LeaderHeadTypes getPersonalityType() const;
 	void setPersonalityType(LeaderHeadTypes eNewValue);

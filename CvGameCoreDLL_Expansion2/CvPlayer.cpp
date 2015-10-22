@@ -2438,7 +2438,7 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 	if(bCapital)
 	{
 #if defined(MOD_GLOBAL_NO_CONQUERED_SPACESHIPS)
-		GET_PLAYER(eOldOwner).disassembleSpaceship();
+		GET_PLAYER(eOldOwner).disassembleSpaceship(pCityPlot);
 #endif
 		GET_PLAYER(eOldOwner).findNewCapital();
 		GET_TEAM(getTeam()).resetVictoryProgress();
@@ -5902,6 +5902,21 @@ void CvPlayer::findNewCapital()
 		}
 		CvAssertMsg(!(pBestCity->GetCityBuildings()->GetNumRealBuilding(eCapitalBuilding)), "(pBestCity->getNumRealBuilding(eCapitalBuilding)) did not return false as expected");
 		pBestCity->GetCityBuildings()->SetNumRealBuilding(eCapitalBuilding, 1);
+
+#if defined(MOD_GLOBAL_NO_CONQUERED_SPACESHIPS)
+		if (MOD_GLOBAL_NO_CONQUERED_SPACESHIPS && !isMinorCiv() && !isBarbarian()) {
+			// Rebuild the spaceship launch pad
+			CvTeam& thisTeam = GET_TEAM(getTeam());
+
+			if (thisTeam.getProjectCount((ProjectTypes)GC.getSPACE_RACE_TRIGGER_PROJECT()) == 1) {
+				if (isAlive()) {
+					CUSTOMLOG("Rebuilding launch pad at (%i, %i)", pBestCity->getX(), pBestCity->getY());
+					auto_ptr<ICvPlot1> pDllPlot(new CvDllPlot(pBestCity->plot()));
+					gDLL->GameplaySpaceshipEdited(pDllPlot.get(), 0x0001); // Display just the launch pad
+				}
+			}
+		}
+#endif
 	}
 }
 
@@ -7147,7 +7162,11 @@ void CvPlayer::receiveGoody(CvPlot* pPlot, GoodyTypes eGoody, CvUnit* pUnit)
 		bool bDontShowRewardPopup = GC.GetEngineUserInterface()->IsOptionNoRewardPopups();
 
 		// Don't show in MP, or if the player has turned it off
+#if defined(MOD_API_EXTENSIONS)
+		if(!GC.getGame().isReallyNetworkMultiPlayer() && !bDontShowRewardPopup)
+#else
 		if(!GC.getGame().isNetworkMultiPlayer() && !bDontShowRewardPopup)	// KWG: Candidate for !GC.getGame().isOption(GAMEOPTION_SIMULTANEOUS_TURNS)
+#endif
 		{
 			int iSpecialValue = 0;
 
@@ -10788,13 +10807,25 @@ void CvPlayer::DoYieldsFromKill(UnitTypes eAttackingUnitType, UnitTypes eKilledU
 #endif
 
 	int iNumBonuses = iExistingDelay; // Passed by reference below, incremented to stagger floating text in UI
+#if defined(MOD_API_EXTENSIONS)
+	DoUnresearchedTechBonusFromKill(pDefendingUnit, eKilledUnitType, iX, iY, iNumBonuses);
+#else
 	DoUnresearchedTechBonusFromKill(eKilledUnitType, iX, iY, iNumBonuses);
+#endif
 	for(int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
 	{
 #if defined(MOD_API_UNIFIED_YIELDS)
+#if defined(MOD_API_EXTENSIONS)
+		DoYieldBonusFromKill((YieldTypes)iYield, pAttackingUnit, pDefendingUnit, eKilledUnitType, iX, iY, pDefendingUnit->isBarbarian(), iNumBonuses);
+#else
 		DoYieldBonusFromKill((YieldTypes)iYield, pAttackingUnit, eKilledUnitType, iX, iY, pDefendingUnit->isBarbarian(), iNumBonuses);
+#endif
+#else
+#if defined(MOD_API_EXTENSIONS)
+		DoYieldBonusFromKill((YieldTypes)iYield, eAttackingUnitType, pDefendingUnit, eKilledUnitType, iX, iY, bWasBarbarian, iNumBonuses);
 #else
 		DoYieldBonusFromKill((YieldTypes)iYield, eAttackingUnitType, eKilledUnitType, iX, iY, bWasBarbarian, iNumBonuses);
+#endif
 #endif
 	}
 }
@@ -10803,9 +10834,17 @@ void CvPlayer::DoYieldsFromKill(UnitTypes eAttackingUnitType, UnitTypes eKilledU
 /// Apply and show a yield bonus from a combat win
 /// If a bonus is applied, iNumBonuses must be incremented to stagger the UI text with other bonuses
 #if defined(MOD_API_UNIFIED_YIELDS)
+#if defined(MOD_API_EXTENSIONS)
+void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, CvUnit* pAttackingUnit, CvUnit* pKilledUnit, UnitTypes eKilledUnitType, int iX, int iY, bool bWasBarbarian, int &iNumBonuses)
+#else
 void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, CvUnit* pAttackingUnit, UnitTypes eKilledUnitType, int iX, int iY, bool bWasBarbarian, int &iNumBonuses)
+#endif
+#else
+#if defined(MOD_API_EXTENSIONS)
+void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, UnitTypes eAttackingUnitType, CvUnit* pKilledUnit, UnitTypes eKilledUnitType, int iX, int iY, bool bWasBarbarian, int &iNumBonuses)
 #else
 void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, UnitTypes eAttackingUnitType, UnitTypes eKilledUnitType, int iX, int iY, bool bWasBarbarian, int &iNumBonuses)
+#endif
 #endif
 {
 	int iValue = 0;
@@ -10816,7 +10855,11 @@ void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, UnitTypes eAttackingUnitT
 	CvUnitEntry* pkKilledUnitInfo = GC.getUnitInfo(eKilledUnitType);
 	if(pkKilledUnitInfo)
 	{
+#if defined(MOD_API_EXTENSIONS)
+		int iCombatStrength = pKilledUnit ? max(pKilledUnit->GetBaseCombatStrength(), pKilledUnit->GetBaseRangedCombatStrength()) : max(pkKilledUnitInfo->GetCombat(), pkKilledUnitInfo->GetRangedCombat());
+#else
 		int iCombatStrength = max(pkKilledUnitInfo->GetCombat(), pkKilledUnitInfo->GetRangedCombat());
+#endif
 		if(iCombatStrength > 0)
 		{	
 			switch(eYield)
@@ -10954,7 +10997,11 @@ void CvPlayer::DoYieldBonusFromKill(YieldTypes eYield, UnitTypes eAttackingUnitT
 //	--------------------------------------------------------------------------------
 /// Apply and show a bonus towards unresearched tech when we defeat a unit of that tech
 /// If a bonus is applied, iNumBonuses must be incremented to stagger the UI text with other bonuses
+#if defined(MOD_API_EXTENSIONS)
+void CvPlayer::DoUnresearchedTechBonusFromKill(CvUnit* pKilledUnit, UnitTypes eKilledUnitType, int iX, int iY, int &iNumBonuses)
+#else
 void CvPlayer::DoUnresearchedTechBonusFromKill(UnitTypes eKilledUnitType, int iX, int iY, int &iNumBonuses)
+#endif
 {
 	CvAssertMsg(eKilledUnitType != NO_UNIT, "Killed unit's type is NO_TYPE. Please send Anton your save file and version.");
 	if (eKilledUnitType == NO_UNIT) return;
@@ -10974,7 +11021,11 @@ void CvPlayer::DoUnresearchedTechBonusFromKill(UnitTypes eKilledUnitType, int iX
 				CvTechEntry* pkTechInfo = GC.getTechInfo(ePrereq);
 				if (pkTechInfo && !GET_TEAM(getTeam()).GetTeamTechs()->HasTech(ePrereq))
 				{
+#if defined(MOD_API_EXTENSIONS)
+					int iCombatStrength = pKilledUnit ? max(pKilledUnit->GetBaseCombatStrength(), pKilledUnit->GetBaseRangedCombatStrength()) : max(pkUnitInfo->GetCombat(), pkUnitInfo->GetRangedCombat());
+#else
 					int iCombatStrength = max(pkUnitInfo->GetCombat(), pkUnitInfo->GetRangedCombat());
+#endif
 					if (iCombatStrength > 0)
 					{
 						int iTechCost = GetPlayerTechs()->GetResearchCost(ePrereq);
@@ -14069,7 +14120,11 @@ void CvPlayer::DoProcessGoldenAge()
 				if(GetID() == GC.getGame().getActivePlayer())
 				{
 					// Don't show in MP
+#if defined(MOD_API_EXTENSIONS)
+					if(!GC.getGame().isReallyNetworkMultiPlayer())
+#else
 					if(!GC.getGame().isNetworkMultiPlayer())	// KWG: Candidate for !GC.getGame().isOption(GAMEOPTION_SIMULTANEOUS_TURNS)
+#endif
 					{
 						CvPopupInfo kPopupInfo(BUTTONPOPUP_GOLDEN_AGE_REWARD);
 						GC.GetEngineUserInterface()->AddPopup(kPopupInfo);
@@ -17459,8 +17514,9 @@ void CvPlayer::SetHasLostCapital(bool bValue, PlayerTypes eConqueror)
 #if defined(MOD_GLOBAL_NO_CONQUERED_SPACESHIPS)
 //	--------------------------------------------------------------------------------
 // Remove all the parts of the spaceship that this player has assembled
-void CvPlayer::disassembleSpaceship() {
+void CvPlayer::disassembleSpaceship(CvPlot* pPlot) {
 	if (MOD_GLOBAL_NO_CONQUERED_SPACESHIPS && !isMinorCiv() && !isBarbarian()) {
+		CUSTOMLOG("Disassemble spaceship for player %i", GetID());
 		CvTeam& thisTeam = GET_TEAM(getTeam());
 
 		if (thisTeam.getProjectCount((ProjectTypes) GC.getSPACE_RACE_TRIGGER_PROJECT()) == 1) {
@@ -17469,9 +17525,10 @@ void CvPlayer::disassembleSpaceship() {
 			thisTeam.changeProjectCount((ProjectTypes) GC.getSPACESHIP_STASIS(), -1 * thisTeam.getProjectCount((ProjectTypes) GC.getSPACESHIP_STASIS()));
 			thisTeam.changeProjectCount((ProjectTypes) GC.getSPACESHIP_ENGINE(), -1 * thisTeam.getProjectCount((ProjectTypes) GC.getSPACESHIP_ENGINE()));
 
-			if (isAlive()) {
-				auto_ptr<ICvPlot1> pDllPlot(new CvDllPlot(getCapitalCity()->plot()));
-				gDLL->GameplaySpaceshipEdited(pDllPlot.get(), 0x0001); // Display just the launch pad
+			if (pPlot) {
+				CUSTOMLOG("Removing launch pad at (%i, %i)", pPlot->getX(), pPlot->getY());
+				auto_ptr<ICvPlot1> pDllPlot(new CvDllPlot(pPlot));
+				gDLL->GameplaySpaceshipEdited(pDllPlot.get(), 0x0000); // Remove the launch pad
 			}
 		}
 	}
@@ -18933,6 +18990,38 @@ LeaderHeadTypes CvPlayer::getLeaderType() const
 	return CvPreGame::leaderHead(GetID());
 }
 
+#if defined(MOD_API_EXTENSIONS)
+//	--------------------------------------------------------------------------------
+void CvPlayer::setLeaderType(LeaderHeadTypes eNewLeader)
+{
+    if (isMajorCiv())
+	{
+		LeaderHeadTypes eOldLeader = getLeaderType();
+		
+		// Set the new leader type
+		CvPreGame::setLeaderHead(GetID(), eNewLeader);
+	
+		// Update the player's personality
+		setPersonalityType(eNewLeader);
+	
+		// Update the player's traits (Leader_Traits)
+		GetPlayerTraits()->Reset();
+		GetPlayerTraits()->InitPlayerTraits();
+		recomputePolicyCostModifier();
+		
+		if (!isHuman()) {
+			// Update the player's biases (Leader_MajorCivApproachBiases)
+			// Nothing to do as they are not cached in CvPlayer
+	
+			// Update the player's flavours (Leader_Flavors)
+			GetFlavorManager()->ChangeLeader(eOldLeader, eNewLeader);
+			
+			// Update the player's strategies
+			// Nothing to do as these will auto-update based on the new flavours at the end of the player's turn
+		}
+	}
+}
+#endif
 
 //	--------------------------------------------------------------------------------
 LeaderHeadTypes CvPlayer::getPersonalityType() const
@@ -28784,7 +28873,9 @@ bool CvPlayer::IsAtWarAnyMinor() const
 
 bool CvPlayer::IsAtWarWith(PlayerTypes iPlayer) const
 {
-	return GET_TEAM(getTeam()).isAtWar(GET_PLAYER(iPlayer).getTeam());
+	CvTeam kTeam = GET_TEAM(getTeam());
+
+	return (iPlayer >= 0 && iPlayer < MAX_PLAYERS && kTeam.isAtWar(GET_PLAYER(iPlayer).getTeam()));
 }
 
 bool CvPlayer::HasPantheon() const

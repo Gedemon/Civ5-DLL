@@ -6719,7 +6719,11 @@ bool CvUnit::createGreatWork()
 		Localization::String localizedText;
 
 		// Notification in MP games
+#if defined(MOD_API_EXTENSIONS)
+		if(bDontShowRewardPopup || GC.getGame().isReallyNetworkMultiPlayer())
+#else
 		if(bDontShowRewardPopup || GC.getGame().isNetworkMultiPlayer())
+#endif
 		{
 			CvNotifications* pNotifications = kPlayer.GetNotifications();
 			if(pNotifications)
@@ -9338,8 +9342,12 @@ void CvUnit::PerformCultureBomb(int iRadius)
 					bAlreadyShownLeader = true;
 
 					DLLUI->SetForceDiscussionModeQuitOnBack(true);		// Set force quit so that when discuss mode pops up the Back button won't go to leader root
+#if defined(MOD_DIPLOMACY_STFU)
+					pPlayer->GetDiplomacyAI()->DisplayAILeaderMessage(pPlayer->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_CULTURE_BOMBED, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 					const char* strText = pPlayer->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_CULTURE_BOMBED);
 					gDLL->GameplayDiplomacyAILeaderMessage(pPlayer->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 				}
 			}
 		}
@@ -15383,7 +15391,11 @@ void CvUnit::setXY(int iX, int iY, bool bGroup, bool bUpdate, bool bShow, bool b
 						if(getOwner() == GC.getGame().getActivePlayer())
 						{
 							// Don't show in MP
+#if defined(MOD_API_EXTENSIONS)
+							if(!GC.getGame().isReallyNetworkMultiPlayer())
+#else
 							if(!GC.getGame().isNetworkMultiPlayer())	// KWG: Candidate for !GC.getGame().isOption(GAMEOPTION_SIMULTANEOUS_TURNS)
+#endif
 							{
 								CvPopupInfo kPopupInfo(BUTTONPOPUP_BARBARIAN_CAMP_REWARD, iNumGold);
 								DLLUI->AddPopup(kPopupInfo);

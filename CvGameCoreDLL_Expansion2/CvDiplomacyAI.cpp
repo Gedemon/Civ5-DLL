@@ -385,6 +385,11 @@ CvDiplomacyAI::CvDiplomacyAI():
 	m_paiMoveTroopsRequestCounter(NULL),
 #endif
 
+#if defined(MOD_DIPLOMACY_STFU)
+	m_pStfuResponseQuery(NULL),
+	m_pStfuQuery(NULL),
+#endif
+
 	m_eTargetPlayer(NO_PLAYER),
 	m_eTestToPlayer(NO_PLAYER),
 	m_eTestStatement(NO_DIPLO_STATEMENT_TYPE),
@@ -862,6 +867,11 @@ void CvDiplomacyAI::Uninit()
 	m_paiMoveTroopsRequestCounter = NULL;
 #endif
 
+#if defined(MOD_DIPLOMACY_STFU)
+	SAFE_DELETE(m_pStfuResponseQuery);
+	SAFE_DELETE(m_pStfuQuery);
+#endif
+		
 	delete m_pDiploData;
 	m_pDiploData = NULL;
 }
@@ -1925,8 +1935,12 @@ void CvDiplomacyAI::update()
 		{
 			m_aGreetPlayers.erase(itr);
 
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), eActivePlayer, DIPLO_UI_STATE_DEFAULT_ROOT, DIPLO_MESSAGE_INTRO, LEADERHEAD_ANIM_INTRO);
+#else
 			const char* szText = GetDiploStringForMessage(DIPLO_MESSAGE_INTRO);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), eActivePlayer, DIPLO_UI_STATE_DEFAULT_ROOT, szText, LEADERHEAD_ANIM_INTRO);
+#endif
 		}
 	}
 }
@@ -5975,8 +5989,12 @@ void CvDiplomacyAI::DeclareWar(PlayerTypes ePlayer)
 		// Show scene to human
 		if(!CvPreGame::isNetworkMultiplayerGame() && GC.getGame().getActivePlayer() == ePlayer)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			DisplayAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_DOW_ROOT, ePlayer, LEADERHEAD_ANIM_DECLARE_WAR);
+#else
 			const char* strText = GetDiploStringForMessage(DIPLO_MESSAGE_DOW_ROOT, ePlayer);
 			gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_AI_DECLARED_WAR, strText, LEADERHEAD_ANIM_DECLARE_WAR);
+#endif
 		}
 
 		LogWarDeclaration(ePlayer);
@@ -10929,8 +10947,12 @@ void CvDiplomacyAI::DoKilledByPlayer(PlayerTypes ePlayer)
 {
 	if(ePlayer == GC.getGame().getActivePlayer() && !GC.getGame().isNetworkMultiPlayer())
 	{
+#if defined(MOD_DIPLOMACY_STFU)
+		DisplayAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DEFEATED, LEADERHEAD_ANIM_DEFEATED);
+#else
 		const char* szText = GetDiploStringForMessage(DIPLO_MESSAGE_DEFEATED);
 		gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_DEFEATED);
+#endif
 
 #if !defined(NO_ACHIEVEMENTS)
 		if(!GC.getGame().isGameMultiPlayer())
@@ -10961,12 +10983,19 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			if(IsActHostileTowardsHuman(ePlayer))
+				SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_AGGRESSIVE_MILITARY_WARNING, DIPLO_MESSAGE_HOSTILE_AGGRESSIVE_MILITARY_WARNING, LEADERHEAD_ANIM_NEGATIVE);
+			else
+				SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_AGGRESSIVE_MILITARY_WARNING, DIPLO_MESSAGE_AGGRESSIVE_MILITARY_WARNING, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			if(IsActHostileTowardsHuman(ePlayer))
 				szText = GetDiploStringForMessage(DIPLO_MESSAGE_HOSTILE_AGGRESSIVE_MILITARY_WARNING);
 			else
 				szText = GetDiploStringForMessage(DIPLO_MESSAGE_AGGRESSIVE_MILITARY_WARNING);
 
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_AGGRESSIVE_MILITARY_WARNING, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 
@@ -10981,8 +11010,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			{
 				const char* strMinorCivKey = GET_PLAYER(eMinorCiv).getNameKey();
 
+#if defined(MOD_DIPLOMACY_STFU)
+				SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_HUMAN_KILLED_PROTECTED_CITY_STATE, NO_PLAYER, strMinorCivKey, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_KILLED_PROTECTED_CITY_STATE, NO_PLAYER, strMinorCivKey);
 				CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 		}
 	}
@@ -10998,8 +11031,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			{
 				const char* strMinorCivKey = GET_PLAYER(eMinorCiv).getNameKey();
 
+#if defined(MOD_DIPLOMACY_STFU)
+				SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_ATTACKED_MINOR_CIV, DIPLO_MESSAGE_HUMAN_ATTACKED_PROTECTED_CITY_STATE, NO_PLAYER, strMinorCivKey, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_ATTACKED_PROTECTED_CITY_STATE, NO_PLAYER, strMinorCivKey);
 				CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_ATTACKED_MINOR_CIV, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 		}
 	}
@@ -11015,8 +11052,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			{
 				const char* strMinorCivKey = GET_PLAYER(eMinorCiv).getNameKey();
 
+#if defined(MOD_DIPLOMACY_STFU)
+				SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_BULLIED_MINOR_CIV, DIPLO_MESSAGE_HUMAN_BULLIED_PROTECTED_CITY_STATE, NO_PLAYER, strMinorCivKey, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_BULLIED_PROTECTED_CITY_STATE, NO_PLAYER, strMinorCivKey);
 				CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_BULLIED_MINOR_CIV, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 		}
 	}
@@ -11026,8 +11067,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_EXPANSION_SERIOUS_WARNING, DIPLO_MESSAGE_EXPANSION_SERIOUS_WARNING, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_EXPANSION_SERIOUS_WARNING);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_EXPANSION_SERIOUS_WARNING, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11036,8 +11081,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_EXPANSION_WARNING, DIPLO_MESSAGE_EXPANSION_WARNING, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_EXPANSION_WARNING);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_EXPANSION_WARNING, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11046,8 +11095,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_EXPANSION_BROKEN_PROMISE, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_EXPANSION_BROKEN_PROMISE);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11056,8 +11109,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_PLOT_BUYING_SERIOUS_WARNING, DIPLO_MESSAGE_PLOT_BUYING_SERIOUS_WARNING, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_PLOT_BUYING_SERIOUS_WARNING);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_PLOT_BUYING_SERIOUS_WARNING, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11066,8 +11123,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_PLOT_BUYING_WARNING, DIPLO_MESSAGE_PLOT_BUYING_WARNING, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_PLOT_BUYING_WARNING);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_YOU_PLOT_BUYING_WARNING, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11076,8 +11137,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_PLOT_BUYING_BROKEN_PROMISE, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_PLOT_BUYING_BROKEN_PROMISE);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11091,12 +11156,19 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			if(eMinorCiv != NO_PLAYER)
 			{
 				const char* strMinorCivKey = GET_PLAYER(eMinorCiv).getNameKey();
+#if defined(MOD_DIPLOMACY_STFU)
+				if(IsActHostileTowardsHuman(ePlayer))
+					SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_I_ATTACKED_YOUR_MINOR_CIV, DIPLO_MESSAGE_HOSTILE_WE_ATTACKED_YOUR_MINOR, NO_PLAYER, strMinorCivKey, LEADERHEAD_ANIM_POSITIVE, eMinorCiv);
+				else
+					SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_I_ATTACKED_YOUR_MINOR_CIV, DIPLO_MESSAGE_WE_ATTACKED_YOUR_MINOR, NO_PLAYER, strMinorCivKey, LEADERHEAD_ANIM_POSITIVE, eMinorCiv);
+#else
 				if(IsActHostileTowardsHuman(ePlayer))
 					szText = GetDiploStringForMessage(DIPLO_MESSAGE_HOSTILE_WE_ATTACKED_YOUR_MINOR, NO_PLAYER, strMinorCivKey);
 				else
 					szText = GetDiploStringForMessage(DIPLO_MESSAGE_WE_ATTACKED_YOUR_MINOR, NO_PLAYER, strMinorCivKey);
 
 				CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_I_ATTACKED_YOUR_MINOR_CIV, szText, LEADERHEAD_ANIM_POSITIVE, eMinorCiv);
+#endif
 
 				// Extra flag, since diplo log does not save which minor civ the message was about
 				SetSentAttackProtectedMinorTaunt(ePlayer, eMinorCiv, true);
@@ -11114,12 +11186,19 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			if (eMinorCiv != NO_PLAYER)
 			{
 				const char* strMinorCivKey = GET_PLAYER(eMinorCiv).getNameKey();
+#if defined(MOD_DIPLOMACY_STFU)
+				if(IsActHostileTowardsHuman(ePlayer))
+					SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_I_BULLIED_YOUR_MINOR_CIV, DIPLO_MESSAGE_HOSTILE_WE_BULLIED_YOUR_MINOR, NO_PLAYER, strMinorCivKey, LEADERHEAD_ANIM_POSITIVE, eMinorCiv);
+				else
+					SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_I_BULLIED_YOUR_MINOR_CIV, DIPLO_MESSAGE_WE_BULLIED_YOUR_MINOR, NO_PLAYER, strMinorCivKey, LEADERHEAD_ANIM_POSITIVE, eMinorCiv);
+#else
 				if(IsActHostileTowardsHuman(ePlayer))
 					szText = GetDiploStringForMessage(DIPLO_MESSAGE_HOSTILE_WE_BULLIED_YOUR_MINOR, NO_PLAYER, strMinorCivKey);
 				else
 					szText = GetDiploStringForMessage(DIPLO_MESSAGE_WE_BULLIED_YOUR_MINOR, NO_PLAYER, strMinorCivKey);
 
 				CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_I_BULLIED_YOUR_MINOR_CIV, szText, LEADERHEAD_ANIM_POSITIVE, eMinorCiv);
+#endif
 			}
 		}
 	}
@@ -11130,9 +11209,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		// Send message to human
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_WORK_WITH_US, DIPLO_MESSAGE_WORK_WITH_US, LEADERHEAD_ANIM_REQUEST);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_WORK_WITH_US);
-
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_WORK_WITH_US, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		// AI resolution
 		else if(!bHuman)
@@ -11168,9 +11250,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		// Send message to human
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, DIPLO_MESSAGE_END_WORK_WITH_US, ePlayer, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_END_WORK_WITH_US, ePlayer);
-
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 		else if(!bHuman)
 		{
@@ -11188,9 +11273,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		// Send message to human
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, DIPLO_MESSAGE_WORK_AGAINST_SOMEONE, ePlayer, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_WORK_AGAINST_SOMEONE, ePlayer);
-
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11203,9 +11291,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		// Send message to human
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_AI_DOF_BACKSTAB, ePlayer, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_AI_DOF_BACKSTAB, ePlayer);
-
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11221,9 +11312,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			// Send message to human
 			if(bShouldShowLeaderScene)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_AI_REQUEST_DENOUNCE, DIPLO_MESSAGE_DOF_AI_DENOUNCE_REQUEST, ePlayer, strTargetCivKey, LEADERHEAD_ANIM_POSITIVE, eTarget);
+#else
 				szText = GetDiploStringForMessage(DIPLO_MESSAGE_DOF_AI_DENOUNCE_REQUEST, ePlayer, strTargetCivKey);
-
 				CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_AI_REQUEST_DENOUNCE, szText, LEADERHEAD_ANIM_POSITIVE, eTarget);
+#endif
 			}
 			else if(!bHuman)
 			{
@@ -11239,8 +11333,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 					// Denounced a human?
 					if(eTarget == GC.getGame().getActivePlayer())
 					{
+#if defined(MOD_DIPLOMACY_STFU)
+						SendAILeaderMessage(ePlayer, eTarget, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, DIPLO_MESSAGE_WORK_AGAINST_SOMEONE, eTarget, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 						szText = GetDiploStringForMessage(DIPLO_MESSAGE_WORK_AGAINST_SOMEONE, eTarget);
 						CvDiplomacyRequests::SendRequest(ePlayer, eTarget, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 					}
 				}
 				else
@@ -11290,9 +11388,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			if(bShouldShowLeaderScene)
 			{
 				const char* strAgainstPlayerKey = GET_PLAYER(eAgainstPlayer).getNameKey();
+#if defined(MOD_DIPLOMACY_STFU)
+				SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_COOP_WAR, DIPLO_MESSAGE_COOP_WAR_REQUEST, ePlayer, strAgainstPlayerKey, LEADERHEAD_ANIM_POSITIVE, eAgainstPlayer);
+#else
 				szText = GetDiploStringForMessage(DIPLO_MESSAGE_COOP_WAR_REQUEST, ePlayer, strAgainstPlayerKey);
-
 				CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_COOP_WAR, szText, LEADERHEAD_ANIM_POSITIVE, eAgainstPlayer);
+#endif
 			}
 			// AI resolution
 			else if(!bHuman)
@@ -11337,9 +11438,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			if(bShouldShowLeaderScene)
 			{
 				const char* strAgainstPlayerKey = GET_PLAYER(eAgainstPlayer).getNameKey();
+#if defined(MOD_DIPLOMACY_STFU)
+				SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_COOP_WAR_TIME, DIPLO_MESSAGE_COOP_WAR_TIME, ePlayer, strAgainstPlayerKey, LEADERHEAD_ANIM_POSITIVE, eAgainstPlayer);
+#else
 				szText = GetDiploStringForMessage(DIPLO_MESSAGE_COOP_WAR_TIME, ePlayer, strAgainstPlayerKey);
-
 				CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_COOP_WAR_TIME, szText, LEADERHEAD_ANIM_POSITIVE, eAgainstPlayer);
+#endif
 			}
 		}
 
@@ -11490,8 +11594,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		// Active human
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_PLAN_RESEARCH_AGREEMENT, DIPLO_MESSAGE_PLAN_RESEARCH_AGREEMENT, LEADERHEAD_ANIM_REQUEST);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_PLAN_RESEARCH_AGREEMENT);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_PLAN_RESEARCH_AGREEMENT, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		// Offer to an AI player
 		else if(!bHuman)
@@ -11598,8 +11706,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_NOW_UNFORGIVABLE, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_NOW_UNFORGIVABLE);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11608,8 +11720,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_NOW_ENEMY, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_NOW_ENEMY);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11618,8 +11734,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_CAUGHT_YOUR_SPY, DIPLO_MESSAGE_CAUGHT_YOUR_SPY, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_CAUGHT_YOUR_SPY);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_CAUGHT_YOUR_SPY, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11628,8 +11748,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_KILLED_YOUR_SPY, DIPLO_MESSAGE_KILLED_YOUR_SPY, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_KILLED_YOUR_SPY);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_KILLED_YOUR_SPY, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11638,8 +11762,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_KILLED_MY_SPY, DIPLO_MESSAGE_KILLED_MY_SPY, LEADERHEAD_ANIM_DEFEATED);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_KILLED_MY_SPY);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_KILLED_MY_SPY, szText, LEADERHEAD_ANIM_DEFEATED);
+#endif
 		}
 	}
 
@@ -11683,6 +11811,29 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 
 					szText = "";
 
+#if defined(MOD_DIPLOMACY_STFU)
+					switch(eIntrigueType)
+					{
+					case INTRIGUE_TYPE_ARMY_SNEAK_ATTACK:
+						if(pCity)
+							SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_SHARE_INTRIGUE_ARMY_SNEAK_ATTACK_KNOWN_CITY, NO_PLAYER, szPlayerName, pCity->getNameKey(), LEADERHEAD_ANIM_POSITIVE);
+						else
+							SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_SHARE_INTRIGUE_ARMY_SNEAK_ATTACK_UNKNOWN_CITY, NO_PLAYER, szPlayerName, LEADERHEAD_ANIM_POSITIVE);
+						break;
+					case INTRIGUE_TYPE_AMPHIBIOUS_SNEAK_ATTACK:
+						if(pCity)
+							SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_SHARE_INTRIGUE_AMPHIBIOUS_SNEAK_ATTACK_KNOWN_CITY, NO_PLAYER, szPlayerName, pCity->getNameKey(), LEADERHEAD_ANIM_POSITIVE);
+						else
+							SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_SHARE_INTRIGUE_AMPHIBIOUS_SNEAK_ATTACK_UNKNOWN_CITY, NO_PLAYER, szPlayerName, LEADERHEAD_ANIM_POSITIVE);
+						break;
+					case INTRIGUE_TYPE_DECEPTION:
+						SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_SHARE_INTRIGUE, NO_PLAYER, szPlayerName, LEADERHEAD_ANIM_POSITIVE);
+						break;
+					default:
+						CvAssertMsg(false, "Unknown intrigue type");
+						break;
+					}
+#else
 					switch(eIntrigueType)
 					{
 					case INTRIGUE_TYPE_ARMY_SNEAK_ATTACK:
@@ -11714,6 +11865,7 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 					}
 
 					CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 				}
 
 			}
@@ -11732,8 +11884,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_STOP_CONVERSIONS, DIPLO_MESSAGE_STOP_CONVERSIONS, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_STOP_CONVERSIONS);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_STOP_CONVERSIONS, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11742,8 +11898,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_STOP_DIGGING, DIPLO_MESSAGE_STOP_DIGGING, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_STOP_DIGGING);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_STOP_DIGGING, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11756,8 +11916,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, DIPLO_MESSAGE_INSULT_ROOT, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_INSULT_ROOT);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11770,8 +11934,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_COMPLIMENT, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_COMPLIMENT);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -11784,8 +11952,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_BOOT_KISSING, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_BOOT_KISSING);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -11794,8 +11966,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_WARMONGER, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_WARMONGER);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11807,8 +11983,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			PlayerTypes eMinorCiv = (PlayerTypes) iData1;
 			const char* strMinorCivKey = GET_PLAYER(eMinorCiv).getNameKey();
 
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_MINOR_CIV_COMPETITION, NO_PLAYER, strMinorCivKey, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_MINOR_CIV_COMPETITION, NO_PLAYER, strMinorCivKey);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11819,9 +11999,13 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		{
 			PlayerTypes eTarget = (PlayerTypes) iData1;
 			const char* strTargetCivKey = GET_PLAYER(eTarget).getCivilizationShortDescriptionKey();
-			szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DOFED_ENEMY, ePlayer, strTargetCivKey);
 
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_HUMAN_DOFED_ENEMY, ePlayer, strTargetCivKey, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
+			szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DOFED_ENEMY, ePlayer, strTargetCivKey);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11832,9 +12016,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		{
 			PlayerTypes eTarget = (PlayerTypes) iData1;
 			const char* strTargetCivKey = GET_PLAYER(eTarget).getCivilizationShortDescriptionKey();
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_HUMAN_DENOUNCED_FRIEND, ePlayer, strTargetCivKey, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DENOUNCED_FRIEND, ePlayer, strTargetCivKey);
-
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11845,9 +12032,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		{
 			PlayerTypes eTarget = (PlayerTypes) iData1;
 			const char* strTargetCivKey = GET_PLAYER(eTarget).getCivilizationShortDescriptionKey();
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_DENOUNCED_ENEMY, ePlayer, strTargetCivKey, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DENOUNCED_ENEMY, ePlayer, strTargetCivKey);
-
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -11858,9 +12048,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		{
 			PlayerTypes eTarget = (PlayerTypes) iData1;
 			const char* strTargetCivKey = GET_PLAYER(eTarget).getCivilizationShortDescriptionKey();
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_DOFED_FRIEND, ePlayer, strTargetCivKey, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DOFED_FRIEND, ePlayer, strTargetCivKey);
-
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -11871,9 +12064,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		{
 			PlayerTypes eTarget = (PlayerTypes) iData1;
 			const char* strTargetCivKey = GET_PLAYER(eTarget).getCivilizationShortDescriptionKey();
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, DIPLO_MESSAGE_HUMAN_DENOUNCE_SO_AI_DOF, ePlayer, strTargetCivKey, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DENOUNCE_SO_AI_DOF, ePlayer, strTargetCivKey);
-
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11884,9 +12080,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		{
 			PlayerTypes eTarget = (PlayerTypes) iData1;
 			const char* strTargetCivKey = GET_PLAYER(eTarget).getCivilizationShortDescriptionKey();
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, DIPLO_MESSAGE_HUMAN_DOF_SO_AI_DENOUNCE, ePlayer, strTargetCivKey, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DOF_SO_AI_DENOUNCE, ePlayer, strTargetCivKey);
-
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, szText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11897,9 +12096,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		{
 			PlayerTypes eTarget = (PlayerTypes) iData1;
 			const char* strTargetCivKey = GET_PLAYER(eTarget).getCivilizationShortDescriptionKey();
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_DENOUNCE_SO_AI_DENOUNCE, ePlayer, strTargetCivKey, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DENOUNCE_SO_AI_DENOUNCE, ePlayer, strTargetCivKey);
-
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -11910,9 +12112,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		{
 			PlayerTypes eTarget = (PlayerTypes) iData1;
 			const char* strTargetCivKey = GET_PLAYER(eTarget).getCivilizationShortDescriptionKey();
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_DOF_SO_AI_DOF, ePlayer, strTargetCivKey, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DOF_SO_AI_DOF, ePlayer, strTargetCivKey);
-
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -11921,8 +12126,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_SAME_POLICIES_FREEDOM, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_SAME_POLICIES_FREEDOM);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -11930,8 +12139,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_SAME_POLICIES_ORDER, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_SAME_POLICIES_ORDER);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -11939,8 +12152,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_SAME_POLICIES_AUTOCRACY, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_SAME_POLICIES_AUTOCRACY);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -11954,8 +12171,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			{
 				sLeagueName = pLeague->GetName();
 			}
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_WE_LIKED_THEIR_PROPOSAL, ePlayer, sLeagueName, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_WE_LIKED_THEIR_PROPOSAL, ePlayer, sLeagueName);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -11969,8 +12190,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			{
 				sLeagueName = pLeague->GetName();
 			}
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_WE_DISLIKED_THEIR_PROPOSAL, ePlayer, sLeagueName, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_WE_DISLIKED_THEIR_PROPOSAL, ePlayer, sLeagueName);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 
@@ -11979,8 +12204,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			Localization::String sLeagueName = Localization::Lookup("TXT_KEY_LEAGUE_WORLD_CONGRESS_GENERIC");
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_THEY_SUPPORTED_OUR_PROPOSAL, ePlayer, sLeagueName, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_THEY_SUPPORTED_OUR_PROPOSAL, ePlayer, sLeagueName);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -11989,8 +12218,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			Localization::String sLeagueName = Localization::Lookup("TXT_KEY_LEAGUE_WORLD_CONGRESS_GENERIC");
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_THEY_FOILED_OUR_PROPOSAL, ePlayer, sLeagueName, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_THEY_FOILED_OUR_PROPOSAL, ePlayer, sLeagueName);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 
@@ -12004,8 +12237,12 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 			{
 				sLeagueName = pLeague->GetName();
 			}
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_THEY_SUPPORTED_OUR_HOSTING, ePlayer, sLeagueName, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_THEY_SUPPORTED_OUR_HOSTING, ePlayer, sLeagueName);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -12014,88 +12251,132 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_YOUR_IDEOLOGY_CAUSING_CIVIL_UNREST_FREEDOM, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_YOUR_IDEOLOGY_CAUSING_CIVIL_UNREST_FREEDOM);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}	
 	else if(eStatement == DIPLO_STATEMENT_YOUR_IDEOLOGY_CAUSING_CIVIL_UNREST_ORDER)
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_YOUR_IDEOLOGY_CAUSING_CIVIL_UNREST_ORDER, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_YOUR_IDEOLOGY_CAUSING_CIVIL_UNREST_ORDER);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 	else if(eStatement == DIPLO_STATEMENT_YOUR_IDEOLOGY_CAUSING_CIVIL_UNREST_AUTOCRACY)
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_YOUR_IDEOLOGY_CAUSING_CIVIL_UNREST_AUTOCRACY, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_YOUR_IDEOLOGY_CAUSING_CIVIL_UNREST_AUTOCRACY);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 	else if(eStatement == DIPLO_STATEMENT_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_FREEDOM)
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_FREEDOM, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_FREEDOM);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}	
 	else if(eStatement == DIPLO_STATEMENT_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_ORDER)
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_ORDER, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_ORDER);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}	
 	else if(eStatement == DIPLO_STATEMENT_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_AUTOCRACY)
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_AUTOCRACY, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_AUTOCRACY);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 	else if(eStatement == DIPLO_STATEMENT_SWITCH_OUR_IDEOLOGY_FREEDOM)
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_SWITCH_OUR_IDEOLOGY_FREEDOM, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_SWITCH_OUR_IDEOLOGY_FREEDOM);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 	else if(eStatement == DIPLO_STATEMENT_SWITCH_OUR_IDEOLOGY_ORDER)
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_SWITCH_OUR_IDEOLOGY_ORDER, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_SWITCH_OUR_IDEOLOGY_ORDER);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 	else if(eStatement == DIPLO_STATEMENT_SWITCH_OUR_IDEOLOGY_AUTOCRACY)
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_SWITCH_OUR_IDEOLOGY_AUTOCRACY, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_SWITCH_OUR_IDEOLOGY_AUTOCRACY);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 	else if(eStatement == DIPLO_STATEMENT_YOUR_CULTURE_INFLUENTIAL)
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_YOUR_CULTURE_INFLUENTIAL, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_YOUR_CULTURE_INFLUENTIAL);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 	}
 	else if(eStatement == DIPLO_STATEMENT_OUR_CULTURE_INFLUENTIAL)
 	{
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_OUR_CULTURE_INFLUENTIAL, LEADERHEAD_ANIM_POSITIVE);
+#else
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_OUR_CULTURE_INFLUENTIAL);
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 	}
 
@@ -12155,12 +12436,19 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		// Active human
 		if(bShouldShowLeaderScene)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			if(IsActHostileTowardsHuman(ePlayer))
+				SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_AI_REVOKE_VASSALAGE, DIPLO_MESSAGE_REVOKE_VASSALAGE_HOSTILE, LEADERHEAD_ANIM_NEGATIVE);
+			else
+				SendAILeaderMessage(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_AI_REVOKE_VASSALAGE, DIPLO_MESSAGE_REVOKE_VASSALAGE, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			if(IsActHostileTowardsHuman(ePlayer))
 				szText = GetDiploStringForMessage(DIPLO_MESSAGE_REVOKE_VASSALAGE_HOSTILE);
 			else
 				szText = GetDiploStringForMessage(DIPLO_MESSAGE_REVOKE_VASSALAGE);
 
 			CvDiplomacyRequests::SendRequest(GetPlayer()->GetID(), ePlayer, DIPLO_UI_STATE_DISCUSS_AI_REVOKE_VASSALAGE, szText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 		// Offer to an AI player
 		else
@@ -16010,6 +16298,13 @@ void CvDiplomacyAI::DoBeginDiploWithHuman()
 		LeaderheadAnimationTypes eAnimation = LEADERHEAD_ANIM_NEUTRAL_HELLO;
 		const char* szText = GetGreetHumanMessage(eAnimation);
 
+#if defined(MOD_API_EXTENSIONS) && defined(MOD_DIPLOMACY_NO_LEADERHEADS)
+		if (MOD_DIPLOMACY_NO_LEADERHEADS) {
+			CvPreGame::pushGameType(GAME_NETWORK_MULTIPLAYER);
+		}
+#endif
+				
+CUSTOMLOG("STFU@%i: DoBeginDiploWithHuman for player %i", GC.getGame().getGameTurn(), GetPlayer()->GetID());
 		gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_DEFAULT_ROOT, szText, eAnimation);
 	}
 }
@@ -16019,9 +16314,19 @@ void CvDiplomacyAI::DoBeginDiploWithHumanEspionageResult()
 {
 	if(!GC.getGame().isOption(GAMEOPTION_ALWAYS_WAR) && !IsAtWar(GC.getGame().getActivePlayer()))
 	{
+#if defined(MOD_API_EXTENSIONS) && defined(MOD_DIPLOMACY_NO_LEADERHEADS)
+		if (MOD_DIPLOMACY_NO_LEADERHEADS) {
+			CvPreGame::pushGameType(GAME_NETWORK_MULTIPLAYER);
+		}
+#endif
+				
+#if defined(MOD_DIPLOMACY_STFU)
+		DisplayAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_CONFRONT_YOU_KILLED_MY_SPY, DIPLO_MESSAGE_CONFRONT_YOU_KILLED_MY_SPY, GC.getGame().getActivePlayer(), LEADERHEAD_ANIM_NEUTRAL_HELLO);
+#else
 		LeaderheadAnimationTypes eAnimation = LEADERHEAD_ANIM_NEUTRAL_HELLO;
 		const char* szText = GetDiploStringForMessage(DIPLO_MESSAGE_CONFRONT_YOU_KILLED_MY_SPY, GC.getGame().getActivePlayer());
 		gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_CONFRONT_YOU_KILLED_MY_SPY, szText, eAnimation);
+#endif
 	}
 }
 
@@ -16032,6 +16337,14 @@ void CvDiplomacyAI::DoBeginDiploWithHumanInDiscuss()
 	{
 		LeaderheadAnimationTypes eAnimation = LEADERHEAD_ANIM_NEUTRAL_HELLO;
 		const char* szText = GetGreetHumanMessage(eAnimation);
+
+#if defined(MOD_API_EXTENSIONS) && defined(MOD_DIPLOMACY_NO_LEADERHEADS)
+		if (MOD_DIPLOMACY_NO_LEADERHEADS) {
+			CvPreGame::pushGameType(GAME_NETWORK_MULTIPLAYER);
+		}
+#endif
+				
+CUSTOMLOG("STFU@%i: DoBeginDiploWithHumanInDiscuss for player %i", GC.getGame().getGameTurn(), GetPlayer()->GetID());
 		gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, szText, eAnimation);
 	}
 }
@@ -16049,6 +16362,720 @@ const char* CvDiplomacyAI::GetDiploStringForMessage(DiploMessageTypes eDiploMess
 	return GetDiploStringForMessage(eDiploMessage, eForPlayer, strOptionalKey1, Localization::String::Empty);
 }
 
+#if defined(MOD_DIPLOMACY_STFU)
+const char* GetResponseKeyForMessage(DiploMessageTypes eDiploMessage)
+{
+	switch(eDiploMessage) 
+	{
+	case DIPLO_MESSAGE_INTRO:
+		return "RESPONSE_FIRST_GREETING";
+	case DIPLO_MESSAGE_DEFEATED:
+		return "RESPONSE_DEFEATED";
+	case DIPLO_MESSAGE_GREETING_REPEAT_TOO_MUCH:
+		return "RESPONSE_GREETING_REPEAT_TOO_MUCH";
+	case DIPLO_MESSAGE_GREETING_REPEAT:
+		return "RESPONSE_GREETING_REPEAT";
+	case DIPLO_MESSAGE_GREETING_HOSTILE_REPEAT:
+		return "RESPONSE_GREETING_HOSTILE_REPEAT";
+	case DIPLO_MESSAGE_GREETING_FRIENDLY_HELLO:
+		return "RESPONSE_GREETING_POLITE_HELLO";
+	case DIPLO_MESSAGE_GREETING_NEUTRAL_HELLO:
+		return "RESPONSE_GREETING_NEUTRAL_HELLO";
+	case DIPLO_MESSAGE_GREETING_HOSTILE_HELLO:
+		return "RESPONSE_GREETING_HOSTILE_HELLO";
+	case DIPLO_MESSAGE_GREETING_DESTRUCTION_LOOMS:
+		return "RESPONSE_GREETING_DESTRUCTION_LOOMS";
+	case DIPLO_MESSAGE_GREETING_AT_WAR_WANTS_PEACE:
+		return "RESPONSE_GREETING_AT_WAR_WANTS_PEACE";
+	case DIPLO_MESSAGE_GREETING_AT_WAR_HOSTILE:
+		return "RESPONSE_GREETING_AT_WAR_HOSTILE";
+	case DIPLO_MESSAGE_GREETING_WILL_ACCEPT_SURRENDER:
+		return "RESPONSE_GREETING_WILL_ACCEPT_SURRENDER";
+	case DIPLO_MESSAGE_GREETING_RESEARCH_AGREEMENT:
+		return "RESPONSE_GREETING_RESEARCH_AGREEMENT";
+	case DIPLO_MESSAGE_GREETING_BROKEN_MILITARY_PROMISE:
+		return "RESPONSE_GREETING_BROKEN_MILITARY_PROMISE";
+	case DIPLO_MESSAGE_GREETING_WORKING_WITH:
+		return "RESPONSE_GREETING_WORKING_WITH";
+	case DIPLO_MESSAGE_GREETING_WORKING_AGAINST:
+		return "RESPONSE_GREETING_WORKING_AGAINST";
+	case DIPLO_MESSAGE_GREETING_COOP_WAR:
+		return "RESPONSE_GREETING_COOP_WAR";
+	case DIPLO_MESSAGE_GREETING_HOSTILE_HUMAN_AT_WAR:
+		return "RESPONSE_GREETING_HOSTILE_HUMAN_AT_WAR";
+	case DIPLO_MESSAGE_GREETING_HUMAN_AT_WAR:
+		return "RESPONSE_GREETING_HUMAN_AT_WAR";
+	case DIPLO_MESSAGE_GREETING_HOSTILE_AGGRESSIVE_MILITARY:
+		return "RESPONSE_GREETING_HOSTILE_AGGRESSIVE_MILITARY";
+	case DIPLO_MESSAGE_GREETING_AGGRESSIVE_MILITARY:
+		return "RESPONSE_GREETING_AGGRESSIVE_MILITARY";
+	case DIPLO_MESSAGE_GREETING_HOSTILE_AGGRESSIVE_EXPANSION:
+		return "RESPONSE_GREETING_HOSTILE_AGGRESSIVE_EXPANSION";
+	case DIPLO_MESSAGE_GREETING_AGGRESSIVE_EXPANSION:
+		return "RESPONSE_GREETING_AGGRESSIVE_EXPANSION";
+	case DIPLO_MESSAGE_GREETING_HOSTILE_AGGRESSIVE_PLOT_BUYING:
+		return "RESPONSE_GREETING_HOSTILE_AGGRESSIVE_PLOT_BUYING";
+	case DIPLO_MESSAGE_GREETING_AGGRESSIVE_PLOT_BUYING:
+		return "RESPONSE_GREETING_AGGRESSIVE_PLOT_BUYING";
+	case DIPLO_MESSAGE_GREETING_FRIENDLY_STRONG_MILITARY:
+		return "RESPONSE_GREETING_FRIENDLY_STRONG_MILITARY";
+	case DIPLO_MESSAGE_GREETING_FRIENDLY_STRONG_ECONOMY:
+		return "RESPONSE_GREETING_FRIENDLY_STRONG_ECONOMY";
+	case DIPLO_MESSAGE_GREETING_HOSTILE_HUMAN_FEW_CITIES:
+		return "RESPONSE_GREETING_HOSTILE_HUMAN_FEW_CITIES";
+	case DIPLO_MESSAGE_GREETING_HOSTILE_HUMAN_SMALL_ARMY:
+		return "RESPONSE_GREETING_HOSTILE_HUMAN_SMALL_ARMY";
+	case DIPLO_MESSAGE_GREETING_HOSTILE_HUMAN_IS_WARMONGER:
+		return "RESPONSE_GREETING_HOSTILE_HUMAN_IS_WARMONGER";
+	case DIPLO_MESSAGE_DOT_DOT_DOT:
+		return "RESPONSE_DOT_DOT_DOT";
+	case DIPLO_MESSAGE_LETS_HEAR_IT:
+		return "RESPONSE_LETS_HEAR_IT";
+	case DIPLO_MESSAGE_PEACE_OFFER:
+		return "RESPONSE_PEACE_OFFER";
+	case DIPLO_MESSAGE_DEMAND:
+		return "RESPONSE_DEMAND";
+	case DIPLO_MESSAGE_REQUEST:
+		return "RESPONSE_REQUEST";
+	case DIPLO_MESSAGE_LUXURY_TRADE:
+		return "RESPONSE_LUXURY_TRADE";
+	case DIPLO_MESSAGE_EMBASSY_EXCHANGE:
+		return "RESPONSE_EMBASSY_EXCHANGE";
+	case DIPLO_MESSAGE_EMBASSY_OFFER:
+		return "RESPONSE_EMBASSY_OFFER";
+	case DIPLO_MESSAGE_OPEN_BORDERS_EXCHANGE:
+		return "RESPONSE_OPEN_BORDERS_EXCHANGE";
+	case DIPLO_MESSAGE_OPEN_BORDERS_OFFER:
+		return "RESPONSE_OPEN_BORDERS_OFFER";
+	case DIPLO_MESSAGE_PLAN_RESEARCH_AGREEMENT:
+		return "RESPONSE_PLAN_RESEARCH_AGREEMENT";
+	case DIPLO_MESSAGE_RESEARCH_AGREEMENT_OFFER:
+		return "RESPONSE_RESEARCH_AGREEMENT_OFFER";
+	case DIPLO_MESSAGE_RENEW_DEAL:
+		return "RESPONSE_RENEW_DEAL";
+	case DIPLO_MESSAGE_WANT_MORE_RENEW_DEAL:
+		return "RESPONSE_WANT_MORE_RENEW_DEAL";
+	case DIPLO_MESSAGE_HOSTILE_AGGRESSIVE_MILITARY_WARNING:
+		return "RESPONSE_HOSTILE_AGGRESSIVE_MILITARY_WARNING";
+	case DIPLO_MESSAGE_AGGRESSIVE_MILITARY_WARNING:
+		return "RESPONSE_AGGRESSIVE_MILITARY_WARNING";
+	case DIPLO_MESSAGE_EXPANSION_SERIOUS_WARNING:
+		return "RESPONSE_EXPANSION_SERIOUS_WARNING";
+	case DIPLO_MESSAGE_EXPANSION_WARNING:
+		return "RESPONSE_EXPANSION_WARNING";
+	case DIPLO_MESSAGE_EXPANSION_BROKEN_PROMISE:
+		return "RESPONSE_EXPANSION_BROKEN_PROMISE";
+	case DIPLO_MESSAGE_PLOT_BUYING_SERIOUS_WARNING:
+		return "RESPONSE_PLOT_BUYING_SERIOUS_WARNING";
+	case DIPLO_MESSAGE_PLOT_BUYING_WARNING:
+		return "RESPONSE_PLOT_BUYING_WARNING";
+	case DIPLO_MESSAGE_PLOT_BUYING_BROKEN_PROMISE:
+		return "RESPONSE_PLOT_BUYING_BROKEN_PROMISE";
+	case DIPLO_MESSAGE_HOSTILE_WE_ATTACKED_YOUR_MINOR:
+		return "RESPONSE_HOSTILE_WE_ATTACKED_YOUR_MINOR";
+	case DIPLO_MESSAGE_WE_ATTACKED_YOUR_MINOR:
+		return "RESPONSE_WE_ATTACKED_YOUR_MINOR";
+	case DIPLO_MESSAGE_HOSTILE_WE_BULLIED_YOUR_MINOR:
+		return "RESPONSE_HOSTILE_WE_BULLIED_YOUR_MINOR";
+	case DIPLO_MESSAGE_WE_BULLIED_YOUR_MINOR:
+		return "RESPONSE_WE_BULLIED_YOUR_MINOR";
+	case DIPLO_MESSAGE_WORK_WITH_US:
+		return "RESPONSE_WORK_WITH_US";
+	case DIPLO_MESSAGE_WORK_AGAINST_SOMEONE:
+		return "RESPONSE_WORK_AGAINST_SOMEONE";
+	case DIPLO_MESSAGE_COOP_WAR_REQUEST:
+		return "RESPONSE_COOP_WAR_REQUEST";
+	case DIPLO_MESSAGE_COOP_WAR_TIME:
+		return "RESPONSE_COOP_WAR_TIME";
+	case DIPLO_MESSAGE_NOW_UNFORGIVABLE:
+		return "RESPONSE_NOW_UNFORGIVABLE";
+	case DIPLO_MESSAGE_NOW_ENEMY:
+		return "RESPONSE_NOW_ENEMY";
+	case DIPLO_MESSAGE_INSULT_ROOT:
+		return "RESPONSE_INSULT_GENERIC";
+	case DIPLO_MESSAGE_INSULT_GENERIC:
+		return "RESPONSE_INSULT_GENERIC";
+	case DIPLO_MESSAGE_INSULT_MILITARY:
+		return "RESPONSE_INSULT_MILITARY";
+	case DIPLO_MESSAGE_INSULT_NUKE:
+		return "RESPONSE_INSULT_NUKE";
+	case DIPLO_MESSAGE_INSULT_BULLY:
+		return "RESPONSE_INSULT_BULLY";
+	case DIPLO_MESSAGE_INSULT_UNHAPPINESS:
+		return "RESPONSE_INSULT_UNHAPPINESS";
+	case DIPLO_MESSAGE_INSULT_CITIES:
+		return "RESPONSE_INSULT_CITIES";
+	case DIPLO_MESSAGE_INSULT_POPULATION:
+		return "RESPONSE_INSULT_POPULATION";
+	case DIPLO_MESSAGE_INSULT_CULTURE:
+		return "RESPONSE_INSULT_CULTURE";
+	case DIPLO_MESSAGE_COMPLIMENT:
+		return "RESPONSE_COMPLIMENT";
+	case DIPLO_MESSAGE_BOOT_KISSING:
+		return "RESPONSE_BOOT_KISSING";
+	case DIPLO_MESSAGE_WARMONGER:
+		return "RESPONSE_WARMONGER";
+	case DIPLO_MESSAGE_MINOR_CIV_COMPETITION:
+		return "RESPONSE_MINOR_CIV_COMPETITION";
+	case DIPLO_MESSAGE_PLEASED:
+		return "RESPONSE_PLEASED";
+	case DIPLO_MESSAGE_THANKFUL:
+		return "RESPONSE_THANKFUL";
+	case DIPLO_MESSAGE_DISAPPOINTED:
+		return "RESPONSE_DISAPPOINTED";
+	case DIPLO_MESSAGE_SO_BE_IT:
+		return "RESPONSE_SO_BE_IT";
+	case DIPLO_MESSAGE_RETURNED_CIVILIAN:
+		return "RESPONSE_RETURNED_CIVILIAN";
+	case DIPLO_MESSAGE_CULTURE_BOMBED:
+		return "RESPONSE_CULTURE_BOMBED";
+	case DIPLO_MESSAGE_DECLARATION_PROTECT_CITY_STATE:
+		return "RESPONSE_DECLARATION_PROTECT_CITY_STATE";
+	case DIPLO_MESSAGE_DECLARATION_ABANDON_CITY_STATE:
+		return "RESPONSE_DECLARATION_ABANDON_CITY_STATE";
+	case DIPLO_MESSAGE_REPEAT_NO:
+		return "RESPONSE_REPEAT_NO";
+	case DIPLO_MESSAGE_DONT_SETTLE_YES:
+		return "RESPONSE_DONT_SETTLE_YES";
+	case DIPLO_MESSAGE_DONT_SETTLE_NO:
+		return "RESPONSE_DONT_SETTLE_NO";
+	case DIPLO_MESSAGE_WORK_WITH_US_YES:
+		return "RESPONSE_WORK_WITH_US_YES";
+	case DIPLO_MESSAGE_WORK_WITH_US_NO:
+		return "RESPONSE_WORK_WITH_US_NO";
+	case DIPLO_MESSAGE_WORK_AGAINST_SOMEONE_YES:
+		return "RESPONSE_WORK_AGAINST_SOMEONE_YES";
+	case DIPLO_MESSAGE_WORK_AGAINST_SOMEONE_NO:
+		return "RESPONSE_WORK_AGAINST_SOMEONE_NO";
+	case DIPLO_MESSAGE_COOP_WAR_YES:
+		return "RESPONSE_COOP_WAR_YES";
+	case DIPLO_MESSAGE_COOP_WAR_NO:
+		return "RESPONSE_COOP_WAR_NO";
+	case DIPLO_MESSAGE_COOP_WAR_SOON:
+		return "RESPONSE_COOP_WAR_SOON";
+	case DIPLO_MESSAGE_HUMAN_DEMAND_YES:
+		return "RESPONSE_HUMAN_DEMAND_YES";
+	case DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_WEAK:
+		return "RESPONSE_HUMAN_DEMAND_REFUSE_WEAK";
+	case DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_HOSTILE:
+		return "RESPONSE_HUMAN_DEMAND_REFUSE_HOSTILE";
+	case DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_TOO_MUCH:
+		return "RESPONSE_HUMAN_DEMAND_REFUSE_TOO_MUCH";
+	case DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_TOO_SOON:
+		return "RESPONSE_HUMAN_DEMAND_REFUSE_TOO_SOON";
+	case DIPLO_MESSAGE_HUMAN_HOSTILE_AGGRESSIVE_MILITARY_WARNING_BAD:
+		return "RESPONSE_HOSTILE_AGGRESSIVE_MILITARY_WARNING_BAD";
+	case DIPLO_MESSAGE_HUMAN_HOSTILE_AGGRESSIVE_MILITARY_WARNING_GOOD:
+		return "RESPONSE_HOSTILE_AGGRESSIVE_MILITARY_WARNING_GOOD";
+	case DIPLO_MESSAGE_HUMAN_AGGRESSIVE_MILITARY_WARNING_BAD:
+		return "RESPONSE_AGGRESSIVE_MILITARY_WARNING_BAD";
+	case DIPLO_MESSAGE_HUMAN_AGGRESSIVE_MILITARY_WARNING_GOOD:
+		return "RESPONSE_AGGRESSIVE_MILITARY_WARNING_GOOD";
+	case DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD:
+		return "RESPONSE_HOSTILE_WE_ATTACKED_MINOR_BAD";
+	case DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_GOOD:
+		return "RESPONSE_HOSTILE_WE_ATTACKED_MINOR_GOOD";
+	case DIPLO_MESSAGE_HUMAN_WE_ATTACKED_MINOR_BAD:
+		return "RESPONSE_WE_ATTACKED_MINOR_BAD";
+	case DIPLO_MESSAGE_HUMAN_WE_ATTACKED_MINOR_GOOD:
+		return "RESPONSE_WE_ATTACKED_MINOR_GOOD";
+	case DIPLO_MESSAGE_HUMAN_HOSTILE_WE_BULLIED_MINOR_BAD:
+		return "RESPONSE_HOSTILE_WE_BULLIED_MINOR_BAD";
+	case DIPLO_MESSAGE_HUMAN_HOSTILE_WE_BULLIED_MINOR_GOOD:
+		return "RESPONSE_HOSTILE_WE_BULLIED_MINOR_GOOD";
+	case DIPLO_MESSAGE_HUMAN_WE_BULLIED_MINOR_BAD:
+		return "RESPONSE_WE_BULLIED_MINOR_BAD";
+	case DIPLO_MESSAGE_HUMAN_WE_BULLIED_MINOR_GOOD:
+		return "RESPONSE_WE_BULLIED_MINOR_GOOD";
+	case DIPLO_MESSAGE_HUMAN_ATTACKED_PROTECTED_CITY_STATE:
+		return "RESPONSE_ATTACKED_PROTECTED_CITY_STATE";
+	case DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_BAD:
+		return "RESPONSE_HUMAN_ATTACKED_MINOR_BAD";
+	case DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_GOOD:
+		return "RESPONSE_HUMAN_ATTACKED_MINOR_GOOD";
+	case DIPLO_MESSAGE_HUMAN_KILLED_PROTECTED_CITY_STATE:
+		return "RESPONSE_KILLED_PROTECTED_CITY_STATE";
+	case DIPLO_MESSAGE_HUMAN_KILLED_MINOR_BAD:
+		return "RESPONSE_HUMAN_KILLED_MINOR_BAD";
+	case DIPLO_MESSAGE_HUMAN_KILLED_MINOR_GOOD:
+		return "RESPONSE_HUMAN_KILLED_MINOR_GOOD";
+	case DIPLO_MESSAGE_HUMAN_BULLIED_PROTECTED_CITY_STATE:
+		return "RESPONSE_BULLIED_PROTECTED_CITY_STATE";
+	case DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_BAD:
+		return "RESPONSE_HUMAN_BULLIED_MINOR_BAD";
+	case DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_GOOD:
+		return "RESPONSE_HUMAN_BULLIED_MINOR_GOOD";
+	case DIPLO_MESSAGE_HUMAN_SERIOUS_EXPANSION_WARNING_BAD:
+		return "RESPONSE_HUMAN_SERIOUS_EXPANSION_WARNING_BAD";
+	case DIPLO_MESSAGE_HUMAN_SERIOUS_EXPANSION_WARNING_GOOD:
+		return "RESPONSE_HUMAN_SERIOUS_EXPANSION_WARNING_GOOD";
+	case DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_BAD:
+		return "RESPONSE_HUMAN_EXPANSION_WARNING_BAD";
+	case DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_GOOD:
+		return "RESPONSE_HUMAN_EXPANSION_WARNING_GOOD";
+	case DIPLO_MESSAGE_HUMAN_SERIOUS_PLOT_BUYING_WARNING_BAD:
+		return "RESPONSE_HUMAN_SERIOUS_PLOT_BUYING_WARNING_BAD";
+	case DIPLO_MESSAGE_HUMAN_SERIOUS_PLOT_BUYING_WARNING_GOOD:
+		return "RESPONSE_HUMAN_SERIOUS_PLOT_BUYING_WARNING_GOOD";
+	case DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_BAD:
+		return "RESPONSE_HUMAN_PLOT_BUYING_WARNING_BAD";
+	case DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_GOOD:
+		return "RESPONSE_HUMAN_PLOT_BUYING_WARNING_GOOD";
+	case DIPLO_MESSAGE_PEACE_WHAT_WILL_HUMAN_OFFER:
+		return "RESPONSE_PEACE_WHAT_WILL_HUMAN_OFFER";
+	case DIPLO_MESSAGE_PEACE_MADE_BY_HUMAN_GRACIOUS:
+		return "RESPONSE_PEACE_MADE_BY_HUMAN_GRACIOUS";
+	case DIPLO_MESSAGE_NO_PEACE:
+		return "RESPONSE_NO_PEACE";
+	case DIPLO_MESSAGE_TOO_SOON_NO_PEACE:
+		return "RESPONSE_TOO_SOON_NO_PEACE";
+	case DIPLO_MESSAGE_REPEAT_TRADE_TOO_MUCH:
+		return "RESPONSE_REPEAT_TRADE_TOO_MUCH";
+	case DIPLO_MESSAGE_REPEAT_TRADE:
+		return "RESPONSE_REPEAT_TRADE";
+	case DIPLO_MESSAGE_TRADE_ACCEPT_GENEROUS:
+		return "RESPONSE_TRADE_ACCEPT_GENEROUS";
+	case DIPLO_MESSAGE_TRADE_ACCEPT_ACCEPTABLE:
+		return "RESPONSE_TRADE_ACCEPT_ACCEPTABLE";
+	case DIPLO_MESSAGE_TRADE_ACCEPT_AI_DEMAND:
+		return "RESPONSE_TRADE_ACCEPT_AI_DEMAND";
+	case DIPLO_MESSAGE_TRADE_ACCEPT_HUMAN_CONCESSIONS:
+		return "RESPONSE_TRADE_ACCEPT_HUMAN_CONCESSIONS";
+	case DIPLO_MESSAGE_TRADE_REJECT_UNACCEPTABLE:
+		return "RESPONSE_TRADE_REJECT_UNACCEPTABLE";
+	case DIPLO_MESSAGE_TRADE_REJECT_INSULTING:
+		return "RESPONSE_TRADE_REJECT_INSULTING";
+	case DIPLO_MESSAGE_TRADE_DEAL_UNCHANGED:
+		return "RESPONSE_TRADE_DEAL_UNCHANGED";
+	case DIPLO_MESSAGE_TRADE_AI_MAKES_OFFER:
+		return "RESPONSE_TRADE_AI_MAKES_OFFER";
+	case DIPLO_MESSAGE_TRADE_NO_DEAL_POSSIBLE:
+		return "RESPONSE_TRADE_NO_DEAL_POSSIBLE";
+	case DIPLO_MESSAGE_TRADE_CANT_MATCH_OFFER:
+		return "RESPONSE_TRADE_CANT_MATCH_OFFER";
+	case DIPLO_MESSAGE_ATTACKED_HOSTILE:
+		return "RESPONSE_ATTACKED_HOSTILE";
+	case DIPLO_MESSAGE_ATTACKED_WEAK_HOSTILE:
+		return "RESPONSE_ATTACKED_WEAK_HOSTILE";
+	case DIPLO_MESSAGE_ATTACKED_STRONG_HOSTILE:
+		return "RESPONSE_ATTACKED_STRONG_HOSTILE";
+	case DIPLO_MESSAGE_ATTACKED_EXCITED:
+		return "RESPONSE_ATTACKED_EXCITED";
+	case DIPLO_MESSAGE_ATTACKED_WEAK_EXCITED:
+		return "RESPONSE_ATTACKED_WEAK_EXCITED";
+	case DIPLO_MESSAGE_ATTACKED_STRONG_EXCITED:
+		return "RESPONSE_ATTACKED_STRONG_EXCITED";
+	case DIPLO_MESSAGE_ATTACKED_SAD:
+		return "RESPONSE_ATTACKED_SAD";
+	case DIPLO_MESSAGE_ATTACKED_BETRAYED:
+		return "RESPONSE_ATTACKED_BETRAYED";
+	case DIPLO_MESSAGE_ATTACKED_MILITARY_PROMISE_BROKEN:
+		return "RESPONSE_ATTACKED_MILITARY_PROMISE_BROKEN";
+	case DIPLO_MESSAGE_DOW_GENERIC:
+		return "RESPONSE_DOW_GENERIC";
+	case DIPLO_MESSAGE_DOW_LAND:
+		return "RESPONSE_DOW_LAND";
+	case DIPLO_MESSAGE_DOW_WORLD_CONQUEST:
+		return "RESPONSE_DOW_WORLD_CONQUEST";
+	case DIPLO_MESSAGE_DOW_OPPORTUNITY:
+		return "RESPONSE_DOW_OPPORTUNITY";
+	case DIPLO_MESSAGE_DOW_DESPERATE:
+		return "RESPONSE_DOW_DESPERATE";
+	case DIPLO_MESSAGE_DOW_BETRAYAL:
+		return "RESPONSE_DOW_BETRAYAL";
+	case DIPLO_MESSAGE_DOW_WEAK_BETRAYAL:
+		return "RESPONSE_DOW_WEAK_BETRAYAL";
+	case DIPLO_MESSAGE_DOW_REGRET:
+		return "RESPONSE_DOW_REGRET";
+	case DIPLO_MESSAGE_WAR_DEMAND_REFUSED:
+		return "RESPONSE_WAR_DEMAND_REFUSED";
+	case DIPLO_MESSAGE_DOF_AI_DENOUNCE_REQUEST:
+		return "RESPONSE_DOF_AI_DENOUNCE_REQUEST";
+	case DIPLO_MESSAGE_DOF_AI_WAR_REQUEST:
+		return "RESPONSE_DOF_AI_WAR_REQUEST";
+	case DIPLO_MESSAGE_DOF_NOT_HONORED:
+		return "RESPONSE_DOF_NOT_HONORED";
+	case DIPLO_MESSAGE_AI_DOF_BACKSTAB:
+		return "RESPONSE_AI_DOF_BACKSTAB";
+	case DIPLO_MESSAGE_RESPONSE_TO_BEING_DENOUNCED:
+		return "RESPONSE_RESPONSE_TO_BEING_DENOUNCED";
+	case DIPLO_MESSAGE_HUMAN_DOFED_FRIEND:
+		return "RESPONSE_HUMAN_DOFED_FRIEND";
+	case DIPLO_MESSAGE_HUMAN_DOFED_ENEMY:
+		return "RESPONSE_HUMAN_DOFED_ENEMY";
+	case DIPLO_MESSAGE_HUMAN_DENOUNCED_FRIEND:
+		return "RESPONSE_HUMAN_DENOUNCED_FRIEND";
+	case DIPLO_MESSAGE_HUMAN_DENOUNCED_ENEMY:
+		return "RESPONSE_HUMAN_DENOUNCED_ENEMY";
+	case DIPLO_MESSAGE_HUMAN_DOF_SO_AI_DOF:
+		return "RESPONSE_HUMAN_DOF_SO_AI_DOF";
+	case DIPLO_MESSAGE_HUMAN_DENOUNCE_SO_AI_DENOUNCE:
+		return "RESPONSE_HUMAN_DENOUNCE_SO_AI_DENOUNCE";
+	case DIPLO_MESSAGE_HUMAN_DOF_SO_AI_DENOUNCE:
+		return "RESPONSE_HUMAN_DOF_SO_AI_DENOUNCE";
+	case DIPLO_MESSAGE_HUMAN_DENOUNCE_SO_AI_DOF:
+		return "RESPONSE_HUMAN_DENOUNCE_SO_AI_DOF";
+	case DIPLO_MESSAGE_GREETING_DENOUNCED_BY_AI:
+		return "RESPONSE_GREETING_DENOUNCED_BY_AI";
+	case DIPLO_MESSAGE_GREETING_DENOUNCED_AI:
+		return "RESPONSE_GREETING_DENOUNCED_AI";
+	case DIPLO_MESSAGE_GREETING_OUR_DOF_WITH_AI_ENEMY:
+		return "RESPONSE_GREETING_OUR_DOF_WITH_ENEMY_OF_AI";
+	case DIPLO_MESSAGE_GREETING_OUR_DOF_WITH_AI_FRIEND:
+		return "RESPONSE_GREETING_OUR_DOF_WITH_FRIEND_OF_AI";
+	case DIPLO_MESSAGE_GREETING_DENOUNCED_AI_FRIEND:
+		return "RESPONSE_GREETING_DENOUNCED_FRIEND_OF_AI";
+	case DIPLO_MESSAGE_GREETING_DENOUNCED_AI_ENEMY:
+		return "RESPONSE_GREETING_DENOUNCED_ENEMY_OF_AI";
+	case DIPLO_MESSAGE_TOO_SOON_FOR_DOF:
+		return "RESPONSE_TOO_SOON_FOR_DOF";
+	case DIPLO_MESSAGE_SAME_POLICIES_FREEDOM:
+		return "RESPONSE_SAME_POLICIES_FREEDOM";
+	case DIPLO_MESSAGE_SAME_POLICIES_ORDER:
+		return "RESPONSE_SAME_POLICIES_ORDER";
+	case DIPLO_MESSAGE_SAME_POLICIES_AUTOCRACY:
+		return "RESPONSE_SAME_POLICIES_AUTOCRACY";
+	case DIPLO_MESSAGE_CAUGHT_YOUR_SPY:
+		return "RESPONSE_CAUGHT_YOUR_SPY";
+	case DIPLO_MESSAGE_KILLED_YOUR_SPY:
+		return "RESPONSE_KILLED_YOUR_SPY";
+	case DIPLO_MESSAGE_KILLED_MY_SPY:
+		return "RESPONSE_KILLED_MY_SPY";
+	case DIPLO_MESSAGE_CONFRONT_YOU_KILLED_MY_SPY:
+		return "RESPONSE_CONFRONT_YOU_KILLED_MY_SPY";
+	case DIPLO_MESSAGE_STOP_CONVERSIONS:
+		return "RESPONSE_STOP_CONVERSIONS";
+	case DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_GOOD:
+		return "RESPONSE_HUMAN_CAUGHT_YOUR_SPY_GOOD";
+	case DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_BAD:
+		return "RESPONSE_HUMAN_CAUGHT_YOUR_SPY_BAD";
+	case DIPLO_MESSAGE_STOP_SPYING_YES:
+		return "RESPONSE_STOP_SPYING_YES";
+	case DIPLO_MESSAGE_STOP_SPYING_NO:
+		return "RESPONSE_STOP_SPYING_NO";
+	case DIPLO_MESSAGE_WARNED_ABOUT_INTRIGUE:
+		return "RESPONSE_WARNED_ABOUT_INTRIGUE";
+	case DIPLO_MESSAGE_SHARE_INTRIGUE:
+		return "RESPONSE_SHARE_INTRIGUE_DECEPTION";
+	case DIPLO_MESSAGE_SHARE_INTRIGUE_ARMY_SNEAK_ATTACK_KNOWN_CITY:
+		return "RESPONSE_SHARE_INTRIGUE_ARMY_SNEAK_ATTACK_KNOWN_CITY";
+	case DIPLO_MESSAGE_SHARE_INTRIGUE_ARMY_SNEAK_ATTACK_UNKNOWN_CITY:
+		return "RESPONSE_SHARE_INTRIGUE_ARMY_SNEAK_ATTACK_UNKNOWN_CITY";
+	case DIPLO_MESSAGE_SHARE_INTRIGUE_AMPHIBIOUS_SNEAK_ATTACK_KNOWN_CITY:
+		return "RESPONSE_SHARE_INTRIGUE_AMPHIBIOUS_SNEAK_ATTACK_KNOWN_CITY";
+	case DIPLO_MESSAGE_SHARE_INTRIGUE_AMPHIBIOUS_SNEAK_ATTACK_UNKNOWN_CITY:
+		return "RESPONSE_SHARE_INTRIGUE_AMPHIBIOUS_SNEAK_ATTACK_UNKNOWN_CITY";
+	case DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_UNFORGIVEN:
+		return "RESPONSE_HUMAN_KILLED_MY_SPY_UNFORGIVEN";
+	case DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_FORGIVEN:
+		return "RESPONSE_HUMAN_KILLED_MY_SPY_FORGIVEN";
+	case DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_GOOD:
+		return "RESPONSE_HUMAN_STOP_CONVERSIONS_GOOD";
+	case DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_BAD:
+		return "RESPONSE_HUMAN_STOP_CONVERSIONS_BAD";
+	case DIPLO_MESSAGE_STOP_CONVERSIONS_AGREE:
+		return "RESPONSE_HUMAN_STOP_CONVERSIONS_AGREE";
+	case DIPLO_MESSAGE_STOP_CONVERSIONS_DISAGREE:
+		return "RESPONSE_HUMAN_STOP_CONVERSIONS_DISAGREE";
+	case DIPLO_MESSAGE_STOP_DIGGING:
+		return "RESPONSE_STOP_DIGGING";
+	case DIPLO_MESSAGE_STOP_DIGGING_AGREE:
+		return "RESPONSE_STOP_DIGGING_AGREE";
+	case DIPLO_MESSAGE_STOP_DIGGING_DISAGREE:
+		return "RESPONSE_STOP_DIGGING_DISAGREE";
+	case DIPLO_MESSAGE_HUMAN_STOP_DIGGING_BAD:
+		return "RESPONSE_HUMAN_STOP_DIGGING_BAD";
+	case DIPLO_MESSAGE_HUMAN_STOP_DIGGING_GOOD:
+		return "RESPONSE_HUMAN_STOP_DIGGING_GOOD";
+	case DIPLO_MESSAGE_WE_LIKED_THEIR_PROPOSAL:
+		return "RESPONSE_WE_LIKE_HUMAN_PROPOSAL";
+	case DIPLO_MESSAGE_WE_DISLIKED_THEIR_PROPOSAL:
+		return "RESPONSE_WE_DISLIKE_HUMAN_PROPOSAL";
+	case DIPLO_MESSAGE_THEY_SUPPORTED_OUR_PROPOSAL:
+		return "RESPONSE_HUMAN_SUPPORTED_OUR_PROPOSAL";
+	case DIPLO_MESSAGE_THEY_FOILED_OUR_PROPOSAL:
+		return "RESPONSE_HUMAN_FOILED_OUR_PROPOSAL";
+	case DIPLO_MESSAGE_THEY_SUPPORTED_OUR_HOSTING:
+		return "RESPONSE_HUMAN_SUPPORTED_OUR_HOSTING";
+	case DIPLO_MESSAGE_YOUR_IDEOLOGY_CAUSING_CIVIL_UNREST_FREEDOM:
+		return "RESPONSE_CIVIL_RESISTANCE_ON_AI_BY_FREEDOM";
+	case DIPLO_MESSAGE_YOUR_IDEOLOGY_CAUSING_CIVIL_UNREST_ORDER:
+		return "RESPONSE_CIVIL_RESISTANCE_ON_AI_BY_ORDER";
+	case DIPLO_MESSAGE_YOUR_IDEOLOGY_CAUSING_CIVIL_UNREST_AUTOCRACY:
+		return "RESPONSE_CIVIL_RESISTANCE_ON_AI_BY_AUTOCRACY";
+	case DIPLO_MESSAGE_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_FREEDOM:
+		return "RESPONSE_CIVIL_RESISTANCE_ON_HUMAN_BY_FREEDOM";
+	case DIPLO_MESSAGE_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_ORDER:
+		return "RESPONSE_CIVIL_RESISTANCE_ON_HUMAN_BY_ORDER";
+	case DIPLO_MESSAGE_OUR_IDEOLOGY_CAUSING_CIVIL_UNREST_AUTOCRACY:
+		return "RESPONSE_CIVIL_RESISTANCE_ON_HUMAN_BY_AUTOCRACY";
+	case DIPLO_MESSAGE_SWITCH_OUR_IDEOLOGY_FREEDOM:
+		return "RESPONSE_SWITCHED_TO_FREEDOM";
+	case DIPLO_MESSAGE_SWITCH_OUR_IDEOLOGY_ORDER:
+		return "RESPONSE_SWITCHED_TO_ORDER";
+	case DIPLO_MESSAGE_SWITCH_OUR_IDEOLOGY_AUTOCRACY:
+		return "RESPONSE_SWITCHED_TO_AUTOCRACY";
+	case DIPLO_MESSAGE_YOUR_CULTURE_INFLUENTIAL:
+		return "RESPONSE_INFLUENTIAL_ON_AI";
+	case DIPLO_MESSAGE_OUR_CULTURE_INFLUENTIAL:
+		return "RESPONSE_INFLUENTIAL_ON_HUMAN";
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	case DIPLO_MESSAGE_HOSTILE_REPEAT_SHARE_OPINION_NO:
+		return "RESPONSE_HOSTILE_REPEAT_SHARE_OPINION_NO";
+	case DIPLO_MESSAGE_REPEAT_SHARE_OPINION_NO:
+		return "RESPONSE_REPEAT_SHARE_OPINION_NO";
+	case DIPLO_MESSAGE_HOSTILE_SHARE_OPINION_NO:
+		return "RESPONSE_HOSTILE_SHARE_OPINION_NO";
+	case DIPLO_MESSAGE_SHARE_OPINION_NO:
+		return "RESPONSE_SHARE_OPINION_NO";
+	case DIPLO_MESSAGE_SHARE_OPINION_FRIENDLY:
+		return "RESPONSE_SHARE_OPINION_FRIENDLY";
+	case DIPLO_MESSAGE_SHARE_OPINION_NEUTRAL:
+		return "RESPONSE_SHARE_OPINION_NEUTRAL";
+	case DIPLO_MESSAGE_SHARE_OPINION_GUARDED:
+		return "RESPONSE_SHARE_OPINION_GUARDED";
+	case DIPLO_MESSAGE_SHARE_OPINION_HOSTILE:
+		return "RESPONSE_SHARE_OPINION_HOSTILE";
+	case DIPLO_MESSAGE_SHARE_OPINION_WAR:
+		return "RESPONSE_SHARE_OPINION_WAR";
+	case DIPLO_MESSAGE_SHARE_OPINION_AFRAID:
+		return "RESPONSE_SHARE_OPINION_AFRAID";
+	case DIPLO_MESSAGE_SHARE_OPINION_PLANNING_WAR:
+		return "RESPONSE_SHARE_OPINION_PLANNING_WAR";
+	case DIPLO_MESSAGE_SHARE_OPINION_DECEPTIVE:
+		return "RESPONSE_SHARE_OPINION_DECEPTIVE";
+	case DIPLO_MESSAGE_TOO_SOON_FOR_SHARE_OPINION:
+		return "RESPONSE_TOO_SOON_FOR_SHARE_OPINION";
+	case DIPLO_MESSAGE_MAPS_OFFER:
+		return "RESPONSE_MAPS_OFFER";
+	case DIPLO_MESSAGE_TECH_OFFER:
+		return "RESPONSE_TECH_OFFER";
+	case DIPLO_MESSAGE_GENEROUS_OFFER:
+		return "RESPONSE_GENEROUS_OFFER";
+	case DIPLO_MESSAGE_HUMAN_REQUEST_YES:
+		return "RESPONSE_HELP_REQUEST_YES";
+	case DIPLO_MESSAGE_HUMAN_REQUEST_TOO_MUCH:
+		return "RESPONSE_HELP_REQUEST_REFUSE_TOO_MUCH";
+	case DIPLO_MESSAGE_HUMAN_REQUEST_TOO_SOON:
+		return "RESPONSE_HELP_REQUEST_REFUSE_TOO_SOON";
+	case DIPLO_MESSAGE_VASSALAGE_ATTACKED_VASSAL:
+		return "RESPONSE_VASSALAGE_ATTACKED_VASSAL";
+	case DIPLO_MESSAGE_GREETING_HOSTILE_VASSALAGE_VASSAL:
+		return "RESPONSE_GREETING_VASSALAGE_VASSAL_HOSTILE";
+	case DIPLO_MESSAGE_GREETING_VASSALAGE_VASSAL:
+		return "RESPONSE_GREETING_VASSALAGE_VASSAL";
+	case DIPLO_MESSAGE_GREETING_HOSTILE_VASSALAGE_MASTER:
+		return "RESPONSE_GREETING_HOSTILE_VASSALAGE_MASTER";
+	case DIPLO_MESSAGE_GREETING_VASSALAGE_MASTER:
+		return "RESPONSE_GREETING_VASSALAGE_MASTER";
+	case DIPLO_MESSAGE_REVOKE_VASSALAGE_HOSTILE:
+		return "RESPONSE_VASSALAGE_REVOKE_VASSALAGE_HOSTILE";
+	case DIPLO_MESSAGE_REVOKE_VASSALAGE:
+		return "RESPONSE_VASSALAGE_REVOKE_VASSALAGE";
+	case DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_PEACEFUL:
+		return "RESPONSE_VASSALAGE_REVOKED_HUMAN_PEACEFUL";
+	case DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_WAR:
+		return "RESPONSE_VASSALAGE_REVOKED_HUMAN_WAR";
+	case DIPLO_MESSAGE_VASSALAGE_REVOKED_PEACEFUL:
+		return "RESPONSE_VASSALAGE_REVOKED_PEACEFUL";
+	case DIPLO_MESSAGE_VASSALAGE_REVOKED_FORCEFUL:
+		return "RESPONSE_VASSALAGE_REVOKED_FORCEFUL";
+	case DIPLO_MESSAGE_MOVE_TROOPS_ACCEPT:
+		return "RESPONSE_MOVE_TROOPS_ACCEPT";
+	case DIPLO_MESSAGE_MOVE_TROOPS_NEUTRAL:
+		return "RESPONSE_MOVE_TROOPS_NEUTRAL";
+	case DIPLO_MESSAGE_MOVE_TROOPS_NEUTRAL_HOSTILE:
+		return "RESPONSE_MOVE_TROOPS_NEUTRAL_HOSTILE";
+	case DIPLO_MESSAGE_MOVE_TROOPS_REJECT_CONQUEST:
+		return "RESPONSE_MOVE_TROOPS_REJECT_CONQUEST";
+	case DIPLO_MESSAGE_MOVE_TROOPS_REJECT_DECEPTIVE:
+		return "RESPONSE_MOVE_TROOPS_REJECT_DECEPTIVE";
+	case DIPLO_MESSAGE_MOVE_TROOPS_REJECT_HOSTILE:
+		return "RESPONSE_MOVE_TROOPS_REJECT_HOSTILE";
+#endif
+	}
+
+	return NULL;
+}
+
+const char* CvDiplomacyAI::GetDiploStringForMessage(DiploMessageTypes eDiploMessage, PlayerTypes eForPlayer, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2)
+{
+	CvAssertMsg(eDiploMessage >= 0, "DIPLOMACY_AI: Invalid DiploMessageType.  Please send Jon this with your last 5 autosaves and what changelist # you're playing.");
+	CvAssertMsg(eDiploMessage < NUM_DIPLO_MESSAGE_TYPES, "DIPLOMACY_AI: Invalid DiploMessageType.  Please send Jon this with your last 5 autosaves and what changelist # you're playing.");
+	CvAssertMsg(eForPlayer >= NO_PLAYER, "DIPLOMACY_AI: Invalid Player Index.  Please send Jon this with your last 5 autosaves and what changelist # you're playing.");	// NO_PLAYER is valid because eForPlayer is used when we need specific data (e.g. for declaring war)
+	CvAssertMsg(eForPlayer < MAX_MAJOR_CIVS, "DIPLOMACY_AI: Invalid Player Index.  Please send Jon this with your last 5 autosaves and what changelist # you're playing.");
+
+	switch(eDiploMessage)
+	{
+	case DIPLO_MESSAGE_GREETING_WORKING_AGAINST:
+		return GetDiploTextFromTag("RESPONSE_GREETING_WORKING_AGAINST", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_GREETING_COOP_WAR:
+		return GetDiploTextFromTag("RESPONSE_GREETING_COOP_WAR", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HOSTILE_WE_ATTACKED_YOUR_MINOR:
+		return GetDiploTextFromTag("RESPONSE_HOSTILE_WE_ATTACKED_YOUR_MINOR", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_WE_ATTACKED_YOUR_MINOR:
+		return GetDiploTextFromTag("RESPONSE_WE_ATTACKED_YOUR_MINOR", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HOSTILE_WE_BULLIED_YOUR_MINOR:
+		return GetDiploTextFromTag("RESPONSE_HOSTILE_WE_BULLIED_YOUR_MINOR", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_WE_BULLIED_YOUR_MINOR:
+		return GetDiploTextFromTag("RESPONSE_WE_BULLIED_YOUR_MINOR", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_WORK_AGAINST_SOMEONE:
+		return GetDiploTextFromTag("RESPONSE_WORK_AGAINST_SOMEONE", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_COOP_WAR_REQUEST:
+		return GetDiploTextFromTag("RESPONSE_COOP_WAR_REQUEST", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_COOP_WAR_TIME:
+		return GetDiploTextFromTag("RESPONSE_COOP_WAR_TIME", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_MINOR_CIV_COMPETITION:
+		return GetDiploTextFromTag("RESPONSE_MINOR_CIV_COMPETITION", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HUMAN_ATTACKED_PROTECTED_CITY_STATE:
+		return GetDiploTextFromTag("RESPONSE_ATTACKED_PROTECTED_CITY_STATE", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HUMAN_KILLED_PROTECTED_CITY_STATE:
+		return GetDiploTextFromTag("RESPONSE_KILLED_PROTECTED_CITY_STATE", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HUMAN_BULLIED_PROTECTED_CITY_STATE:
+		return GetDiploTextFromTag("RESPONSE_BULLIED_PROTECTED_CITY_STATE", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_DOF_AI_DENOUNCE_REQUEST:
+		return GetDiploTextFromTag("RESPONSE_DOF_AI_DENOUNCE_REQUEST", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_DOF_AI_WAR_REQUEST:
+		return GetDiploTextFromTag("RESPONSE_DOF_AI_WAR_REQUEST", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HUMAN_DOFED_FRIEND:
+		return GetDiploTextFromTag("RESPONSE_HUMAN_DOFED_FRIEND", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HUMAN_DOFED_ENEMY:
+		return GetDiploTextFromTag("RESPONSE_HUMAN_DOFED_ENEMY", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HUMAN_DENOUNCED_FRIEND:
+		return GetDiploTextFromTag("RESPONSE_HUMAN_DENOUNCED_FRIEND", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HUMAN_DENOUNCED_ENEMY:
+		return GetDiploTextFromTag("RESPONSE_HUMAN_DENOUNCED_ENEMY", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HUMAN_DOF_SO_AI_DOF:
+		return GetDiploTextFromTag("RESPONSE_HUMAN_DOF_SO_AI_DOF", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HUMAN_DENOUNCE_SO_AI_DENOUNCE:
+		return GetDiploTextFromTag("RESPONSE_HUMAN_DENOUNCE_SO_AI_DENOUNCE", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HUMAN_DOF_SO_AI_DENOUNCE:
+		return GetDiploTextFromTag("RESPONSE_HUMAN_DOF_SO_AI_DENOUNCE", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_HUMAN_DENOUNCE_SO_AI_DOF:
+		return GetDiploTextFromTag("RESPONSE_HUMAN_DENOUNCE_SO_AI_DOF", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_GREETING_OUR_DOF_WITH_AI_ENEMY:
+		return GetDiploTextFromTag("RESPONSE_GREETING_OUR_DOF_WITH_ENEMY_OF_AI", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_GREETING_OUR_DOF_WITH_AI_FRIEND:
+		return GetDiploTextFromTag("RESPONSE_GREETING_OUR_DOF_WITH_FRIEND_OF_AI", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_GREETING_DENOUNCED_AI_FRIEND:
+		return GetDiploTextFromTag("RESPONSE_GREETING_DENOUNCED_FRIEND_OF_AI", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_GREETING_DENOUNCED_AI_ENEMY:
+		return GetDiploTextFromTag("RESPONSE_GREETING_DENOUNCED_ENEMY_OF_AI", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_WARNED_ABOUT_INTRIGUE:
+		return GetDiploTextFromTag("RESPONSE_WARNED_ABOUT_INTRIGUE", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_SHARE_INTRIGUE:
+		return GetDiploTextFromTag("RESPONSE_SHARE_INTRIGUE_DECEPTION", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_WE_LIKED_THEIR_PROPOSAL:
+		return GetDiploTextFromTag("RESPONSE_WE_LIKE_HUMAN_PROPOSAL", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_WE_DISLIKED_THEIR_PROPOSAL:
+		return GetDiploTextFromTag("RESPONSE_WE_DISLIKE_HUMAN_PROPOSAL", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_THEY_SUPPORTED_OUR_PROPOSAL:
+		return GetDiploTextFromTag("RESPONSE_HUMAN_SUPPORTED_OUR_PROPOSAL", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_THEY_FOILED_OUR_PROPOSAL:
+		return GetDiploTextFromTag("RESPONSE_HUMAN_FOILED_OUR_PROPOSAL", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_THEY_SUPPORTED_OUR_HOSTING:
+		return GetDiploTextFromTag("RESPONSE_HUMAN_SUPPORTED_OUR_HOSTING", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_SHARE_INTRIGUE_ARMY_SNEAK_ATTACK_UNKNOWN_CITY:
+		return GetDiploTextFromTag("RESPONSE_SHARE_INTRIGUE_ARMY_SNEAK_ATTACK_UNKNOWN_CITY", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_SHARE_INTRIGUE_AMPHIBIOUS_SNEAK_ATTACK_UNKNOWN_CITY:
+		return GetDiploTextFromTag("RESPONSE_SHARE_INTRIGUE_AMPHIBIOUS_SNEAK_ATTACK_UNKNOWN_CITY", strOptionalKey1);
+		break;
+		
+#if defined(MOD_DIPLOMACY_CIV4_FEATURES)
+	case DIPLO_MESSAGE_SHARE_OPINION_FRIENDLY:
+		return GetDiploTextFromTag("RESPONSE_SHARE_OPINION_FRIENDLY", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_SHARE_OPINION_NEUTRAL:
+		return GetDiploTextFromTag("RESPONSE_SHARE_OPINION_NEUTRAL", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_SHARE_OPINION_GUARDED:
+		return GetDiploTextFromTag("RESPONSE_SHARE_OPINION_GUARDED", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_SHARE_OPINION_HOSTILE:
+		return GetDiploTextFromTag("RESPONSE_SHARE_OPINION_HOSTILE", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_SHARE_OPINION_WAR:
+		return GetDiploTextFromTag("RESPONSE_SHARE_OPINION_WAR", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_SHARE_OPINION_AFRAID:
+		return GetDiploTextFromTag("RESPONSE_SHARE_OPINION_AFRAID", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_SHARE_OPINION_PLANNING_WAR:
+		return GetDiploTextFromTag("RESPONSE_SHARE_OPINION_PLANNING_WAR", strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_SHARE_OPINION_DECEPTIVE:
+		return GetDiploTextFromTag("RESPONSE_SHARE_OPINION_DECEPTIVE", strOptionalKey1);
+		break;
+#endif
+
+	case DIPLO_MESSAGE_SHARE_INTRIGUE_ARMY_SNEAK_ATTACK_KNOWN_CITY:
+		return GetDiploTextFromTag("RESPONSE_SHARE_INTRIGUE_ARMY_SNEAK_ATTACK_KNOWN_CITY", strOptionalKey1, strOptionalKey2);
+		break;
+	case DIPLO_MESSAGE_SHARE_INTRIGUE_AMPHIBIOUS_SNEAK_ATTACK_KNOWN_CITY:
+		return GetDiploTextFromTag("RESPONSE_SHARE_INTRIGUE_AMPHIBIOUS_SNEAK_ATTACK_KNOWN_CITY", strOptionalKey1, strOptionalKey2);
+		break;
+	case DIPLO_MESSAGE_ATTACKED_ROOT:
+		return GetAttackedByHumanMessage();
+		break;
+	case DIPLO_MESSAGE_INSULT_ROOT:
+		return GetInsultHumanMessage();
+		break;
+	case DIPLO_MESSAGE_DOW_ROOT:
+		return GetWarMessage(eForPlayer);
+		break;
+	case DIPLO_MESSAGE_END_WORK_WITH_US:
+		return GetEndDoFMessage(eForPlayer);
+		break;
+	case DIPLO_MESSAGE_END_WORK_AGAINST_SOMEONE:
+		return GetEndWorkAgainstSomeoneMessage(eForPlayer, strOptionalKey1);
+		break;
+	case DIPLO_MESSAGE_DECLARATION_PROTECT_CITY_STATE:
+		return GetDiploTextFromTag("RESPONSE_DECLARATION_PROTECT_CITY_STATE", strOptionalKey1, GetPlayer()->getCivilizationShortDescriptionKey());
+		break;
+	case DIPLO_MESSAGE_DECLARATION_ABANDON_CITY_STATE:
+		return GetDiploTextFromTag("RESPONSE_DECLARATION_ABANDON_CITY_STATE", strOptionalKey1, GetPlayer()->getCivilizationShortDescriptionKey());
+		break;
+	}
+
+	const char* szResponseKey = GetResponseKeyForMessage(eDiploMessage);
+	return (szResponseKey ? GetDiploTextFromTag(szResponseKey) : "");
+}
+#else
 const char* CvDiplomacyAI::GetDiploStringForMessage(DiploMessageTypes eDiploMessage, PlayerTypes eForPlayer, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2)
 {
 	CvAssertMsg(eDiploMessage >= 0, "DIPLOMACY_AI: Invalid DiploMessageType.  Please send Jon this with your last 5 autosaves and what changelist # you're playing.");
@@ -17380,6 +18407,7 @@ const char* CvDiplomacyAI::GetDiploStringForMessage(DiploMessageTypes eDiploMess
 
 	return strText;
 }
+#endif
 
 
 /// Message from UI to gameplay about something that should happen with regards to diplomacy
@@ -17416,8 +18444,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 		if(bActivePlayer)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_WAR_DECLARED_BY_HUMAN, DIPLO_MESSAGE_ATTACKED_ROOT, LEADERHEAD_ANIM_ATTACKED, iArg1);
+#else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_ATTACKED_ROOT);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_WAR_DECLARED_BY_HUMAN, strText, LEADERHEAD_ANIM_ATTACKED, iArg1);
+#endif
 		}
 
 #if defined(MOD_DIPLOMACY_CIV4_FEATURES)
@@ -17460,8 +18492,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				// This is essentially the same as the human opening the trade screen
 				GetPlayer()->GetDealAI()->DoTradeScreenOpened();
 
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_TRADE, DIPLO_MESSAGE_PEACE_WHAT_WILL_HUMAN_OFFER, LEADERHEAD_ANIM_LETS_HEAR_IT);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PEACE_WHAT_WILL_HUMAN_OFFER);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_TRADE, strText, LEADERHEAD_ANIM_LETS_HEAR_IT);
+#endif
 			}
 			else
 			{
@@ -17470,9 +18506,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_TOO_SOON_NO_PEACE);
 				// Don't want peace for some other reason
 				else
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_WAR_DECLARED_BY_HUMAN, DIPLO_MESSAGE_NO_PEACE, LEADERHEAD_ANIM_NO);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_NO_PEACE);
-
-				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_WAR_DECLARED_BY_HUMAN, strText, LEADERHEAD_ANIM_NO);
+					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_WAR_DECLARED_BY_HUMAN, strText, LEADERHEAD_ANIM_NO);
+#endif
 			}
 		}
 
@@ -17486,8 +18525,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 	{
 		if(bActivePlayer)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_LETS_HEAR_IT, LEADERHEAD_ANIM_LETS_HEAR_IT);
+#else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_LETS_HEAR_IT);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_LETS_HEAR_IT);
+#endif
 		}
 
 		break;
@@ -17503,8 +18546,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		{
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NO);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_NO);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
+#endif
 			}
 		}
 		// AI gives a new answer
@@ -17528,13 +18575,21 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 				if(bAcceptable)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_DONT_SETTLE_YES, LEADERHEAD_ANIM_NEGATIVE);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_DONT_SETTLE_YES);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 				}
 				else
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_DONT_SETTLE_NO, LEADERHEAD_ANIM_NO);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_DONT_SETTLE_NO);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
+#endif
 				}
 			}
 		}
@@ -17552,8 +18607,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		{
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NO);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_NO);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
+#endif
 			}
 		}
 		// AI gives a new answer
@@ -17588,6 +18647,13 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					eStateType = DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT;
 				}
 
+#if defined(MOD_DIPLOMACY_STFU)
+				if (bAcceptable) {
+					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_SPYING_YES, LEADERHEAD_ANIM_NEGATIVE);
+				} else {
+					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_SPYING_NO, LEADERHEAD_ANIM_NO);
+				}
+#else
 				LeaderheadAnimationTypes eAnimType;
 
 				if(bAcceptable)
@@ -17602,6 +18668,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				}
 
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, eStateType, strText, eAnimType);
+#endif
 			}
 		}
 
@@ -17622,9 +18689,18 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					eStateType = DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT;
 				}
 
+				bool bIsYes = IsStopSpreadingReligionAcceptable(eFromPlayer);
+				SetPlayerAgreeNotToConvert(eFromPlayer, bIsYes);
+				
+#if defined(MOD_DIPLOMACY_STFU)
+				if (bIsYes) {					
+					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_CONVERSIONS_AGREE, LEADERHEAD_ANIM_NEGATIVE);
+				} else {
+					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_CONVERSIONS_DISAGREE, LEADERHEAD_ANIM_NO);
+				}
+#else
 				LeaderheadAnimationTypes eAnimType;
 
-				bool bIsYes = IsStopSpreadingReligionAcceptable(eFromPlayer);
 				if (bIsYes)
 				{					
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_STOP_CONVERSIONS_AGREE);
@@ -17636,8 +18712,8 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					eAnimType = LEADERHEAD_ANIM_NO;
 				}
 
-				SetPlayerAgreeNotToConvert(eFromPlayer, bIsYes);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, eStateType, strText, eAnimType);
+#endif
 			}
 			break;
 		}
@@ -17656,9 +18732,18 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					eStateType = DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT;
 				}
 
+				bool bIsYes = IsStopDiggingAcceptable(eFromPlayer);
+				SetPlayerAgreeNotToDig(eFromPlayer, bIsYes);
+				
+#if defined(MOD_DIPLOMACY_STFU)
+				if (bIsYes) {					
+					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_DIGGING_AGREE, LEADERHEAD_ANIM_NEGATIVE);
+				} else {
+					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_DIGGING_DISAGREE, LEADERHEAD_ANIM_NO);
+				}
+#else
 				LeaderheadAnimationTypes eAnimType;
 
-				bool bIsYes = IsStopDiggingAcceptable(eFromPlayer);
 				if (bIsYes)
 				{					
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_STOP_DIGGING_AGREE);
@@ -17670,8 +18755,8 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					eAnimType = LEADERHEAD_ANIM_NO;
 				}
 
-				SetPlayerAgreeNotToDig(eFromPlayer, bIsYes);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, eStateType, strText, eAnimType);
+#endif
 			}
 			break;
 		}
@@ -17689,8 +18774,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_TOO_SOON_FOR_DOF, LEADERHEAD_ANIM_NO);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_TOO_SOON_FOR_DOF);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
+#endif
 			}
 		}
 		// Player has asked this before
@@ -17698,8 +18787,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		{
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NO);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_NO);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
+#endif
 			}
 		}
 		// AI gives a new answer
@@ -17719,13 +18812,21 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 				if(bAcceptable)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_WORK_WITH_US_YES, LEADERHEAD_ANIM_POSITIVE);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_WORK_WITH_US_YES);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 				}
 				else
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_WORK_WITH_US_NO, LEADERHEAD_ANIM_NO);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_WORK_WITH_US_NO);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
+#endif
 				}
 			}
 		}
@@ -17745,8 +18846,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 		if(bActivePlayer)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 
 		break;
@@ -17779,13 +18884,21 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		{
 			if(bDeclareWar)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_WAR_DEMAND_REFUSED, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_WAR_DEMAND_REFUSED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 			else
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_SO_BE_IT, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_SO_BE_IT);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 		}
 
@@ -17801,8 +18914,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 		if(bActivePlayer)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 
 		break;
@@ -17823,12 +18940,20 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				if (IsActHostileTowardsHuman(eFromPlayer)) {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_AGGRESSIVE_MILITARY_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				} else {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_AGGRESSIVE_MILITARY_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				}
+#else
 				if(IsActHostileTowardsHuman(eFromPlayer))
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_HOSTILE_AGGRESSIVE_MILITARY_WARNING_GOOD);
 				else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_AGGRESSIVE_MILITARY_WARNING_GOOD);
 
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 		// Human told the AI to die
@@ -17844,12 +18969,20 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				if (IsActHostileTowardsHuman(eFromPlayer)) {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_AGGRESSIVE_MILITARY_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+				} else {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_AGGRESSIVE_MILITARY_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+				}
+#else
 				if(IsActHostileTowardsHuman(eFromPlayer))
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_HOSTILE_AGGRESSIVE_MILITARY_WARNING_BAD);
 				else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_AGGRESSIVE_MILITARY_WARNING_BAD);
 
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 		}
 
@@ -17868,8 +19001,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		if (!(eMinor >= MAX_MAJOR_CIVS && eMinor < MAX_CIV_PLAYERS))
 		{
 			// Fail gracefully, allow UI to continue
+#if defined(MOD_DIPLOMACY_STFU)
+			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			break;
 		}
 
@@ -17878,8 +19015,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		if (!pMinor)
 		{
 			// Fail gracefully, allow UI to continue
+#if defined(MOD_DIPLOMACY_STFU)
+			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			break;
 		}
 		
@@ -17892,12 +19033,20 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			
 			if (bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				if (IsActHostileTowardsHuman(eFromPlayer)) {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				} else {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_ATTACKED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				}
+#else
 				if(IsActHostileTowardsHuman(eFromPlayer))
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_GOOD);
 				else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_WE_ATTACKED_MINOR_GOOD);
 
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 		// Human said he'd get revenge
@@ -17907,12 +19056,20 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if (bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				if (IsActHostileTowardsHuman(eFromPlayer)) {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+				} else {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+				}
+#else
 				if(IsActHostileTowardsHuman(eFromPlayer))
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD);
 				else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_WE_ATTACKED_MINOR_BAD);
 
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			}
 		}
 
@@ -17931,8 +19088,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		if (!(eMinor >= MAX_MAJOR_CIVS && eMinor < MAX_CIV_PLAYERS))
 		{
 			// Fail gracefully, allow UI to continue
+#if defined(MOD_DIPLOMACY_STFU)
+			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			break;
 		}
 		
@@ -17941,8 +19102,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		if (!pMinor)
 		{
 			// Fail gracefully, allow UI to continue
+#if defined(MOD_DIPLOMACY_STFU)
+			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			break;
 		}
 		
@@ -17955,12 +19120,20 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		
 			if (bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				if (IsActHostileTowardsHuman(eFromPlayer)) {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_BULLIED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				} else {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_BULLIED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				}
+#else
 				if(IsActHostileTowardsHuman(eFromPlayer))
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_HOSTILE_WE_BULLIED_MINOR_GOOD);
 				else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_WE_BULLIED_MINOR_GOOD);
 
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 		// Human said he'd get revenge
@@ -17970,12 +19143,20 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if (bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				if (IsActHostileTowardsHuman(eFromPlayer)) {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_BULLIED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+				} else {
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_BULLIED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+				}
+#else
 				if(IsActHostileTowardsHuman(eFromPlayer))
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_HOSTILE_WE_BULLIED_MINOR_BAD);
 				else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_WE_BULLIED_MINOR_BAD);
 
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			}
 		}
 
@@ -17996,8 +19177,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 		}
 		// Human said he'd withdraw
@@ -18007,8 +19192,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 
@@ -18037,8 +19226,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 		}
 		// Human said he'd withdraw
@@ -18048,8 +19241,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 
@@ -18082,8 +19279,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 		}
 		// Human said he wouldn't settle near us again
@@ -18094,8 +19295,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 
@@ -18128,8 +19333,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 		}
 		// Human said he wouldn't buy land near us again
@@ -18140,8 +19349,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 
@@ -18166,8 +19379,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 		// Human says sorry, no
@@ -18175,8 +19392,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		{
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			}
 		}
 
@@ -18231,8 +19452,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 		if(bActivePlayer)
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_RESPONSE_TO_BEING_DENOUNCED, LEADERHEAD_ANIM_NEGATIVE);
+#else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_RESPONSE_TO_BEING_DENOUNCED);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 		}
 
 		break;
@@ -18252,8 +19477,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		{
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_NO);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			}
 		}
 		else
@@ -18293,8 +19522,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 				if(bActivePlayer)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_COOP_WAR_YES, LEADERHEAD_ANIM_POSITIVE);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_COOP_WAR_YES);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 				}
 			}
 			// Soon
@@ -18302,8 +19535,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 				if(bActivePlayer)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_COOP_WAR_SOON, LEADERHEAD_ANIM_POSITIVE);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_COOP_WAR_SOON);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 				}
 			}
 			// Rejected
@@ -18311,8 +19548,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 				if(bActivePlayer)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_COOP_WAR_NO, LEADERHEAD_ANIM_NEGATIVE);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_COOP_WAR_NO);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 				}
 			}
 		}
@@ -18337,8 +19578,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			// TODO: diplo penalty if we were friends
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			}
 		}
 		// Human says "soon"
@@ -18348,8 +19593,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 		// Human agrees
@@ -18359,8 +19608,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 
 			// AI declaration
@@ -18401,8 +19654,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 
 			// AI declaration
@@ -18429,8 +19686,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			}
 		}
 
@@ -18453,25 +19714,37 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			// Demand agreed to
 			if(eResponse == DEMAND_RESPONSE_ACCEPT)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_YES, LEADERHEAD_ANIM_YES);
+#else
 				strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DEMAND_YES);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, strText, LEADERHEAD_ANIM_YES);
+#endif
 			}
 			// Demand rebuffed
 			else
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				if(eResponse == DEMAND_RESPONSE_REFUSE_WEAK)
+					GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_WEAK, LEADERHEAD_ANIM_NO);
+				else if(eResponse == DEMAND_RESPONSE_REFUSE_HOSTILE)
+					GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_HOSTILE, LEADERHEAD_ANIM_NO);
+				else if(eResponse == DEMAND_RESPONSE_REFUSE_TOO_MUCH)
+					GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_TOO_MUCH, LEADERHEAD_ANIM_NO);
+				else if(eResponse == DEMAND_RESPONSE_REFUSE_TOO_SOON)
+					GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_TOO_SOON, LEADERHEAD_ANIM_NO);
+#else
 				if(eResponse == DEMAND_RESPONSE_REFUSE_WEAK)
 					strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_WEAK);
-
 				else if(eResponse == DEMAND_RESPONSE_REFUSE_HOSTILE)
 					strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_HOSTILE);
-
 				else if(eResponse == DEMAND_RESPONSE_REFUSE_TOO_MUCH)
 					strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_TOO_MUCH);
-
 				else if(eResponse == DEMAND_RESPONSE_REFUSE_TOO_SOON)
 					strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_TOO_SOON);
 
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, strText, LEADERHEAD_ANIM_NO);
+#endif
 			}
 		}
 
@@ -18490,8 +19763,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		{
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 		// Human says sorry, no
@@ -18499,8 +19776,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		{
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			}
 
 			DoCancelWantsResearchAgreementWithPlayer(eFromPlayer);
@@ -18524,8 +19805,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 		// Human says sorry, no
@@ -18537,13 +19822,21 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				DoDenouncePlayer(eFromPlayer);
 				LogDenounce(eFromPlayer, /*bBackstab*/ false, /*bRefusal*/ true);
 
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, DIPLO_MESSAGE_DOF_NOT_HONORED, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_DOF_NOT_HONORED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 			else if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			}
 		}
 
@@ -18563,8 +19856,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			SetPlayerIgnoredSpyPromise(eFromPlayer, true);
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 		}
 		// Human said he'd withdraw
@@ -18573,8 +19870,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			SetPlayerMadeSpyPromise(eFromPlayer, true);
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_GOOD, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 
@@ -18593,8 +19894,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		{
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_UNFORGIVEN, LEADERHEAD_ANIM_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_UNFORGIVEN);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 			}
 		}
 		// Human forgave AI player
@@ -18603,8 +19908,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			SetPlayerForgaveForSpying(eFromPlayer, true);
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_FORGIVEN, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_FORGIVEN);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 
@@ -18635,8 +19944,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				}
 #endif
 
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_WARNED_ABOUT_INTRIGUE, NO_PLAYER, GET_PLAYER(ePlottingPlayer).getCivilizationAdjectiveKey(), LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_WARNED_ABOUT_INTRIGUE, NO_PLAYER, GET_PLAYER(ePlottingPlayer).getCivilizationAdjectiveKey());
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 		break;
@@ -18655,8 +19968,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			SetPlayerIgnoredNoConvertPromise(eFromPlayer, true);
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 			}
 		}
 		// Human said he'd withdraw
@@ -18667,8 +19984,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			ChangeNegativeReligiousConversionPoints(eFromPlayer, iAdjustmentToJustBelowThreshold);
 			if(bActivePlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_GOOD, LEADERHEAD_ANIM_POSITIVE);
+#else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 		}
 
@@ -18689,8 +20010,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				SetPlayerIgnoredNoDiggingPromise(eFromPlayer, true);
 				if(bActivePlayer)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_DIGGING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_STOP_DIGGING_BAD);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 				}
 			}
 			// Human said he'd withdraw
@@ -18701,8 +20026,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				ChangeNegativeArchaeologyPoints(eFromPlayer, -10);
 				if(bActivePlayer)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_DIGGING_GOOD, LEADERHEAD_ANIM_POSITIVE);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_STOP_DIGGING_GOOD);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 				}
 			}
 
@@ -18723,8 +20052,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 				if(bActivePlayer)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_TOO_SOON_FOR_SHARE_OPINION, LEADERHEAD_ANIM_NO);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_TOO_SOON_FOR_SHARE_OPINION);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
+#endif
 				}
 			}
 			// Player has asked this before
@@ -18734,13 +20067,21 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				{
 					if(IsActHostileTowardsHuman(eFromPlayer))
 					{
+#if defined(MOD_DIPLOMACY_STFU)
+						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_HOSTILE_REPEAT_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
+#else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_HOSTILE_REPEAT_SHARE_OPINION_NO);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
+#endif
 					}
 					else
 					{
+#if defined(MOD_DIPLOMACY_STFU)
+						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
+#else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_SHARE_OPINION_NO);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
+#endif
 					}
 				}
 			}
@@ -18783,6 +20124,40 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 						SetShareOpinionAccepted(eFromPlayer, true);
 						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->SetShareOpinionAccepted(eMyPlayer, true);
 
+#if defined(MOD_DIPLOMACY_STFU)
+						if (IsAtWar(eTargetPlayer)) {
+							DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_SHARE_OPINION_WAR, NO_PLAYER, GET_PLAYER(eTargetPlayer).getNameKey(), LEADERHEAD_ANIM_POSITIVE);
+						} else {
+							DiploMessageTypes eDiploMessage = NO_DIPLO_MESSAGE_TYPE;
+							
+							switch(eOurApproachWithOtherCiv)
+							{
+								case MAJOR_CIV_APPROACH_FRIENDLY:
+									eDiploMessage = DIPLO_MESSAGE_SHARE_OPINION_FRIENDLY;
+									break;
+								case MAJOR_CIV_APPROACH_NEUTRAL:
+									eDiploMessage = DIPLO_MESSAGE_SHARE_OPINION_NEUTRAL;
+									break;
+								case MAJOR_CIV_APPROACH_GUARDED:
+									eDiploMessage = DIPLO_MESSAGE_SHARE_OPINION_GUARDED;
+									break;
+								case MAJOR_CIV_APPROACH_HOSTILE:
+									eDiploMessage = DIPLO_MESSAGE_SHARE_OPINION_HOSTILE;
+									break;
+								case MAJOR_CIV_APPROACH_AFRAID:
+									eDiploMessage = DIPLO_MESSAGE_SHARE_OPINION_AFRAID;
+									break;
+								case MAJOR_CIV_APPROACH_WAR:
+									eDiploMessage = DIPLO_MESSAGE_SHARE_OPINION_PLANNING_WAR;
+									break;
+								case MAJOR_CIV_APPROACH_DECEPTIVE:
+									eDiploMessage = DIPLO_MESSAGE_SHARE_OPINION_DECEPTIVE;
+									break;
+							}
+						
+							DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, eDiploMessage, NO_PLAYER, GET_PLAYER(eTargetPlayer).getNameKey(), LEADERHEAD_ANIM_POSITIVE);
+						}
+#else
 						if(IsAtWar(eTargetPlayer))
 						{
 							strText = GetDiploStringForMessage(DIPLO_MESSAGE_SHARE_OPINION_WAR, NO_PLAYER, GET_PLAYER(eTargetPlayer).getNameKey());
@@ -18814,7 +20189,9 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 									break;
 							}
 						}
+
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 					}
 					// We've declined, tell them no.
 					else
@@ -18823,13 +20200,21 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				
 						if(IsActHostileTowardsHuman(eFromPlayer))
 						{
+#if defined(MOD_DIPLOMACY_STFU)
+							DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_HOSTILE_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
+#else
 							strText = GetDiploStringForMessage(DIPLO_MESSAGE_HOSTILE_SHARE_OPINION_NO);
 							gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
+#endif
 						}
 						else
 						{
+#if defined(MOD_DIPLOMACY_STFU)
+							DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
+#else
 							strText = GetDiploStringForMessage(DIPLO_MESSAGE_SHARE_OPINION_NO);
 							gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
+#endif
 						}
 					}
 				}
@@ -18855,19 +20240,29 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				// Help Request agreed to
 				if(eResponse == DEMAND_RESPONSE_GIFT_ACCEPT)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_REQUEST_YES, LEADERHEAD_ANIM_POSITIVE);
+#else
 					strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_REQUEST_YES);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 				}
 				// Help Request rebuffed
 				else
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					if(eResponse == DEMAND_RESPONSE_GIFT_REFUSE_TOO_MUCH)
+						GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_REQUEST_TOO_MUCH, LEADERHEAD_ANIM_NEGATIVE);
+					else if(eResponse == DEMAND_RESPONSE_GIFT_REFUSE_TOO_SOON)
+						GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_REQUEST_TOO_SOON, LEADERHEAD_ANIM_NEGATIVE);
+#else
 					if(eResponse == DEMAND_RESPONSE_GIFT_REFUSE_TOO_MUCH)
 						strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_REQUEST_TOO_MUCH);
-
 					else if(eResponse == DEMAND_RESPONSE_GIFT_REFUSE_TOO_SOON)
 						strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_REQUEST_TOO_SOON);
 
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, strText, LEADERHEAD_ANIM_NEGATIVE);
+#endif
 				}
 			}
 
@@ -18947,13 +20342,21 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				{
 					if(bPeaceful)
 					{
+#if defined(MOD_DIPLOMACY_STFU)
+						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_PEACEFUL, LEADERHEAD_ANIM_YES);
+#else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_PEACEFUL);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, strText, LEADERHEAD_ANIM_YES);
+#endif
 					}
 					else
 					{
+#if defined(MOD_DIPLOMACY_STFU)
+						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_WAR, LEADERHEAD_ANIM_ATTACKED);
+#else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_WAR);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, strText, LEADERHEAD_ANIM_ATTACKED);
+#endif
 					}
 				}
 				// Human requests AI to end vassalage
@@ -18961,13 +20364,21 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				{
 					if(bAcceptable)
 					{
+#if defined(MOD_DIPLOMACY_STFU)
+						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_VASSALAGE_REVOKED_PEACEFUL, LEADERHEAD_ANIM_YES);
+#else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_VASSALAGE_REVOKED_PEACEFUL);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, strText, LEADERHEAD_ANIM_YES);
+#endif
 					}
 					else
 					{
+#if defined(MOD_DIPLOMACY_STFU)
+						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_VASSALAGE_REVOKED_FORCEFUL, LEADERHEAD_ANIM_ATTACKED);
+#else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_VASSALAGE_REVOKED_FORCEFUL);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, strText, LEADERHEAD_ANIM_ATTACKED);
+#endif
 					}
 				}
 			}
@@ -19000,8 +20411,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 				if(bActivePlayer)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_MOVE_TROOPS_ACCEPT, LEADERHEAD_ANIM_YES);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_MOVE_TROOPS_ACCEPT);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_YES);
+#endif
 				}
 
 				// lower weight for crossing tiles around this player's cities
@@ -19043,8 +20458,12 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 				if(bActivePlayer)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_MOVE_TROOPS_NEUTRAL, LEADERHEAD_ANIM_YES);
+#else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_MOVE_TROOPS_NEUTRAL);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_YES);
+#endif
 				}
 			}
 			// AI tells human to die
@@ -19054,6 +20473,15 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				GET_TEAM(GetTeam()).declareWar(eFromTeam);
 				if(bActivePlayer)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					if (IsGoingForWorldConquest()) {
+						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_MOVE_TROOPS_REJECT_CONQUEST, LEADERHEAD_ANIM_HATE_NEGATIVE);
+					} else if (GetMajorCivApproach(eFromPlayer, /*bHideTrueFeelings*/ false) == MAJOR_CIV_APPROACH_DECEPTIVE) {
+						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_MOVE_TROOPS_REJECT_DECEPTIVE, LEADERHEAD_ANIM_HATE_NEGATIVE);
+					} else {
+						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_MOVE_TROOPS_REJECT_HOSTILE, LEADERHEAD_ANIM_HATE_NEGATIVE);
+					}
+#else
 					if(IsGoingForWorldConquest())
 					{
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_MOVE_TROOPS_REJECT_CONQUEST);
@@ -19070,6 +20498,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					}
 
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
+#endif
 				}
 			}
 			// Something happened! (will generate an error message)
@@ -19079,7 +20508,11 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 				if(bActivePlayer)
 				{
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, NO_DIPLO_MESSAGE_TYPE, LEADERHEAD_ANIM_YES);
+#else
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_YES);
+#endif
 				}
 			}
 
@@ -22483,8 +23916,12 @@ void CvDiplomacyAI::ChangeNumCiviliansReturnedToMe(PlayerTypes ePlayer, int iCha
 				if(GC.getGame().getActivePlayer() == ePlayer)
 				{
 					GC.GetEngineUserInterface()->SetForceDiscussionModeQuitOnBack(true);		// Set force quit so that when discuss mode pops up the Back button won't go to leader root
+#if defined(MOD_DIPLOMACY_STFU)
+					DisplayAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_RETURNED_CIVILIAN, LEADERHEAD_ANIM_POSITIVE);
+#else
 					const char* strText = GetDiploStringForMessage(DIPLO_MESSAGE_RETURNED_CIVILIAN);
 					gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 				}
 			}
 		}
@@ -27891,7 +29328,7 @@ int CvDiplomacyAIHelpers::GetWarmongerOffset(int iNumCitiesRemaining, bool bIsMi
 	}
 #endif
 
-	CUSTOMLOG("GetWarmongerOffset(owner=%i, capital=%s) = %i", ((int) eOriginalOwner), (bIsCapital ? "true" : "false"), iWarmongerOffset);
+	// CUSTOMLOG("GetWarmongerOffset(owner=%i, capital=%s) = %i", ((int) eOriginalOwner), (bIsCapital ? "true" : "false"), iWarmongerOffset);
 	return iWarmongerOffset;
 }
 
@@ -30585,5 +32022,156 @@ bool CvDiplomacyAI::IsTooSoonForMoveTroopsRequest(PlayerTypes ePlayer) const
 	}
 
 	return false;
+}
+#endif
+
+#if defined(MOD_DIPLOMACY_STFU)
+bool CvDiplomacyAI::WantAILeaderMessage(DiploMessageTypes eDiploMessage, PlayerTypes eAI, DiploUIStateTypes eDiploUIState, LeaderheadAnimationTypes eAction, int iExtraData)
+{
+	bool bWant = true;
+	int iResponseType = 0;
+
+	const char* szResponseKey = GetResponseKeyForMessage(eDiploMessage);
+	
+	if (szResponseKey) {
+		CUSTOMLOG("STFU@%i: Diplo message %s (%i) from player %i", GC.getGame().getGameTurn(), szResponseKey, eDiploMessage, eAI);
+
+		if (m_pStfuResponseQuery == NULL)
+		{
+			const char* szSQL = "SELECT r.ID, s.SendEvent, s.Ignore, s.Respond, s.ResponseEvent, s.ResponseAI, s.ResponseData1, s.ResponseData2 FROM Diplomacy_Stfu s, Responses r, Diplomacy_StfuResponses sr WHERE sr.ResponseType=? AND sr.StfuType=s.Type AND sr.ResponseType=r.Type";
+			m_pStfuResponseQuery = new Database::Results();
+			if (!GC.GetGameDatabase()->Execute(*m_pStfuResponseQuery, szSQL, strlen(szSQL)))
+			{
+				CUSTOMLOG("STFU: Failed to generate response query.");
+			}
+		}
+
+		bool bSendEvent = false;
+		bool bIgnore = false;
+		bool bRespond = false;
+		FromUIDiploEventTypes eResponseEvent = NO_FROM_UI_DIPLO_EVENT;
+		PlayerTypes eResponseAI = NO_PLAYER;
+		int iResponseData1 = 0;
+		int iResponseData2 = 0;
+
+		m_pStfuResponseQuery->Bind(1, szResponseKey);
+		while (m_pStfuResponseQuery->Step())
+		{
+			iResponseType = m_pStfuResponseQuery->GetInt(0);
+			if (m_pStfuResponseQuery->GetInt(1) == 1) bSendEvent = true;
+			if (m_pStfuResponseQuery->GetInt(2) == 1) bIgnore = true;
+			if (bRespond == false && m_pStfuResponseQuery->GetInt(3) == 1) {
+				bRespond = true;
+				eResponseEvent = (FromUIDiploEventTypes)m_pStfuResponseQuery->GetInt(4);
+				if (m_pStfuResponseQuery->GetInt(5) == 1) {
+					eResponseAI = eAI;
+				}
+				iResponseData1 = m_pStfuResponseQuery->GetInt(6);
+				iResponseData2 = m_pStfuResponseQuery->GetInt(7);
+			}
+		}
+
+		m_pStfuResponseQuery->Reset();
+
+		if (bSendEvent) {
+			CUSTOMLOG("STFU: GameEvents.DiplomacyStfu(%i, %i, %i, %i, %i)", eAI, iResponseType, eDiploUIState, eAction, iExtraData);
+
+			int iValue = 0;
+			if (GAMEEVENTINVOKE_VALUE(iValue, GAMEEVENT_DiplomacyStfu, eAI, iResponseType, eDiploUIState, eAction, iExtraData) == GAMEEVENTRETURN_VALUE) {
+				CUSTOMLOG("STFU: Received %i", iValue);
+				if (iValue != 0) {
+					// Process the return code as the ID of the STFU_ action to execute
+					if (m_pStfuQuery == NULL) {
+						const char* szSQL = "SELECT ID, SendEvent, Ignore, Respond, ResponseEvent, ResponseAI, ResponseData1, ResponseData2 FROM Diplomacy_Stfu WHERE ID=?";
+						m_pStfuQuery = new Database::Results();
+						if (!GC.GetGameDatabase()->Execute(*m_pStfuQuery, szSQL, strlen(szSQL))) {
+							CUSTOMLOG("STFU: Failed to generate stfu query.");
+						}
+					}
+
+					m_pStfuQuery->Bind(1, iValue);
+					while (m_pStfuQuery->Step())
+					{
+						if (m_pStfuQuery->GetInt(2) == 1) bIgnore = true;
+						if (m_pStfuQuery->GetInt(3) == 1) {
+							bRespond = true;
+							eResponseEvent = (FromUIDiploEventTypes)m_pStfuQuery->GetInt(4);
+							if (m_pStfuQuery->GetInt(5) == 1) {
+								eResponseAI = eAI;
+							} else {
+								eResponseAI = NO_PLAYER;
+							}
+							iResponseData1 = m_pStfuQuery->GetInt(6);
+							iResponseData2 = m_pStfuQuery->GetInt(7);
+						}
+					}
+
+					m_pStfuQuery->Reset();
+				}
+			}
+		}
+
+		if (bIgnore) {
+			CUSTOMLOG("STFU: Ignore");
+			bWant = false;
+		} else if (bRespond) {
+			CUSTOMLOG("STFU: Game.DoFromUIDiploEvent(%i, %i, %i, %i)", eResponseEvent, eResponseAI, iResponseData1, iResponseData2);
+			GC.getGame().DoFromUIDiploEvent(eResponseEvent, eResponseAI, iResponseData1, iResponseData2);
+			bWant = false;
+		}
+	}
+	else
+	{
+		CUSTOMLOG("STFU@%i: WARNING: Cannot find response key for message %i from player %i", GC.getGame().getGameTurn(), eDiploMessage, eAI);
+	}
+
+	if (bWant) {
+		CUSTOMLOG("STFU: Want");
+	} else {
+		// Need to close the leader screen if it's open
+		// In Lua this is UI.RequestLeaveLeader(), but it's not in the API, so we'll have to send a GameEvent and do it in Lua ... YUCK!!!
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_DiplomacyStfuLeaveLeader, iResponseType);
+	}
+
+	return bWant;
+}
+
+void CvDiplomacyAI::DisplayAILeaderMessage(PlayerTypes ePlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
+{
+	DisplayAILeaderMessage(ePlayer, eDiploUIState, eDiploMessage, NO_PLAYER, Localization::String::Empty, eAction, iExtraData);
+}
+
+void CvDiplomacyAI::DisplayAILeaderMessage(PlayerTypes ePlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
+{
+	DisplayAILeaderMessage(ePlayer, eDiploUIState, eDiploMessage, eThirdParty, Localization::String::Empty, eAction, iExtraData);
+}
+
+void CvDiplomacyAI::DisplayAILeaderMessage(PlayerTypes ePlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, const Localization::String& strOptionalKey1, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
+{
+	if (!MOD_DIPLOMACY_STFU || WantAILeaderMessage(eDiploMessage, ePlayer, eDiploUIState, eAction, iExtraData)) {
+		gDLL->GameplayDiplomacyAILeaderMessage(ePlayer, eDiploUIState, GetDiploStringForMessage(eDiploMessage, eThirdParty, strOptionalKey1), eAction, iExtraData);
+	}
+}
+
+void CvDiplomacyAI::SendAILeaderMessage(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
+{
+	SendAILeaderMessage(eFromPlayer, eToPlayer, eDiploUIState, eDiploMessage, NO_PLAYER, Localization::String::Empty, eAction, iExtraData);
+}
+
+void CvDiplomacyAI::SendAILeaderMessage(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
+{
+	SendAILeaderMessage(eFromPlayer, eToPlayer, eDiploUIState, eDiploMessage, eThirdParty, Localization::String::Empty, eAction, iExtraData);
+}
+
+void CvDiplomacyAI::SendAILeaderMessage(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, const Localization::String& strOptionalKey1, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
+{
+	SendAILeaderMessage(eFromPlayer, eToPlayer, eDiploUIState, eDiploMessage, eThirdParty, strOptionalKey1, Localization::String::Empty, eAction, iExtraData);
+}
+
+void CvDiplomacyAI::SendAILeaderMessage(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
+{
+	if (!MOD_DIPLOMACY_STFU || WantAILeaderMessage(eDiploMessage, eFromPlayer, eDiploUIState, eAction, iExtraData)) {
+		CvDiplomacyRequests::SendRequest(eFromPlayer, eToPlayer, eDiploUIState, GetDiploStringForMessage(eDiploMessage, eThirdParty, strOptionalKey1, strOptionalKey2), eAction, iExtraData);
+	}
 }
 #endif
