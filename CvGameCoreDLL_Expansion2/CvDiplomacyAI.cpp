@@ -11457,7 +11457,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_DEMAND);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_DEMAND, DIPLO_MESSAGE_DEMAND, szText, LEADERHEAD_ANIM_DEMAND);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_DEMAND, szText, LEADERHEAD_ANIM_DEMAND);
+#endif
 		}
 		// AI player
 		else if(!bHuman)
@@ -11478,7 +11482,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_REQUEST);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_REQUEST, DIPLO_MESSAGE_REQUEST, szText, LEADERHEAD_ANIM_REQUEST);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_REQUEST, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		// AI player
 		else if(!bHuman)
@@ -11499,7 +11507,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_LUXURY_TRADE);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, DIPLO_MESSAGE_LUXURY_TRADE, szText, LEADERHEAD_ANIM_REQUEST);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		// Offer to an AI player
 		else if(!bHuman)
@@ -11518,7 +11530,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_EMBASSY_EXCHANGE);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, DIPLO_MESSAGE_EMBASSY_EXCHANGE, szText, LEADERHEAD_ANIM_REQUEST);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		else if(!bHuman)
 		{
@@ -11536,7 +11552,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_EMBASSY_OFFER);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, DIPLO_MESSAGE_EMBASSY_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		else if(!bHuman)
 		{
@@ -11555,7 +11575,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_OPEN_BORDERS_EXCHANGE);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, DIPLO_MESSAGE_OPEN_BORDERS_EXCHANGE, szText, LEADERHEAD_ANIM_REQUEST);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		// Offer to an AI player
 		else if(!bHuman)
@@ -11575,7 +11599,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_OPEN_BORDERS_OFFER);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, DIPLO_MESSAGE_OPEN_BORDERS_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		// Offer to an AI player
 		else if(!bHuman)
@@ -11616,7 +11644,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_RESEARCH_AGREEMENT_OFFER);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, DIPLO_MESSAGE_RESEARCH_AGREEMENT_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		// Offer to an AI player
 		else if(!bHuman)
@@ -11676,7 +11708,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 					pRenewDeal->m_bCheckedForRenewal = true;
 				}
 				szText = GetDiploStringForMessage(eMessageType);
+#if defined(MOD_API_PLAYER_LOGS)
+				CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, eMessageType, szText, LEADERHEAD_ANIM_REQUEST);
+#else
 				CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 			}
 		}
 		// Offer to an AI player
@@ -12386,7 +12422,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_MAPS_OFFER);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, DIPLO_MESSAGE_MAPS_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		else if(!bHuman)
 		{
@@ -12402,7 +12442,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_TECH_OFFER);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, DIPLO_MESSAGE_TECH_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		else if(!bHuman)
 		{
@@ -12420,7 +12464,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_GENEROUS_OFFER);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_GENEROUS_OFFER, DIPLO_MESSAGE_GENEROUS_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_GENEROUS_OFFER, szText, LEADERHEAD_ANIM_REQUEST);
+#endif
 		}
 		else if(!bHuman)
 		{
@@ -12505,7 +12553,11 @@ void CvDiplomacyAI::DoSendStatementToPlayer(PlayerTypes ePlayer, DiploStatementT
 		if(bShouldShowLeaderScene)
 		{
 			szText = GetDiploStringForMessage(DIPLO_MESSAGE_PEACE_OFFER);
+#if defined(MOD_API_PLAYER_LOGS)
+			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, DIPLO_MESSAGE_PEACE_OFFER, szText, LEADERHEAD_ANIM_POSITIVE);
+#else
 			CvDiplomacyRequests::SendDealRequest(GetPlayer()->GetID(), ePlayer, pDeal, DIPLO_UI_STATE_TRADE_AI_MAKES_OFFER, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 		}
 		// Offer to an AI player
 		else if(!bHuman)
@@ -13421,6 +13473,13 @@ void CvDiplomacyAI::DoContactMinorCivs()
 
 					//antonjs: consider: different behavior to CS that have been bullied by others, bullied by rival, etc.
 
+#if defined(MOD_EVENTS_MINORS_INTERACTION)
+					if (MOD_EVENTS_MINORS_INTERACTION) {
+						if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanGiftGold, eID, eMinor) == GAMEEVENTRETURN_FALSE) {
+							iValue = 0;
+						}
+					}
+#endif				
 					// Do we want it enough?
 					if(iValue > GC.getMC_GIFT_WEIGHT_THRESHOLD())
 					{
@@ -16306,6 +16365,7 @@ void CvDiplomacyAI::DoBeginDiploWithHuman()
 				
 CUSTOMLOG("STFU@%i: DoBeginDiploWithHuman for player %i", GC.getGame().getGameTurn(), GetPlayer()->GetID());
 		gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_DEFAULT_ROOT, szText, eAnimation);
+		DIPLOMACYLOG(m_pPlayer->GetID(), szText, GetPlayer()->GetID(), DIPLO_UI_STATE_DEFAULT_ROOT, DIPLO_MESSAGE_GREETING_NEUTRAL_HELLO);
 	}
 }
 
@@ -16346,6 +16406,7 @@ void CvDiplomacyAI::DoBeginDiploWithHumanInDiscuss()
 				
 CUSTOMLOG("STFU@%i: DoBeginDiploWithHumanInDiscuss for player %i", GC.getGame().getGameTurn(), GetPlayer()->GetID());
 		gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, szText, eAnimation);
+		DIPLOMACYLOG(m_pPlayer->GetID(), szText, GetPlayer()->GetID(), DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_GREETING_NEUTRAL_HELLO);
 	}
 }
 
@@ -18445,7 +18506,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		if(bActivePlayer)
 		{
 #if defined(MOD_DIPLOMACY_STFU)
-			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_WAR_DECLARED_BY_HUMAN, DIPLO_MESSAGE_ATTACKED_ROOT, LEADERHEAD_ANIM_ATTACKED, iArg1);
+			GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_WAR_DECLARED_BY_HUMAN, DIPLO_MESSAGE_ATTACKED_ROOT, LEADERHEAD_ANIM_ATTACKED, iArg1);
 #else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_ATTACKED_ROOT);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_WAR_DECLARED_BY_HUMAN, strText, LEADERHEAD_ANIM_ATTACKED, iArg1);
@@ -18493,7 +18554,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				GetPlayer()->GetDealAI()->DoTradeScreenOpened();
 
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_TRADE, DIPLO_MESSAGE_PEACE_WHAT_WILL_HUMAN_OFFER, LEADERHEAD_ANIM_LETS_HEAR_IT);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_TRADE, DIPLO_MESSAGE_PEACE_WHAT_WILL_HUMAN_OFFER, LEADERHEAD_ANIM_LETS_HEAR_IT);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PEACE_WHAT_WILL_HUMAN_OFFER);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_TRADE, strText, LEADERHEAD_ANIM_LETS_HEAR_IT);
@@ -18507,7 +18568,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				// Don't want peace for some other reason
 				else
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_WAR_DECLARED_BY_HUMAN, DIPLO_MESSAGE_NO_PEACE, LEADERHEAD_ANIM_NO);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_WAR_DECLARED_BY_HUMAN, DIPLO_MESSAGE_NO_PEACE, LEADERHEAD_ANIM_NO);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_NO_PEACE);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_WAR_DECLARED_BY_HUMAN, strText, LEADERHEAD_ANIM_NO);
@@ -18526,7 +18587,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		if(bActivePlayer)
 		{
 #if defined(MOD_DIPLOMACY_STFU)
-			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_LETS_HEAR_IT, LEADERHEAD_ANIM_LETS_HEAR_IT);
+			GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_LETS_HEAR_IT, LEADERHEAD_ANIM_LETS_HEAR_IT);
 #else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_LETS_HEAR_IT);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_LETS_HEAR_IT);
@@ -18547,7 +18608,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NO);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NO);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_NO);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
@@ -18576,7 +18637,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(bAcceptable)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_DONT_SETTLE_YES, LEADERHEAD_ANIM_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_DONT_SETTLE_YES, LEADERHEAD_ANIM_NEGATIVE);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_DONT_SETTLE_YES);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -18585,7 +18646,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				else
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_DONT_SETTLE_NO, LEADERHEAD_ANIM_NO);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_DONT_SETTLE_NO, LEADERHEAD_ANIM_NO);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_DONT_SETTLE_NO);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
@@ -18608,7 +18669,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NO);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NO);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_NO);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
@@ -18649,9 +18710,9 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 #if defined(MOD_DIPLOMACY_STFU)
 				if (bAcceptable) {
-					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_SPYING_YES, LEADERHEAD_ANIM_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_SPYING_YES, LEADERHEAD_ANIM_NEGATIVE);
 				} else {
-					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_SPYING_NO, LEADERHEAD_ANIM_NO);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_SPYING_NO, LEADERHEAD_ANIM_NO);
 				}
 #else
 				LeaderheadAnimationTypes eAnimType;
@@ -18694,9 +18755,9 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				
 #if defined(MOD_DIPLOMACY_STFU)
 				if (bIsYes) {					
-					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_CONVERSIONS_AGREE, LEADERHEAD_ANIM_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_CONVERSIONS_AGREE, LEADERHEAD_ANIM_NEGATIVE);
 				} else {
-					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_CONVERSIONS_DISAGREE, LEADERHEAD_ANIM_NO);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_CONVERSIONS_DISAGREE, LEADERHEAD_ANIM_NO);
 				}
 #else
 				LeaderheadAnimationTypes eAnimType;
@@ -18737,9 +18798,9 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				
 #if defined(MOD_DIPLOMACY_STFU)
 				if (bIsYes) {					
-					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_DIGGING_AGREE, LEADERHEAD_ANIM_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_DIGGING_AGREE, LEADERHEAD_ANIM_NEGATIVE);
 				} else {
-					DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_DIGGING_DISAGREE, LEADERHEAD_ANIM_NO);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, eStateType, DIPLO_MESSAGE_STOP_DIGGING_DISAGREE, LEADERHEAD_ANIM_NO);
 				}
 #else
 				LeaderheadAnimationTypes eAnimType;
@@ -18775,7 +18836,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_TOO_SOON_FOR_DOF, LEADERHEAD_ANIM_NO);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_TOO_SOON_FOR_DOF, LEADERHEAD_ANIM_NO);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_TOO_SOON_FOR_DOF);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
@@ -18788,7 +18849,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NO);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NO);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_NO);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
@@ -18813,7 +18874,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(bAcceptable)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_WORK_WITH_US_YES, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_WORK_WITH_US_YES, LEADERHEAD_ANIM_POSITIVE);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_WORK_WITH_US_YES);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -18822,7 +18883,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				else
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_WORK_WITH_US_NO, LEADERHEAD_ANIM_NO);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_WORK_WITH_US_NO, LEADERHEAD_ANIM_NO);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_WORK_WITH_US_NO);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
@@ -18847,7 +18908,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		if(bActivePlayer)
 		{
 #if defined(MOD_DIPLOMACY_STFU)
-			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+			GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
 #else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -18885,7 +18946,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bDeclareWar)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_WAR_DEMAND_REFUSED, LEADERHEAD_ANIM_HATE_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_WAR_DEMAND_REFUSED, LEADERHEAD_ANIM_HATE_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_WAR_DEMAND_REFUSED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
@@ -18894,7 +18955,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			else
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_SO_BE_IT, LEADERHEAD_ANIM_HATE_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_SO_BE_IT, LEADERHEAD_ANIM_HATE_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_SO_BE_IT);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
@@ -18915,7 +18976,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		if(bActivePlayer)
 		{
 #if defined(MOD_DIPLOMACY_STFU)
-			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+			GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
 #else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_HUMAN, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -18942,9 +19003,9 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 #if defined(MOD_DIPLOMACY_STFU)
 				if (IsActHostileTowardsHuman(eFromPlayer)) {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_AGGRESSIVE_MILITARY_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_AGGRESSIVE_MILITARY_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
 				} else {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_AGGRESSIVE_MILITARY_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_AGGRESSIVE_MILITARY_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
 				}
 #else
 				if(IsActHostileTowardsHuman(eFromPlayer))
@@ -18971,9 +19032,9 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 #if defined(MOD_DIPLOMACY_STFU)
 				if (IsActHostileTowardsHuman(eFromPlayer)) {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_AGGRESSIVE_MILITARY_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_AGGRESSIVE_MILITARY_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
 				} else {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_AGGRESSIVE_MILITARY_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_AGGRESSIVE_MILITARY_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
 				}
 #else
 				if(IsActHostileTowardsHuman(eFromPlayer))
@@ -19035,9 +19096,9 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 #if defined(MOD_DIPLOMACY_STFU)
 				if (IsActHostileTowardsHuman(eFromPlayer)) {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
 				} else {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_ATTACKED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_ATTACKED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
 				}
 #else
 				if(IsActHostileTowardsHuman(eFromPlayer))
@@ -19058,9 +19119,9 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 #if defined(MOD_DIPLOMACY_STFU)
 				if (IsActHostileTowardsHuman(eFromPlayer)) {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
 				} else {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
 				}
 #else
 				if(IsActHostileTowardsHuman(eFromPlayer))
@@ -19122,9 +19183,9 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 #if defined(MOD_DIPLOMACY_STFU)
 				if (IsActHostileTowardsHuman(eFromPlayer)) {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_BULLIED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_BULLIED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
 				} else {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_BULLIED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_BULLIED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
 				}
 #else
 				if(IsActHostileTowardsHuman(eFromPlayer))
@@ -19145,9 +19206,9 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 #if defined(MOD_DIPLOMACY_STFU)
 				if (IsActHostileTowardsHuman(eFromPlayer)) {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_BULLIED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_HOSTILE_WE_BULLIED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
 				} else {
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_BULLIED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_WE_BULLIED_MINOR_BAD, LEADERHEAD_ANIM_NEGATIVE);
 				}
 #else
 				if(IsActHostileTowardsHuman(eFromPlayer))
@@ -19178,7 +19239,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
@@ -19193,7 +19254,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_ATTACKED_MINOR_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19227,7 +19288,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
@@ -19242,7 +19303,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_GOOD, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_BULLIED_MINOR_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19280,7 +19341,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
@@ -19296,7 +19357,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_EXPANSION_WARNING_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19334,7 +19395,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
@@ -19350,7 +19411,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_GOOD, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_PLOT_BUYING_WARNING_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19380,7 +19441,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19393,7 +19454,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -19453,7 +19514,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 		if(bActivePlayer)
 		{
 #if defined(MOD_DIPLOMACY_STFU)
-			DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_RESPONSE_TO_BEING_DENOUNCED, LEADERHEAD_ANIM_NEGATIVE);
+			GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_RESPONSE_TO_BEING_DENOUNCED, LEADERHEAD_ANIM_NEGATIVE);
 #else
 			strText = GetDiploStringForMessage(DIPLO_MESSAGE_RESPONSE_TO_BEING_DENOUNCED);
 			gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -19478,7 +19539,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_REPEAT_NO, LEADERHEAD_ANIM_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_NO);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -19523,7 +19584,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(bActivePlayer)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_COOP_WAR_YES, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_COOP_WAR_YES, LEADERHEAD_ANIM_POSITIVE);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_COOP_WAR_YES);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19536,7 +19597,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(bActivePlayer)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_COOP_WAR_SOON, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_COOP_WAR_SOON, LEADERHEAD_ANIM_POSITIVE);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_COOP_WAR_SOON);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19549,7 +19610,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(bActivePlayer)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_COOP_WAR_NO, LEADERHEAD_ANIM_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_COOP_WAR_NO, LEADERHEAD_ANIM_NEGATIVE);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_COOP_WAR_NO);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -19579,7 +19640,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -19594,7 +19655,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19609,7 +19670,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19655,7 +19716,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19687,7 +19748,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -19715,7 +19776,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(eResponse == DEMAND_RESPONSE_ACCEPT)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_YES, LEADERHEAD_ANIM_YES);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_YES, LEADERHEAD_ANIM_YES);
 #else
 				strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DEMAND_YES);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, strText, LEADERHEAD_ANIM_YES);
@@ -19726,13 +19787,13 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			{
 #if defined(MOD_DIPLOMACY_STFU)
 				if(eResponse == DEMAND_RESPONSE_REFUSE_WEAK)
-					GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_WEAK, LEADERHEAD_ANIM_NO);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_WEAK, LEADERHEAD_ANIM_NO);
 				else if(eResponse == DEMAND_RESPONSE_REFUSE_HOSTILE)
-					GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_HOSTILE, LEADERHEAD_ANIM_NO);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_HOSTILE, LEADERHEAD_ANIM_NO);
 				else if(eResponse == DEMAND_RESPONSE_REFUSE_TOO_MUCH)
-					GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_TOO_MUCH, LEADERHEAD_ANIM_NO);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_TOO_MUCH, LEADERHEAD_ANIM_NO);
 				else if(eResponse == DEMAND_RESPONSE_REFUSE_TOO_SOON)
-					GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_TOO_SOON, LEADERHEAD_ANIM_NO);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_TOO_SOON, LEADERHEAD_ANIM_NO);
 #else
 				if(eResponse == DEMAND_RESPONSE_REFUSE_WEAK)
 					strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_DEMAND_REFUSE_WEAK);
@@ -19764,7 +19825,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19777,7 +19838,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -19806,7 +19867,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_PLEASED, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_PLEASED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19832,7 +19893,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			else if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_DISAPPOINTED, LEADERHEAD_ANIM_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_DISAPPOINTED);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -19857,7 +19918,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
@@ -19871,7 +19932,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_GOOD, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_CAUGHT_YOUR_SPY_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19895,7 +19956,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_UNFORGIVEN, LEADERHEAD_ANIM_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_UNFORGIVEN, LEADERHEAD_ANIM_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_UNFORGIVEN);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_NEGATIVE);
@@ -19909,7 +19970,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_FORGIVEN, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_FORGIVEN, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_KILLED_MY_SPY_FORGIVEN);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19945,7 +20006,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 #endif
 
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_WARNED_ABOUT_INTRIGUE, NO_PLAYER, GET_PLAYER(ePlottingPlayer).getCivilizationAdjectiveKey(), LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_WARNED_ABOUT_INTRIGUE, NO_PLAYER, GET_PLAYER(ePlottingPlayer).getCivilizationAdjectiveKey(), LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_WARNED_ABOUT_INTRIGUE, NO_PLAYER, GET_PLAYER(ePlottingPlayer).getCivilizationAdjectiveKey());
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -19969,7 +20030,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_BAD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
@@ -19985,7 +20046,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 			if(bActivePlayer)
 			{
 #if defined(MOD_DIPLOMACY_STFU)
-				DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_GOOD, LEADERHEAD_ANIM_POSITIVE);
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_GOOD, LEADERHEAD_ANIM_POSITIVE);
 #else
 				strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_STOP_CONVERSIONS_GOOD);
 				gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -20011,7 +20072,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(bActivePlayer)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_DIGGING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_DIGGING_BAD, LEADERHEAD_ANIM_HATE_NEGATIVE);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_STOP_DIGGING_BAD);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_HATE_NEGATIVE);
@@ -20027,7 +20088,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(bActivePlayer)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_DIGGING_GOOD, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_HUMAN_STOP_DIGGING_GOOD, LEADERHEAD_ANIM_POSITIVE);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_STOP_DIGGING_GOOD);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -20053,7 +20114,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(bActivePlayer)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_TOO_SOON_FOR_SHARE_OPINION, LEADERHEAD_ANIM_NO);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_TOO_SOON_FOR_SHARE_OPINION, LEADERHEAD_ANIM_NO);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_TOO_SOON_FOR_SHARE_OPINION);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
@@ -20068,7 +20129,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					if(IsActHostileTowardsHuman(eFromPlayer))
 					{
 #if defined(MOD_DIPLOMACY_STFU)
-						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_HOSTILE_REPEAT_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
+						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_HOSTILE_REPEAT_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
 #else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_HOSTILE_REPEAT_SHARE_OPINION_NO);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
@@ -20077,7 +20138,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					else
 					{
 #if defined(MOD_DIPLOMACY_STFU)
-						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
+						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_REPEAT_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
 #else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_SHARE_OPINION_NO);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
@@ -20126,7 +20187,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 
 #if defined(MOD_DIPLOMACY_STFU)
 						if (IsAtWar(eTargetPlayer)) {
-							DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_SHARE_OPINION_WAR, NO_PLAYER, GET_PLAYER(eTargetPlayer).getNameKey(), LEADERHEAD_ANIM_POSITIVE);
+							GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_SHARE_OPINION_WAR, NO_PLAYER, GET_PLAYER(eTargetPlayer).getNameKey(), LEADERHEAD_ANIM_POSITIVE);
 						} else {
 							DiploMessageTypes eDiploMessage = NO_DIPLO_MESSAGE_TYPE;
 							
@@ -20155,7 +20216,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 									break;
 							}
 						
-							DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, eDiploMessage, NO_PLAYER, GET_PLAYER(eTargetPlayer).getNameKey(), LEADERHEAD_ANIM_POSITIVE);
+							GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, eDiploMessage, NO_PLAYER, GET_PLAYER(eTargetPlayer).getNameKey(), LEADERHEAD_ANIM_POSITIVE);
 						}
 #else
 						if(IsAtWar(eTargetPlayer))
@@ -20201,7 +20262,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 						if(IsActHostileTowardsHuman(eFromPlayer))
 						{
 #if defined(MOD_DIPLOMACY_STFU)
-							DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_HOSTILE_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
+							GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_HOSTILE_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
 #else
 							strText = GetDiploStringForMessage(DIPLO_MESSAGE_HOSTILE_SHARE_OPINION_NO);
 							gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
@@ -20210,7 +20271,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 						else
 						{
 #if defined(MOD_DIPLOMACY_STFU)
-							DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
+							GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, DIPLO_MESSAGE_SHARE_OPINION_NO, LEADERHEAD_ANIM_NO);
 #else
 							strText = GetDiploStringForMessage(DIPLO_MESSAGE_SHARE_OPINION_NO);
 							gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_DISCUSS_HUMAN_INVOKED, strText, LEADERHEAD_ANIM_NO);
@@ -20241,7 +20302,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(eResponse == DEMAND_RESPONSE_GIFT_ACCEPT)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_REQUEST_YES, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_REQUEST_YES, LEADERHEAD_ANIM_POSITIVE);
 #else
 					strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_REQUEST_YES);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -20252,9 +20313,9 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				{
 #if defined(MOD_DIPLOMACY_STFU)
 					if(eResponse == DEMAND_RESPONSE_GIFT_REFUSE_TOO_MUCH)
-						GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_REQUEST_TOO_MUCH, LEADERHEAD_ANIM_NEGATIVE);
+						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_REQUEST_TOO_MUCH, LEADERHEAD_ANIM_NEGATIVE);
 					else if(eResponse == DEMAND_RESPONSE_GIFT_REFUSE_TOO_SOON)
-						GetPlayer()->GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_REQUEST_TOO_SOON, LEADERHEAD_ANIM_NEGATIVE);
+						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_HUMAN_REQUEST_TOO_SOON, LEADERHEAD_ANIM_NEGATIVE);
 #else
 					if(eResponse == DEMAND_RESPONSE_GIFT_REFUSE_TOO_MUCH)
 						strText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_HUMAN_REQUEST_TOO_MUCH);
@@ -20343,7 +20404,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					if(bPeaceful)
 					{
 #if defined(MOD_DIPLOMACY_STFU)
-						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_PEACEFUL, LEADERHEAD_ANIM_YES);
+						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_PEACEFUL, LEADERHEAD_ANIM_YES);
 #else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_PEACEFUL);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, strText, LEADERHEAD_ANIM_YES);
@@ -20352,7 +20413,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					else
 					{
 #if defined(MOD_DIPLOMACY_STFU)
-						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_WAR, LEADERHEAD_ANIM_ATTACKED);
+						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_WAR, LEADERHEAD_ANIM_ATTACKED);
 #else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_VASSALAGE_REVOKED_HUMAN_WAR);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION_RETURN_TO_ROOT, strText, LEADERHEAD_ANIM_ATTACKED);
@@ -20365,7 +20426,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					if(bAcceptable)
 					{
 #if defined(MOD_DIPLOMACY_STFU)
-						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_VASSALAGE_REVOKED_PEACEFUL, LEADERHEAD_ANIM_YES);
+						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_VASSALAGE_REVOKED_PEACEFUL, LEADERHEAD_ANIM_YES);
 #else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_VASSALAGE_REVOKED_PEACEFUL);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, strText, LEADERHEAD_ANIM_YES);
@@ -20374,7 +20435,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 					else
 					{
 #if defined(MOD_DIPLOMACY_STFU)
-						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_VASSALAGE_REVOKED_FORCEFUL, LEADERHEAD_ANIM_ATTACKED);
+						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_VASSALAGE_REVOKED_FORCEFUL, LEADERHEAD_ANIM_ATTACKED);
 #else
 						strText = GetDiploStringForMessage(DIPLO_MESSAGE_VASSALAGE_REVOKED_FORCEFUL);
 						gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, strText, LEADERHEAD_ANIM_ATTACKED);
@@ -20412,7 +20473,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(bActivePlayer)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_MOVE_TROOPS_ACCEPT, LEADERHEAD_ANIM_YES);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_MOVE_TROOPS_ACCEPT, LEADERHEAD_ANIM_YES);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_MOVE_TROOPS_ACCEPT);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_YES);
@@ -20459,7 +20520,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(bActivePlayer)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_MOVE_TROOPS_NEUTRAL, LEADERHEAD_ANIM_YES);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_MOVE_TROOPS_NEUTRAL, LEADERHEAD_ANIM_YES);
 #else
 					strText = GetDiploStringForMessage(DIPLO_MESSAGE_MOVE_TROOPS_NEUTRAL);
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_YES);
@@ -20475,11 +20536,11 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				{
 #if defined(MOD_DIPLOMACY_STFU)
 					if (IsGoingForWorldConquest()) {
-						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_MOVE_TROOPS_REJECT_CONQUEST, LEADERHEAD_ANIM_HATE_NEGATIVE);
+						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_MOVE_TROOPS_REJECT_CONQUEST, LEADERHEAD_ANIM_HATE_NEGATIVE);
 					} else if (GetMajorCivApproach(eFromPlayer, /*bHideTrueFeelings*/ false) == MAJOR_CIV_APPROACH_DECEPTIVE) {
-						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_MOVE_TROOPS_REJECT_DECEPTIVE, LEADERHEAD_ANIM_HATE_NEGATIVE);
+						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_MOVE_TROOPS_REJECT_DECEPTIVE, LEADERHEAD_ANIM_HATE_NEGATIVE);
 					} else {
-						DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_MOVE_TROOPS_REJECT_HOSTILE, LEADERHEAD_ANIM_HATE_NEGATIVE);
+						GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_AI_DECLARED_WAR, DIPLO_MESSAGE_MOVE_TROOPS_REJECT_HOSTILE, LEADERHEAD_ANIM_HATE_NEGATIVE);
 					}
 #else
 					if(IsGoingForWorldConquest())
@@ -20509,7 +20570,7 @@ void CvDiplomacyAI::DoFromUIDiploEvent(PlayerTypes eFromPlayer, FromUIDiploEvent
 				if(bActivePlayer)
 				{
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, NO_DIPLO_MESSAGE_TYPE, LEADERHEAD_ANIM_YES);
+					GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, NO_DIPLO_MESSAGE_TYPE, LEADERHEAD_ANIM_YES);
 #else
 					gDLL->GameplayDiplomacyAILeaderMessage(eMyPlayer, DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_YES);
 #endif
@@ -23917,7 +23978,7 @@ void CvDiplomacyAI::ChangeNumCiviliansReturnedToMe(PlayerTypes ePlayer, int iCha
 				{
 					GC.GetEngineUserInterface()->SetForceDiscussionModeQuitOnBack(true);		// Set force quit so that when discuss mode pops up the Back button won't go to leader root
 #if defined(MOD_DIPLOMACY_STFU)
-					DisplayAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_RETURNED_CIVILIAN, LEADERHEAD_ANIM_POSITIVE);
+					GET_PLAYER(ePlayer).GetDiplomacyAI()->DisplayAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_RETURNED_CIVILIAN, LEADERHEAD_ANIM_POSITIVE);
 #else
 					const char* strText = GetDiploStringForMessage(DIPLO_MESSAGE_RETURNED_CIVILIAN);
 					gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, strText, LEADERHEAD_ANIM_POSITIVE);
@@ -29683,7 +29744,7 @@ void CvDiplomacyAIHelpers::ApplyWarmongerPenalties(PlayerTypes eConqueror, Playe
 				}
 #endif
 #if defined(MOD_API_EXTENSIONS)
-					CUSTOMLOG("WarmongerTimes100: Att=%, Def=%i, 3rd=%i, Off=%i, Mod%%=%i, Agg%%=%i, App%%=%i, Total=%i", eConqueror, eConquered, eMajor, iWarmongerOffset, iWarmongerModifier, iWarmongerAggrievedModifier, iWarmongerApproachModifier, (iWarmongerOffset * iWarmongerModifier * iWarmongerAggrievedModifier * (100 + iWarmongerApproachModifier) / 10000));
+					CUSTOMLOG("WarmongerTimes100: Att=%i, Def=%i, 3rd=%i, Off=%i, Mod%%=%i, Agg%%=%i, App%%=%i, Total=%i", eConqueror, eConquered, eMajor, iWarmongerOffset, iWarmongerModifier, iWarmongerAggrievedModifier, iWarmongerApproachModifier, (iWarmongerOffset * iWarmongerModifier * iWarmongerAggrievedModifier * (100 + iWarmongerApproachModifier) / 10000));
 					GET_PLAYER(eMajor).GetDiplomacyAI()->ChangeOtherPlayerWarmongerAmountTimes100(eConqueror, iWarmongerOffset * iWarmongerModifier * iWarmongerAggrievedModifier * (100 + iWarmongerApproachModifier) / 10000);
 #else
 					GET_PLAYER(eMajor).GetDiplomacyAI()->ChangeOtherPlayerWarmongerAmount(eConqueror, iWarmongerOffset);
@@ -32026,7 +32087,7 @@ bool CvDiplomacyAI::IsTooSoonForMoveTroopsRequest(PlayerTypes ePlayer) const
 #endif
 
 #if defined(MOD_DIPLOMACY_STFU)
-bool CvDiplomacyAI::WantAILeaderMessage(DiploMessageTypes eDiploMessage, PlayerTypes eAI, DiploUIStateTypes eDiploUIState, LeaderheadAnimationTypes eAction, int iExtraData)
+bool CvDiplomacyAI::WantAILeaderMessage(DiploMessageTypes eDiploMessage, PlayerTypes eFromPlayer, DiploUIStateTypes eDiploUIState, LeaderheadAnimationTypes eAction, int iExtraData)
 {
 	bool bWant = true;
 	int iResponseType = 0;
@@ -32034,7 +32095,7 @@ bool CvDiplomacyAI::WantAILeaderMessage(DiploMessageTypes eDiploMessage, PlayerT
 	const char* szResponseKey = GetResponseKeyForMessage(eDiploMessage);
 	
 	if (szResponseKey) {
-		CUSTOMLOG("STFU@%i: Diplo message %s (%i) from player %i", GC.getGame().getGameTurn(), szResponseKey, eDiploMessage, eAI);
+		CUSTOMLOG("STFU@%i: Diplo message %s (%i) from player %i", GC.getGame().getGameTurn(), szResponseKey, eDiploMessage, eFromPlayer);
 
 		if (m_pStfuResponseQuery == NULL)
 		{
@@ -32050,7 +32111,7 @@ bool CvDiplomacyAI::WantAILeaderMessage(DiploMessageTypes eDiploMessage, PlayerT
 		bool bIgnore = false;
 		bool bRespond = false;
 		FromUIDiploEventTypes eResponseEvent = NO_FROM_UI_DIPLO_EVENT;
-		PlayerTypes eResponseAI = NO_PLAYER;
+		PlayerTypes eResponseFrom = NO_PLAYER;
 		int iResponseData1 = 0;
 		int iResponseData2 = 0;
 
@@ -32064,7 +32125,7 @@ bool CvDiplomacyAI::WantAILeaderMessage(DiploMessageTypes eDiploMessage, PlayerT
 				bRespond = true;
 				eResponseEvent = (FromUIDiploEventTypes)m_pStfuResponseQuery->GetInt(4);
 				if (m_pStfuResponseQuery->GetInt(5) == 1) {
-					eResponseAI = eAI;
+					eResponseFrom = eFromPlayer;
 				}
 				iResponseData1 = m_pStfuResponseQuery->GetInt(6);
 				iResponseData2 = m_pStfuResponseQuery->GetInt(7);
@@ -32074,10 +32135,10 @@ bool CvDiplomacyAI::WantAILeaderMessage(DiploMessageTypes eDiploMessage, PlayerT
 		m_pStfuResponseQuery->Reset();
 
 		if (bSendEvent) {
-			CUSTOMLOG("STFU: GameEvents.DiplomacyStfu(%i, %i, %i, %i, %i)", eAI, iResponseType, eDiploUIState, eAction, iExtraData);
+			CUSTOMLOG("STFU: GameEvents.DiplomacyStfu(%i, %i, %i, %i, %i, %i)", eFromPlayer, iResponseType, eDiploMessage, eDiploUIState, eAction, iExtraData);
 
 			int iValue = 0;
-			if (GAMEEVENTINVOKE_VALUE(iValue, GAMEEVENT_DiplomacyStfu, eAI, iResponseType, eDiploUIState, eAction, iExtraData) == GAMEEVENTRETURN_VALUE) {
+			if (GAMEEVENTINVOKE_VALUE(iValue, GAMEEVENT_DiplomacyStfu, eFromPlayer, iResponseType, eDiploMessage, eDiploUIState, eAction, iExtraData) == GAMEEVENTRETURN_VALUE) {
 				CUSTOMLOG("STFU: Received %i", iValue);
 				if (iValue != 0) {
 					// Process the return code as the ID of the STFU_ action to execute
@@ -32097,9 +32158,9 @@ bool CvDiplomacyAI::WantAILeaderMessage(DiploMessageTypes eDiploMessage, PlayerT
 							bRespond = true;
 							eResponseEvent = (FromUIDiploEventTypes)m_pStfuQuery->GetInt(4);
 							if (m_pStfuQuery->GetInt(5) == 1) {
-								eResponseAI = eAI;
+								eResponseFrom = eFromPlayer;
 							} else {
-								eResponseAI = NO_PLAYER;
+								eResponseFrom = NO_PLAYER;
 							}
 							iResponseData1 = m_pStfuQuery->GetInt(6);
 							iResponseData2 = m_pStfuQuery->GetInt(7);
@@ -32115,14 +32176,14 @@ bool CvDiplomacyAI::WantAILeaderMessage(DiploMessageTypes eDiploMessage, PlayerT
 			CUSTOMLOG("STFU: Ignore");
 			bWant = false;
 		} else if (bRespond) {
-			CUSTOMLOG("STFU: Game.DoFromUIDiploEvent(%i, %i, %i, %i)", eResponseEvent, eResponseAI, iResponseData1, iResponseData2);
-			GC.getGame().DoFromUIDiploEvent(eResponseEvent, eResponseAI, iResponseData1, iResponseData2);
+			CUSTOMLOG("STFU: Game.DoFromUIDiploEvent(%i, %i, %i, %i)", eResponseEvent, eResponseFrom, iResponseData1, iResponseData2);
+			GC.getGame().DoFromUIDiploEvent(eResponseEvent, eResponseFrom, iResponseData1, iResponseData2);
 			bWant = false;
 		}
 	}
 	else
 	{
-		CUSTOMLOG("STFU@%i: WARNING: Cannot find response key for message %i from player %i", GC.getGame().getGameTurn(), eDiploMessage, eAI);
+		CUSTOMLOG("STFU@%i: WARNING: Cannot find response key for message %i from player %i", GC.getGame().getGameTurn(), eDiploMessage, eFromPlayer);
 	}
 
 	if (bWant) {
@@ -32136,21 +32197,27 @@ bool CvDiplomacyAI::WantAILeaderMessage(DiploMessageTypes eDiploMessage, PlayerT
 	return bWant;
 }
 
-void CvDiplomacyAI::DisplayAILeaderMessage(PlayerTypes ePlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
+void CvDiplomacyAI::DisplayAILeaderMessage(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
 {
-	DisplayAILeaderMessage(ePlayer, eDiploUIState, eDiploMessage, NO_PLAYER, Localization::String::Empty, eAction, iExtraData);
+	DisplayAILeaderMessage(eFromPlayer, eDiploUIState, eDiploMessage, NO_PLAYER, Localization::String::Empty, eAction, iExtraData);
 }
 
-void CvDiplomacyAI::DisplayAILeaderMessage(PlayerTypes ePlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
+void CvDiplomacyAI::DisplayAILeaderMessage(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
 {
-	DisplayAILeaderMessage(ePlayer, eDiploUIState, eDiploMessage, eThirdParty, Localization::String::Empty, eAction, iExtraData);
+	DisplayAILeaderMessage(eFromPlayer, eDiploUIState, eDiploMessage, eThirdParty, Localization::String::Empty, eAction, iExtraData);
 }
 
-void CvDiplomacyAI::DisplayAILeaderMessage(PlayerTypes ePlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, const Localization::String& strOptionalKey1, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
+void CvDiplomacyAI::DisplayAILeaderMessage(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, const Localization::String& strOptionalKey1, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
 {
-	if (!MOD_DIPLOMACY_STFU || WantAILeaderMessage(eDiploMessage, ePlayer, eDiploUIState, eAction, iExtraData)) {
-		gDLL->GameplayDiplomacyAILeaderMessage(ePlayer, eDiploUIState, GetDiploStringForMessage(eDiploMessage, eThirdParty, strOptionalKey1), eAction, iExtraData);
+	const char* szText = GetDiploStringForMessage(eDiploMessage, eThirdParty, strOptionalKey1);
+
+	if (!MOD_DIPLOMACY_STFU || WantAILeaderMessage(eDiploMessage, eFromPlayer, eDiploUIState, eAction, iExtraData)) {
+		gDLL->GameplayDiplomacyAILeaderMessage(eFromPlayer, eDiploUIState, szText, eAction, iExtraData);
 	}
+
+#if defined(MOD_API_PLAYER_LOGS)
+	DIPLOMACYLOG(m_pPlayer->GetID(), szText, eFromPlayer, eDiploUIState, eDiploMessage);
+#endif
 }
 
 void CvDiplomacyAI::SendAILeaderMessage(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
@@ -32171,7 +32238,11 @@ void CvDiplomacyAI::SendAILeaderMessage(PlayerTypes eFromPlayer, PlayerTypes eTo
 void CvDiplomacyAI::SendAILeaderMessage(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploUIState, DiploMessageTypes eDiploMessage, PlayerTypes eThirdParty, const Localization::String& strOptionalKey1, const Localization::String& strOptionalKey2, LeaderheadAnimationTypes eAction, int iExtraData /* = -1 */)
 {
 	if (!MOD_DIPLOMACY_STFU || WantAILeaderMessage(eDiploMessage, eFromPlayer, eDiploUIState, eAction, iExtraData)) {
+#if defined(MOD_API_PLAYER_LOGS)
+		CvDiplomacyRequests::SendRequest(eFromPlayer, eToPlayer, eDiploUIState, eDiploMessage, GetDiploStringForMessage(eDiploMessage, eThirdParty, strOptionalKey1, strOptionalKey2), eAction, iExtraData);
+#else
 		CvDiplomacyRequests::SendRequest(eFromPlayer, eToPlayer, eDiploUIState, GetDiploStringForMessage(eDiploMessage, eThirdParty, strOptionalKey1, strOptionalKey2), eAction, iExtraData);
+#endif
 	}
 }
 #endif

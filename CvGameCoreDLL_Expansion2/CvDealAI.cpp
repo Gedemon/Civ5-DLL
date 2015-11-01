@@ -168,6 +168,18 @@ DealOfferResponseTypes CvDealAI::DoHumanOfferDealToThisAI(CvDeal* pDeal)
 		if(eResponse >= DEAL_RESPONSE_UNACCEPTABLE)
 		{
 			int iTimesDealOffered = GC.GetEngineUserInterface()->GetOfferTradeRepeatCount();
+
+#if defined(MOD_DIPLOMACY_STFU)
+			if (iTimesDealOffered > 4)
+			{
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(GetPlayer()->GetID(), eUIState, DIPLO_MESSAGE_REPEAT_TRADE_TOO_MUCH, eAnimation);
+			}
+			else if (iTimesDealOffered > 1)
+			{
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(GetPlayer()->GetID(), eUIState, DIPLO_MESSAGE_REPEAT_TRADE, eAnimation);
+			}
+			GC.GetEngineUserInterface()->ChangeOfferTradeRepeatCount(1);
+#else
 			if(iTimesDealOffered > 4)
 			{
 				szText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_REPEAT_TRADE_TOO_MUCH);
@@ -178,8 +190,8 @@ DealOfferResponseTypes CvDealAI::DoHumanOfferDealToThisAI(CvDeal* pDeal)
 			}
 
 			GC.GetEngineUserInterface()->ChangeOfferTradeRepeatCount(1);
-			// TODO - WH - STFU
 			gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), eUIState, szText, eAnimation);
+#endif
 		}
 	}
 
@@ -224,9 +236,12 @@ void CvDealAI::DoAcceptedDeal(PlayerTypes eFromPlayer, const CvDeal& kDeal, int 
 		{
 			if(GC.getGame().getActivePlayer() == eFromPlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, DIPLO_MESSAGE_TRADE_ACCEPT_AI_DEMAND, LEADERHEAD_ANIM_POSITIVE);
+#else
 				szText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_TRADE_ACCEPT_AI_DEMAND);
-				// TODO - WH - STFU
 				gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION_MEAN_AI, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 
 			return;
@@ -237,20 +252,29 @@ void CvDealAI::DoAcceptedDeal(PlayerTypes eFromPlayer, const CvDeal& kDeal, int 
 		{
 			if(GC.getGame().getActivePlayer() == eFromPlayer)
 			{
+#if defined(MOD_DIPLOMACY_STFU)
+				GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, DIPLO_MESSAGE_THANKFUL, LEADERHEAD_ANIM_POSITIVE);
+#else
 				szText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_THANKFUL);
-				// TODO - WH - STFU
 				gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), DIPLO_UI_STATE_BLANK_DISCUSSION, szText, LEADERHEAD_ANIM_POSITIVE);
+#endif
 			}
 			GetPlayer()->GetDiplomacyAI()->ChangeRecentAssistValue(eFromPlayer, -iDealValueToMe);
 			return;
 		}
 
 		eUIState = DIPLO_UI_STATE_BLANK_DISCUSSION;
+#if defined(MOD_DIPLOMACY_STFU)
+		DiploMessageTypes eDiploMessage;
+#endif
 
 		// Good deal for us
 		if(iDealValueToMe >= 100 ||
 		        iValueTheyreOffering > (iValueImOffering * 5))	// A deal can be generous if we're getting a lot overall, OR a lot more than we're giving up
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			eDiploMessage = DIPLO_MESSAGE_TRADE_ACCEPT_GENEROUS;
+#endif
 			szText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_TRADE_ACCEPT_GENEROUS);
 			eAnimation = LEADERHEAD_ANIM_YES;
 			GetPlayer()->GetDiplomacyAI()->ChangeRecentTradeValue(eFromPlayer, iDealValueToMe);
@@ -258,6 +282,9 @@ void CvDealAI::DoAcceptedDeal(PlayerTypes eFromPlayer, const CvDeal& kDeal, int 
 		// Acceptable deal for us
 		else
 		{
+#if defined(MOD_DIPLOMACY_STFU)
+			eDiploMessage = DIPLO_MESSAGE_TRADE_ACCEPT_ACCEPTABLE;
+#endif
 			szText = GetPlayer()->GetDiplomacyAI()->GetDiploStringForMessage(DIPLO_MESSAGE_TRADE_ACCEPT_ACCEPTABLE);
 			eAnimation = LEADERHEAD_ANIM_YES;
 			GetPlayer()->GetDiplomacyAI()->ChangeRecentTradeValue(eFromPlayer, (iDealValueToMe / 2));
@@ -273,9 +300,12 @@ void CvDealAI::DoAcceptedDeal(PlayerTypes eFromPlayer, const CvDeal& kDeal, int 
 		}
 
 		// Send message back to diplo UI
-		// TODO - WH - STFU
 		if(GC.getGame().getActivePlayer() == eFromPlayer)
+#if defined(MOD_DIPLOMACY_STFU)
+			GET_PLAYER(eFromPlayer).GetDiplomacyAI()->DisplayAILeaderMessage(GetPlayer()->GetID(), eUIState, eDiploMessage, eAnimation);
+#else
 			gDLL->GameplayDiplomacyAILeaderMessage(GetPlayer()->GetID(), eUIState, szText, eAnimation);
+#endif
 	}
 
 	if(GC.getGame().getActivePlayer() == eFromPlayer || GC.getGame().getActivePlayer() == GetPlayer()->GetID())

@@ -129,21 +129,13 @@ CvCity::CvCity() :
 	, m_iGreatPeopleRateModifier("CvCity::m_iGreatPeopleRateModifier", m_syncArchive)
 	, m_iJONSCultureStored("CvCity::m_iJONSCultureStored", m_syncArchive, true)
 	, m_iJONSCultureLevel("CvCity::m_iJONSCultureLevel", m_syncArchive)
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 	, m_iJONSCulturePerTurnFromBuildings("CvCity::m_iJONSCulturePerTurnFromBuildings", m_syncArchive)
-#endif
 	, m_iJONSCulturePerTurnFromPolicies("CvCity::m_iJONSCulturePerTurnFromPolicies", m_syncArchive)
 	, m_iJONSCulturePerTurnFromSpecialists("CvCity::m_iJONSCulturePerTurnFromSpecialists", m_syncArchive)
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 	, m_iJONSCulturePerTurnFromReligion("CvCity::m_iJONSCulturePerTurnFromReligion", m_syncArchive)
-#endif
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 	, m_iFaithPerTurnFromBuildings(0)
-#endif
 	, m_iFaithPerTurnFromPolicies(0)
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 	, m_iFaithPerTurnFromReligion(0)
-#endif
 	, m_iCultureRateModifier("CvCity::m_iCultureRateModifier", m_syncArchive)
 	, m_iNumWorldWonders("CvCity::m_iNumWorldWonders", m_syncArchive)
 	, m_iNumTeamWonders("CvCity::m_iNumTeamWonders", m_syncArchive)
@@ -829,21 +821,13 @@ void CvCity::reset(int iID, PlayerTypes eOwner, int iX, int iY, bool bConstructo
 	m_iGreatPeopleRateModifier = 0;
 	m_iJONSCultureStored = 0;
 	m_iJONSCultureLevel = 0;
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 	m_iJONSCulturePerTurnFromBuildings = 0;
-#endif
 	m_iJONSCulturePerTurnFromPolicies = 0;
 	m_iJONSCulturePerTurnFromSpecialists = 0;
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 	m_iJONSCulturePerTurnFromReligion = 0;
-#endif
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 	m_iFaithPerTurnFromBuildings = 0;
-#endif
 	m_iFaithPerTurnFromPolicies = 0;
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 	m_iFaithPerTurnFromReligion = 0;
-#endif
 	m_iCultureRateModifier = 0;
 	m_iNumWorldWonders = 0;
 	m_iNumTeamWonders = 0;
@@ -3366,11 +3350,7 @@ void CvCity::ChangeNumResourceLocal(ResourceTypes eResource, int iChange)
 #if defined(MOD_BUGFIX_MINOR)
 						iCulture *= GetCityBuildings()->GetNumBuilding(eBuilding);
 #endif
-#if defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-						ChangeBaseYieldRateFromBuildings(YIELD_CULTURE, iCulture * iChange);
-#else
 						ChangeJONSCulturePerTurnFromBuildings(iCulture * iChange);
-#endif
 
 					// Does eBuilding give faith with eResource?
 					int iFaith = pkBuildingInfo->GetResourceFaithChange(eResource);
@@ -3379,11 +3359,7 @@ void CvCity::ChangeNumResourceLocal(ResourceTypes eResource, int iChange)
 #if defined(MOD_BUGFIX_MINOR)
 						iFaith *= GetCityBuildings()->GetNumBuilding(eBuilding);
 #endif
-#if defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-						ChangeBaseYieldRateFromBuildings(YIELD_FAITH, iFaith * iChange);
-#else
 						ChangeFaithPerTurnFromBuildings(iFaith * iChange);
-#endif
 				}
 			}
 		}
@@ -6546,17 +6522,9 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 		int iBuildingCulture = pBuildingInfo->GetYieldChange(YIELD_CULTURE);
 		if(iBuildingCulture > 0)
 		{
-#if defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-			iBuildingCulture = owningPlayer.GetPlayerTraits()->GetCultureBuildingYieldChange();
-#else
 			iBuildingCulture += owningPlayer.GetPlayerTraits()->GetCultureBuildingYieldChange();
-#endif
 		}
-#if defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-		ChangeBaseYieldRateFromBuildings(YIELD_CULTURE, iBuildingCulture * iChange);
-#else
 		ChangeJONSCulturePerTurnFromBuildings(iBuildingCulture * iChange);
-#endif
 		changeCultureRateModifier(pBuildingInfo->GetCultureRateModifier() * iChange);
 		changePlotCultureCostModifier(pBuildingInfo->GetPlotCultureCostModifier() * iChange);
 		changePlotBuyCostModifier(pBuildingInfo->GetPlotBuyCostModifier() * iChange);
@@ -6564,10 +6532,8 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 		changeCityWorkingChange(pBuildingInfo->GetCityWorkingChange() * iChange);
 #endif
 
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 		int iBuildingFaith = pBuildingInfo->GetYieldChange(YIELD_FAITH);
 		ChangeFaithPerTurnFromBuildings(iBuildingFaith * iChange);
-#endif
 		m_pCityReligions->ChangeReligiousPressureModifier(pBuildingInfo->GetReligiousPressureModifier() * iChange);
 
 		PolicyTypes ePolicy;
@@ -6640,11 +6606,7 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 
 				if(iCulture != 0)
 				{
-#if defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-					ChangeBaseYieldRateFromBuildings(YIELD_CULTURE, iCulture * m_paiNumResourcesLocal[eResource]);
-#else
 					ChangeJONSCulturePerTurnFromBuildings(iCulture * m_paiNumResourcesLocal[eResource]);
-#endif
 				}
 
 				// What about faith?
@@ -6652,11 +6614,7 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 
 				if(iFaith != 0)
 				{
-#if defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-					ChangeBaseYieldRateFromBuildings(YIELD_FAITH, iFaith * m_paiNumResourcesLocal[eResource]);
-#else
 					ChangeFaithPerTurnFromBuildings(iFaith * m_paiNumResourcesLocal[eResource]);
-#endif
 				}
 			}
 		}
@@ -6753,7 +6711,6 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 #if defined(MOD_API_UNIFIED_YIELDS)
 			if (pkBuildingClassInfo && isWorldWonderClass(*pkBuildingClassInfo))
 			{
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 				if(eYield == YIELD_CULTURE)
 				{
 					ChangeJONSCulturePerTurnFromBuildings(GetPlayer()->GetYieldChangeWorldWonder(eYield) * iChange);
@@ -6765,7 +6722,6 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 					ChangeFaithPerTurnFromBuildings(GetPlayer()->GetPlayerTraits()->GetYieldChangeWorldWonder(eYield) * iChange);
 				}
 				else
-#endif
 				{
 					ChangeBaseYieldRateFromBuildings(eYield, GetPlayer()->GetYieldChangeWorldWonder(eYield) * iChange);
 					ChangeBaseYieldRateFromBuildings(eYield, GetPlayer()->GetPlayerTraits()->GetYieldChangeWorldWonder(eYield) * iChange);
@@ -6815,7 +6771,6 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 			{
 				if(owningTeam.GetTeamTechs()->HasTech((TechTypes)pBuildingInfo->GetEnhancedYieldTech()))
 				{
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 					if(eYield == YIELD_CULTURE)
 					{
 						ChangeJONSCulturePerTurnFromBuildings(pBuildingInfo->GetTechEnhancedYieldChange(eYield) * iChange);
@@ -6825,7 +6780,6 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 						ChangeFaithPerTurnFromBuildings(pBuildingInfo->GetTechEnhancedYieldChange(eYield) * iChange);
 					}
 					else
-#endif
 					{
 						ChangeBaseYieldRateFromBuildings(eYield, pBuildingInfo->GetTechEnhancedYieldChange(eYield) * iChange);
 					}
@@ -6835,7 +6789,6 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 			int iBuildingClassBonus = owningPlayer.GetBuildingClassYieldChange(eBuildingClass, eYield);
 			if(iBuildingClassBonus > 0)
 			{
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 				if(eYield == YIELD_CULTURE)
 				{
 					ChangeJONSCulturePerTurnFromBuildings(iBuildingClassBonus * iChange);
@@ -6845,7 +6798,6 @@ void CvCity::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst, 
 					ChangeFaithPerTurnFromBuildings(iBuildingClassBonus * iChange);
 				}
 				else
-#endif
 				{
 					ChangeBaseYieldRateFromBuildings(eYield, iBuildingClassBonus * iChange);
 				}
@@ -6961,10 +6913,8 @@ void CvCity::UpdateReligion(ReligionTypes eNewMajority)
 	updateYield();
 
 	// Reset city level yields
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 	m_iJONSCulturePerTurnFromReligion = 0;
 	m_iFaithPerTurnFromReligion = 0;
-#endif
 #if defined(MOD_BUGFIX_MINOR)
 	for(int iYield = 0; iYield < NUM_YIELD_TYPES; iYield++)
 #else
@@ -6979,7 +6929,6 @@ void CvCity::UpdateReligion(ReligionTypes eNewMajority)
 		int iYieldPerReligion = GetYieldPerReligionTimes100((YieldTypes)iYield);
 		if (iYieldPerReligion > 0)
 		{
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 			switch(iYield)
 			{
 				case YIELD_CULTURE:
@@ -6989,12 +6938,9 @@ void CvCity::UpdateReligion(ReligionTypes eNewMajority)
 					ChangeFaithPerTurnFromReligion((GetCityReligions()->GetNumReligionsWithFollowers() * iYieldPerReligion) / 100);
 					break;
 				default:
-#endif
 					ChangeBaseYieldRateFromReligion((YieldTypes)iYield, (GetCityReligions()->GetNumReligionsWithFollowers() * iYieldPerReligion) / 100);
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 					break;
 			}
-#endif
 		}
 
 		if(eNewMajority != NO_RELIGION)
@@ -7027,7 +6973,6 @@ void CvCity::UpdateReligion(ReligionTypes eNewMajority)
 #endif
 				}
 
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 				switch(iYield)
 				{
 				case YIELD_CULTURE:
@@ -7037,12 +6982,9 @@ void CvCity::UpdateReligion(ReligionTypes eNewMajority)
 					ChangeFaithPerTurnFromReligion(iReligionYieldChange);
 					break;
 				default:
-#endif
 					ChangeBaseYieldRateFromReligion((YieldTypes)iYield, iReligionYieldChange);
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 					break;
 				}
-#endif
 
 				if(IsRouteToCapitalConnected())
 				{
@@ -7053,7 +6995,6 @@ void CvCity::UpdateReligion(ReligionTypes eNewMajority)
 						iReligionChange += GC.GetGameBeliefs()->GetEntry(eSecondaryPantheon)->GetYieldChangeTradeRoute((YieldTypes)iYield);
 					}
 
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 					switch(iYield)
 					{
 					case YIELD_CULTURE:
@@ -7063,17 +7004,13 @@ void CvCity::UpdateReligion(ReligionTypes eNewMajority)
 						ChangeFaithPerTurnFromReligion(iReligionChange);
 						break;
 					default:
-#endif
 						ChangeBaseYieldRateFromReligion((YieldTypes)iYield, iReligionChange);
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 						break;
 					}
-#endif
 				}
 				
 				if (GetCityCitizens()->GetTotalSpecialistCount() > 0)
 				{
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 					switch(iYield)
 					{
 					case YIELD_CULTURE:
@@ -7083,12 +7020,9 @@ void CvCity::UpdateReligion(ReligionTypes eNewMajority)
 						ChangeFaithPerTurnFromReligion(pReligion->m_Beliefs.GetYieldChangeAnySpecialist((YieldTypes)iYield));
 						break;
 					default:
-#endif
 						ChangeBaseYieldRateFromReligion((YieldTypes)iYield, pReligion->m_Beliefs.GetYieldChangeAnySpecialist((YieldTypes)iYield));
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 						break;
 					}
-#endif
 				}
 
 				// Buildings
@@ -7119,7 +7053,6 @@ void CvCity::UpdateReligion(ReligionTypes eNewMajority)
 								iYieldFromBuilding += pReligion->m_Beliefs.GetYieldChangeWorldWonder((YieldTypes)iYield);
 							}
 
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 							switch(iYield)
 							{
 							case YIELD_CULTURE:
@@ -7129,12 +7062,9 @@ void CvCity::UpdateReligion(ReligionTypes eNewMajority)
 								ChangeFaithPerTurnFromReligion(iYieldFromBuilding);
 								break;
 							default:
-#endif
 								ChangeBaseYieldRateFromReligion((YieldTypes)iYield, iYieldFromBuilding);
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 								break;
 							}
-#endif
 						}
 					}
 				}
@@ -8511,25 +8441,18 @@ int CvCity::GetBaseJONSCulturePerTurn() const
 int CvCity::GetJONSCulturePerTurnFromBuildings() const
 {
 	VALIDATE_OBJECT
-#if defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	return GetBaseYieldRateFromBuildings(YIELD_CULTURE); 
-#else
 	return m_iJONSCulturePerTurnFromBuildings;
-#endif
 }
 
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 //	--------------------------------------------------------------------------------
 void CvCity::ChangeJONSCulturePerTurnFromBuildings(int iChange)
 {
 	VALIDATE_OBJECT
 	if(iChange != 0)
 	{
-		CUSTOMLOG("ChangeJONSCulturePerTurnFromBuildings(%i)", iChange);
 		m_iJONSCulturePerTurnFromBuildings = (m_iJONSCulturePerTurnFromBuildings + iChange);
 	}
 }
-#endif
 
 //	--------------------------------------------------------------------------------
 int CvCity::GetJONSCulturePerTurnFromPolicies() const
@@ -8544,7 +8467,6 @@ void CvCity::ChangeJONSCulturePerTurnFromPolicies(int iChange)
 	VALIDATE_OBJECT
 	if(iChange != 0)
 	{
-		CUSTOMLOG("ChangeJONSCulturePerTurnFromPolicies(%i)", iChange);
 		m_iJONSCulturePerTurnFromPolicies = (m_iJONSCulturePerTurnFromPolicies + iChange);
 	}
 }
@@ -8587,14 +8509,9 @@ int CvCity::GetJONSCulturePerTurnFromTraits() const
 int CvCity::GetJONSCulturePerTurnFromReligion() const
 {
 	VALIDATE_OBJECT
-#if defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	return GetBaseYieldRateFromReligion(YIELD_CULTURE);
-#else
 	return m_iJONSCulturePerTurnFromReligion;
-#endif
 }
 
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 //	--------------------------------------------------------------------------------
 void CvCity::ChangeJONSCulturePerTurnFromReligion(int iChange)
 {
@@ -8604,7 +8521,6 @@ void CvCity::ChangeJONSCulturePerTurnFromReligion(int iChange)
 		m_iJONSCulturePerTurnFromReligion = (m_iJONSCulturePerTurnFromReligion + iChange);
 	}
 }
-#endif
 
 //	--------------------------------------------------------------------------------
 int CvCity::GetJONSCulturePerTurnFromLeagues() const
@@ -8693,25 +8609,18 @@ int CvCity::GetFaithPerTurn() const
 int CvCity::GetFaithPerTurnFromBuildings() const
 {
 	VALIDATE_OBJECT
-#if defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	return GetBaseYieldRateFromBuildings(YIELD_FAITH);
-#else
 	return m_iFaithPerTurnFromBuildings;
-#endif
 }
 
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 //	--------------------------------------------------------------------------------
 void CvCity::ChangeFaithPerTurnFromBuildings(int iChange)
 {
 	VALIDATE_OBJECT
 	if(iChange != 0)
 	{
-		CUSTOMLOG("ChangeFaithPerTurnFromBuildings(%i)", iChange);
 		m_iFaithPerTurnFromBuildings = (m_iFaithPerTurnFromBuildings + iChange);
 	}
 }
-#endif
 
 //	--------------------------------------------------------------------------------
 int CvCity::GetFaithPerTurnFromPolicies() const
@@ -8726,7 +8635,6 @@ void CvCity::ChangeFaithPerTurnFromPolicies(int iChange)
 	VALIDATE_OBJECT
 	if(iChange != 0)
 	{
-		CUSTOMLOG("ChangeFaithPerTurnFromPolicies(%i)", iChange);
 		m_iFaithPerTurnFromPolicies = (m_iFaithPerTurnFromPolicies + iChange);
 	}
 }
@@ -8835,14 +8743,9 @@ int CvCity::GetFaithPerTurnFromTraits() const
 int CvCity::GetFaithPerTurnFromReligion() const
 {
 	VALIDATE_OBJECT
-#if defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	return GetBaseYieldRateFromReligion(YIELD_FAITH);
-#else
 	return m_iFaithPerTurnFromReligion;
-#endif
 }
 
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 //	--------------------------------------------------------------------------------
 void CvCity::ChangeFaithPerTurnFromReligion(int iChange)
 {
@@ -8852,7 +8755,6 @@ void CvCity::ChangeFaithPerTurnFromReligion(int iChange)
 		m_iFaithPerTurnFromReligion = (m_iFaithPerTurnFromReligion + iChange);
 	}
 }
-#endif
 
 //	--------------------------------------------------------------------------------
 int CvCity::getCultureRateModifier() const
@@ -9476,6 +9378,15 @@ bool CvCity::CanAirlift() const
 			}
 		}
 	}
+
+#if defined(MOD_EVENTS_CITY_AIRLIFT)
+	if (MOD_EVENTS_CITY_AIRLIFT) {
+		if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_CityCanAirlift, getOwner(), GetID()) == GAMEEVENTRETURN_TRUE) {
+			return true;
+		}
+	}
+#endif				
+
 	return false;
 }
 
@@ -10832,7 +10743,6 @@ void CvCity::ChangeBaseYieldRateFromBuildings(YieldTypes eIndex, int iChange)
 
 	if(iChange != 0)
 	{
-		CUSTOMLOG("ChangeBaseYieldRateFromBuildings(%i, %i)", eIndex, iChange);
 		m_aiBaseYieldRateFromBuildings.setAt(eIndex, m_aiBaseYieldRateFromBuildings[eIndex] + iChange);
 
 		if(getTeam() == GC.getGame().getActiveTeam())
@@ -15078,7 +14988,7 @@ void CvCity::doProcess()
 		int iPile = getCurrentProductionDifferenceTimes100(false, false);
 		// Can't use changeOverflowProductionTimes100() here as it asserts above 250 production
 		setOverflowProductionTimes100(getOverflowProductionTimes100() + iPile);
-		CUSTOMLOG("Adding %i production to the stockpile of %s (for a total of %i)", iPile/100, getName().c_str(), getOverflowProduction());
+		// CUSTOMLOG("Adding %i production to the stockpile of %s (for a total of %i)", iPile/100, getName().c_str(), getOverflowProduction());
 	}
 #endif
 }
@@ -15260,25 +15170,13 @@ void CvCity::read(FDataStream& kStream)
 	kStream >> m_iGreatPeopleRateModifier;
 	kStream >> m_iJONSCultureStored;
 	kStream >> m_iJONSCultureLevel;
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	// MOD_SERIALIZE_READ - v57/v58/v59 broke the save format  couldn't be helped, but don't make a habit of it!!!
 	kStream >> m_iJONSCulturePerTurnFromBuildings;
-#endif
 	kStream >> m_iJONSCulturePerTurnFromPolicies;
 	kStream >> m_iJONSCulturePerTurnFromSpecialists;
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	// MOD_SERIALIZE_READ - v57/v58/v59 broke the save format  couldn't be helped, but don't make a habit of it!!!
 	kStream >> m_iJONSCulturePerTurnFromReligion;
-#endif
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	// MOD_SERIALIZE_READ - v57/v58/v59 broke the save format  couldn't be helped, but don't make a habit of it!!!
 	kStream >> m_iFaithPerTurnFromBuildings;
-#endif
 	kStream >> m_iFaithPerTurnFromPolicies;
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	// MOD_SERIALIZE_READ - v57/v58/v59 broke the save format  couldn't be helped, but don't make a habit of it!!!
 	kStream >> m_iFaithPerTurnFromReligion;
-#endif
 
 	kStream >> m_iCultureRateModifier;
 	kStream >> m_iNumWorldWonders;
@@ -15645,25 +15543,13 @@ void CvCity::write(FDataStream& kStream) const
 	kStream << m_iGreatPeopleRateModifier;
 	kStream << m_iJONSCultureStored;
 	kStream << m_iJONSCultureLevel;
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	// MOD_SERIALIZE_WRITE - v57/v58/v59 broke the save format  couldn't be helped, but don't make a habit of it!!!
 	kStream << m_iJONSCulturePerTurnFromBuildings;
-#endif
 	kStream << m_iJONSCulturePerTurnFromPolicies;
 	kStream << m_iJONSCulturePerTurnFromSpecialists;
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	// MOD_SERIALIZE_WRITE - v57/v58/v59 broke the save format  couldn't be helped, but don't make a habit of it!!!
 	kStream << m_iJONSCulturePerTurnFromReligion;
-#endif
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	// MOD_SERIALIZE_WRITE - v57/v58/v59 broke the save format  couldn't be helped, but don't make a habit of it!!!
 	kStream << m_iFaithPerTurnFromBuildings;
-#endif
 	kStream << m_iFaithPerTurnFromPolicies;
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
-	// MOD_SERIALIZE_WRITE - v57/v58/v59 broke the save format  couldn't be helped, but don't make a habit of it!!!
 	kStream << m_iFaithPerTurnFromReligion;
-#endif
 	kStream << m_iCultureRateModifier;
 	kStream << m_iNumWorldWonders;
 	kStream << m_iNumTeamWonders;

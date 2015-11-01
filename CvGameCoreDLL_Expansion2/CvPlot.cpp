@@ -2063,7 +2063,6 @@ bool CvPlot::canHaveResource(ResourceTypes eResource, bool bIgnoreLatitude) cons
 		}
 	}
 
-
 	return true;
 }
 
@@ -6527,6 +6526,12 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 #if defined(MOD_BUGFIX_BARB_CAMP_SPAWNING)
 			// Alert the barbarian spawning code to this new camp
 			CvBarbarians::DoCampActivationNotice(this);
+#endif
+
+#if defined(MOD_EVENTS_BARBARIANS)
+			if (MOD_EVENTS_BARBARIANS) {
+				GAMEEVENTINVOKE_HOOK(GAMEEVENT_BarbariansCampFounded, getX(), getY());
+			}
 #endif
 		}
 

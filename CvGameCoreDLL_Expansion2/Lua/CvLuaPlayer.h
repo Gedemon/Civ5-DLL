@@ -888,6 +888,10 @@ protected:
 #if defined(MOD_API_LUA_EXTENSIONS)
 	LUAAPIEXTN(DismissNotification, void, iIndex, bUserInvoked);
 #endif
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_PLAYER_LOGS)
+	LUAAPIEXTN(GetDiplomacyLog, table);
+	LUAAPIEXTN(GetMilitaryLog, table);
+#endif
 
 	static int lGetRecommendedWorkerPlots(lua_State* L);
 	static int lGetRecommendedFoundCityPlots(lua_State* L);

@@ -21,6 +21,12 @@
 FDataStream& operator>>(FDataStream& loadFrom, CvDiplomacyRequests::Request& writeTo)
 {
 	loadFrom >> writeTo.m_eDiploType;
+#if defined(MOD_API_PLAYER_LOGS)
+	// All because there isn't a Firaxis defined serialization template for DiploMessageTypes
+	int temp;
+	loadFrom >> temp;
+	writeTo.m_eDiploMessageType = (DiploMessageTypes) temp;
+#endif
 	loadFrom >> writeTo.m_eAnimationType;
 	loadFrom >> writeTo.m_strMessage;
 	loadFrom >> writeTo.m_iExtraGameData;
@@ -35,6 +41,10 @@ FDataStream& operator>>(FDataStream& loadFrom, CvDiplomacyRequests::Request& wri
 FDataStream& operator<<(FDataStream& saveTo, const CvDiplomacyRequests::Request& readFrom)
 {
 	saveTo << readFrom.m_eDiploType;
+#if defined(MOD_API_PLAYER_LOGS)
+	// All because there isn't a Firaxis defined serialization template for DiploMessageTypes
+	saveTo << (int) readFrom.m_eDiploMessageType;
+#endif
 	saveTo << readFrom.m_eAnimationType;
 	saveTo << readFrom.m_strMessage;
 	saveTo << readFrom.m_iExtraGameData;
@@ -48,6 +58,9 @@ FDataStream& operator<<(FDataStream& saveTo, const CvDiplomacyRequests::Request&
 void CvDiplomacyRequests::Request::Clear()
 {
 	m_eDiploType = NO_DIPLO_UI_STATE;
+#if defined(MOD_API_PLAYER_LOGS)
+	m_eDiploMessageType = NO_DIPLO_MESSAGE_TYPE;
+#endif
 	m_eAnimationType = NO_LEADERHEAD_ANIM;
 	m_eFromPlayer = NO_PLAYER;
 	m_strMessage = "";
@@ -141,7 +154,11 @@ void CvDiplomacyRequests::Update(void)
 		// Make sure the player this is from is still alive.
 		if(kRequest.m_eFromPlayer != NO_PLAYER && GET_PLAYER(kRequest.m_eFromPlayer).isAlive())
 		{
+#if defined(MOD_API_PLAYER_LOGS)
+			Send(kRequest.m_eFromPlayer, kRequest.m_eDiploType, kRequest.m_eDiploMessageType, kRequest.m_strMessage, kRequest.m_eAnimationType, kRequest.m_iExtraGameData);
+#else
 			Send(kRequest.m_eFromPlayer, kRequest.m_eDiploType, kRequest.m_strMessage, kRequest.m_eAnimationType, kRequest.m_iExtraGameData);
+#endif
 		}
 		m_aRequests.pop_front();
 	}
@@ -163,7 +180,11 @@ void CvDiplomacyRequests::EndTurn(void)
 
 //	----------------------------------------------------------------------------
 /// Adds a new notification to the list
+#if defined(MOD_API_PLAYER_LOGS)
+bool CvDiplomacyRequests::Add(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploType, DiploMessageTypes eDiploMessage, const char* pszMessage, LeaderheadAnimationTypes eAnimationType, int iExtraGameData /*= -1*/)
+#else
 bool CvDiplomacyRequests::Add(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploType, const char* pszMessage, LeaderheadAnimationTypes eAnimationType, int iExtraGameData /*= -1*/)
+#endif
 {
 	// Queue it up
 	m_aRequests.push_back(Request());
@@ -172,6 +193,9 @@ bool CvDiplomacyRequests::Add(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploT
 	newRequest.Clear();
 	newRequest.m_eFromPlayer = eFromPlayer;
 	newRequest.m_eDiploType = eDiploType;
+#if defined(MOD_API_PLAYER_LOGS)
+	newRequest.m_eDiploMessageType = eDiploMessage;
+#endif
 	newRequest.m_strMessage = pszMessage;
 	newRequest.m_iExtraGameData = iExtraGameData;
 	newRequest.m_eAnimationType = eAnimationType;
@@ -181,9 +205,14 @@ bool CvDiplomacyRequests::Add(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploT
 }
 //	----------------------------------------------------------------------------
 //	Send the request immediately
+#if defined(MOD_API_PLAYER_LOGS)
+void CvDiplomacyRequests::Send(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploType, DiploMessageTypes eDiploMessage, const char* pszMessage, LeaderheadAnimationTypes eAnimationType, int iExtraGameData /*= -1*/)
+#else
 void CvDiplomacyRequests::Send(PlayerTypes eFromPlayer, DiploUIStateTypes eDiploType, const char* pszMessage, LeaderheadAnimationTypes eAnimationType, int iExtraGameData /*= -1*/)
+#endif
 {
 	gDLL->GameplayDiplomacyAILeaderMessage(eFromPlayer, eDiploType, pszMessage, eAnimationType, iExtraGameData);
+	DIPLOMACYLOG(m_ePlayer, pszMessage, eFromPlayer, eDiploType, eDiploMessage);
 	m_bRequestActiveFromPlayer = eFromPlayer;
 	m_bRequestActive = true;
 }
@@ -222,7 +251,11 @@ bool CvDiplomacyRequests::HasActiveRequestFrom(PlayerTypes eFromPlayer) const
 //	If the toPlayer is the active human player, it will be sent right away, else
 //	it will be queued.
 // static
+#if defined(MOD_API_PLAYER_LOGS)
+void CvDiplomacyRequests::SendRequest(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploType, DiploMessageTypes eDiploMessage, const char* pszMessage, LeaderheadAnimationTypes eAnimationType, int iExtraGameData /*= -1*/)
+#else
 void CvDiplomacyRequests::SendRequest(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, DiploUIStateTypes eDiploType, const char* pszMessage, LeaderheadAnimationTypes eAnimationType, int iExtraGameData /*= -1*/)
+#endif
 {
 	CvPlayer& kPlayer = GET_PLAYER(eToPlayer);
 	CvDiplomacyRequests* pkDiploRequests = kPlayer.GetDiplomacyRequests();
@@ -237,17 +270,29 @@ void CvDiplomacyRequests::SendRequest(PlayerTypes eFromPlayer, PlayerTypes eToPl
 		if(!CvPreGame::isNetworkMultiplayerGame() && GC.getGame().getActivePlayer() == eToPlayer)
 		{
 			// Target is the active player, just send it right now
+#if defined(MOD_API_PLAYER_LOGS)
+			pkDiploRequests->Send(eFromPlayer, eDiploType, eDiploMessage, pszMessage, eAnimationType, iExtraGameData);
+#else
 			pkDiploRequests->Send(eFromPlayer, eDiploType, pszMessage, eAnimationType, iExtraGameData);
+#endif
 		}
 		else
+#if defined(MOD_API_PLAYER_LOGS)
+			pkDiploRequests->Add(eFromPlayer, eDiploType, eDiploMessage, pszMessage, eAnimationType, iExtraGameData);
+#else
 			pkDiploRequests->Add(eFromPlayer, eDiploType, pszMessage, eAnimationType, iExtraGameData);
+#endif
 	}
 }
 
 //	----------------------------------------------------------------------------
 //	Request for a deal
 //static
+#if defined(MOD_API_PLAYER_LOGS)
+void CvDiplomacyRequests::SendDealRequest(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, CvDeal* pkDeal, DiploUIStateTypes eDiploType, DiploMessageTypes eDiploMessage, const char* pszMessage, LeaderheadAnimationTypes eAnimationType)
+#else
 void CvDiplomacyRequests::SendDealRequest(PlayerTypes eFromPlayer, PlayerTypes eToPlayer, CvDeal* pkDeal, DiploUIStateTypes eDiploType, const char* pszMessage, LeaderheadAnimationTypes eAnimationType)
+#endif
 {
 	// Deals must currently happen on the active player's turn...
 	if(GC.getGame().getActivePlayer() == eToPlayer)
@@ -255,7 +300,11 @@ void CvDiplomacyRequests::SendDealRequest(PlayerTypes eFromPlayer, PlayerTypes e
 CUSTOMLOG("STFU@%i: Deal request from player %i", GC.getGame().getGameTurn(), eFromPlayer);
 		auto_ptr<ICvDeal1> pDeal = GC.WrapDealPointer(pkDeal);
 		GC.GetEngineUserInterface()->SetScratchDeal(pDeal.get());
+#if defined(MOD_API_PLAYER_LOGS)
+		SendRequest(eFromPlayer, eToPlayer, eDiploType, eDiploMessage, pszMessage, eAnimationType, -1);
+#else
 		SendRequest(eFromPlayer, eToPlayer, eDiploType, pszMessage, eAnimationType, -1);
+#endif
 	}
 }
 

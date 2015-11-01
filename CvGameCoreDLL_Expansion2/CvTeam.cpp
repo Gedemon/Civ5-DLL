@@ -1067,7 +1067,7 @@ bool CvTeam::canChangeWarPeace(TeamTypes eTeam) const
 	{
 		return false;
 	}
-
+	
 	return true;
 }
 
@@ -5025,7 +5025,6 @@ void CvTeam::enhanceBuilding(BuildingTypes eIndex, int iChange)
 						{
 							for(int k = 0; k < NUM_YIELD_TYPES; k++)
 							{
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 								if((YieldTypes)k == YIELD_CULTURE)
 								{
 #if defined(MOD_BUGFIX_MINOR)
@@ -5045,7 +5044,6 @@ void CvTeam::enhanceBuilding(BuildingTypes eIndex, int iChange)
 #endif
 								}
 								else
-#endif
 								{
 #if defined(MOD_BUGFIX_MINOR)
 									int iEnhancedYield = thisBuildingEntry->GetTechEnhancedYieldChange(k) * pLoopCity->GetCityBuildings()->GetNumBuilding(eIndex);

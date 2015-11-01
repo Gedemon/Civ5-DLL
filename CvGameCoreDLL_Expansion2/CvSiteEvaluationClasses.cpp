@@ -173,6 +173,14 @@ bool CvCitySiteEvaluator::CanFound(CvPlot* pPlot, const CvPlayer* pPlayer, bool 
 		}
 	}
 
+#if defined(MOD_EVENTS_CITY_FOUNDING)
+	if (MOD_EVENTS_CITY_FOUNDING) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanFoundCity, pPlayer->GetID(), pPlot->getX(), pPlot->getY()) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
+	}
+#endif
+	
 	return true;
 }
 

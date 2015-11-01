@@ -405,7 +405,11 @@ bool CvDllPlayer::MayNotAnnex()
 //------------------------------------------------------------------------------
 bool CvDllPlayer::AddDiplomacyRequest(PlayerTypes ePlayerID, DiploUIStateTypes eDiploType, const char* pszMessage, LeaderheadAnimationTypes eAnimationType, int iExtraGameData)
 {
+#if defined(MOD_API_PLAYER_LOGS)
+	return m_pPlayer->GetDiplomacyRequests()->Add(ePlayerID, eDiploType, NO_DIPLO_MESSAGE_TYPE, pszMessage, eAnimationType, iExtraGameData);
+#else
 	return m_pPlayer->GetDiplomacyRequests()->Add(ePlayerID, eDiploType, pszMessage, eAnimationType, iExtraGameData);
+#endif
 }
 //------------------------------------------------------------------------------
 void CvDllPlayer::ActiveDiplomacyRequestComplete()

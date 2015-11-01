@@ -37,6 +37,9 @@
 #include "CvDangerPlots.h"
 #include "CvCityConnections.h"
 #include "CvNotifications.h"
+#if defined(MOD_API_PLAYER_LOGS)
+#include "CvEventLog.h"
+#endif
 #include "CvDiplomacyRequests.h"
 #include "cvStopWatch.h"
 #include "CvTypes.h"
@@ -492,6 +495,10 @@ CvPlayer::CvPlayer() :
 	m_pCulture = FNEW(CvPlayerCulture, c_eCiv5GameplayDLL, 0);
 
 	m_pNotifications = NULL;
+#if defined(MOD_API_PLAYER_LOGS)
+	m_pDiplomacyLog = NULL;
+	m_pMilitaryLog = NULL;
+#endif
 	m_pDiplomacyRequests = NULL;
 
 	m_iNextOperationID = 0;
@@ -530,6 +537,10 @@ CvPlayer::~CvPlayer()
 	delete m_pBuilderTaskingAI;
 	SAFE_DELETE(m_pCityConnections);
 	SAFE_DELETE(m_pNotifications);
+#if defined(MOD_API_PLAYER_LOGS)
+	SAFE_DELETE(m_pDiplomacyLog);
+	SAFE_DELETE(m_pMilitaryLog);
+#endif
 	SAFE_DELETE(m_pDiplomacyRequests);
 	SAFE_DELETE(m_pTreasury);
 	SAFE_DELETE(m_pTraits);
@@ -553,6 +564,10 @@ void CvPlayer::init(PlayerTypes eID)
 	if(eID < MAX_MAJOR_CIVS)
 	{
 		m_pNotifications = FNEW(CvNotifications, c_eCiv5GameplayDLL, 0);
+#if defined(MOD_API_PLAYER_LOGS)
+		m_pDiplomacyLog = FNEW(CvEventLog, c_eCiv5GameplayDLL, 0);
+		m_pMilitaryLog = FNEW(CvEventLog, c_eCiv5GameplayDLL, 0);
+#endif
 		m_pDiplomacyRequests = FNEW(CvDiplomacyRequests, c_eCiv5GameplayDLL, 0);
 	}
 
@@ -757,6 +772,16 @@ void CvPlayer::uninit()
 	{
 		m_pNotifications->Uninit();
 	}
+#if defined(MOD_API_PLAYER_LOGS)
+	if(m_pDiplomacyLog)
+	{
+		m_pDiplomacyLog->Uninit();
+	}
+	if(m_pMilitaryLog)
+	{
+		m_pMilitaryLog->Uninit();
+	}
+#endif
 	if(m_pDiplomacyRequests)
 	{
 		m_pDiplomacyRequests->Uninit();
@@ -1269,6 +1294,16 @@ void CvPlayer::reset(PlayerTypes eID, bool bConstructorCall)
 		{
 			m_pNotifications->Init(eID);
 		}
+#if defined(MOD_API_PLAYER_LOGS)
+		if(m_pDiplomacyLog)
+		{
+			m_pDiplomacyLog->Init(eID);
+		}
+		if(m_pMilitaryLog)
+		{
+			m_pMilitaryLog->Init(eID);
+		}
+#endif
 		if(m_pDiplomacyRequests)
 		{
 			m_pDiplomacyRequests->Init(eID);
@@ -2073,6 +2108,7 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 		{
 			strBuffer = GetLocalizedText("TXT_KEY_MISC_CAPTURED_CITY", pOldCity->getNameKey()).GetCString();
 			GC.GetEngineUserInterface()->AddCityMessage(0, pOldCity->GetIDInfo(), GetID(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer/*, "AS2D_CITYCAPTURE", MESSAGE_TYPE_MAJOR_EVENT, NULL, (ColorTypes)GC.getInfoTypeForString("COLOR_GREEN"), pOldCity->getX(), pOldCity->getY(), true, true*/);
+			MILITARYLOG(GetID(), strBuffer.c_str(), pOldCity->plot(), pOldCity->getOwner());
 		}
 
 		strName.Format("%s (%s)", pOldCity->getName().GetCString(), GET_PLAYER(pOldCity->getOwner()).getName());
@@ -3016,6 +3052,7 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 						strBuffer = GetLocalizedText("TXT_KEY_POPUP_GOLD_AND_CULTURE_CITY_CAPTURE", iCaptureGold, iCaptureCulture, iCaptureGreatWorks, pNewCity->getNameKey());
 					}
 					GC.GetEngineUserInterface()->AddCityMessage(0, pNewCity->GetIDInfo(), GetID(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+					MILITARYLOG(GetID(), strBuffer.c_str(), pNewCity->plot(), pOldCity->getOwner());
 				}
 			}
 			else
@@ -3066,12 +3103,13 @@ void CvPlayer::acquireCity(CvCity* pOldCity, bool bConquest, bool bGift)
 				{
 					strBuffer = GetLocalizedText("TXT_KEY_POPUP_GOLD_CITY_CAPTURE", iCaptureGold, pNewCity->getNameKey());
 					GC.GetEngineUserInterface()->AddCityMessage(0, pNewCity->GetIDInfo(), GetID(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
+					MILITARYLOG(GetID(), strBuffer.c_str(), pNewCity->plot(), pOldCity->getOwner());
 				}
 				else
 				{
 					strBuffer = GetLocalizedText("TXT_KEY_POPUP_GOLD_AND_CULTURE_CITY_CAPTURE", iCaptureGold, iCaptureCulture, iCaptureGreatWorks, pNewCity->getNameKey());
 					GC.GetEngineUserInterface()->AddCityMessage(0, pNewCity->GetIDInfo(), GetID(), true, GC.getEVENT_MESSAGE_TIME(), strBuffer);
-
+					MILITARYLOG(GetID(), strBuffer.c_str(), pNewCity->plot(), pOldCity->getOwner());
 				}
 			}
 		}
@@ -3634,6 +3672,12 @@ void CvPlayer::DoLiberatePlayer(PlayerTypes ePlayer, int iOldCityID)
 		}
 	}
 
+#if defined(MOD_EVENTS_LIBERATION)
+	if (MOD_EVENTS_LIBERATION) {
+		GAMEEVENTINVOKE_HOOK(GAMEEVENT_PlayerLiberated, GetID(), ePlayer, pNewCity->GetID());
+	}
+#endif
+
 #if defined(MOD_DIPLOMACY_CITYSTATES)
 	//Let's give the Embassies of the defeated player back to the liberated player
 	if(MOD_DIPLOMACY_CITYSTATES && GET_PLAYER(ePlayer).GetImprovementLeagueVotes() > 0)
@@ -3663,6 +3707,14 @@ bool CvPlayer::CanLiberatePlayer(PlayerTypes ePlayer)
 	{
 		return false;
 	}
+	
+#if defined(MOD_EVENTS_LIBERATION)
+	if (MOD_EVENTS_LIBERATION) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_PlayerCanLiberate, GetID(), ePlayer) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
+	}
+#endif
 
 	return true;
 }
@@ -7352,6 +7404,14 @@ bool CvPlayer::canFound(int iX, int iY, bool bTestVisible) const
 
 	pPlot = GC.getMap().plot(iX, iY);
 
+#if defined(MOD_EVENTS_CITY_FOUNDING)
+	if (MOD_EVENTS_CITY_FOUNDING) {
+		if (GAMEEVENTINVOKE_TESTANY(GAMEEVENT_PlayerCanFoundCityRegardless, GetID(), iX, iY) == GAMEEVENTRETURN_TRUE) {
+			return true;
+		}
+	}
+#endif
+
 	// Has the AI agreed to not settle here?
 	if(!isMinorCiv() && !isBarbarian())
 	{
@@ -9270,14 +9330,11 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 
 					if(iBuildingCount > 0)
 					{
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 						pLoopCity->ChangeJONSCulturePerTurnFromBuildings(pBuildingInfo->GetBuildingClassYieldChange(eBuildingClass, YIELD_CULTURE) * iBuildingCount * iChange);
-#endif
 
 						// Building Class Yield Stuff
 						for(iJ = 0; iJ < NUM_YIELD_TYPES; iJ++)
 						{
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 							switch(iJ)
 							{
 							case YIELD_CULTURE:
@@ -9292,17 +9349,14 @@ void CvPlayer::processBuilding(BuildingTypes eBuilding, int iChange, bool bFirst
 							}
 							default:
 							{
-#endif
 								YieldTypes eYield = (YieldTypes) iJ;
 								int iYieldChange = pBuildingInfo->GetBuildingClassYieldChange(eBuildingClass, eYield);
 								if(iYieldChange > 0)
 								{
 									pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iYieldChange * iBuildingCount * iChange);
 								}
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 							}
 							}
-#endif
 						}
 					}
 				}
@@ -24583,7 +24637,6 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 				YieldTypes eYield = (YieldTypes) iI;
 				int iYield = pPolicy->GetYieldChangeWorldWonder(iI);
 
-#if !defined(MOD_API_UNIFIED_YIELDS_CONSOLIDATION)
 				if (eYield == YIELD_CULTURE)
 				{
 					pLoopCity->ChangeJONSCulturePerTurnFromBuildings(iYield * iTotalWonders * iChange);
@@ -24593,7 +24646,6 @@ void CvPlayer::processPolicies(PolicyTypes ePolicy, int iChange)
 					pLoopCity->ChangeFaithPerTurnFromBuildings(iYield * iTotalWonders * iChange);
 				}
 				else
-#endif
 				{
 					pLoopCity->ChangeBaseYieldRateFromBuildings(eYield, iYield * iTotalWonders * iChange);
 				}
@@ -25113,6 +25165,42 @@ int CvPlayer::AddNotification(NotificationTypes eNotificationType, const char* s
   }
   
   return iNotification;
+}
+#endif
+
+#if defined(MOD_API_PLAYER_LOGS)
+CvEventLog* CvPlayer::GetDiplomacyLog() const
+{
+	return m_pDiplomacyLog;
+}
+
+bool CvPlayer::AddDiplomacyEvent(const char* sMessage, PlayerTypes eFromPlayer, int iData1 /* = -1 */, int iData2 /* = -1 */, int iData3 /* = -1 */, int iData4 /* = -1 */)
+{
+	if (MOD_API_PLAYER_LOGS)
+	{
+		if (m_pDiplomacyLog) {
+			return m_pDiplomacyLog->Add(sMessage, eFromPlayer, -1, -1, iData1, iData2, iData3, iData4);
+		}
+	}
+  
+	return false;
+}
+
+CvEventLog* CvPlayer::GetMilitaryLog() const
+{
+	return m_pMilitaryLog;
+}
+
+bool CvPlayer::AddMilitaryEvent(const char* sMessage, CvPlot* pPlot, PlayerTypes eOtherPlayer, int iData1 /* = -1 */, int iData2 /* = -1 */, int iData3 /* = -1 */, int iData4 /* = -1 */)
+{
+	if (MOD_API_PLAYER_LOGS)
+	{
+		if (m_pMilitaryLog) {
+			return m_pMilitaryLog->Add(sMessage, eOtherPlayer, pPlot->getX(), pPlot->getY(), iData1, iData2, iData3, iData4);
+		}
+	}
+
+	return false;
 }
 #endif
 
@@ -25654,6 +25742,27 @@ void CvPlayer::Read(FDataStream& kStream)
 		m_pNotifications->Init(GetID());
 		m_pNotifications->Read(kStream);
 	}
+#if defined(MOD_API_PLAYER_LOGS)
+	// MOD_SERIALIZE_READ - v68 broke the save format  couldn't be helped, but don't make a habit of it!!!
+	bool bReadDiplomacyLog;
+	kStream >> bReadDiplomacyLog;
+	if (bReadDiplomacyLog)
+	{
+		m_pDiplomacyLog = FNEW(CvEventLog, c_eCiv5GameplayDLL, 0);
+		m_pDiplomacyLog->Init(GetID());
+		m_pDiplomacyLog->Read(kStream);
+	}
+
+	// MOD_SERIALIZE_READ - v68 broke the save format  couldn't be helped, but don't make a habit of it!!!
+	bool bReadMilitaryLog;
+	kStream >> bReadMilitaryLog;
+	if (bReadMilitaryLog)
+	{
+		m_pMilitaryLog = FNEW(CvEventLog, c_eCiv5GameplayDLL, 0);
+		m_pMilitaryLog->Init(GetID());
+		m_pMilitaryLog->Read(kStream);
+	}
+#endif
 	m_pTreasury->Read(kStream);
 
 	// If this is a real player, hook up the player-level flavor recipients
@@ -26176,15 +26285,38 @@ void CvPlayer::Write(FDataStream& kStream) const
 	{
 		kStream << false;
 	}
+#if defined(MOD_API_PLAYER_LOGS)
+	// MOD_SERIALIZE_WRITE - v68 broke the save format  couldn't be helped, but don't make a habit of it!!!
+	if (m_pDiplomacyLog)
+	{
+		kStream << true;
+		m_pDiplomacyLog->Write(kStream);
+	}
+	else
+	{
+		kStream << false;
+	}
+
+	// MOD_SERIALIZE_WRITE - v68 broke the save format  couldn't be helped, but don't make a habit of it!!!
+	if (m_pMilitaryLog)
+	{
+		kStream << true;
+		m_pMilitaryLog->Write(kStream);
+	}
+	else
+	{
+		kStream << false;
+	}
+#endif
 	m_pTreasury->Write(kStream);
 
 	kStream << m_ppaaiSpecialistExtraYield;
 #if defined(MOD_API_UNIFIED_YIELDS) && defined(MOD_API_PLOT_YIELDS)
-	// MOD_SERIALIZE_READ - v57/v58/v59 broke the save format  couldn't be helped, but don't make a habit of it!!!
+	// MOD_SERIALIZE_WRITE - v57/v58/v59 broke the save format  couldn't be helped, but don't make a habit of it!!!
 	kStream << m_ppiPlotYieldChange;
 #endif
 #if defined(MOD_API_UNIFIED_YIELDS)
-	// MOD_SERIALIZE_READ - v57/v58/v59 and v61 broke the save format  couldn't be helped, but don't make a habit of it!!!
+	// MOD_SERIALIZE_WRITE - v57/v58/v59 and v61 broke the save format  couldn't be helped, but don't make a habit of it!!!
 	kStream << m_ppiFeatureYieldChange;
 	kStream << m_ppiResourceYieldChange;
 	kStream << m_ppiTerrainYieldChange;

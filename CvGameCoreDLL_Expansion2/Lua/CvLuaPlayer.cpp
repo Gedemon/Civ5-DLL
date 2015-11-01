@@ -896,6 +896,10 @@ void CvLuaPlayer::PushMethods(lua_State* L, int t)
 #if defined(MOD_API_LUA_EXTENSIONS)
 	Method(DismissNotification);
 #endif
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_PLAYER_LOGS)
+	Method(GetDiplomacyLog);
+	Method(GetMilitaryLog);
+#endif
 
 	Method(GetRecommendedWorkerPlots);
 	Method(GetRecommendedFoundCityPlots);
@@ -8915,6 +8919,79 @@ int CvLuaPlayer::lGetNotificationDismissed(lua_State* L)
 	lua_pushboolean(L, pkPlayer->GetNotifications()->IsNotificationDismissed(iIndex));
 	return 1;
 }
+
+#if defined(MOD_API_LUA_EXTENSIONS) && defined(MOD_API_PLAYER_LOGS)
+int CvLuaPlayer::lGetDiplomacyLog(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+
+	lua_createtable(L, 0, 0);
+	int index = 1;
+
+	CvEventLog* pDiplomacyLog = pkPlayer->GetDiplomacyLog();
+	for (int i = 0; i < pDiplomacyLog->GetNumEvents(); i++)
+	{
+		lua_createtable(L, 0, 0);
+		const int t = lua_gettop(L);
+
+		lua_pushinteger(L, pDiplomacyLog->GetTurn(i));
+		lua_setfield(L, t, "Turn");
+		lua_pushstring(L, pDiplomacyLog->GetMessage(i));
+		lua_setfield(L, t, "Message");
+		lua_pushinteger(L, pDiplomacyLog->GetOtherPlayer(i));
+		lua_setfield(L, t, "OtherPlayer");
+		lua_pushinteger(L, pDiplomacyLog->GetData1(i));
+		lua_setfield(L, t, "Data1");
+		lua_pushinteger(L, pDiplomacyLog->GetData2(i));
+		lua_setfield(L, t, "Data2");
+		lua_pushinteger(L, pDiplomacyLog->GetData3(i));
+		lua_setfield(L, t, "Data3");
+		lua_pushinteger(L, pDiplomacyLog->GetData4(i));
+		lua_setfield(L, t, "Data4");
+
+		lua_rawseti(L, -2, index++);
+	}
+
+	return 1;
+}
+
+int CvLuaPlayer::lGetMilitaryLog(lua_State* L)
+{
+	CvPlayerAI* pkPlayer = GetInstance(L);
+
+	lua_createtable(L, 0, 0);
+	int index = 1;
+
+	CvEventLog* pMilitaryLog = pkPlayer->GetMilitaryLog();
+	for (int i = 0; i < pMilitaryLog->GetNumEvents(); i++)
+	{
+		lua_createtable(L, 0, 0);
+		const int t = lua_gettop(L);
+
+		lua_pushinteger(L, pMilitaryLog->GetTurn(i));
+		lua_setfield(L, t, "Turn");
+		lua_pushstring(L, pMilitaryLog->GetMessage(i));
+		lua_setfield(L, t, "Message");
+		lua_pushinteger(L, pMilitaryLog->GetOtherPlayer(i));
+		lua_setfield(L, t, "OtherPlayer");
+		CvLuaPlot::Push(L, pMilitaryLog->GetPlot(i));
+		lua_setfield(L, t, "Plot");
+		lua_pushinteger(L, pMilitaryLog->GetData1(i));
+		lua_setfield(L, t, "Data1");
+		lua_pushinteger(L, pMilitaryLog->GetData2(i));
+		lua_setfield(L, t, "Data2");
+		lua_pushinteger(L, pMilitaryLog->GetData3(i));
+		lua_setfield(L, t, "Data3");
+		lua_pushinteger(L, pMilitaryLog->GetData4(i));
+		lua_setfield(L, t, "Data4");
+
+		lua_rawseti(L, -2, index++);
+	}
+
+	return 1;
+}
+#endif
+
 //------------------------------------------------------------------------------
 int CvLuaPlayer::lGetRecommendedWorkerPlots(lua_State* L)
 {

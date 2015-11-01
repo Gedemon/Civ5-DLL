@@ -1371,6 +1371,14 @@ bool CvPlayerEspionage::CanEverMoveSpyTo(CvCity* pCity)
 		return false;
 	}
 
+#if defined(MOD_EVENTS_ESPIONAGE)
+	if (MOD_EVENTS_ESPIONAGE) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_EspionageCanMoveSpyTo, m_pPlayer->GetID(), pCity->getOwner(), pCity->GetID()) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
+	}
+#endif
+	
 	return true;
 }
 
@@ -2066,6 +2074,14 @@ bool CvPlayerEspionage::CanStageCoup(uint uiSpyIndex)
 		return true;
 	}
 
+#if defined(MOD_EVENTS_ESPIONAGE)
+	if (MOD_EVENTS_ESPIONAGE) {
+		if (GAMEEVENTINVOKE_TESTALL(GAMEEVENT_EspionageCanStageCoup, m_pPlayer->GetID(), eCityOwner, pCity->GetID()) == GAMEEVENTRETURN_FALSE) {
+			return false;
+		}
+	}
+#endif
+	
 	return false;
 }
 
