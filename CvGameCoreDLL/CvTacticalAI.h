@@ -756,6 +756,9 @@ private:
 	FStaticVector<CvOperationUnit, SAFE_ESTIMATE_NUM_MULTIUNITFORMATION_ENTRIES, true, c_eCiv5GameplayDLL, 0> m_GeneralsToMove;
 
 	// RED <<<<<
+	int m_iManufactoryType;
+	int m_iMineType;
+	int m_iWellType;
 	int m_CachedInfoTypes[eNUM_TACTICAL_INFOTYPES];
 	
 	void PlotGuardUnitMoves();

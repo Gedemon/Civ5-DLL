@@ -1072,25 +1072,25 @@ int CvMilitaryAI::ScoreTarget(CvMilitaryTarget &target)
 		// Much higher value on close target (keep a frontline !)
 		if (target.m_iPathLength < 5)
 		{
-			uliRtnValue *= 1024;
+			uliRtnValue *= 2000;
 		}
 		else if (target.m_iPathLength < 8)
 		{
-			uliRtnValue *= 512;
+			uliRtnValue *= 1000;
 		}
 		else if (target.m_iPathLength < 10)
 		{
-			uliRtnValue *= 128;
+			uliRtnValue *= 250;
 		}
 		else if (target.m_iPathLength < 12) 
 		// RED >>>>>
 		//if (target.m_iPathLength < 10) // RED
 		{
-			uliRtnValue *= 64; // RED (was 16)
+			uliRtnValue *= 120; // RED (was 16)
 		}
 		else if (target.m_iPathLength < 15)
 		{
-			uliRtnValue *= 32; // RED (was 8)
+			uliRtnValue *= 60; // RED (was 8)
 		}
 		else if (target.m_iPathLength < 20)
 		{
@@ -3882,6 +3882,39 @@ bool CvMilitaryAI::WillAirUnitRebase(CvUnit* pUnit) const
 		// Found somewhere to rebase to
 		return true;
 	}
+
+	// RED <<<<<
+	// If no base found, try team's cities
+	int iI;
+	iLoopCity = 0;
+	for (iI = 0; iI < MAX_PLAYERS; iI++)
+	{
+		CvPlayerAI& kPlayer = GET_PLAYER(static_cast<PlayerTypes>(iI));
+		if (kPlayer.isAlive())
+		{
+			if (kPlayer.getTeam() == m_pPlayer->getTeam() && kPlayer.GetID() != m_pPlayer->GetID())
+			{
+				for (pLoopCity = kPlayer.firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoopCity))
+				{
+					CvPlot *pTarget = pLoopCity->plot();
+
+					if (3 * pLoopCity->getDamage() > pLoopCity->GetMaxHitPoints() && m_pPlayer->IsPlotUnderImmediateThreat(*pTarget))
+					{
+						continue;
+					}
+
+					if (pTarget != pUnitPlot && !pUnit->canRebaseAt(pUnitPlot,pTarget->getX(),pTarget->getY()))
+					{
+						continue;
+					}
+
+					// Found somewhere to rebase to
+					return true;
+				}
+			}
+		}
+	}
+	// RED >>>>>
 
 	return false;
 }

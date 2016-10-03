@@ -75,6 +75,9 @@ protected:
 	double m_fMinorConquestMod;
 
 	FFastVector<int, true, c_eCiv5GameplayDLL, 0> m_DangerPlots;
+	// RED <<<<<
+	FFastVector<int, true, c_eCiv5GameplayDLL, 0> m_ImmediateDangerPlots;
+	// RED >>>>>
 };
 
 

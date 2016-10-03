@@ -63,6 +63,13 @@ void CvDangerPlots::Init(PlayerTypes ePlayer, bool bAllocate)
 		{
 			m_DangerPlots[i] = 0;
 		}
+		// RED <<<<<
+		m_ImmediateDangerPlots.resize(iGridSize);
+		for (int i = 0; i < iGridSize; i++)
+		{
+			m_ImmediateDangerPlots[i] = 0;
+		}
+		// RED >>>>>
 	}
 }
 
@@ -73,6 +80,9 @@ void CvDangerPlots::Uninit()
 	m_DangerPlots.clear();
 	m_bArrayAllocated = false;
 	m_bDirty = false;
+	// RED <<<<<
+	m_ImmediateDangerPlots.clear();
+	// RED >>>>>
 }
 
 /// Updates the danger plots values to reflect threats across the map
@@ -91,6 +101,14 @@ void CvDangerPlots::UpdateDanger (bool bPretendWarWithAllCivs, bool bIgnoreVisib
 	{
 		m_DangerPlots[i] = 0;
 	}
+
+	// RED <<<<<
+	CvAssertMsg(iGridSize == m_ImmediateDangerPlots.size(), "iGridSize does not match number of ImmediateDangerPlots");
+	for (int i = 0; i < iGridSize; i++)
+	{
+		m_ImmediateDangerPlots[i] = 0;
+	}
+	// RED >>>>>
 
 	CvPlayer& thisPlayer = GET_PLAYER(m_ePlayer);
 	TeamTypes thisTeam = thisPlayer.getTeam();
@@ -232,17 +250,12 @@ void CvDangerPlots::UpdateDanger (bool bPretendWarWithAllCivs, bool bIgnoreVisib
 void CvDangerPlots::AddDanger (int iPlotX, int iPlotY, int iValue, bool bWithinOneMove)
 {
 	const int idx = iPlotX + iPlotY * GC.getMap().getGridWidth();
-	if (iValue > 0)
+	// RED <<<<<
+	if (bWithinOneMove)
 	{
-		if (bWithinOneMove)
-		{
-			iValue |= 0x1;
-		}
-		else
-		{
-			iValue &= ~0x1;
-		}
+		m_ImmediateDangerPlots[idx] += 1;
 	}
+	// RED >>>>>
 	m_DangerPlots[idx] += iValue;
 }
 
@@ -660,6 +673,14 @@ void CvDangerPlots::Read (FDataStream& kStream)
 	}
 
 	m_bDirty = false;
+
+	// RED <<<<<
+	m_ImmediateDangerPlots.resize(iGridSize);
+	for (int i = 0; i < iGridSize; i++)
+	{
+		kStream >> m_ImmediateDangerPlots[i];
+	}
+	// RED >>>>>
 }
 
 /// writes out danger plots info
@@ -678,6 +699,12 @@ void CvDangerPlots::Write (FDataStream& kStream) const
 	{
 		kStream << m_DangerPlots[i];
 	}
+	// RED <<<<<
+	for (int i = 0; i < iGridSize; i++)
+	{
+		kStream << m_ImmediateDangerPlots[i];
+	}
+	// RED >>>>>
 }
 
 //	-----------------------------------------------------------------------------------------------
@@ -690,6 +717,7 @@ void CvDangerPlots::SetDirty()
 /// Returns if the unit is in immediate danger
 bool CvDangerPlots::IsUnderImmediateThreat(const CvPlot& pPlot) const
 {
-	return GetDanger(pPlot) & 0x1;
+	const int idx = pPlot.getX() + pPlot.getY() * GC.getMap().getGridWidth();
+	return (m_ImmediateDangerPlots[idx] > 0);
 }
 // RED >>>>>

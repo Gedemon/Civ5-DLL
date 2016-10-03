@@ -3024,6 +3024,46 @@ void CvHomelandAI::ExecuteAircraftMoves()
 			}
 		}
 
+		// RED <<<<<
+		// If no plot found, try to rebase in team cities
+		if (!pBestPlot)
+		{
+			int iI;
+			iLoopCity = 0;
+			for (iI = 0; iI < MAX_PLAYERS; iI++)
+			{
+				CvPlayerAI& kPlayer = GET_PLAYER(static_cast<PlayerTypes>(iI));
+				if (kPlayer.isAlive())
+				{
+					if (kPlayer.getTeam() == m_pPlayer->getTeam() && kPlayer.GetID() != m_pPlayer->GetID())
+					{
+						for (pLoopCity = kPlayer.firstCity(&iLoopCity); pLoopCity != NULL; pLoopCity = kPlayer.nextCity(&iLoopCity))
+						{
+							CvPlot *pTarget = pLoopCity->plot();
+
+							if (3 * pLoopCity->getDamage() > pLoopCity->GetMaxHitPoints() && m_pPlayer->IsPlotUnderImmediateThreat(*pTarget))
+							{
+								continue;
+							}
+
+							if (pBestPlot != pUnitPlot && !pUnit->canRebaseAt(pUnitPlot,pTarget->getX(),pTarget->getY()))
+							{
+								continue;
+							}
+
+							int iPlotDanger = m_pPlayer->GetPlotDanger(*pTarget);
+							if (iPlotDanger > iMostDangerous)
+							{
+								iMostDangerous = iPlotDanger;
+								pBestPlot = pTarget;
+							}
+						}
+					}
+				}
+			}
+		}
+		// RED >>>>>
+
 		if (pBestPlot && pBestPlot != pUnitPlot)
 		{
 			pUnit->PushMission(CvTypes::getMISSION_REBASE(), pBestPlot->getX(), pBestPlot->getY());

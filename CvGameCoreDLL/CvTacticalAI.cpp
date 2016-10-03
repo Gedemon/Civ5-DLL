@@ -243,7 +243,11 @@ void CvTacticalAI::Init(CvPlayer *pPlayer)
 	m_iRandomRange = GC.getAI_TACTICAL_MOVE_PRIORITY_RANDOMNESS();
 	m_fFlavorDampening = GC.getAI_TACTICAL_FLAVOR_DAMPENING_FOR_MOVE_PRIORITIZATION();
 
-	// cache TypeInfos rather than doing a hash map look up of the string every time it is being used
+	// RED <<<<<
+	m_iManufactoryType = GC.getInfoTypeForString("IMPROVEMENT_MANUFACTORY");
+	m_iMineType = GC.getInfoTypeForString("IMPROVEMENT_MINE");
+	m_iWellType = GC.getInfoTypeForString("IMPROVEMENT_WELL");
+
 	m_CachedInfoTypes[eTACTICAL_UNASSIGNED] = GC.getInfoTypeForString("TACTICAL_UNASSIGNED");
 	m_CachedInfoTypes[eTACTICAL_POSTURE_SIT_AND_BOMBARD] = GC.getInfoTypeForString("TACTICAL_POSTURE_SIT_AND_BOMBARD");
 	m_CachedInfoTypes[eTACTICAL_POSTURE_ATTRIT_FROM_RANGE] = GC.getInfoTypeForString("TACTICAL_POSTURE_ATTRIT_FROM_RANGE");
@@ -300,6 +304,7 @@ void CvTacticalAI::Init(CvPlayer *pPlayer)
 	m_CachedInfoTypes[eMUPOSITION_BOMBARD] = GC.getInfoTypeForString("MUPOSITION_BOMBARD");
 	m_CachedInfoTypes[eMUPOSITION_FRONT_LINE] = GC.getInfoTypeForString("MUPOSITION_FRONT_LINE");
 	m_CachedInfoTypes[eTACTICAL_TARGET_UNIT_TO_DEFEND] = GC.getInfoTypeForString("TACTICAL_TARGET_UNIT_TO_DEFEND");
+	// RED >>>>>
 }
 
 /// Deallocate memory created in initialize
@@ -5292,9 +5297,41 @@ void CvTacticalAI::ExecuteAttack(CvTacticalTarget *pTarget, CvPlot *pTargetPlot,
 										}
 									}
 									// RED <<<<<
+									// Limit air attack to cities
 									// todo : remove magic number
-									if (!(pUnit->getDomainType() == DOMAIN_AIR && pTarget->GetTargetType() == AI_TACTICAL_TARGET_CITY && iDamageRemaining < 20) || pUnit->cityAttackModifier() > 20)
+
+									bool bUnitIsAirLimited = true;
+									
+									if (pUnit->getDomainType() != DOMAIN_AIR || pTarget->GetTargetType() != AI_TACTICAL_TARGET_CITY || iDamageRemaining > 24)
 									{
+										bUnitIsAirLimited = false;
+									}
+									else if (pUnit->cityAttackModifier() >= 20)
+									{
+										// Check for non-pillaged improvements around the target city
+										CvPlot* pAdjacentPlot;
+										int iI;
+										for (iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
+										{
+											pAdjacentPlot = plotDirection(pTargetPlot->getX(), pTargetPlot->getY(), ((DirectionTypes)iI));
+											if (pAdjacentPlot != NULL)
+											{
+												ImprovementTypes iImprovement = pAdjacentPlot->getImprovementType();
+												if (iImprovement == (ImprovementTypes)m_iManufactoryType || iImprovement == (ImprovementTypes)m_iMineType || iImprovement == (ImprovementTypes)m_iWellType)
+												{
+													if (!pAdjacentPlot->IsImprovementPillaged())
+													{
+														bUnitIsAirLimited = false;
+													}
+												}
+											}
+										}
+									}
+
+									//if (!(pUnit->getDomainType() == DOMAIN_AIR && pTarget->GetTargetType() == AI_TACTICAL_TARGET_CITY && iDamageRemaining < 20) || pUnit->cityAttackModifier() > 20)
+									if (!bUnitIsAirLimited)
+									{
+
 										// Can we hit it with a ranged attack?  If so, that gets first priority
 										if (pUnit->canMove() && pUnit->canRangeStrikeAt(pTargetPlot->getX(), pTargetPlot->getY()))
 										{
@@ -8227,7 +8264,7 @@ bool CvTacticalAI::CanCoverFromEnemy(CvPlot *pPlot, int &iNumUnitsRequiredToCove
 
 				if (m_pMap->GetCell(iPlotIndex)->IsEnemyCanMovePast() && !m_pMap->GetCell(iPlotIndex)->IsFriendlyTurnEndTile())
 				{
-					if (!FindClosestUnit(pLoopPlot, 1, false /*bMustBeRangedUnit*/, 2 /*iRangeRequired*/, false /*bNeedsIgnoreLOS*/, true /*bMustBeMeleeUnit*/))
+					if (!FindClosestUnit(pPlot, 1, false /*bMustBeRangedUnit*/, 2 /*iRangeRequired*/, false /*bNeedsIgnoreLOS*/, true /*bMustBeMeleeUnit*/))
 					{
 						return false;
 					}
